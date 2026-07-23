@@ -55,9 +55,12 @@ src/
 ├── api/          # 백엔드 API 요청
 ├── assets/       # 이미지 및 스타일
 ├── components/   # 공통 컴포넌트
+├── constants/    # 온보딩 옵션
+├── pages/        # 페이지 컴포넌트
 ├── router/       # 페이지 라우팅
+├── service/      
 ├── stores/       # 전역 상태 관리
-├── views/        # 페이지 컴포넌트
+├── styles/       
 ├── App.vue
 └── main.js
 ```
