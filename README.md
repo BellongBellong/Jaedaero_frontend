@@ -54,6 +54,7 @@ API Key와 Secret 값은 Git에 업로드하지 않습니다.
 src/
 ├── api/          # 백엔드 API 요청
 ├── assets/       # 이미지 및 스타일
+├── auth/         # 로그인(소셜 로그인)
 ├── components/   # 공통 컴포넌트
 ├── constants/    # 온보딩 옵션
 ├── pages/        # 페이지 컴포넌트
