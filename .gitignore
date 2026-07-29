@@ -53,6 +53,10 @@ uploads/
 cache/
 tmp/
 
+### Local AI assistant instructions ###
+/AGENTS.md
+/CLAUDE.md
+
 ### Node / Vite ###
 node_modules/
 dist/
