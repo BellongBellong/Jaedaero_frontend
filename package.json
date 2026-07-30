@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "mock": "node mock-server/server.js",
-    "dev:mock": "concurrently -k -n VITE,MOCK \"npm run dev\" \"npm run mock\"",
+    "dev:mock": "concurrently -k -n VITE,MOCK \"vite --mode mock\" \"npm run mock\"",
     "build": "vite build",
     "format": "prettier --write .",
     "lint": "eslint .",
