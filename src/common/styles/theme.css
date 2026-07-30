@@ -1,0 +1,182 @@
+/* ==========================================================
+   JEDAERO DESIGN SYSTEM
+   Tailwind Theme
+========================================================== */
+
+@theme {
+
+    /* ======================================================
+       FONT
+    ====================================================== */
+  
+    --font-display: var(--font-display);
+    --font-body: var(--font-body);
+  
+  
+  
+    /* ======================================================
+       BRAND
+    ====================================================== */
+  
+    --color-primary: var(--brand-primary);
+  
+    --color-green: var(--brand-green);
+    --color-deep-green: var(--brand-deep-green);
+  
+    --color-olive: var(--brand-olive);
+  
+    --color-yellow: var(--brand-yellow);
+  
+    --color-orange: var(--brand-orange);
+  
+    --color-white: var(--brand-white);
+  
+    --color-light-blue: var(--brand-light-blue);
+    --color-blue: var(--brand-blue);
+    --color-deep-blue: var(--brand-deep-blue);
+  
+  
+  
+    /* ======================================================
+       UI
+    ====================================================== */
+  
+    --color-background: var(--ui-background);
+  
+    --color-surface: var(--ui-surface);
+  
+    --color-light-gray: var(--ui-light-gray);
+  
+    --color-border: var(--ui-border);
+  
+    --color-text: var(--ui-text);
+  
+    --color-text-secondary: var(--ui-text-secondary);
+  
+    --color-placeholder: var(--ui-placeholder);
+  
+    --color-disabled: var(--ui-disabled);
+  
+  
+  
+    /* ======================================================
+       STATUS
+    ====================================================== */
+  
+    --color-success: var(--status-success);
+  
+    --color-warning: var(--status-warning);
+  
+    --color-error: var(--status-error);
+  
+    --color-info: var(--status-info);
+  
+  
+  
+    /* ======================================================
+       CATEGORY
+    ====================================================== */
+  
+    --color-salary: var(--category-salary-main);
+    --color-salary-light: var(--category-salary-light);
+    --color-salary-deep: var(--category-salary-deep);
+  
+    --color-asset: var(--category-asset-main);
+    --color-asset-light: var(--category-asset-light);
+    --color-asset-deep: var(--category-asset-deep);
+  
+    --color-px: var(--category-px-main);
+    --color-px-light: var(--category-px-light);
+    --color-px-deep: var(--category-px-deep);
+  
+    --color-food: var(--category-food-main);
+    --color-food-light: var(--category-food-light);
+    --color-food-deep: var(--category-food-deep);
+  
+    --color-shopping: var(--category-shopping-main);
+    --color-shopping-light: var(--category-shopping-light);
+    --color-shopping-deep: var(--category-shopping-deep);
+  
+    --color-transport: var(--category-transport-main);
+    --color-transport-light: var(--category-transport-light);
+    --color-transport-deep: var(--category-transport-deep);
+  
+    --color-leisure: var(--category-leisure-main);
+    --color-leisure-light: var(--category-leisure-light);
+    --color-leisure-deep: var(--category-leisure-deep);
+  
+    --color-medical: var(--category-medical-main);
+    --color-medical-light: var(--category-medical-light);
+    --color-medical-deep: var(--category-medical-deep);
+  
+    --color-etc: var(--category-etc-main);
+    --color-etc-light: var(--category-etc-light);
+    --color-etc-deep: var(--category-etc-deep);
+  
+  
+  
+    /* ======================================================
+       TYPOGRAPHY
+    ====================================================== */
+  
+    --text-h1: var(--text-h1);
+    --text-h2: var(--text-h2);
+    --text-h3: var(--text-h3);
+    --text-h4: var(--text-h4);
+    --text-h5: var(--text-h5);
+  
+    --text-lg: var(--text-lg);
+    --text-md: var(--text-md);
+    --text-sm: var(--text-sm);
+    --text-xs: var(--text-xs);
+  
+  
+  
+    /* ======================================================
+       RADIUS
+    ====================================================== */
+  
+    --radius-sm: var(--radius-sm);
+    --radius-md: var(--radius-md);
+    --radius-lg: var(--radius-lg);
+    --radius-xl: var(--radius-xl);
+    --radius-full: var(--radius-full);
+  
+  
+  
+    /* ======================================================
+       SHADOW
+    ====================================================== */
+  
+    --shadow-sm: var(--shadow-sm);
+    --shadow-md: var(--shadow-md);
+    --shadow-lg: var(--shadow-lg);
+
+      /* ======================================================
+     SPACING
+    ====================================================== */
+
+    --spacing-page: var(--page-padding);
+
+    --spacing-4: var(--space-4);
+    --spacing-8: var(--space-8);
+    --spacing-10: var(--space-10);
+    --spacing-12: var(--space-12);
+    --spacing-14: var(--space-14);
+    --spacing-16: var(--space-16);
+    --spacing-20: var(--space-20);
+    --spacing-24: var(--space-24);
+    --spacing-28: var(--space-28);
+    --spacing-32: var(--space-32);
+    --spacing-40: var(--space-40);
+
+    /* ======================================================
+   LAYOUT
+    ====================================================== */
+
+    --app-width: 393px;          /* 디자인 기준 기기 */
+    --header-height: 56px;
+    -bottom-nav-height: 84px;
+    --fab-size: 56px;
+    
+  }
