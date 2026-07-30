@@ -1,16 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import accountRoutes from '@/features/accounts/routes'
-import aiCoachRoutes from '@/features/ai-coach/routes'
+import aiAnalysisRoutes from '@/features/ai-analysis/routes'
 import authRoutes from '@/features/auth/routes'
 import cashflowRoutes from '@/features/cashflow/routes'
-import cohortRoutes from '@/features/cohort/routes'
 import dashboardRoutes from '@/features/dashboard/routes'
-import eventRoutes from '@/features/events/routes'
+import challengeRoutes from '@/features/challenges/routes'
+import leaveModeRoutes from '@/features/leave-mode/routes'
+import marketReportRoutes from '@/features/market-report/routes'
 import missionRoutes from '@/features/missions/routes'
 import myPageRoutes from '@/features/my-page/routes'
+import notificationRoutes from '@/features/notifications/routes'
 import onboardingRoutes from '@/features/onboarding/routes'
-import vacationRoutes from '@/features/vacation/routes'
+import rebalancingRoutes from '@/features/rebalancing/routes'
+import reportRoutes from '@/features/reports/routes'
+import simulationRoutes from '@/features/simulations/routes'
+import soldierSavingRoutes from '@/features/soldier-savings/routes'
+import transactionRoutes from '@/features/transactions/routes'
 
 import { registerRouterGuards } from './guards'
 
@@ -20,11 +26,17 @@ const routes = [
   ...dashboardRoutes,
   ...accountRoutes,
   ...cashflowRoutes,
-  ...aiCoachRoutes,
+  ...simulationRoutes,
+  ...aiAnalysisRoutes,
+  ...transactionRoutes,
+  ...soldierSavingRoutes,
+  ...challengeRoutes,
   ...missionRoutes,
-  ...eventRoutes,
-  ...vacationRoutes,
-  ...cohortRoutes,
+  ...reportRoutes,
+  ...rebalancingRoutes,
+  ...notificationRoutes,
+  ...leaveModeRoutes,
+  ...marketReportRoutes,
   ...myPageRoutes,
 ]
 
