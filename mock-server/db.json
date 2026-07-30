@@ -15,7 +15,7 @@
       "userId": 1,
       "militaryType": "ARMY",
       "rank": "SERGEANT",
-      "enlistmentDate": "2025-02-10",
+      "enlistmentDate": "2026-06-30",
       "promotionDate": "2026-09-01",
       "dischargeDate": "2027-03-01",
       "payday": 10,
@@ -27,10 +27,8 @@
     {
       "id": 1,
       "userId": 1,
-      "targetAmount": 30000000,
-      "targetDate": "2027-03-01",
-      "warningLevel": "CHALLENGING",
-      "estimatedAmountAtDischarge": 27800000
+      "goalStatus": "CHALLENGING",
+      "targetAmount": 23000000
     }
   ],
   "connectedAccounts": [
@@ -183,7 +181,7 @@
       "transactionType": "INCOME",
       "category": "SALARY",
       "classificationSource": "RULE",
-      "classificationConfidence": 1.0,
+      "classificationConfidence": 1,
       "transactionDate": "2026-07-10T09:00:00+09:00"
     },
     {
@@ -195,7 +193,7 @@
       "transactionType": "ASSET_TRANSFER",
       "category": "SAVINGS",
       "classificationSource": "RULE",
-      "classificationConfidence": 1.0,
+      "classificationConfidence": 1,
       "transactionDate": "2026-07-10T09:03:00+09:00"
     },
     {
@@ -227,7 +225,7 @@
         "monthlySpendingAmount": 450000,
         "monthlySavingAmount": 600000,
         "monthlyInvestmentAmount": 100000,
-        "annualReturnRate": 5.0,
+        "annualReturnRate": 5,
         "vacationBudget": 300000
       }
     }
@@ -240,7 +238,7 @@
       "monthlySpendingAmount": 320000,
       "monthlySavingAmount": 600000,
       "monthlyInvestmentAmount": 100000,
-      "annualReturnRate": 5.0,
+      "annualReturnRate": 5,
       "vacationBudget": 250000,
       "targetAmount": 30000000,
       "projectedAssetAtDischarge": 29350000,
@@ -280,7 +278,9 @@
           "priority": "MEDIUM"
         }
       ],
-      "warnings": ["AI 분석은 참고용이며 실제 결과를 보장하지 않습니다."],
+      "warnings": [
+        "AI 분석은 참고용이며 실제 결과를 보장하지 않습니다."
+      ],
       "generatedAt": "2026-07-30T08:00:00+09:00"
     },
     {
@@ -464,5 +464,23 @@
       "isRead": true,
       "createdAt": "2026-07-29T12:10:00+09:00"
     }
-  ]
+  ],
+  "agreements": [],
+  "loginResponses": [],
+  "refreshTokenResponses": [],
+  "investmentPreferencePreviews": [],
+  "codefConnections": [],
+  "dashboardResponses": [],
+  "cashflowForecasts": [],
+  "aiAnalyses": [],
+  "strategyApplications": [],
+  "soldierSavings": [],
+  "challengeGroups": [],
+  "dischargeReports": [],
+  "productRecommendations": [],
+  "militaryBenefits": [],
+  "rebalancingRecommendations": [],
+  "deviceTokens": [],
+  "leaveModes": [],
+  "todayMarketReports": []
 }

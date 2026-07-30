@@ -1,0 +1,313 @@
+/* Figma Styles of your File */
+:root {
+  /* Colors */
+  --background: radial-gradient(
+      closest-side,
+      rgba(255, 229, 114, 1) 0%,
+      rgba(255, 236, 189, 0) 100%
+    ),
+    radial-gradient(
+      closest-side,
+      rgba(98, 255, 156, 1) 0%,
+      rgba(98, 255, 156, 0) 100%
+    ),
+    linear-gradient(to left, #fafafa, #fafafa);
+  --navigation-gradient: radial-gradient(
+    closest-side,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(59, 225, 120, 0.4) 100%
+  );
+  --style-ffffff: #ffffff;
+  --style-1b3e6b: #1b3e6b;
+  --style-2b4c76: #2b4c76;
+  --style-274973: #274973;
+
+  /* Fonts */
+  --display-heading-h1-regular-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-heading-h1-regular-font-size: 48px;
+  --display-heading-h1-regular-line-height: 140%;
+  --display-heading-h1-regular-font-weight: 400;
+  --display-heading-h1-regular-font-style: normal;
+  --display-heading-h2-regular-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-heading-h2-regular-font-size: 40px;
+  --display-heading-h2-regular-line-height: 140%;
+  --display-heading-h2-regular-font-weight: 400;
+  --display-heading-h2-regular-font-style: normal;
+  --display-heading-h3-regular-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-heading-h3-regular-font-size: 32px;
+  --display-heading-h3-regular-line-height: 140%;
+  --display-heading-h3-regular-font-weight: 400;
+  --display-heading-h3-regular-font-style: normal;
+  --display-heading-h4-regular-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-heading-h4-regular-font-size: 24px;
+  --display-heading-h4-regular-line-height: 150%;
+  --display-heading-h4-regular-font-weight: 400;
+  --display-heading-h4-regular-font-style: normal;
+  --display-heading-h5-regular-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-heading-h5-regular-font-size: 20px;
+  --display-heading-h5-regular-line-height: 150%;
+  --display-heading-h5-regular-font-weight: 400;
+  --display-heading-h5-regular-font-style: normal;
+  --display-body-large-regular-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-body-large-regular-font-size: 18px;
+  --display-body-large-regular-line-height: 150%;
+  --display-body-large-regular-font-weight: 400;
+  --display-body-large-regular-font-style: normal;
+  --display-body-medium-regular-font-family: GamtanRoadGamtan-Regular,
+    sans-serif;
+  --display-body-medium-regular-font-size: 16px;
+  --display-body-medium-regular-line-height: 150%;
+  --display-body-medium-regular-font-weight: 400;
+  --display-body-medium-regular-font-style: normal;
+  --display-body-small-regular-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-body-small-regular-font-size: 14px;
+  --display-body-small-regular-line-height: 150%;
+  --display-body-small-regular-font-weight: 400;
+  --display-body-small-regular-font-style: normal;
+  --display-body-xsmall-regular-font-family: GamtanRoadGamtan-Regular,
+    sans-serif;
+  --display-body-xsmall-regular-font-size: 12px;
+  --display-body-xsmall-regular-line-height: 150%;
+  --display-body-xsmall-regular-font-weight: 400;
+  --display-body-xsmall-regular-font-style: normal;
+  --display-navigation-large-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-navigation-large-font-size: 18px;
+  --display-navigation-large-line-height: 150%;
+  --display-navigation-large-font-weight: 400;
+  --display-navigation-large-font-style: normal;
+  --display-navigation-medium-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-navigation-medium-font-size: 16px;
+  --display-navigation-medium-line-height: 150%;
+  --display-navigation-medium-font-weight: 400;
+  --display-navigation-medium-font-style: normal;
+  --display-navigation-small-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-navigation-small-font-size: 14px;
+  --display-navigation-small-line-height: 150%;
+  --display-navigation-small-font-weight: 400;
+  --display-navigation-small-font-style: normal;
+  --display-label-large-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-label-large-font-size: 18px;
+  --display-label-large-line-height: 150%;
+  --display-label-large-font-weight: 400;
+  --display-label-large-font-style: normal;
+  --display-label-medium-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-label-medium-font-size: 14px;
+  --display-label-medium-line-height: 150%;
+  --display-label-medium-font-weight: 400;
+  --display-label-medium-font-style: normal;
+  --display-label-small-font-family: GamtanRoadGamtan-Regular, sans-serif;
+  --display-label-small-font-size: 12px;
+  --display-label-small-line-height: 150%;
+  --display-label-small-font-weight: 400;
+  --display-label-small-font-style: normal;
+  --body-heading-h1-bold-font-family: Pretendard-Bold, sans-serif;
+  --body-heading-h1-bold-font-size: 48px;
+  --body-heading-h1-bold-line-height: 140%;
+  --body-heading-h1-bold-font-weight: 700;
+  --body-heading-h1-bold-font-style: normal;
+  --body-heading-h1-regular-font-family: Pretendard-Regular, sans-serif;
+  --body-heading-h1-regular-font-size: 48px;
+  --body-heading-h1-regular-line-height: 140%;
+  --body-heading-h1-regular-font-weight: 400;
+  --body-heading-h1-regular-font-style: normal;
+  --body-heading-h1-regular-font-family: Pretendard-Bold, sans-serif;
+  --body-heading-h1-regular-font-size: 40px;
+  --body-heading-h1-regular-line-height: 140%;
+  --body-heading-h1-regular-font-weight: 700;
+  --body-heading-h1-regular-font-style: normal;
+  --body-heading-h1-regular-font-family: Pretendard-Regular, sans-serif;
+  --body-heading-h1-regular-font-size: 40px;
+  --body-heading-h1-regular-line-height: 140%;
+  --body-heading-h1-regular-font-weight: 400;
+  --body-heading-h1-regular-font-style: normal;
+  --body-heading-h3-bold-font-family: Pretendard-Bold, sans-serif;
+  --body-heading-h3-bold-font-size: 32px;
+  --body-heading-h3-bold-line-height: 140%;
+  --body-heading-h3-bold-font-weight: 700;
+  --body-heading-h3-bold-font-style: normal;
+  --body-heading-h3-regular-font-family: Pretendard-Regular, sans-serif;
+  --body-heading-h3-regular-font-size: 32px;
+  --body-heading-h3-regular-line-height: 140%;
+  --body-heading-h3-regular-font-weight: 400;
+  --body-heading-h3-regular-font-style: normal;
+  --body-heading-h4-bold-font-family: Pretendard-Bold, sans-serif;
+  --body-heading-h4-bold-font-size: 24px;
+  --body-heading-h4-bold-line-height: 150%;
+  --body-heading-h4-bold-font-weight: 700;
+  --body-heading-h4-bold-font-style: normal;
+  --body-heading-h4-regular-font-family: Pretendard-Regular, sans-serif;
+  --body-heading-h4-regular-font-size: 24px;
+  --body-heading-h4-regular-line-height: 150%;
+  --body-heading-h4-regular-font-weight: 400;
+  --body-heading-h4-regular-font-style: normal;
+  --body-heading-h5-bold-font-family: Pretendard-Bold, sans-serif;
+  --body-heading-h5-bold-font-size: 20px;
+  --body-heading-h5-bold-line-height: 150%;
+  --body-heading-h5-bold-font-weight: 700;
+  --body-heading-h5-bold-font-style: normal;
+  --body-heading-h5-regular-font-family: Pretendard-Regular, sans-serif;
+  --body-heading-h5-regular-font-size: 20px;
+  --body-heading-h5-regular-line-height: 150%;
+  --body-heading-h5-regular-font-weight: 400;
+  --body-heading-h5-regular-font-style: normal;
+  --body-body-large-bold-font-family: Pretendard-Bold, sans-serif;
+  --body-body-large-bold-font-size: 18px;
+  --body-body-large-bold-line-height: 150%;
+  --body-body-large-bold-font-weight: 700;
+  --body-body-large-bold-font-style: normal;
+  --body-body-large-regular-font-family: Pretendard-Regular, sans-serif;
+  --body-body-large-regular-font-size: 18px;
+  --body-body-large-regular-line-height: 150%;
+  --body-body-large-regular-font-weight: 400;
+  --body-body-large-regular-font-style: normal;
+  --body-body-medium-bold-font-family: Pretendard-Bold, sans-serif;
+  --body-body-medium-bold-font-size: 16px;
+  --body-body-medium-bold-line-height: 150%;
+  --body-body-medium-bold-font-weight: 700;
+  --body-body-medium-bold-font-style: normal;
+  --body-body-medium-regular-font-family: Pretendard-Regular, sans-serif;
+  --body-body-medium-regular-font-size: 16px;
+  --body-body-medium-regular-line-height: 150%;
+  --body-body-medium-regular-font-weight: 400;
+  --body-body-medium-regular-font-style: normal;
+  --body-body-small-bold-font-family: Pretendard-Bold, sans-serif;
+  --body-body-small-bold-font-size: 14px;
+  --body-body-small-bold-line-height: 150%;
+  --body-body-small-bold-font-weight: 700;
+  --body-body-small-bold-font-style: normal;
+  --body-body-small-regular-font-family: Pretendard-Regular, sans-serif;
+  --body-body-small-regular-font-size: 14px;
+  --body-body-small-regular-line-height: 150%;
+  --body-body-small-regular-font-weight: 400;
+  --body-body-small-regular-font-style: normal;
+  --body-body-xsmall-bold-font-family: Pretendard-Bold, sans-serif;
+  --body-body-xsmall-bold-font-size: 12px;
+  --body-body-xsmall-bold-line-height: 150%;
+  --body-body-xsmall-bold-font-weight: 700;
+  --body-body-xsmall-bold-font-style: normal;
+  --body-body-xsmall-regular-font-family: Pretendard-Regular, sans-serif;
+  --body-body-xsmall-regular-font-size: 12px;
+  --body-body-xsmall-regular-line-height: 150%;
+  --body-body-xsmall-regular-font-weight: 400;
+  --body-body-xsmall-regular-font-style: normal;
+  --body-navigation-large-font-family: Pretendard-SemiBold, sans-serif;
+  --body-navigation-large-font-size: 18px;
+  --body-navigation-large-line-height: 150%;
+  --body-navigation-large-font-weight: 600;
+  --body-navigation-large-font-style: normal;
+  --body-navigation-medium-font-family: Pretendard-SemiBold, sans-serif;
+  --body-navigation-medium-font-size: 16px;
+  --body-navigation-medium-line-height: 150%;
+  --body-navigation-medium-font-weight: 600;
+  --body-navigation-medium-font-style: normal;
+  --body-navigation-small-font-family: Pretendard-SemiBold, sans-serif;
+  --body-navigation-small-font-size: 14px;
+  --body-navigation-small-line-height: 150%;
+  --body-navigation-small-font-weight: 600;
+  --body-navigation-small-font-style: normal;
+  --body-label-large-font-family: Pretendard-SemiBold, sans-serif;
+  --body-label-large-font-size: 18px;
+  --body-label-large-line-height: 150%;
+  --body-label-large-font-weight: 600;
+  --body-label-large-font-style: normal;
+  --body-label-medium-font-family: Pretendard-SemiBold, sans-serif;
+  --body-label-medium-font-size: 14px;
+  --body-label-medium-line-height: 150%;
+  --body-label-medium-font-weight: 600;
+  --body-label-medium-font-style: normal;
+  --body-label-small-font-family: Pretendard-Regular, sans-serif;
+  --body-label-small-font-size: 12px;
+  --body-label-small-line-height: 150%;
+  --body-label-small-font-weight: 400;
+  --body-label-small-font-style: normal;
+
+  /* Effects */
+}
+/* Figma Color Variables of your File */
+:root,
+[data-primaitive-mode="mode-1"] {
+  /* mode-1 */
+  --green-50: #f3fff8;
+  --green-100: #e4fff0;
+  --green-200: #cbffe0;
+  --green-300: #a6ffc7;
+  --green-400: #82ffaf;
+  --green-500: #62ff9c;
+  --green-600: #3be178;
+  --green-700: #20ba5c;
+  --green-800: #169145;
+  --green-900: #0e6931;
+  --olive-50: #f6f7f5;
+  --olive-100: #e8ece6;
+  --olive-200: #d0d8cc;
+  --olive-300: #aebba7;
+  --olive-400: #7c8e77;
+  --olive-500: #566752;
+  --olive-600: #41503d;
+  --olive-700: #2f3b2c;
+  --olive-800: #1f2a1c;
+  --olive-900: #141a12;
+  --yellow-50: #fffdf6;
+  --yellow-100: #fff8dd;
+  --yellow-200: #fff1ba;
+  --yellow-300: #ffe98f;
+  --yellow-400: #ffe572;
+  --yellow-500: #ffe26d;
+  --yellow-600: #e6c542;
+  --yellow-700: #bc9d18;
+  --yellow-800: #8d760b;
+  --yellow-900: #5e4d04;
+  --orange-50: #fff7f3;
+  --orange-100: #ffe7de;
+  --orange-200: #ffd3c5;
+  --orange-300: #ffb79f;
+  --orange-400: #ffa383;
+  --orange-500: #ff9b7a;
+  --orange-600: #e37255;
+  --orange-700: #b9543b;
+  --orange-800: #8a3a29;
+  --orange-900: #5d2418;
+  --gray-50: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-200: #ececec;
+  --gray-300: #dddddd;
+  --gray-400: #bdbdbd;
+  --gray-500: #9e9e9e;
+  --gray-600: #757575;
+  --gray-700: #616161;
+  --gray-800: #424242;
+  --gray-900: #333333;
+  --white: #ffffff;
+  --grayopacity-100: rgba(51, 51, 51, 0.1);
+  --grayopacity-200: rgba(51, 51, 51, 0.2);
+  --grayopacity-300: rgba(51, 51, 51, 0.3);
+  --grayopacity-400: rgba(51, 51, 51, 0.4);
+  --grayopacity-500: rgba(51, 51, 51, 0.5);
+  --grayopacity-600: rgba(51, 51, 51, 0.6);
+  --grayopacity-700: rgba(51, 51, 51, 0.7);
+  --grayopacity-800: rgba(51, 51, 51, 0.8);
+  --grayopacity-900: rgba(51, 51, 51, 0.9);
+  --blue-200: #cce2ff;
+  --blue-400: #98ccff;
+  --blue-800: #009dff;
+}
+
+[data-sementic-mode="mode-1"] {
+  /* mode-1 */
+  --brand-primary: var(--green-500);
+  --brand-deepgreen: var(--green-700);
+  --brand-olive: var(--olive-500);
+  --brand-yellow: var(--yellow-400);
+  --brand-orange: var(--orange-500);
+  --brand-green: var(--green-500);
+  --ui-text: var(--gray-900);
+  --ui-light-gray: var(--gray-200);
+  --ui-deep-gray: var(--gray-600);
+  --ui-background: var(--gray-50);
+  --ui-sub-title: var(--gray-600);
+  --ui-sub-title-light: var(--gray-400);
+  --brand-white: var(--white);
+  --brand-light-blue: var(--blue-200);
+  --brand-blue: var(--blue-400);
+  --brand-deep-blue: var(--blue-800);
+}
