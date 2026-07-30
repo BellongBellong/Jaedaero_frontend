@@ -10,7 +10,28 @@ const PORT = Number(process.env.MOCK_PORT || 3001)
 server.use(middlewares)
 server.use(jsonServer.bodyParser)
 
-const first = (resource) => db.get(resource).value()?.[0] ?? null
+db.defaults({
+  agreements: [],
+  loginResponses: [],
+  refreshTokenResponses: [],
+  investmentPreferencePreviews: [],
+  codefConnections: [],
+  dashboardResponses: [],
+  cashflowForecasts: [],
+  aiAnalyses: [],
+  strategyApplications: [],
+  soldierSavings: [],
+  challengeGroups: [],
+  dischargeReports: [],
+  productRecommendations: [],
+  militaryBenefits: [],
+  rebalancingRecommendations: [],
+  deviceTokens: [],
+  leaveModes: [],
+  todayMarketReports: [],
+}).write()
+
+const first = (resource, fallback = null) => db.get(resource).value()?.[0] ?? fallback
 const list = (resource) => db.get(resource).value() ?? []
 const nextId = (resource) => {
   const ids = list(resource).map((item) => Number(item.id) || 0)
@@ -22,12 +43,21 @@ const paginate = (items, page = 0, size = 20) => {
 }
 
 server.post('/api/v1/auth/login', (req, res) => {
-  const response = first('loginResponses')
+  const response = first('loginResponses', {
+    accessToken: 'mock-access-token',
+    refreshToken: 'mock-refresh-token',
+    onboardingCompleted: first('users')?.onboardingCompleted || false,
+  })
   res.status(200).json({ ...response, provider: req.body?.socialType || 'GOOGLE' })
 })
 
 server.post('/api/v1/auth/refresh', (_req, res) => {
-  res.status(200).json(first('refreshTokenResponses'))
+  res.status(200).json(
+    first('refreshTokenResponses', {
+      accessToken: 'mock-access-token-refreshed',
+      refreshToken: 'mock-refresh-token',
+    }),
+  )
 })
 
 server.post('/api/v1/auth/logout', (_req, res) => res.status(204).end())
@@ -75,7 +105,10 @@ server.post('/api/v1/onboarding/military-info', (req, res) => {
 })
 
 server.post('/api/v1/onboarding/investment-preference', (req, res) => {
-  const preview = first('investmentPreferencePreviews')
+  const preview = first('investmentPreferencePreviews', {
+    expectedReturnRate: 3.2,
+    riskLevel: 'LOW',
+  })
   res.status(200).json({ ...preview, investmentPreference: req.body.investmentPreference })
 })
 
@@ -87,17 +120,38 @@ server.post('/api/v1/goals', (req, res) => {
 server.get('/api/v1/goals', (_req, res) => res.status(200).json(first('goals')))
 
 server.post('/api/v1/accounts/connect', (_req, res) =>
-  res.status(201).json(first('codefConnections')),
+  res.status(201).json(
+    first('codefConnections', {
+      connected: true,
+      accounts: list('connectedAccounts'),
+    }),
+  ),
 )
 server.get('/api/v1/accounts', (_req, res) => res.status(200).json(list('connectedAccounts')))
 
-server.get('/api/v1/dashboard', (_req, res) => res.status(200).json(first('dashboardResponses')))
+server.get('/api/v1/dashboard', (_req, res) =>
+  res.status(200).json(first('dashboardResponses', first('dashboardSummaries'))),
+)
 server.get('/api/v1/cashflow', (req, res) => {
-  const response = first('cashflowForecasts')
-  const months = Number(req.query.months || response.requestedMonths)
+  const projection = first('cashflowProjections', {})
+  const fallback = {
+    ...projection,
+    requestedMonths: 8,
+    months: list('assetProjections').map((item) => ({
+      date: item.date,
+      projectedAsset: item.amount,
+      planType: item.planType,
+    })),
+  }
+  const response = first('cashflowForecasts', fallback)
+  const months = Number(req.query.months || response.requestedMonths || 8)
   res
     .status(200)
-    .json({ ...response, requestedMonths: months, months: response.months.slice(0, months) })
+    .json({
+      ...response,
+      requestedMonths: months,
+      months: (response.months || []).slice(0, months),
+    })
 })
 
 server.post('/api/v1/simulations', (req, res) => {
@@ -123,7 +177,7 @@ server.get('/api/v1/simulations/:simulationId', (req, res) => {
 })
 
 server.post('/api/v1/ai-analyses', (req, res) => {
-  const base = first('aiAnalyses')
+  const base = first('aiAnalyses', first('aiReports', {}))
   const created = {
     ...base,
     id: nextId('aiAnalyses'),
@@ -180,9 +234,18 @@ server.put('/api/v1/transactions/:transactionId/category', (req, res) => {
   res.status(200).json(chain.value())
 })
 
-server.get('/api/v1/soldier-savings', (_req, res) => res.status(200).json(first('soldierSavings')))
+server.get('/api/v1/soldier-savings', (_req, res) =>
+  res
+    .status(200)
+    .json(
+      first(
+        'soldierSavings',
+        list('connectedAccounts').find((item) => item.accountType === 'MILITARY_SAVINGS') || null,
+      ),
+    ),
+)
 server.get('/api/v1/challenges/group', (_req, res) =>
-  res.status(200).json(first('challengeGroups')),
+  res.status(200).json(first('challengeGroups', first('cohortComparisons'))),
 )
 server.get('/api/v1/users/investment-badges', (req, res) => {
   res.status(200).json(paginate(list('investmentBadges'), req.query.page, req.query.size))
@@ -199,13 +262,14 @@ server.post('/api/v1/missions/:missionId/complete', (req, res) => {
 })
 
 server.get('/api/v1/reports/discharge', (_req, res) =>
-  res.status(200).json(first('dischargeReports')),
+  res.status(200).json(first('dischargeReports', first('dashboardSummaries'))),
 )
 server.get('/api/v1/products/recommendations', (_req, res) =>
   res.status(200).json(list('productRecommendations')),
 )
 server.get('/api/v1/benefits', (req, res) => {
   let items = list('militaryBenefits')
+  if (!items.length) items = list('benefits')
   if (req.query.category) items = items.filter((item) => item.category === req.query.category)
   if (req.query.rank)
     items = items.filter((item) => item.rank === 'ALL' || item.rank === req.query.rank)
@@ -213,7 +277,12 @@ server.get('/api/v1/benefits', (req, res) => {
 })
 
 server.get('/api/v1/rebalancing/recommendations', (_req, res) =>
-  res.status(200).json(first('rebalancingRecommendations')),
+  res.status(200).json(
+    first('rebalancingRecommendations', {
+      status: 'NO_CHANGE_REQUIRED',
+      message: '현재 투자 구성을 유지해도 좋아요.',
+    }),
+  ),
 )
 server.post('/api/v1/rebalancing/recommendations/:rebalancingId/apply', (req, res) => {
   const base = first('strategyApplications')
@@ -245,18 +314,25 @@ server.put('/api/v1/notifications/:notificationId/read', (req, res) => {
 })
 
 server.post('/api/v1/leave-mode', (req, res) => {
-  const current = first('leaveModes') || { id: 1 }
+  const current = first('leaveModes', first('vacationModes')) || { id: 1 }
   const updated = { ...current, ...req.body, active: true }
   db.set('leaveModes', [updated]).write()
   res.status(201).json(updated)
 })
 server.get('/api/v1/leave-mode/current', (_req, res) => {
-  const current = first('leaveModes')
+  const current = first('leaveModes', first('vacationModes'))
   if (!current?.active) return res.status(204).end()
   res.status(200).json(current)
 })
 server.get('/api/v1/market-reports/today', (_req, res) =>
-  res.status(200).json(first('todayMarketReports')),
+  res
+    .status(200)
+    .json(
+      first(
+        'todayMarketReports',
+        list('aiReports').find((item) => item.reportType === 'DAILY_MARKET') || null,
+      ),
+    ),
 )
 
 // 원본 리소스를 확인할 때만 사용: /__db/users, /__db/transactions 등

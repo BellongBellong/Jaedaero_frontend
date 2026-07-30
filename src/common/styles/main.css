@@ -1,12 +1,27 @@
+@font-face {
+  font-family: 'Pretendard';
+  src: url('@/assets/fonts/PretendardVariable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Pretendard-Regular';
+  src: url('@/assets/fonts/PretendardVariable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: '감탄로드감탄체';
+  src: url('@/assets/fonts/GamtanRoadGamtanOriginal.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  font-family:
-    Pretendard,
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+  font-family: 'Pretendard-Regular', 'Pretendard', sans-serif;
   color: #1f2937;
   background: #ffffff;
   font-synthesis: none;
@@ -22,4 +37,64 @@ body,
 #app {
   min-height: 100%;
   margin: 0;
+}
+
+body {
+  background: #ececec;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.screen {
+  width: min(100%, 393px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.content-screen {
+  position: relative;
+}
+
+.step-page {
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 30px 24px;
+  background: #f6f6f6;
+}
+
+.step-page > .step-header {
+  padding-top: 22px;
+}
+
+.plain-back {
+  position: absolute;
+  top: 55px;
+  left: 21px;
+  border: 0;
+  background: transparent;
+  color: #333;
+  font-size: 42px;
+  line-height: 30px;
+  cursor: pointer;
+}
+
+.form-error {
+  margin: 9px 3px;
+  color: #e75050;
+  font-size: 12px;
+}
+
+@media (max-width: 430px) {
+  body {
+    background: #fafafa;
+  }
 }
