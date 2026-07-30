@@ -1,0 +1,43 @@
+/* ==========================================================
+   JEDAERO DESIGN SYSTEM
+   Utilities
+========================================================== */
+
+/* ======================================================
+   CONTAINER
+====================================================== */
+
+.container {
+  width: 100%;
+  max-width: var(--app-width);
+  margin: 0 auto;
+  padding-inline: var(--page-padding);
+}
+
+/* ======================================================
+   SCROLL
+====================================================== */
+
+.no-scroll {
+  overflow: hidden;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ======================================================
+   SAFE AREA
+====================================================== */
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
