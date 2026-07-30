@@ -1,0 +1,468 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "nickname": "도헌",
+      "profileIcon": "army-bear",
+      "profileBackgroundColor": "#EAF2FF",
+      "onboardingCompleted": true,
+      "initialInvestmentPreference": "BALANCED"
+    }
+  ],
+  "soldierProfiles": [
+    {
+      "id": 1,
+      "userId": 1,
+      "militaryType": "ARMY",
+      "rank": "SERGEANT",
+      "enlistmentDate": "2025-02-10",
+      "promotionDate": "2026-09-01",
+      "dischargeDate": "2027-03-01",
+      "payday": 10,
+      "monthlySalary": 1200000,
+      "militarySavingsMonthlyAmount": 400000
+    }
+  ],
+  "goals": [
+    {
+      "id": 1,
+      "userId": 1,
+      "targetAmount": 30000000,
+      "targetDate": "2027-03-01",
+      "warningLevel": "CHALLENGING",
+      "estimatedAmountAtDischarge": 27800000
+    }
+  ],
+  "connectedAccounts": [
+    {
+      "id": 1,
+      "userId": 1,
+      "bankName": "KB국민은행",
+      "accountName": "장병내일준비적금",
+      "accountNumberMasked": "•••• 4821",
+      "accountType": "MILITARY_SAVINGS",
+      "balance": 4850000,
+      "monthlyPayment": 400000,
+      "syncStatus": "NORMAL",
+      "lastSyncedAt": "2026-07-30T02:12:00+09:00"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "bankName": "신한은행",
+      "accountName": "나라사랑카드 연결계좌",
+      "accountNumberMasked": "•••• 1954",
+      "accountType": "CHECKING",
+      "balance": 1420000,
+      "monthlyPayment": 0,
+      "syncStatus": "NORMAL",
+      "lastSyncedAt": "2026-07-30T02:13:00+09:00"
+    },
+    {
+      "id": 3,
+      "userId": 1,
+      "bankName": "한국투자증권",
+      "accountName": "종합계좌",
+      "accountNumberMasked": "•••• 7734",
+      "accountType": "INVESTMENT",
+      "balance": 2000000,
+      "monthlyPayment": 100000,
+      "syncStatus": "SYNC_REQUIRED",
+      "lastSyncedAt": "2026-07-29T02:09:00+09:00"
+    }
+  ],
+  "dashboardSummaries": [
+    {
+      "id": 1,
+      "userId": 1,
+      "asOf": "2026-07-30T09:00:00+09:00",
+      "totalAsset": 12850000,
+      "monthlyAssetChange": 450000,
+      "targetAmount": 30000000,
+      "goalProgressRate": 42.8,
+      "remainingTargetAmount": 17150000,
+      "dischargeDday": 214,
+      "actualDischargeDate": "2027-03-01",
+      "financialDischargeDate": "2027-01-18",
+      "financialDischargeDifferenceDays": 42,
+      "projectedAssetAtDischarge": 27800000,
+      "assetComposition": {
+        "savings": 8500000,
+        "checking": 2350000,
+        "investment": 2000000
+      },
+      "briefing": {
+        "type": "NORMAL",
+        "title": "오늘의 금융 브리핑",
+        "summary": "이번 주 식비가 평소보다 42,000원 증가했어요.",
+        "todo": "휴가 예산 설정하기"
+      },
+      "todayMissionProgress": {
+        "completed": 1,
+        "total": 3
+      }
+    }
+  ],
+  "assetProjections": [
+    {
+      "id": 1,
+      "userId": 1,
+      "planType": "CURRENT",
+      "date": "2026-07-01",
+      "amount": 12850000
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "planType": "CURRENT",
+      "date": "2026-08-01",
+      "amount": 14100000
+    },
+    {
+      "id": 3,
+      "userId": 1,
+      "planType": "CURRENT",
+      "date": "2026-09-01",
+      "amount": 15450000
+    },
+    {
+      "id": 4,
+      "userId": 1,
+      "planType": "CURRENT",
+      "date": "2026-10-01",
+      "amount": 16900000
+    },
+    {
+      "id": 5,
+      "userId": 1,
+      "planType": "AI_RECOMMENDED",
+      "date": "2026-07-01",
+      "amount": 12850000
+    },
+    {
+      "id": 6,
+      "userId": 1,
+      "planType": "AI_RECOMMENDED",
+      "date": "2026-08-01",
+      "amount": 14250000
+    },
+    {
+      "id": 7,
+      "userId": 1,
+      "planType": "AI_RECOMMENDED",
+      "date": "2026-09-01",
+      "amount": 15750000
+    },
+    {
+      "id": 8,
+      "userId": 1,
+      "planType": "AI_RECOMMENDED",
+      "date": "2026-10-01",
+      "amount": 17350000
+    }
+  ],
+  "transactions": [
+    {
+      "id": 1,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "GS25",
+      "amount": 7500,
+      "transactionType": "EXPENSE",
+      "category": "FOOD",
+      "classificationSource": "RULE",
+      "classificationConfidence": 0.98,
+      "transactionDate": "2026-07-30T08:21:00+09:00"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "군 급여",
+      "amount": 1200000,
+      "transactionType": "INCOME",
+      "category": "SALARY",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1.0,
+      "transactionDate": "2026-07-10T09:00:00+09:00"
+    },
+    {
+      "id": 3,
+      "userId": 1,
+      "accountId": 1,
+      "merchantName": "장병내일준비적금",
+      "amount": 400000,
+      "transactionType": "ASSET_TRANSFER",
+      "category": "SAVINGS",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1.0,
+      "transactionDate": "2026-07-10T09:03:00+09:00"
+    },
+    {
+      "id": 4,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "PAYCO 결제",
+      "amount": 18500,
+      "transactionType": "EXPENSE",
+      "category": "UNCLASSIFIED",
+      "classificationSource": "AI",
+      "classificationConfidence": 0.47,
+      "transactionDate": "2026-07-29T20:10:00+09:00"
+    }
+  ],
+  "cashflowProjections": [
+    {
+      "id": 1,
+      "userId": 1,
+      "baseDate": "2026-07-30",
+      "currentAsset": 12850000,
+      "projectedAssetAtDischarge": 27800000,
+      "targetAmount": 30000000,
+      "shortfallAmount": 2200000,
+      "financialDischargeDate": "2027-01-18",
+      "actualDischargeDate": "2027-03-01",
+      "status": "EARLY_ACHIEVEMENT",
+      "assumptions": {
+        "monthlySpendingAmount": 450000,
+        "monthlySavingAmount": 600000,
+        "monthlyInvestmentAmount": 100000,
+        "annualReturnRate": 5.0,
+        "vacationBudget": 300000
+      }
+    }
+  ],
+  "simulations": [
+    {
+      "id": 1,
+      "userId": 1,
+      "name": "월 소비 13만 원 절약",
+      "monthlySpendingAmount": 320000,
+      "monthlySavingAmount": 600000,
+      "monthlyInvestmentAmount": 100000,
+      "annualReturnRate": 5.0,
+      "vacationBudget": 250000,
+      "targetAmount": 30000000,
+      "projectedAssetAtDischarge": 29350000,
+      "financialDischargeDate": "2027-01-18",
+      "differenceFromCurrent": 1550000,
+      "createdAt": "2026-07-30T09:20:00+09:00"
+    }
+  ],
+  "aiReports": [
+    {
+      "id": 1,
+      "userId": 1,
+      "reportType": "FINANCIAL_ANALYSIS",
+      "isBeta": true,
+      "summary": "이번 달 목표 달성 속도가 지난달보다 조금 느려졌어요.",
+      "causes": [
+        {
+          "title": "휴가 지출 증가",
+          "amount": 180000,
+          "description": "교통비와 식비가 평소보다 증가했어요."
+        },
+        {
+          "title": "미분류 소비 증가",
+          "amount": 72000,
+          "description": "사용처가 분류되지 않은 거래가 4건 있어요."
+        }
+      ],
+      "actions": [
+        {
+          "title": "다음 휴가 예산 설정",
+          "expectedEffect": 120000,
+          "priority": "HIGH"
+        },
+        {
+          "title": "미분류 거래 확인",
+          "expectedEffect": 72000,
+          "priority": "MEDIUM"
+        }
+      ],
+      "warnings": ["AI 분석은 참고용이며 실제 결과를 보장하지 않습니다."],
+      "generatedAt": "2026-07-30T08:00:00+09:00"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "reportType": "DAILY_MARKET",
+      "isBeta": true,
+      "summary": "국내 시장은 오늘 변동성이 확대됐어요.",
+      "details": "단기 등락보다 적립식 계획을 유지하는 것이 중요해요.",
+      "marketStatus": "NEUTRAL",
+      "validFrom": "2026-07-29T18:00:00+09:00",
+      "validUntil": "2026-07-30T17:59:59+09:00"
+    }
+  ],
+  "missions": [
+    {
+      "id": 1,
+      "title": "금융 브리핑 확인",
+      "missionType": "COMMON",
+      "rewardExperience": 5,
+      "status": "COMPLETED"
+    },
+    {
+      "id": 2,
+      "title": "휴가 예산 설정하기",
+      "missionType": "SAFE",
+      "rewardExperience": 10,
+      "status": "IN_PROGRESS"
+    },
+    {
+      "id": 3,
+      "title": "미분류 거래 3건 확인하기",
+      "missionType": "COMMON",
+      "rewardExperience": 5,
+      "status": "IN_PROGRESS",
+      "progress": 2,
+      "target": 3
+    },
+    {
+      "id": 4,
+      "title": "ETF 기초 교육 완료하기",
+      "missionType": "AGGRESSIVE",
+      "rewardExperience": 10,
+      "status": "AVAILABLE"
+    }
+  ],
+  "investmentBadges": [
+    {
+      "id": 1,
+      "userId": 1,
+      "badgeType": "BALANCED",
+      "level": 2,
+      "safeCount": 8,
+      "aggressiveCount": 7,
+      "missionsUntilNextLevel": 5,
+      "unlockedAt": "2026-07-20T12:00:00+09:00"
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "userId": 1,
+      "eventType": "PAYDAY",
+      "title": "월급날",
+      "startDate": "2026-08-10",
+      "endDate": "2026-08-10",
+      "expectedExpense": 0,
+      "notificationEnabled": true
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "eventType": "VACATION",
+      "title": "8월 정기휴가",
+      "startDate": "2026-08-07",
+      "endDate": "2026-08-10",
+      "expectedExpense": 300000,
+      "notificationEnabled": true,
+      "autoVacationMode": true
+    },
+    {
+      "id": 3,
+      "userId": 1,
+      "eventType": "PROMOTION",
+      "title": "병장 진급",
+      "startDate": "2026-09-01",
+      "endDate": "2026-09-01",
+      "expectedExpense": 50000,
+      "notificationEnabled": true
+    }
+  ],
+  "vacationModes": [
+    {
+      "id": 1,
+      "userId": 1,
+      "eventId": 2,
+      "isActive": false,
+      "currentDay": 0,
+      "totalDays": 4,
+      "startDate": "2026-08-07",
+      "endDate": "2026-08-10",
+      "totalBudget": 300000,
+      "spentAmount": 0,
+      "remainingBudget": 300000,
+      "dailyAvailableAmount": 75000
+    }
+  ],
+  "benefits": [
+    {
+      "id": 1,
+      "title": "영화관 군인 할인",
+      "category": "CULTURE",
+      "discountSummary": "본인 포함 최대 4인 할인",
+      "requiredProof": "군인 신분증 또는 휴가증",
+      "validFrom": "2026-01-01",
+      "validTo": "2026-12-31",
+      "verifiedAt": "2026-07-20",
+      "isActive": true
+    },
+    {
+      "id": 2,
+      "title": "놀이공원 군인 우대",
+      "category": "LEISURE",
+      "discountSummary": "군인 우대가 적용",
+      "requiredProof": "휴가증 또는 군인 신분증",
+      "validFrom": "2026-03-01",
+      "validTo": "2026-12-31",
+      "verifiedAt": "2026-07-20",
+      "isActive": true
+    }
+  ],
+  "cohortComparisons": [
+    {
+      "id": 1,
+      "userId": 1,
+      "cohortLabel": "2025년 2월 입대 육군",
+      "cohortSize": 248,
+      "goalProgress": {
+        "userValue": 64,
+        "averageValue": 57,
+        "percentile": 32
+      },
+      "savingRate": {
+        "userValue": 62,
+        "averageValue": 54,
+        "percentile": 29
+      },
+      "monthlySpending": {
+        "userValue": 380000,
+        "averageValue": 430000,
+        "percentile": 35
+      },
+      "message": "동기 평균보다 월 50,000원을 더 적게 소비하고 있어요."
+    }
+  ],
+  "notifications": [
+    {
+      "id": 1,
+      "userId": 1,
+      "type": "VACATION_D3",
+      "title": "휴가 D-3",
+      "message": "휴가 예산을 미리 설정해 보세요.",
+      "isRead": false,
+      "createdAt": "2026-07-30T08:30:00+09:00"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "type": "DAILY_MARKET_REPORT",
+      "title": "오늘의 AI 투자 리포트",
+      "message": "오늘 시장의 주요 변화를 확인해 보세요.",
+      "isRead": false,
+      "createdAt": "2026-07-29T18:00:00+09:00"
+    },
+    {
+      "id": 3,
+      "userId": 1,
+      "type": "MISSION_COMPLETED",
+      "title": "미션 완료",
+      "message": "금융 브리핑 확인 미션을 완료했어요.",
+      "isRead": true,
+      "createdAt": "2026-07-29T12:10:00+09:00"
+    }
+  ]
+}
