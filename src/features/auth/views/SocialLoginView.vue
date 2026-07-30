@@ -1,10 +1,9 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 import HomeIndicator from '@/common/components/HomeIndicator.vue'
 import MobileStatusBar from '@/common/components/MobileStatusBar.vue'
-import { login } from '@/features/auth/api/auth.api'
+import { startSocialLogin } from '@/features/auth/oauth'
 import brandLogo from '@/assets/onboarding/brand/brand-logo.svg'
 import googleLogo from '@/assets/onboarding/brand/google-logo.svg'
 import kakaoLogo from '@/assets/onboarding/brand/kakao-logo.svg'
@@ -13,7 +12,6 @@ import army from '@/assets/onboarding/characters/character-army.png'
 import marine from '@/assets/onboarding/characters/character-marine.png'
 import navy from '@/assets/onboarding/characters/character-navy.png'
 
-const router = useRouter()
 const loadingProvider = ref('')
 const errorMessage = ref('')
 const characters = [army, navy, airforce, marine]
@@ -23,11 +21,10 @@ async function handleLogin(provider) {
   errorMessage.value = ''
 
   try {
-    const response = await login({ socialType: provider, accessToken: 'mock-social-token' })
-    if (response?.accessToken) localStorage.setItem('accessToken', response.accessToken)
-    router.push({ name: 'terms' })
+    startSocialLogin(provider)
   } catch {
     errorMessage.value = '로그인에 실패했어요. 목 서버 실행 상태를 확인해주세요.'
+    errorMessage.value = '소셜 로그인 설정을 확인해 주세요.'
   } finally {
     loadingProvider.value = ''
   }

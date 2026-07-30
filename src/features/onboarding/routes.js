@@ -28,11 +28,6 @@ const onboardingRoutes = [
         name: 'preference-goal',
         component: () => import('./views/PreferenceGoalView.vue'),
       },
-      {
-        path: 'confirm',
-        name: 'onboarding-confirm',
-        component: () => import('./views/OnboardingConfirmView.vue'),
-      },
     ],
   },
 ]
