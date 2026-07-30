@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 defineOptions({ name: 'ExamplePlaceholder' })
 </script>
 
