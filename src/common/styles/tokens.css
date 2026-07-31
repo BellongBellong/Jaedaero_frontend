@@ -8,6 +8,9 @@
 
 :root {
 
+   --mobile-width: 393px;
+
+
     /* ======================================================
        FONT
     ====================================================== */
@@ -162,19 +165,13 @@
 
   --brand-green: var(--green-500);
   --brand-deep-green: var(--green-700);
-
   --brand-olive: var(--olive-500);
-
   --brand-yellow: var(--yellow-400);
-
   --brand-orange: var(--orange-500);
-
   --brand-white: var(--white);
-
   --brand-light-blue: var(--blue-200);
   --brand-blue: var(--blue-400);
   --brand-deep-blue: var(--blue-800);
-
 
 
   /* ======================================================
@@ -182,21 +179,13 @@
   ====================================================== */
 
   --ui-background: var(--gray-50);
-
   --ui-surface: var(--white);
-
   --ui-light-gray: var(--gray-200);
-
   --ui-border: var(--gray-300);
-
-  --ui-text: var(--gray-900);
-
+  --ui-ext: var(--gray-900);
   --ui-text-secondary: var(--gray-600);
-
   --ui-sub-title: var(--gray-600);
-
   --ui-sub-title-light: var(--gray-400);
-
   --ui-placeholder: var(--gray-400);
 
 
@@ -315,7 +304,7 @@
   --space-32: 32px;
   --space-40: 40px;
 
-  --page-padding: 20px;
+  --layout-page-padding: 20px;
 
 
 
@@ -373,28 +362,5 @@
 
 --leading-relaxed: 1.7;
 
-/* ======================================================
-   UI
-====================================================== */
-
---ui-background: var(--gray-50);
-
---ui-surface: var(--white);
-
---ui-light-gray: var(--gray-200);
-
---ui-border: var(--gray-300);
-
---ui-text: var(--gray-900);
-
---ui-text-secondary: var(--gray-600);
-
---ui-sub-title: var(--gray-600);
-
---ui-sub-title-light: var(--gray-400);
-
---ui-placeholder: var(--gray-400);
-
---ui-disabled: var(--gray-300);
 
 }
