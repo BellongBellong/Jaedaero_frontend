@@ -9,7 +9,13 @@ export async function checkNickname(nickname) {
 }
 
 export async function saveAgreements(agreements) {
-  const { data } = await apiClient.post(ENDPOINTS.agreements, { agreements })
+  const { data } = await apiClient.post(ENDPOINTS.agreements, {
+    serviceUseAgreed: agreements.includes('service'),
+    personalInformationCollectionAgreed: agreements.includes('privacy'),
+    financialInformationInquiryAgreed: agreements.includes('finance'),
+    aiServiceUseAgreed: agreements.includes('ai'),
+    marketingInformationReceiptAgreed: agreements.includes('marketing'),
+  })
   return data
 }
 

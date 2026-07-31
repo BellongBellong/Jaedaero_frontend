@@ -14,6 +14,11 @@ const onboardingRoutes = [
         component: () => import('./views/AccountConnectView.vue'),
       },
       {
+        path: 'accounts/codef/:assetType',
+        name: 'connect-codef-bank',
+        component: () => import('./views/CodefBankConnectView.vue'),
+      },
+      {
         path: 'nickname',
         name: 'nickname',
         component: () => import('./views/NicknameSetupView.vue'),

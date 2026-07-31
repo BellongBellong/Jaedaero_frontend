@@ -6,7 +6,19 @@ export async function connectAccount(payload) {
   return data
 }
 
-export async function getAccounts() {
-  const { data } = await apiClient.get(ENDPOINTS.accounts.list)
+export async function getCodefBanks() {
+  const { data } = await apiClient.get(ENDPOINTS.codef.banks)
+  return data
+}
+
+export async function getCodefSecurities() {
+  const { data } = await apiClient.get(ENDPOINTS.codef.securities)
+  return data
+}
+
+export async function getAccounts(userId) {
+  const { data } = await apiClient.get(ENDPOINTS.accounts.list, {
+    params: { userId },
+  })
   return data
 }
