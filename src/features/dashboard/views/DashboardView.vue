@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 
 import { getDashboard } from '@/features/dashboard/api/dashboard.api'
 
@@ -37,6 +38,9 @@ onMounted(async () => {
       <span>현재 총자산</span>
       <strong>{{ Number(dashboard.totalAsset || 0).toLocaleString('ko-KR') }}원</strong>
     </article>
+    <RouterLink :to="{ name: 'transactions' }">
+      거래내역 보기
+    </RouterLink>
   </main>
 </template>
 
@@ -64,5 +68,12 @@ article {
 }
 article strong {
   font-size: 26px;
+}
+
+a {
+  display: inline-block;
+  margin-top: 24px;
+  color: #169145;
+  font-weight: 700;
 }
 </style>
