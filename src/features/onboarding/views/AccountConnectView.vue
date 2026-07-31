@@ -39,6 +39,8 @@ function accountTypeFor(target) {
   return 'ALL'
 }
 
+// Kept for compatibility while existing in-session references are replaced by the CODEF flow.
+// eslint-disable-next-line no-unused-vars
 async function connect(target) {
   if (loadingTarget.value) return
 
@@ -66,11 +68,17 @@ function next() {
   router.push({ name: 'nickname' })
 }
 
+function openCodefConnect(target) {
+  if (!loadingTarget.value) {
+    router.push({ name: 'connect-codef-bank', params: { assetType: target } })
+  }
+}
+
 onMounted(async () => {
   if (!onboarding.form.accountsConnected) return
 
   try {
-    accounts.value = await getAccounts()
+    accounts.value = await getAccounts(Number(localStorage.getItem('userId')))
   } catch {
     onboarding.form.accountsConnected = false
   }
@@ -94,7 +102,7 @@ onMounted(async () => {
         class="asset-card"
         :class="{ connected: asset.connected }"
         :disabled="Boolean(loadingTarget) || asset.connected"
-        @click="connect(asset.id)"
+        @click="openCodefConnect(asset.id)"
       >
         <span class="asset-icon">
           <img
@@ -148,7 +156,7 @@ onMounted(async () => {
         v-else
         class="connect-card"
         :disabled="Boolean(loadingTarget) || !canContinue"
-        @click="connect('personal-assets')"
+        @click="openCodefConnect('personal-assets')"
       >
         <span>
           {{
