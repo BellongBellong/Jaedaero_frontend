@@ -5,7 +5,11 @@ import { useRouter } from 'vue-router'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import ProfileAppearanceSheet from '@/features/onboarding/components/ProfileAppearanceSheet.vue'
-import { checkNickname } from '@/features/onboarding/api/onboarding.api'
+import {
+  checkNickname,
+  saveNickname,
+  saveProfileAppearance,
+} from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 import airforce from '@/assets/onboarding/profiles/profile-airforce.png'
 import army from '@/assets/onboarding/profiles/profile-army.png'
@@ -16,42 +20,86 @@ import navy from '@/assets/onboarding/profiles/profile-navy.png'
 const router = useRouter()
 const onboarding = useOnboardingStore()
 const nickname = ref(onboarding.form.nickname)
-const status = ref(nickname.value ? 'available' : 'idle')
+const status = ref('idle')
 const showProfileSheet = ref(false)
 const errorMessage = ref('')
+const loading = ref(false)
+const appearanceLoading = ref(false)
 const profiles = {
   'profile-army.png': army,
-  'profile-navy.png': navy,
-  'profile-airforce.png': airforce,
   'profile-marine.png': marine,
+  'profile-airforce.png': airforce,
+  'profile-navy.png': navy,
   'profile-default.png': defaultProfile,
+}
+const profileImageCodes = {
+  'profile-army.png': 'ARMY',
+  'profile-marine.png': 'MARINE',
+  'profile-airforce.png': 'AIRFORCE',
+  'profile-navy.png': 'NAVY',
+}
+const profileSourceCodes = {
+  '#E5FFF4': 'GREEN',
+  '#AEBBAA': 'OLIVE',
+  '#FFF0B8': 'YELLOW',
+  '#FFB39F': 'ORANGE',
+  '#F7F7F7': 'GRAY',
+  '#333333': 'BLACK',
 }
 const validNickname = computed(() => /^[가-힣a-zA-Z]{2,12}$/.test(nickname.value))
 
 async function validateNickname() {
   if (!validNickname.value) return
+  const nicknameToCheck = nickname.value
   status.value = 'checking'
   errorMessage.value = ''
   try {
-    const result = await checkNickname(nickname.value)
+    const result = await checkNickname(nicknameToCheck)
+    if (nickname.value !== nicknameToCheck) return
     status.value = result.available ? 'available' : 'duplicate'
   } catch {
+    if (nickname.value !== nicknameToCheck) return
     errorMessage.value = '중복 확인 중 오류가 발생했어요.'
     status.value = 'idle'
   }
 }
 
-function saveAppearance(image, color) {
-  onboarding.form.profileImage = image
-  onboarding.form.profileBackgroundColor = color
-  showProfileSheet.value = false
-  onboarding.persist()
+async function saveAppearance(image, color) {
+  if (appearanceLoading.value) return
+
+  appearanceLoading.value = true
+  errorMessage.value = ''
+  try {
+    await saveProfileAppearance({
+      profileImage: profileImageCodes[image],
+      profileSource: profileSourceCodes[color],
+    })
+    onboarding.form.profileImage = image
+    onboarding.form.profileBackgroundColor = color
+    onboarding.persist()
+    showProfileSheet.value = false
+  } catch {
+    errorMessage.value = '프로필 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.'
+  } finally {
+    appearanceLoading.value = false
+  }
 }
 
-function next() {
+async function next() {
+  if (status.value !== 'available' || loading.value) return
+
+  loading.value = true
+  errorMessage.value = ''
   onboarding.form.nickname = nickname.value
-  onboarding.persist()
-  router.push({ name: 'military-info' })
+  try {
+    await saveNickname(onboarding.form.nickname)
+    onboarding.persist()
+    router.push({ name: 'military-info' })
+  } catch {
+    errorMessage.value = '프로필 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -110,6 +158,7 @@ function next() {
     </section>
     <PrimaryButton
       :disabled="status !== 'available'"
+      :loading="loading"
       @click="next"
     >
       다음으로
@@ -118,6 +167,7 @@ function next() {
       v-if="showProfileSheet"
       :image="onboarding.form.profileImage"
       :background-color="onboarding.form.profileBackgroundColor"
+      :saving="appearanceLoading"
       @close="showProfileSheet = false"
       @save="saveAppearance"
     />

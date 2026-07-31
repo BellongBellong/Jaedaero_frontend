@@ -8,6 +8,25 @@ export async function checkNickname(nickname) {
   return data
 }
 
+export async function saveAgreements(agreements) {
+  const { data } = await apiClient.post(ENDPOINTS.agreements, {
+    serviceUseAgreed: agreements.includes('service'),
+    personalInformationCollectionAgreed: agreements.includes('privacy'),
+    financialInformationInquiryAgreed: agreements.includes('finance'),
+    aiServiceUseAgreed: agreements.includes('ai'),
+    marketingInformationReceiptAgreed: agreements.includes('marketing'),
+  })
+  return data
+}
+
+export async function saveNickname(nickname) {
+  await apiClient.put(ENDPOINTS.users.nickname, { nickname })
+}
+
+export async function saveProfileAppearance(payload) {
+  await apiClient.put(ENDPOINTS.users.profileAppearance, payload)
+}
+
 export async function saveMilitaryInfo(payload) {
   const { data } = await apiClient.post(ENDPOINTS.onboarding.militaryInfo, payload)
   return data
