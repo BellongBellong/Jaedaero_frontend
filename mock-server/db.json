@@ -2,11 +2,13 @@
   "users": [
     {
       "id": 1,
-      "nickname": "도헌",
+      "nickname": "aaa",
       "profileIcon": "army-bear",
-      "profileBackgroundColor": "#EAF2FF",
+      "profileBackgroundColor": "#E5FFF4",
       "onboardingCompleted": true,
-      "initialInvestmentPreference": "BALANCED"
+      "initialInvestmentPreference": "BALANCED",
+      "profileImage": "profile-army.png",
+      "profileSource": "PRESET"
     }
   ],
   "soldierProfiles": [
@@ -465,7 +467,56 @@
       "createdAt": "2026-07-29T12:10:00+09:00"
     }
   ],
-  "agreements": [],
+  "agreements": [
+    {
+      "id": 1,
+      "userId": 1,
+      "agreements": [
+        "service",
+        "privacy",
+        "finance",
+        "ai",
+        "marketing"
+      ],
+      "agreedAt": "2026-07-31T02:32:07.774Z"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "agreements": [
+        "service",
+        "privacy",
+        "finance",
+        "ai",
+        "marketing"
+      ],
+      "agreedAt": "2026-07-31T02:40:58.780Z"
+    },
+    {
+      "id": 3,
+      "userId": 1,
+      "agreements": [
+        "service",
+        "privacy",
+        "finance",
+        "ai",
+        "marketing"
+      ],
+      "agreedAt": "2026-07-31T02:41:56.444Z"
+    },
+    {
+      "id": 4,
+      "userId": 1,
+      "agreements": [
+        "service",
+        "privacy",
+        "finance",
+        "ai",
+        "marketing"
+      ],
+      "agreedAt": "2026-07-31T02:49:04.345Z"
+    }
+  ],
   "loginResponses": [],
   "refreshTokenResponses": [],
   "investmentPreferencePreviews": [],
