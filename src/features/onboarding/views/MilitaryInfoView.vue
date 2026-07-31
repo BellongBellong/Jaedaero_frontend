@@ -18,6 +18,12 @@ const militaryTypes = [
   { value: 'AIR_FORCE', icon: '✈️', label: '공군', duration: '21개월' },
   { value: 'MARINE', icon: '🦅', label: '해병대', duration: '18개월' },
 ]
+const soldierTypeCodes = {
+  ARMY: 'ARMY',
+  NAVY: 'NAVY',
+  AIR_FORCE: 'AIRFORCE',
+  MARINE: 'MARINE',
+}
 const ranks = [
   { value: 'PRIVATE', level: 1, label: '이병' },
   { value: 'PRIVATE_FIRST_CLASS', level: 2, label: '일병' },
@@ -29,11 +35,14 @@ async function next() {
   loading.value = true
   errorMessage.value = ''
   try {
-    await saveMilitaryInfo({
-      militaryType: onboarding.form.militaryType,
-      rank: onboarding.form.rank,
+    const soldierProfile = await saveMilitaryInfo({
+      soldierType: soldierTypeCodes[onboarding.form.militaryType],
+      rankName: ranks.find((rank) => rank.value === onboarding.form.rank)?.label,
       enlistmentDate: onboarding.form.enlistmentDate,
     })
+    onboarding.form.challengeGroupTargetAmountAverage = Number(
+      soldierProfile.challengeGroupTargetAmountAverage ?? 0,
+    )
     onboarding.persist()
     router.push({ name: 'preference-goal' })
   } catch {

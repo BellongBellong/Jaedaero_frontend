@@ -12,6 +12,7 @@ const initialState = {
   militaryType: 'ARMY',
   rank: 'PRIVATE',
   enlistmentDate: '2026-06-30',
+  challengeGroupTargetAmountAverage: 0,
   investmentPreference: 'SAFE',
   targetAmount: 23000000,
 }

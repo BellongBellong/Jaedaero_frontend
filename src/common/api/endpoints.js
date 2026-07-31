@@ -15,7 +15,6 @@ export const ENDPOINTS = {
   onboarding: {
     militaryInfo: '/onboarding/military-info',
     investmentPreference: '/onboarding/investment-preference',
-    complete: '/onboarding/complete',
   },
   goals: '/goals',
   accounts: {

@@ -10,11 +10,7 @@ import profileMarine from '@/assets/onboarding/profiles/profile-marine.png'
 import profileNavy from '@/assets/onboarding/profiles/profile-navy.png'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
-import {
-  completeOnboarding,
-  previewInvestmentPreference,
-  saveGoal,
-} from '@/features/onboarding/api/onboarding.api'
+import { previewInvestmentPreference } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
@@ -47,27 +43,25 @@ const formattedAmount = computed(
       Math.round(onboarding.form.targetAmount / 10000),
     )}만 원`,
 )
-const estimatedDischargeAmount = 20_000_000
+const estimatedDischargeAmount = computed(() => onboarding.form.challengeGroupTargetAmountAverage)
 const isAboveEstimatedAmount = computed(
-  () => onboarding.form.targetAmount > estimatedDischargeAmount,
+  () => onboarding.form.targetAmount > estimatedDischargeAmount.value,
 )
-const requiredSavingsAmount = computed(() =>
-  Math.max(0, onboarding.form.targetAmount - estimatedDischargeAmount),
+const requiredSavingsAmountInTenThousands = computed(() =>
+  Math.max(0, onboarding.targetAmountInTenThousands - 2000),
 )
 const formattedRequiredSavings = computed(
-  () => `${new Intl.NumberFormat('ko-KR').format(requiredSavingsAmount.value / 10000)}만 원`,
+  () => `${new Intl.NumberFormat('ko-KR').format(requiredSavingsAmountInTenThousands.value)}만 원`,
 )
 
 async function next() {
   loading.value = true
   errorMessage.value = ''
   try {
-    await Promise.all([
-      previewInvestmentPreference({
-        investmentPreference: onboarding.form.investmentPreference,
-      }),
-      saveGoal({ targetAmount: onboarding.form.targetAmount }),
-    ])
+    await previewInvestmentPreference({
+      investmentPreference: onboarding.form.investmentPreference,
+      targetAmount: onboarding.form.targetAmount,
+    })
     onboarding.persist()
     showConfirmModal.value = true
   } catch {
@@ -81,20 +75,12 @@ function closeModal() {
   if (!completing.value) showConfirmModal.value = false
 }
 
-async function complete() {
+function complete() {
   if (completing.value) return
 
   completing.value = true
-  errorMessage.value = ''
-  try {
-    await completeOnboarding()
-    onboarding.complete()
-    router.replace({ name: 'dashboard' })
-  } catch {
-    errorMessage.value = '온보딩 완료 처리에 실패했어요. 잠시 후 다시 시도해주세요.'
-  } finally {
-    completing.value = false
-  }
+  onboarding.complete()
+  router.replace({ name: 'dashboard' })
 }
 </script>
 

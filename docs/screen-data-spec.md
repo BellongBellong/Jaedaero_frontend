@@ -103,7 +103,7 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | ------------------------ | -------- | ---: | ------------------ |
 | `profileImage`           | `string` |    O | 프리셋 이미지 코드 |
 | `profileBackgroundColor` | `string` |    O | `#RRGGBB`          |
-| `profileSource`          | `enum`   |    O | `PRESET`, `CUSTOM` |
+| `profileSource`          | `enum`   |    O | `GREEN`, `OLIVE`, `YELLOW`, `ORANGE`, `GRAY`, `BLACK` |
 
 ## 3. 약관 동의 화면
 
@@ -127,16 +127,15 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 - Request: `MilitaryInfoRequest`
 - Response: `SoldierProfileResponse`
 
-| 필드                           | 타입                   | 필수 | 설명             |
-| ------------------------------ | ---------------------- | ---: | ---------------- |
-| `soldierType`                  | `SoldierType`          |    O | 군종             |
-| `rank`                         | `string`               |    O | 현재 계급        |
-| `enlistmentDate`               | `string(date)`         |    O | 입대일           |
-| `promotionDate`                | `string(date) \| null` |    X | 진급 예정일      |
-| `dischargeDate`                | `string(date)`         |    O | 전역 예정일      |
-| `payday`                       | `number`               |    O | 1~31             |
-| `monthlySalary`                | `number`               | 응답 | 현재 계급 월급   |
-| `militarySavingsMonthlyAmount` | `number`               |    O | 군적금 월 납입액 |
+| 필드                                | 타입           | 필수 | 설명                         |
+| ----------------------------------- | -------------- | ---: | ---------------------------- |
+| `soldierType`                       | `SoldierType`  |    O | 군종                         |
+| `rankName`                          | `string`       |    O | 현재 계급                    |
+| `enlistmentDate`                    | `string(date)` |    O | 입대일                       |
+| `success`                           | `boolean`      | 응답 | 저장 성공 여부               |
+| `dischargeDate`                     | `string(date)` | 응답 | 전역 예정일                  |
+| `savingJoinYn`                      | `boolean`      | 응답 | 군적금 가입 여부             |
+| `challengeGroupTargetAmountAverage` | `number`       | 응답 | 입대 동기 그룹 평균 목표금액 |
 
 ## 5. 초기 투자성향 프리뷰 화면
 
