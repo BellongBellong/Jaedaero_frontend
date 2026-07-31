@@ -5,7 +5,7 @@ const server = jsonServer.create()
 const router = jsonServer.router(path.join(__dirname, 'db.json'))
 const middlewares = jsonServer.defaults()
 const db = router.db
-const PORT = Number(process.env.MOCK_PORT || 3001)
+const PORT = Number(process.env.MOCK_PORT || 8080)
 
 server.use(middlewares)
 server.use(jsonServer.bodyParser)
@@ -110,6 +110,11 @@ server.post('/api/v1/onboarding/investment-preference', (req, res) => {
     riskLevel: 'LOW',
   })
   res.status(200).json({ ...preview, investmentPreference: req.body.investmentPreference })
+})
+
+server.post('/api/v1/onboarding/complete', (_req, res) => {
+  db.get('users').find({ id: 1 }).assign({ onboardingCompleted: true }).write()
+  res.status(200).json({ onboardingCompleted: true })
 })
 
 server.post('/api/v1/goals', (req, res) => {

@@ -9,15 +9,16 @@ import navy from '@/assets/onboarding/profiles/profile-navy.png'
 const props = defineProps({
   image: { type: String, required: true },
   backgroundColor: { type: String, required: true },
+  saving: { type: Boolean, default: false },
 })
 const emit = defineEmits(['close', 'save'])
 const selectedImage = ref(props.image)
 const selectedColor = ref(props.backgroundColor)
 const profiles = [
   ['profile-army.png', army],
-  ['profile-navy.png', navy],
-  ['profile-airforce.png', airforce],
   ['profile-marine.png', marine],
+  ['profile-airforce.png', airforce],
+  ['profile-navy.png', navy],
 ]
 const colors = ['#E5FFF4', '#AEBBAA', '#FFF0B8', '#FFB39F', '#F7F7F7', '#333333']
 </script>
@@ -62,9 +63,10 @@ const colors = ['#E5FFF4', '#AEBBAA', '#FFF0B8', '#FFB39F', '#F7F7F7', '#333333'
       </div>
       <button
         class="save-button"
+        :disabled="saving"
         @click="emit('save', selectedImage, selectedColor)"
       >
-        변경하기
+        {{ saving ? '저장 중...' : '변경하기' }}
       </button>
     </section>
   </div>
@@ -147,5 +149,9 @@ h3 {
   border-radius: 27px;
   background: #35eb84;
   font-weight: 700;
+}
+.save-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 </style>
