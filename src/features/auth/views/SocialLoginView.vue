@@ -1,8 +1,8 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-import HomeIndicator from '@/common/components/HomeIndicator.vue'
-import MobileStatusBar from '@/common/components/MobileStatusBar.vue'
+import { login } from '@/features/auth/api/auth.api'
 import { startSocialLogin } from '@/features/auth/oauth'
 import brandLogo from '@/assets/onboarding/brand/brand-logo.svg'
 import googleLogo from '@/assets/onboarding/brand/google-logo.svg'
@@ -15,16 +15,29 @@ import navy from '@/assets/onboarding/characters/character-navy.png'
 const loadingProvider = ref('')
 const errorMessage = ref('')
 const characters = [army, navy, airforce, marine]
+const router = useRouter()
+const isMockMode =
+  import.meta.env.MODE === 'mock' || import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 
 async function handleLogin(provider) {
   loadingProvider.value = provider
   errorMessage.value = ''
 
   try {
+    if (isMockMode) {
+      const response = await login({ socialType: provider, authorizationCode: 'mock-login' })
+
+      localStorage.setItem('accessToken', response.accessToken)
+      localStorage.setItem('refreshToken', response.refreshToken)
+      await router.push({ name: 'terms' })
+      return
+    }
+
     startSocialLogin(provider)
   } catch {
-    errorMessage.value = '로그인에 실패했어요. 목 서버 실행 상태를 확인해주세요.'
-    errorMessage.value = '소셜 로그인 설정을 확인해 주세요.'
+    errorMessage.value = isMockMode
+      ? '로그인에 실패했어요. 목 서버 실행 상태를 확인해 주세요.'
+      : '소셜 로그인 설정을 확인해 주세요.'
   } finally {
     loadingProvider.value = ''
   }
@@ -33,7 +46,6 @@ async function handleLogin(provider) {
 
 <template>
   <main class="login screen">
-    <MobileStatusBar />
     <section class="login__content">
       <p>군인을 위한 AI 자산관리</p>
       <img
@@ -82,7 +94,6 @@ async function handleLogin(provider) {
         >Google로 시작하기
       </button>
     </div>
-    <HomeIndicator />
   </main>
 </template>
 

@@ -10,7 +10,11 @@ import profileMarine from '@/assets/onboarding/profiles/profile-marine.png'
 import profileNavy from '@/assets/onboarding/profiles/profile-navy.png'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
-import { previewInvestmentPreference, saveGoal } from '@/features/onboarding/api/onboarding.api'
+import {
+  completeOnboarding,
+  previewInvestmentPreference,
+  saveGoal,
+} from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
@@ -43,6 +47,16 @@ const formattedAmount = computed(
       Math.round(onboarding.form.targetAmount / 10000),
     )}만 원`,
 )
+const estimatedDischargeAmount = 20_000_000
+const isAboveEstimatedAmount = computed(
+  () => onboarding.form.targetAmount > estimatedDischargeAmount,
+)
+const requiredSavingsAmount = computed(() =>
+  Math.max(0, onboarding.form.targetAmount - estimatedDischargeAmount),
+)
+const formattedRequiredSavings = computed(
+  () => `${new Intl.NumberFormat('ko-KR').format(requiredSavingsAmount.value / 10000)}만 원`,
+)
 
 async function next() {
   loading.value = true
@@ -67,12 +81,20 @@ function closeModal() {
   if (!completing.value) showConfirmModal.value = false
 }
 
-function complete() {
+async function complete() {
+  if (completing.value) return
+
   completing.value = true
-  window.setTimeout(() => {
+  errorMessage.value = ''
+  try {
+    await completeOnboarding()
     onboarding.complete()
     router.replace({ name: 'dashboard' })
-  }, 450)
+  } catch {
+    errorMessage.value = '온보딩 완료 처리에 실패했어요. 잠시 후 다시 시도해주세요.'
+  } finally {
+    completing.value = false
+  }
 }
 </script>
 
@@ -100,12 +122,22 @@ function complete() {
         <p>전역시에 모으고 싶은<br>목표 금액을 설정해주세요.</p>
         <label><input
           v-model.number="onboarding.targetAmountInTenThousands"
+          :class="{ warning: isAboveEstimatedAmount }"
           type="number"
           min="0"
           step="100"
         ><span>만 원</span></label>
-        <div class="goal-breakdown">
-          <span>군적금 수령 예상금액 2,000만 원</span><b>＋</b><span>저축 자산 300만 원</span>
+        <p
+          v-if="isAboveEstimatedAmount"
+          class="goal-warning"
+        >
+          <span>!</span> 목표금액이 동기 평균 보다 높은 편이에요
+        </p>
+        <div
+          class="goal-breakdown"
+          :class="{ warning: isAboveEstimatedAmount }"
+        >
+          <span>군적금 수령 예상금액 2,000만 원</span><b>＋</b><span>저축 {{ formattedRequiredSavings }}</span>
         </div>
       </div>
       <p
@@ -262,6 +294,29 @@ h2 {
   font-weight: 700;
   text-align: center;
 }
+.goal-card input.warning {
+  border-bottom-color: #ff8a72;
+}
+.goal-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 14px 0 0;
+  color: #ff765c;
+  font-size: 11px;
+}
+.goal-warning span {
+  display: inline-grid;
+  width: 12px;
+  height: 12px;
+  place-items: center;
+  border-radius: 50%;
+  background: #ff765c;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+}
 .goal-breakdown {
   display: flex;
   align-items: center;
@@ -275,6 +330,10 @@ h2 {
   background: #effff5;
   color: #1dc767;
   font-size: 10px;
+}
+.goal-breakdown.warning span {
+  background: #fff4f1;
+  color: #ff765c;
 }
 .goal-breakdown b {
   color: #aaa;

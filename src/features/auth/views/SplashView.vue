@@ -2,8 +2,6 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-import HomeIndicator from '@/common/components/HomeIndicator.vue'
-import MobileStatusBar from '@/common/components/MobileStatusBar.vue'
 import brandLogo from '@/assets/onboarding/brand/brand-logo.svg'
 import airforce from '@/assets/onboarding/characters/character-airforce.png'
 import army from '@/assets/onboarding/characters/character-army.png'
@@ -20,7 +18,6 @@ onMounted(() => {
 
 <template>
   <main class="splash screen">
-    <MobileStatusBar />
     <p class="splash__tagline">
       군인을 위한<br>AI 자산관리
     </p>
@@ -40,7 +37,6 @@ onMounted(() => {
         >
       </span>
     </div>
-    <HomeIndicator />
   </main>
 </template>
 

@@ -5,7 +5,11 @@ import { useRouter } from 'vue-router'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import ProfileAppearanceSheet from '@/features/onboarding/components/ProfileAppearanceSheet.vue'
-import { checkNickname } from '@/features/onboarding/api/onboarding.api'
+import {
+  checkNickname,
+  saveNickname,
+  saveProfileAppearance,
+} from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 import airforce from '@/assets/onboarding/profiles/profile-airforce.png'
 import army from '@/assets/onboarding/profiles/profile-army.png'
@@ -19,6 +23,7 @@ const nickname = ref(onboarding.form.nickname)
 const status = ref(nickname.value ? 'available' : 'idle')
 const showProfileSheet = ref(false)
 const errorMessage = ref('')
+const loading = ref(false)
 const profiles = {
   'profile-army.png': army,
   'profile-navy.png': navy,
@@ -48,10 +53,27 @@ function saveAppearance(image, color) {
   onboarding.persist()
 }
 
-function next() {
+async function next() {
+  if (status.value !== 'available' || loading.value) return
+
+  loading.value = true
+  errorMessage.value = ''
   onboarding.form.nickname = nickname.value
-  onboarding.persist()
-  router.push({ name: 'military-info' })
+  try {
+    await Promise.all([
+      saveNickname(onboarding.form.nickname),
+      saveProfileAppearance({
+        profileImage: onboarding.form.profileImage,
+        profileBackgroundColor: onboarding.form.profileBackgroundColor,
+      }),
+    ])
+    onboarding.persist()
+    router.push({ name: 'military-info' })
+  } catch {
+    errorMessage.value = '프로필 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -110,6 +132,7 @@ function next() {
     </section>
     <PrimaryButton
       :disabled="status !== 'available'"
+      :loading="loading"
       @click="next"
     >
       다음으로

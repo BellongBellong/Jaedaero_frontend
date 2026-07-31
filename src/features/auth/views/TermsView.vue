@@ -1,9 +1,9 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
-import HomeIndicator from '@/common/components/HomeIndicator.vue'
+import { saveAgreements } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
@@ -16,6 +16,9 @@ const terms = [
   { id: 'marketing', label: '마케팅 정보 수신 동의', required: false },
 ]
 const checked = ref([...onboarding.form.agreements])
+const loading = ref(false)
+const errorMessage = ref('')
+const isOpen = ref(false)
 const allChecked = computed(() => checked.value.length === terms.length)
 const requiredChecked = computed(() =>
   terms.filter((term) => term.required).every((term) => checked.value.includes(term.id)),
@@ -25,63 +28,113 @@ function toggleAll() {
   checked.value = allChecked.value ? [] : terms.map((term) => term.id)
 }
 
-function submit() {
-  onboarding.form.agreements = checked.value
-  onboarding.persist()
-  router.push({ name: 'onboarding-intro' })
+function close() {
+  if (!loading.value) isOpen.value = false
+}
+
+function handleAfterLeave() {
+  router.back()
+}
+
+onMounted(() => {
+  isOpen.value = true
+})
+
+async function submit() {
+  if (!requiredChecked.value || loading.value) return
+
+  loading.value = true
+  errorMessage.value = ''
+  try {
+    await saveAgreements(checked.value)
+    onboarding.form.agreements = checked.value
+    onboarding.persist()
+    router.push({ name: 'onboarding-intro' })
+  } catch {
+    errorMessage.value = '약관 동의를 저장하지 못했어요. 잠시 후 다시 시도해주세요.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
 <template>
-  <main class="terms screen">
-    <button
-      class="close-button"
-      aria-label="닫기"
-      @click="router.back()"
+  <Transition
+    name="terms-sheet"
+    @after-leave="handleAfterLeave"
+  >
+    <div
+      v-if="isOpen"
+      class="terms-backdrop"
+      @click.self="close"
     >
-      ×
-    </button>
-    <h1>서비스 이용약관</h1>
-    <p>제대로 서비스 이용을 위해 약관에 동의해 주세요</p>
-    <button
-      class="all-check"
-      type="button"
-      @click="toggleAll"
-    >
-      약관 전체 동의<span :class="{ checked: allChecked }">✓</span>
-    </button>
-    <div class="term-list">
-      <label
-        v-for="term in terms"
-        :key="term.id"
-      >
-        <input
-          v-model="checked"
-          type="checkbox"
-          :value="term.id"
+      <main class="terms">
+        <button
+          class="close-button"
+          aria-label="닫기"
+          @click="close"
         >
-        <span>{{ term.label }} ({{ term.required ? '필수' : '선택' }})</span>
-        <b :class="{ checked: checked.includes(term.id) }">✓</b>
-      </label>
+          ×
+        </button>
+        <h1>서비스 이용약관</h1>
+        <p>제대로 서비스 이용을 위해 약관에 동의해 주세요</p>
+        <button
+          class="all-check"
+          type="button"
+          @click="toggleAll"
+        >
+          약관 전체 동의<span :class="{ checked: allChecked }">✓</span>
+        </button>
+        <div class="term-list">
+          <label
+            v-for="term in terms"
+            :key="term.id"
+          >
+            <input
+              v-model="checked"
+              type="checkbox"
+              :value="term.id"
+            >
+            <span>{{ term.label }} ({{ term.required ? '필수' : '선택' }})</span>
+            <b :class="{ checked: checked.includes(term.id) }">✓</b>
+          </label>
+        </div>
+        <PrimaryButton
+          :disabled="!requiredChecked"
+          :loading="loading"
+          @click="submit"
+        >
+          동의하고 시작하기
+        </PrimaryButton>
+        <p
+          v-if="errorMessage"
+          class="form-error"
+        >
+          {{ errorMessage }}
+        </p>
+      </main>
     </div>
-    <PrimaryButton
-      :disabled="!requiredChecked"
-      @click="submit"
-    >
-      동의하고 시작하기
-    </PrimaryButton>
-    <HomeIndicator />
-  </main>
+  </Transition>
 </template>
 
 <style scoped>
+.terms-backdrop {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  background: rgb(0 0 0 / 58%);
+  inset: 0;
+}
 .terms {
   position: relative;
   display: flex;
-  height: 100dvh;
+  width: min(100%, 393px);
+  min-height: min(86dvh, 730px);
   flex-direction: column;
   padding: 74px 16px 40px;
-  border-radius: 42px 42px 0 0;
+  border-radius: 32px 32px 0 0;
   background: #fff;
 }
 h1 {
@@ -165,5 +218,21 @@ p {
 .primary-button:not(:disabled) {
   background: #303030;
   color: #fff;
+}
+.terms-sheet-enter-active,
+.terms-sheet-leave-active {
+  transition: background 0.24s ease;
+}
+.terms-sheet-enter-active .terms,
+.terms-sheet-leave-active .terms {
+  transition: transform 0.28s ease;
+}
+.terms-sheet-enter-from,
+.terms-sheet-leave-to {
+  background: transparent;
+}
+.terms-sheet-enter-from .terms,
+.terms-sheet-leave-to .terms {
+  transform: translateY(100%);
 }
 </style>
