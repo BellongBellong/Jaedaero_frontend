@@ -41,8 +41,3 @@ export async function saveGoal(payload) {
   const { data } = await apiClient.post(ENDPOINTS.goals, payload)
   return data
 }
-
-export async function completeOnboarding() {
-  const { data } = await apiClient.post(ENDPOINTS.onboarding.complete)
-  return data
-}
