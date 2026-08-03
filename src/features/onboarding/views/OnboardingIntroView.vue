@@ -16,7 +16,7 @@ const router = useRouter()
       alt=""
     >
     <h2>제대로를 이용하기 위한<br>몇가지 절차가 필요해요</h2>
-    <PrimaryButton @click="router.push({ name: 'nickname' })">
+    <PrimaryButton @click="router.push({ name: 'connect-accounts' })">
       시작하기
     </PrimaryButton>
   </main>
