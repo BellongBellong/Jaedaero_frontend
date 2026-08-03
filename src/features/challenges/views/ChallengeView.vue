@@ -1,5 +1,5 @@
 <template>
-  <section class="tab-page">
+  <section class="tab-page app-page">
     <p class="tab-page__eyebrow">
       CHALLENGE
     </p>
@@ -9,28 +9,22 @@
 </template>
 
 <style scoped>
-.tab-page {
-  min-height: 100%;
-  padding: 80px 24px;
-  background: var(--ui-background, #fafafa);
-}
-
 .tab-page__eyebrow {
-  margin: 0 0 8px;
-  color: var(--green-700, #20ba5c);
-  font-size: 13px;
-  font-weight: 700;
+  margin: 0 0 var(--space-8);
+  color: var(--green-700);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.08em;
 }
 
 h1 {
   margin: 0;
-  color: var(--gray-900, #333);
-  font-size: 30px;
+  color: var(--ui-ext);
+  font-size: var(--text-h3);
 }
 
 p:not(.tab-page__eyebrow) {
-  margin-top: 12px;
-  color: var(--gray-600, #757575);
+  margin-top: var(--space-12);
+  color: var(--ui-text-secondary);
 }
 </style>

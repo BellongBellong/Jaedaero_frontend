@@ -15,8 +15,8 @@
        FONT
     ====================================================== */
   
-    --font-display: "GamtanRoad";
-    --font-body: "SUIT Variable", "SUIT", sans-serif;
+    --font-display: "감탄로드감탄체", sans-serif;
+    --font-body: "Pretendard-Regular", "Pretendard", sans-serif;
   
     /* ======================================================
        PRIMITIVE / GREEN
@@ -305,6 +305,7 @@
   --space-40: 40px;
 
   --layout-page-padding: 20px;
+  --page-padding: var(--layout-page-padding);
 
 
 
