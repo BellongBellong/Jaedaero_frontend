@@ -252,6 +252,12 @@ function accountDetail(account) {
   return account.accountNumberMasked || account.accountNumber || '계좌번호 정보 없음'
 }
 
+function accountRoleForRoute() {
+  if (route.params.assetType === 'military-savings') return 'MILITARY_SAVINGS'
+  if (route.params.assetType === 'salary-account') return 'CHECKING'
+  return form.value.businessType === 'ST' ? 'INVESTMENT' : 'DEPOSIT'
+}
+
 function toggleAccount(account, index) {
   const id = accountId(account, index)
   if (accountRequirement(account, index) === 'required') {
@@ -302,22 +308,18 @@ function nextFromSummary() {
 async function submit() {
   if (!canSubmit.value) return
 
-  const userId = Number(localStorage.getItem('userId'))
-  if (!userId) {
-    errorMessage.value = '로그인 정보를 찾을 수 없습니다. 다시 로그인해 주세요.'
-    return
-  }
-
   loading.value = true
   errorMessage.value = ''
   try {
     const result = await connectAccount({
-      userId,
+      userId: Number(localStorage.getItem('userId')) || undefined,
       organizationCode: form.value.organizationCode,
       businessType: form.value.businessType,
       loginId: form.value.loginId,
       password: form.value.password,
       birthDate: form.value.birthDate || undefined,
+      accountRole: accountRoleForRoute(),
+      isPrimary: true,
     })
     const returnedAccounts = Array.isArray(result?.accounts) ? result.accounts : []
     discoveredAccounts.value = returnedAccounts.length
