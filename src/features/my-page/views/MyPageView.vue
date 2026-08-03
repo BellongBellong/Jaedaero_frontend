@@ -8,8 +8,8 @@ import goalIcon from '@/assets/my-page/icon5.svg'
 import notificationIcon from '@/assets/my-page/icon7.svg'
 import logoutIcon from '@/assets/my-page/icon9.svg'
 import profileImage from '@/assets/my-page/image-1860.png'
-import { logout } from '@/features/auth/api/auth.api'
 import { getAccounts } from '@/features/accounts/api/accounts.api'
+import { logout } from '@/features/auth/api/auth.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
@@ -31,11 +31,13 @@ const militaryLabel = computed(() => {
     CORPORAL: '상병',
     SERGEANT: '병장',
   }[onboarding.form.rank]
+
   return `${branch || '육군'} · ${rank || '병장'}`
 })
 
 async function handleLogout() {
   if (loggingOut.value) return
+
   loggingOut.value = true
   try {
     await logout()
@@ -59,17 +61,6 @@ onMounted(async () => {
 
 <template>
   <main class="mypage screen">
-    <header class="page-header">
-      <button
-        type="button"
-        aria-label="뒤로 가기"
-        @click="router.back()"
-      >
-        ‹
-      </button>
-      <h1>마이페이지</h1>
-    </header>
-
     <section class="profile-section">
       <div class="profile-avatar">
         <img
@@ -90,7 +81,7 @@ onMounted(async () => {
     </section>
 
     <section class="settings-card badge-card">
-      <h3>획득 뱃지</h3>
+      <h3>획득 배지</h3>
       <button
         type="button"
         class="badge-summary"
@@ -171,39 +162,18 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.tab-page {
-  min-height: 100%;
-  padding: 80px 24px;
-  background: var(--ui-background, #fafafa);
+.mypage {
+  padding: 30px 20px 14px;
+  background: #fafafa;
 }
 
-.tab-page__eyebrow {
-  margin: 0 0 8px;
-  color: var(--green-700, #20ba5c);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-.page-header button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #444;
-  font-size: 38px;
-  line-height: 32px;
-}
-.page-header h1 {
-  margin: 0;
-  color: var(--ui-ext);
-  font-size: var(--text-h3);
-  font-size: 22px;
-}
 .profile-section {
   display: flex;
   align-items: center;
   flex-direction: column;
   padding: 27px 0 34px;
 }
+
 .profile-avatar {
   position: relative;
   display: grid;
@@ -213,15 +183,13 @@ onMounted(async () => {
   border: 1.5px dashed #31e47c;
   border-radius: 50%;
 }
+
 .profile-avatar > img {
   width: 68px;
   height: 68px;
   object-fit: contain;
 }
 
-p:not(.tab-page__eyebrow) {
-  margin-top: var(--space-12);
-  color: var(--ui-text-secondary);
 .profile-avatar span {
   position: absolute;
   right: -2px;
@@ -235,11 +203,6 @@ p:not(.tab-page__eyebrow) {
   color: #fff;
 }
 
-a {
-  display: inline-block;
-  margin-top: var(--space-32);
-  color: var(--green-800);
-  font-weight: var(--weight-bold);
 .profile-section h2 {
   margin: 19px 0 5px;
   font-size: 21px;
@@ -247,12 +210,14 @@ a {
   text-decoration-color: #777;
   text-decoration-thickness: 2px;
 }
+
 .profile-section p {
   margin: 0 0 8px;
   color: #777;
   font-size: 14px;
   font-weight: 700;
 }
+
 .nickname-button {
   padding: 5px 12px;
   border: 0;
@@ -261,18 +226,21 @@ a {
   color: #999;
   font-size: 12px;
 }
+
 .settings-card {
   padding: 20px;
   margin-bottom: 18px;
   border-radius: 28px;
   background: #fff;
 }
+
 .settings-card h3 {
   margin: 0 0 9px;
   color: #999;
   font-size: 16px;
   font-weight: 500;
 }
+
 .badge-summary {
   display: flex;
   width: 100%;
@@ -282,10 +250,12 @@ a {
   background: transparent;
   text-align: left;
 }
+
 .badge-icons {
   display: flex;
   gap: 8px;
 }
+
 .badge-icons i {
   display: grid;
   width: 47px;
@@ -298,22 +268,27 @@ a {
   font-size: 22px;
   font-style: normal;
 }
+
 .badge-copy {
   display: grid;
   gap: 4px;
   margin-left: 12px;
 }
+
 .badge-copy b {
   font-size: 14px;
 }
+
 .badge-copy small {
   color: #aaa;
   font-size: 12px;
 }
+
 .badge-summary > img {
   width: 18px;
   margin-left: auto;
 }
+
 .menu-row {
   display: flex;
   width: 100%;
@@ -327,17 +302,21 @@ a {
   color: #333;
   text-align: left;
 }
+
 .menu-row:last-child {
   border-bottom: 0;
 }
+
 .menu-row b {
   font-size: 15px;
 }
+
 .menu-row small {
   margin-left: auto;
   color: #999;
   font-size: 13px;
 }
+
 .menu-icon {
   display: grid;
   width: 36px;
@@ -346,30 +325,38 @@ a {
   place-items: center;
   border-radius: 10px;
 }
+
 .menu-icon img {
   width: 22px;
   height: 22px;
 }
+
 .menu-icon.bank {
   background: #e9f5ff;
 }
+
 .menu-icon.goal {
   background: #f7edff;
 }
+
 .menu-icon.notification {
   background: #f5f5f5;
 }
+
 .menu-icon.logout-icon {
   background: #fff0f0;
 }
+
 .chevron {
   margin-left: 8px;
   color: #aaa;
   font-size: 25px;
 }
+
 .menu-row.logout {
   color: #ff4c4c;
 }
+
 .withdraw {
   width: 100%;
   padding: 18px 20px 0;
@@ -378,13 +365,16 @@ a {
   color: #c9c9c9;
   text-align: left;
 }
+
 @media (max-height: 760px) {
   .profile-section {
     padding-block: 18px 24px;
   }
+
   .settings-card {
     margin-bottom: 12px;
   }
+
   .mypage {
     padding-top: 20px;
   }

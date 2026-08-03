@@ -1,12 +1,10 @@
 <script setup>
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
 const earnedBadges = [
   { icon: '🥇', title: '첫 저축', date: '2024.08.01' },
   { icon: '💎', title: '30일 연속', date: '2024.09.01' },
   { icon: '🚀', title: '목표 50%', date: '2025.03.15' },
 ]
+
 const challengeBadges = [
   { icon: '🎯', title: '목표 달성', description: '전역 목표 100% 달성' },
   { icon: '👑', title: '재정전역', description: '목표보다 빠른 전역!' },
@@ -19,17 +17,6 @@ const challengeBadges = [
 
 <template>
   <main class="badge-history screen">
-    <header class="page-header">
-      <button
-        type="button"
-        aria-label="뒤로 가기"
-        @click="router.back()"
-      >
-        ‹
-      </button>
-      <h1>마이페이지</h1>
-    </header>
-
     <section class="badge-progress">
       <div><span>뱃지 수집</span><b>3 / 9</b></div>
       <progress
@@ -47,7 +34,9 @@ const challengeBadges = [
           v-for="badge in earnedBadges"
           :key="badge.title"
         >
-          <span>{{ badge.icon }}</span><b>{{ badge.title }}</b><small>{{ badge.date }}</small>
+          <span>{{ badge.icon }}</span>
+          <b>{{ badge.title }}</b>
+          <small>{{ badge.date }}</small>
         </article>
       </div>
     </section>
@@ -59,7 +48,9 @@ const challengeBadges = [
           v-for="badge in challengeBadges"
           :key="badge.title"
         >
-          <span>{{ badge.icon }}</span><b>{{ badge.title }}</b><small>{{ badge.description }}</small>
+          <span>{{ badge.icon }}</span>
+          <b>{{ badge.title }}</b>
+          <small>{{ badge.description }}</small>
         </article>
       </div>
     </section>
@@ -71,39 +62,25 @@ const challengeBadges = [
   padding: 30px 20px 24px;
   background: #fafafa;
 }
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
-}
-.page-header button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #444;
-  font-size: 38px;
-  line-height: 32px;
-}
-.page-header h1 {
-  margin: 0;
-  font-size: 22px;
-}
+
 .badge-progress {
   padding: 17px 16px;
   border-radius: 24px;
   background: linear-gradient(105deg, #e1ffeb, #fff9df);
 }
+
 .badge-progress div {
   display: flex;
   justify-content: space-between;
   margin-bottom: 10px;
   font-size: 14px;
 }
+
 .badge-progress b {
   color: #08772f;
   font-size: 17px;
 }
+
 progress {
   display: block;
   width: 100%;
@@ -113,29 +90,35 @@ progress {
   overflow: hidden;
   appearance: none;
 }
+
 progress::-webkit-progress-bar {
   border-radius: 9px;
   background: rgb(224 235 218 / 70%);
 }
+
 progress::-webkit-progress-value {
   border-radius: 9px;
   background: linear-gradient(90deg, #55ef94, #ffe066);
 }
+
 .badge-section {
   margin-top: 16px;
 }
+
 .badge-section h2 {
   margin: 0 0 14px;
   color: #555;
   font-size: 14px;
   font-weight: 500;
 }
+
 .earned-grid,
 .challenge-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
+
 .earned-grid article {
   display: flex;
   min-height: 109px;
@@ -147,29 +130,36 @@ progress::-webkit-progress-value {
   background: #fff;
   box-shadow: 0 6px 15px rgb(43 224 120 / 8%);
 }
+
 article span {
   font-size: 25px;
 }
+
 article b {
   margin-top: 8px;
   color: #555;
   font-size: 12px;
 }
+
 article small {
   margin-top: 7px;
   color: #bbb;
   font-size: 9px;
   text-align: center;
 }
+
 .challenges {
   margin-top: 18px;
 }
+
 .challenges h2 {
   color: #aaa;
 }
+
 .challenge-grid {
   gap: 9px 12px;
 }
+
 .challenge-grid article {
   display: flex;
   min-height: 122px;
@@ -181,24 +171,26 @@ article small {
   background: #666;
   text-align: center;
 }
+
 .challenge-grid article b {
   color: #eee;
 }
+
 .challenge-grid article small {
   max-width: 86px;
   color: #d0d0d0;
   line-height: 1.45;
 }
+
 @media (max-height: 760px) {
   .badge-history {
     padding-top: 20px;
   }
-  .page-header {
-    margin-bottom: 18px;
-  }
+
   .earned-grid article {
     min-height: 96px;
   }
+
   .challenge-grid article {
     min-height: 104px;
   }
