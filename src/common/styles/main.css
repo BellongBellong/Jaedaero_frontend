@@ -1,3 +1,7 @@
+@import "./tokens.css";
+@import "./base.css";
+@import "./utilities.css";
+
 @font-face {
   font-family: 'Pretendard';
   src: url('@/assets/fonts/PretendardVariable.woff2') format('woff2-variations');
