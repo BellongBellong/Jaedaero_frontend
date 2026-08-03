@@ -1,59 +1,616 @@
 <script setup>
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+
+import analysisIcon from '@/assets/ai-coach/analysis.svg'
+import coachCharacter from '@/assets/ai-coach/coach-character.svg'
+import glidepathImage from '@/assets/ai-coach/glidepath.svg'
+import historyIcon from '@/assets/ai-coach/history.svg'
+import whatIfIcon from '@/assets/ai-coach/what-if.svg'
+import { getCashflow } from '@/features/cashflow/api/cashflow.api'
+import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
+import { getTransactions } from '@/features/transactions/api/transactions.api'
+
+const onboarding = useOnboardingStore()
+const cashflow = ref(null)
+const transactions = ref([])
+const loading = ref(true)
+const errorMessage = ref('')
+
+const nickname = computed(() => onboarding.form.nickname || '윤호')
+
+const reportDate = computed(() => {
+  if (!cashflow.value?.baseDate) return '-'
+
+  const [year, month, day] = cashflow.value.baseDate.split('-')
+  return `${year}. ${month}. ${day} 기준`
+})
+
+const monthlyExpense = computed(() =>
+  transactions.value
+    .filter((transaction) => transaction.transactionType === 'EXPENSE')
+    .reduce((total, transaction) => total + Number(transaction.amount || 0), 0),
+)
+
+const projectedGrowth = computed(() => {
+  const current = Number(cashflow.value?.currentAsset || 0)
+  const projected = Number(cashflow.value?.projectedAssetAtDischarge || 0)
+
+  if (!current) return 0
+  return Math.round(((projected - current) / current) * 100)
+})
+
+const remainingServiceDays = computed(() => {
+  const dischargeDate = cashflow.value?.actualDischargeDate
+  if (!dischargeDate) return 54
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const discharge = new Date(`${dischargeDate}T00:00:00`)
+
+  return Math.max(0, Math.ceil((discharge - today) / 86_400_000))
+})
+
+const insightText = computed(() => {
+  const shortfall = formatTenThousands(cashflow.value?.shortfallAmount)
+  const expense = Number(monthlyExpense.value || 0).toLocaleString('ko-KR')
+
+  return `목표까지 ${shortfall} 남았어요. 이번 달 지출 ${expense}원을 바탕으로 추가 납입을 검토해보세요.`
+})
+
+const reportMetrics = computed(() => [
+  {
+    label: '현재 자산',
+    value: formatTenThousands(cashflow.value?.currentAsset),
+    change: '기준',
+    tone: 'neutral',
+  },
+  {
+    label: '전역 예상 자산',
+    value: formatTenThousands(cashflow.value?.projectedAssetAtDischarge),
+    change: `+${projectedGrowth.value}%`,
+    tone: 'positive',
+  },
+  {
+    label: '이번 달 지출',
+    value: `${Number(monthlyExpense.value || 0).toLocaleString('ko-KR')}원`,
+    change: `${transactions.value.length}건`,
+    tone: 'negative',
+  },
+])
+
+const analysisMenus = [
+  {
+    label: 'what if\n시뮬레이션',
+    icon: whatIfIcon,
+    to: { name: 'what-if-simulation' },
+  },
+  {
+    label: 'AI 분석',
+    icon: analysisIcon,
+    to: { name: 'ai-asset-analysis-result' },
+  },
+  {
+    label: '분석 기록',
+    icon: historyIcon,
+    to: { name: 'ai-financial-report' },
+  },
+]
+
+function formatTenThousands(value) {
+  const amount = Number(value || 0)
+  if (!amount) return '0만원'
+
+  return `${Math.round(amount / 10_000).toLocaleString('ko-KR')}만원`
+}
+
+onMounted(async () => {
+  try {
+    const [cashflowResponse, transactionResponse] = await Promise.all([
+      getCashflow(),
+      getTransactions(),
+    ])
+    cashflow.value = cashflowResponse
+    transactions.value = Array.isArray(transactionResponse) ? transactionResponse : []
+  } catch {
+    errorMessage.value = 'AI 코칭 데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
-  <section class="tab-page app-page">
-    <p class="tab-page__eyebrow">
-      AI COACH
-    </p>
-    <h1>AI 코치</h1>
-    <p>나에게 맞는 자산 관리 코칭을 준비하고 있어요.</p>
-    <nav aria-label="AI 코치 페이지">
-      <RouterLink :to="{ name: 'ai-financial-report' }">
-        AI 금융 리포트
+  <section class="ai-coach-screen">
+    <div class="ai-coach-screen__content">
+      <header class="coach-intro">
+        <h2>
+          지금 {{ nickname }}님에게 필요한<br>
+          금융 행동은 무엇일까요?
+        </h2>
+      </header>
+
+      <article class="report-card">
+        <img
+          class="report-card__character"
+          :src="coachCharacter"
+          alt=""
+          aria-hidden="true"
+        >
+
+        <div class="report-card__body">
+          <div class="report-card__heading">
+            <strong>오늘의 AI 투자 리포트</strong>
+            <span>BETA</span>
+          </div>
+          <p class="report-card__date">
+            {{ reportDate }}
+          </p>
+
+          <p
+            v-if="loading"
+            class="report-card__status"
+          >
+            자산 흐름을 분석하고 있어요.
+          </p>
+          <p
+            v-else-if="errorMessage"
+            class="report-card__status report-card__status--error"
+          >
+            {{ errorMessage }}
+          </p>
+          <template v-else>
+            <dl class="report-metrics">
+              <div
+                v-for="metric in reportMetrics"
+                :key="metric.label"
+                class="report-metrics__row"
+              >
+                <dt>{{ metric.label }}</dt>
+                <dd>
+                  <span>{{ metric.value }}</span>
+                  <em :class="`metric-change--${metric.tone}`">{{ metric.change }}</em>
+                </dd>
+              </div>
+            </dl>
+
+            <p class="report-insight">
+              <span aria-hidden="true">💡</span>
+              {{ insightText }}
+            </p>
+          </template>
+        </div>
+
+        <RouterLink
+          class="report-card__link"
+          :to="{ name: 'ai-financial-report' }"
+        >
+          전체 리포트 보기
+          <span aria-hidden="true">›</span>
+        </RouterLink>
+      </article>
+
+      <section
+        class="analysis-section"
+        aria-labelledby="analysis-menu-title"
+      >
+        <h3 id="analysis-menu-title">
+          AI 분석 메뉴
+        </h3>
+        <nav
+          class="analysis-menu"
+          aria-label="AI 분석 메뉴"
+        >
+          <RouterLink
+            v-for="menu in analysisMenus"
+            :key="menu.label"
+            class="analysis-menu__item"
+            :to="menu.to"
+          >
+            <img
+              :src="menu.icon"
+              alt=""
+              aria-hidden="true"
+            >
+            <span>{{ menu.label }}</span>
+          </RouterLink>
+        </nav>
+      </section>
+
+      <RouterLink
+        class="glidepath-card"
+        :to="{ name: 'rebalancing' }"
+      >
+        <h3>리밸런싱 · 글라이드패스</h3>
+        <div class="glidepath-card__summary">
+          <div>
+            <span class="glidepath-card__eyebrow">현재 단계</span>
+            <strong>4단계 <em>집중 납입기</em></strong>
+            <span class="glidepath-card__badge">전역 D-{{ remainingServiceDays }}</span>
+          </div>
+          <img
+            :src="glidepathImage"
+            alt=""
+            aria-hidden="true"
+          >
+        </div>
+        <div class="glidepath-card__footer">
+          <div class="risk-bar">
+            <div class="risk-bar__labels">
+              <span>안전 85%</span>
+              <span>위험 15%</span>
+            </div>
+            <div
+              class="risk-bar__track"
+              aria-hidden="true"
+            >
+              <span />
+              <span />
+            </div>
+          </div>
+          <span class="glidepath-card__link">
+            현재 전략 보기
+            <b aria-hidden="true">›</b>
+          </span>
+        </div>
       </RouterLink>
-      <RouterLink :to="{ name: 'ai-asset-analysis-result' }">
-        AI 자산 분석 결과
-      </RouterLink>
-      <RouterLink :to="{ name: 'what-if-simulation' }">
-        왓이프 시뮬레이션
-      </RouterLink>
-      <RouterLink :to="{ name: 'rebalancing' }">
-        리밸런싱
-      </RouterLink>
-    </nav>
+    </div>
   </section>
 </template>
 
 <style scoped>
-.tab-page__eyebrow {
-  margin: 0 0 8px;
-  color: var(--green-700);
-  font-size: var(--text-xs);
+.ai-coach-screen {
+  min-height: 100%;
+  padding: 10px 20px 40px;
+  color: var(--gray-900);
+}
+
+.ai-coach-screen__content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coach-intro {
+  display: flex;
+  min-height: 76px;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.coach-intro h2 {
+  font-family: var(--font-body);
+  font-size: 20px;
   font-weight: var(--weight-bold);
-  letter-spacing: 0.08em;
+  line-height: 1.5;
 }
 
-h1 {
-  margin: 0;
-  color: var(--ui-ext);
-  font-size: var(--text-h3);
+.report-card {
+  position: relative;
+  display: flex;
+  height: 303px;
+  flex-direction: column;
+  overflow: visible;
+  border-radius: 28px;
+  background: var(--white);
 }
 
-p:not(.tab-page__eyebrow) {
-  margin-top: var(--space-12);
-  color: var(--ui-text-secondary);
+.report-card__character {
+  position: absolute;
+  z-index: 1;
+  top: -38px;
+  right: 8px;
+  width: 92px;
+  height: 101px;
+  object-fit: contain;
+  pointer-events: none;
 }
 
-nav {
+.report-card__body {
+  height: 263px;
+  padding: 20px 20px 16px;
+}
+
+.report-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gray-600);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.report-card__heading strong {
+  font-weight: var(--weight-bold);
+}
+
+.report-card__heading span {
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background: var(--olive-100);
+  color: var(--olive-500);
+  font-size: 12px;
+  font-weight: var(--weight-bold);
+}
+
+.report-card__date {
+  padding-top: 4px;
+  color: #888;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.report-card__status {
   display: grid;
-  gap: var(--space-14);
-  margin-top: var(--space-32);
+  min-height: 145px;
+  place-items: center;
+  color: var(--gray-600);
+  font-size: 13px;
+  text-align: center;
 }
 
-a {
-  color: var(--green-800);
+.report-card__status--error {
+  color: var(--orange-600);
+}
+
+.report-metrics {
+  display: grid;
+  gap: 10px;
+  padding: 10px 10px 0;
+}
+
+.report-metrics__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.report-metrics dt {
   font-weight: var(--weight-bold);
+}
+
+.report-metrics dd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gray-600);
+  font-size: 13px;
+  font-weight: var(--weight-semibold);
+}
+
+.report-metrics em {
+  min-width: 52px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: var(--weight-bold);
+  text-align: center;
+}
+
+.metric-change--positive {
+  background: var(--green-100);
+  color: #22c55e;
+}
+
+.metric-change--negative {
+  background: var(--orange-50);
+  color: var(--orange-600);
+}
+
+.metric-change--neutral {
+  background: var(--gray-200);
+  color: var(--gray-600);
+}
+
+.report-insight {
+  min-height: 62px;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 14px;
+  background: var(--green-100);
+  color: var(--gray-600);
+  font-size: 12px;
+  font-weight: var(--weight-bold);
+  line-height: 1.6;
+}
+
+.report-card__link {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 10px;
+  color: var(--olive-400);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.report-card__link span,
+.glidepath-card__link b {
+  font-size: 22px;
+  font-weight: var(--weight-regular);
+  line-height: 0.7;
+}
+
+.analysis-section h3 {
+  padding: 0 10px;
+  color: var(--gray-600);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: var(--weight-bold);
+  line-height: 1.5;
+}
+
+.analysis-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  margin-top: 8px;
+}
+
+.analysis-menu__item {
+  display: flex;
+  width: 100px;
+  height: 100px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 82%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 255 255 / 18%) 0%, rgb(255 255 255 / 82%) 100%);
+}
+
+.analysis-menu__item img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.analysis-menu__item span {
+  color: #888;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.glidepath-card {
+  display: flex;
+  min-height: 204px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 21px;
+  border: 1px solid rgb(255 255 255 / 90%);
+  border-radius: 24px;
+  background: rgb(255 255 255 / 50%);
+}
+
+.glidepath-card h3 {
+  color: var(--gray-600);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: var(--weight-bold);
+  line-height: 1.5;
+}
+
+.glidepath-card__summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.glidepath-card__summary > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.glidepath-card__eyebrow {
+  color: var(--gray-600);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.glidepath-card__summary strong {
+  color: var(--gray-900);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.glidepath-card__summary strong em {
+  color: var(--green-700);
+  font-style: normal;
+}
+
+.glidepath-card__badge {
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background: var(--olive-100);
+  color: var(--olive-500);
+  font-size: 12px;
+  font-weight: var(--weight-bold);
+}
+
+.glidepath-card__summary img {
+  width: 116px;
+  height: 68px;
+  object-fit: contain;
+}
+
+.glidepath-card__footer {
+  display: flex;
+  min-height: 40px;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.risk-bar {
+  width: 131px;
+}
+
+.risk-bar__labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--gray-600);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.risk-bar__track {
+  display: flex;
+  height: 14px;
+  gap: 5px;
+  margin-top: 1px;
+}
+
+.risk-bar__track span:first-child {
+  width: 106px;
+  background: linear-gradient(94deg, var(--yellow-300), var(--green-600));
+}
+
+.risk-bar__track span:last-child {
+  width: 20px;
+  background: linear-gradient(90deg, var(--orange-50), var(--orange-500));
+}
+
+.glidepath-card__link {
+  display: flex;
+  align-items: center;
+  color: var(--olive-400);
+  font-size: 12px;
+  font-weight: var(--weight-bold);
+  line-height: 1.3;
+}
+
+@media (max-width: 370px) {
+  .analysis-menu {
+    gap: 8px;
+  }
+
+  .analysis-menu__item {
+    width: 92px;
+    height: 92px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .analysis-menu__item,
+  .glidepath-card,
+  .report-card__link {
+    transition: transform var(--duration-fast) var(--ease-default);
+  }
+
+  .analysis-menu__item:active,
+  .glidepath-card:active,
+  .report-card__link:active {
+    transform: scale(0.98);
+  }
 }
 </style>

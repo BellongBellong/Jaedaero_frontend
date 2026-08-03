@@ -9,7 +9,11 @@ const route = useRoute()
 </script>
 
 <template>
-  <MobileFrame>
+  <MobileFrame
+    :class="{
+      'mobile-frame--ai-coach': route.name === 'ai-coach',
+    }"
+  >
     <AppHeader
       v-if="!route.meta.hideHeader"
       :title="route.meta.headerTitle"
@@ -27,6 +31,12 @@ const route = useRoute()
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+:global(.mobile-frame.mobile-frame--ai-coach) {
+  background:
+    radial-gradient(circle at 92% 8%, rgb(98 255 156 / 52%) 0, rgb(98 255 156 / 0%) 34%),
+    var(--gray-100);
 }
 
 .main-layout__content :deep(.screen) {
