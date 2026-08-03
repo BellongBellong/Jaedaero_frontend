@@ -1,6 +1,6 @@
 <script setup>
-import BaseBadge from './BaseBadge.vue'
-import Icon from './BaseIcon.vue'
+import BaseBadge from '@/common/components/BaseBadge.vue'
+import Icon from '@/common/components/common/BaseIcon.vue'
 
 const props = defineProps({
   items: {
