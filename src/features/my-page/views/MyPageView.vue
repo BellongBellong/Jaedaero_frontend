@@ -171,14 +171,18 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.mypage {
-  padding: 30px 20px 14px;
-  background: #fafafa;
+.tab-page {
+  min-height: 100%;
+  padding: 80px 24px;
+  background: var(--ui-background, #fafafa);
 }
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+
+.tab-page__eyebrow {
+  margin: 0 0 8px;
+  color: var(--green-700, #20ba5c);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 .page-header button {
   padding: 0;
@@ -190,6 +194,8 @@ onMounted(async () => {
 }
 .page-header h1 {
   margin: 0;
+  color: var(--ui-ext);
+  font-size: var(--text-h3);
   font-size: 22px;
 }
 .profile-section {
@@ -212,6 +218,10 @@ onMounted(async () => {
   height: 68px;
   object-fit: contain;
 }
+
+p:not(.tab-page__eyebrow) {
+  margin-top: var(--space-12);
+  color: var(--ui-text-secondary);
 .profile-avatar span {
   position: absolute;
   right: -2px;
@@ -224,6 +234,12 @@ onMounted(async () => {
   background: #35e780;
   color: #fff;
 }
+
+a {
+  display: inline-block;
+  margin-top: var(--space-32);
+  color: var(--green-800);
+  font-weight: var(--weight-bold);
 .profile-section h2 {
   margin: 19px 0 5px;
   font-size: 21px;

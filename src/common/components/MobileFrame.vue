@@ -1,5 +1,3 @@
-<script setup></script>
-
 <template>
   <div class="mobile-frame">
     <slot />
@@ -20,9 +18,5 @@
   overflow: hidden;
 
   background: var(--ui-background);
-}
-
-:slotted(main) {
-  flex: 1;
 }
 </style>

@@ -1,12 +1,20 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 
+import AppHeader from '@/common/components/AppHeader.vue'
 import BottomNavigation from '@/common/components/BottomNavigation.vue'
 import MobileFrame from '@/common/components/MobileFrame.vue'
+
+const route = useRoute()
 </script>
 
 <template>
   <MobileFrame>
+    <AppHeader
+      v-if="!route.meta.hideHeader"
+      :title="route.meta.headerTitle"
+      :variant="route.meta.headerVariant || 'back'"
+    />
     <main class="main-layout__content">
       <RouterView />
     </main>
@@ -23,5 +31,12 @@ import MobileFrame from '@/common/components/MobileFrame.vue'
 
 .main-layout__content :deep(.screen) {
   min-height: 100%;
+}
+
+.main-layout__content :deep(.app-page) {
+  min-height: 100%;
+  padding: var(--space-24) var(--layout-page-padding) var(--space-40);
+  background: var(--ui-background);
+  color: var(--ui-ext);
 }
 </style>
