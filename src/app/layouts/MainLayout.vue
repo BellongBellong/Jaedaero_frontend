@@ -11,12 +11,13 @@ const route = useRoute()
 <template>
   <MobileFrame
     :class="{
-      'mobile-frame--ai-coach': route.name === 'ai-coach',
+      'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
     }"
   >
     <AppHeader
       v-if="!route.meta.hideHeader"
       :title="route.meta.headerTitle"
+      :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
     />
     <main class="main-layout__content">
