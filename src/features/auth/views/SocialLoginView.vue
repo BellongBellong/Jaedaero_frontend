@@ -29,7 +29,12 @@ async function handleLogin(provider) {
 
       localStorage.setItem('accessToken', response.accessToken)
       localStorage.setItem('refreshToken', response.refreshToken)
-      await router.push({ name: 'terms' })
+      await router.push({
+        name:
+          (response.user?.onboardingCompleted ?? response.onboardingCompleted)
+            ? 'dashboard'
+            : 'terms',
+      })
       return
     }
 
