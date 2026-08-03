@@ -20,7 +20,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="dashboard screen content-screen">
+  <main class="dashboard screen content-screen app-page">
     <p class="eyebrow">
       온보딩 완료
     </p>
@@ -45,35 +45,32 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.dashboard {
-  padding: 80px 24px;
-}
 .eyebrow {
-  color: #20c86b;
-  font-weight: 700;
+  color: var(--green-700);
+  font-weight: var(--weight-bold);
 }
 h1 {
   max-width: 310px;
-  font-size: 30px;
-  line-height: 1.4;
+  font-size: var(--text-h3);
+  line-height: var(--leading-normal);
 }
 article {
   display: grid;
   gap: 8px;
-  padding: 24px;
-  margin-top: 36px;
-  border-radius: 22px;
-  background: #303030;
-  color: #fff;
+  padding: var(--space-24);
+  margin-top: var(--space-32);
+  border-radius: var(--radius-lg);
+  background: var(--gray-900);
+  color: var(--white);
 }
 article strong {
-  font-size: 26px;
+  font-size: var(--text-h4);
 }
 
 a {
   display: inline-block;
-  margin-top: 24px;
-  color: #169145;
-  font-weight: 700;
+  margin-top: var(--space-24);
+  color: var(--green-800);
+  font-weight: var(--weight-bold);
 }
 </style>
