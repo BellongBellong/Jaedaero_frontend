@@ -43,7 +43,12 @@ const mainRoutes = [
         path: 'ai-financial-report',
         name: 'ai-financial-report',
         component: () => import('@/features/reports/views/AiFinancialReportView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'ai-coach', headerTitle: 'AI 금융 리포트' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '오늘의 AI 투자 리포트',
+          headerBadge: 'BETA',
+        },
       },
       {
         path: 'ai-asset-analysis-result',
