@@ -28,6 +28,12 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'profile', headerTitle: '마이페이지' },
       },
       {
+        path: 'mypage/connected-banks',
+        name: 'connected-banks',
+        component: () => import('@/features/accounts/views/ConnectedBanksView.vue'),
+        meta: { requiresAuth: true, hideHeader: true, hideBottomNavigation: true },
+      },
+      {
         path: 'transactions',
         name: 'transactions',
         component: () => import('@/features/transactions/views/TransactionHistoryView.vue'),

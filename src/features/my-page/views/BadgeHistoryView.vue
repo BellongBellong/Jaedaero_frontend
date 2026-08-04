@@ -1,65 +1,88 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
 
-const router = useRouter()
-const earnedBadges = [
-  { icon: '🥇', title: '첫 저축', date: '2024.08.01' },
-  { icon: '💎', title: '30일 연속', date: '2024.09.01' },
-  { icon: '🚀', title: '목표 50%', date: '2025.03.15' },
-]
-const challengeBadges = [
-  { icon: '🎯', title: '목표 달성', description: '전역 목표 100% 달성' },
-  { icon: '👑', title: '재정전역', description: '목표보다 빠른 전역!' },
-  { icon: '💰', title: '저축왕', description: '월 80% 이상 3개월 달성' },
-  { icon: '📈', title: '투자 입문', description: '첫 투자 상품 가입' },
-  { icon: '🤝', title: '동기 1위', description: '동기 랭킹 1위 달성' },
-  { icon: '⚡', title: '100일 연속', description: '100일 연속 미션 달성' },
-]
+import { getInvestmentBadges } from '@/features/challenges/api/challenges.api'
+
+const badges = ref([])
+const loading = ref(true)
+const loadFailed = ref(false)
+const totalBadgeCount = 3
+
+const badgeDetails = {
+  TIER_SAFE: { icon: '🛡️', title: '안정형 투자자', description: '투자 성향 배지' },
+  TIER_BALANCED: { icon: '⚖️', title: '균형형 투자자', description: '투자 성향 배지' },
+  TIER_AGGRESSIVE: { icon: '🚀', title: '공격형 투자자', description: '투자 성향 배지' },
+}
+
+const earnedBadges = computed(() =>
+  badges.value.map((badge) => {
+    const [category, grade] = badge.badgeCode.split('_')
+    const detail =
+      category === 'TIER'
+        ? badgeDetails[badge.badgeCode]
+        : {
+            icon: category === 'SAFE' ? '🛡️' : '🚀',
+            title: `${category === 'SAFE' ? '안정형' : '공격형'} ${grade} 등급`,
+            description: '미션 완료 배지',
+          }
+    return { ...badge, ...detail }
+  }),
+)
+
+function formatDate(value) {
+  if (!value) return '획득일 정보 없음'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '획득일 정보 없음' : date.toLocaleDateString('ko-KR')
+}
+
+onMounted(async () => {
+  try {
+    badges.value = await getInvestmentBadges({ page: 0, size: 20 })
+  } catch {
+    loadFailed.value = true
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
   <main class="badge-history screen">
-    <header class="page-header">
-      <button
-        type="button"
-        aria-label="뒤로 가기"
-        @click="router.back()"
-      >
-        ‹
-      </button>
-      <h1>마이페이지</h1>
-    </header>
-
     <section class="badge-progress">
-      <div><span>뱃지 수집</span><b>3 / 9</b></div>
+      <div>
+        <span>뱃지 수집</span><b>{{ earnedBadges.length }} / {{ totalBadgeCount }}</b>
+      </div>
       <progress
-        value="3"
-        max="9"
+        :value="earnedBadges.length"
+        :max="totalBadgeCount"
       >
-        3 / 9
+        {{ earnedBadges.length }} / {{ totalBadgeCount }}
       </progress>
     </section>
 
     <section class="badge-section">
       <h2>획득한 뱃지</h2>
-      <div class="earned-grid">
+      <p
+        v-if="loading || loadFailed"
+        class="status-message"
+      >
+        {{ loading ? '뱃지 내역을 불러오는 중이에요.' : '뱃지 내역을 불러오지 못했어요.' }}
+      </p>
+      <p
+        v-else-if="earnedBadges.length === 0"
+        class="status-message"
+      >
+        아직 획득한 뱃지가 없어요.
+      </p>
+      <div
+        v-else
+        class="earned-grid"
+      >
         <article
           v-for="badge in earnedBadges"
-          :key="badge.title"
+          :key="badge.badgeCode"
         >
-          <span>{{ badge.icon }}</span><b>{{ badge.title }}</b><small>{{ badge.date }}</small>
-        </article>
-      </div>
-    </section>
-
-    <section class="badge-section challenges">
-      <h2>도전 중인 뱃지</h2>
-      <div class="challenge-grid">
-        <article
-          v-for="badge in challengeBadges"
-          :key="badge.title"
-        >
-          <span>{{ badge.icon }}</span><b>{{ badge.title }}</b><small>{{ badge.description }}</small>
+          <span>{{ badge.icon }}</span><b>{{ badge.title }}</b><small>{{ formatDate(badge.acquiredAt) }}</small>
         </article>
       </div>
     </section>
@@ -70,24 +93,6 @@ const challengeBadges = [
 .badge-history {
   padding: 30px 20px 24px;
   background: #fafafa;
-}
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
-}
-.page-header button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #444;
-  font-size: 38px;
-  line-height: 32px;
-}
-.page-header h1 {
-  margin: 0;
-  font-size: 22px;
 }
 .badge-progress {
   padding: 17px 16px;
@@ -130,8 +135,14 @@ progress::-webkit-progress-value {
   font-size: 14px;
   font-weight: 500;
 }
-.earned-grid,
-.challenge-grid {
+.status-message {
+  padding: 24px 0;
+  margin: 0;
+  color: #999;
+  font-size: 14px;
+  text-align: center;
+}
+.earned-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
@@ -154,6 +165,7 @@ article b {
   margin-top: 8px;
   color: #555;
   font-size: 12px;
+  text-align: center;
 }
 article small {
   margin-top: 7px;
@@ -161,46 +173,12 @@ article small {
   font-size: 9px;
   text-align: center;
 }
-.challenges {
-  margin-top: 18px;
-}
-.challenges h2 {
-  color: #aaa;
-}
-.challenge-grid {
-  gap: 9px 12px;
-}
-.challenge-grid article {
-  display: flex;
-  min-height: 122px;
-  align-items: center;
-  flex-direction: column;
-  justify-content: center;
-  padding: 10px 5px;
-  border-radius: 17px;
-  background: #666;
-  text-align: center;
-}
-.challenge-grid article b {
-  color: #eee;
-}
-.challenge-grid article small {
-  max-width: 86px;
-  color: #d0d0d0;
-  line-height: 1.45;
-}
 @media (max-height: 760px) {
   .badge-history {
     padding-top: 20px;
   }
-  .page-header {
-    margin-bottom: 18px;
-  }
   .earned-grid article {
     min-height: 96px;
-  }
-  .challenge-grid article {
-    min-height: 104px;
   }
 }
 </style>
