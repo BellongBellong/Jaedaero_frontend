@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import reportMascot from '@/assets/onboarding/intro/intro-mascot.png'
+import reportMascot from '@/assets/ai-coach/coach-character.svg'
+import smallMoney from '@/assets/icons/Smallmoney.png'
 
 const props = defineProps({
   greeting: {
@@ -61,46 +62,11 @@ const formattedDate = computed(() => {
       class="daily-report-banner__report-icon"
       aria-hidden="true"
     >
-      <svg
-        viewBox="0 0 32 32"
-        fill="none"
+      <span class="daily-report-banner__money-blur" />
+      <img
+        :src="smallMoney"
+        alt=""
       >
-        <circle
-          cx="16"
-          cy="16"
-          r="15"
-          fill="url(#report-icon-fill)"
-        />
-        <circle
-          cx="16"
-          cy="16"
-          r="14.5"
-          stroke="white"
-          stroke-opacity=".72"
-        />
-        <path
-          d="M7.5 16h4l1.8-5 3.2 10 2.4-7 1.5 3H25"
-          stroke="#20BA5C"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <defs>
-          <linearGradient
-            id="report-icon-fill"
-            x1="16"
-            y1="1"
-            x2="16"
-            y2="31"
-          >
-            <stop stop-color="#FFF8DD" />
-            <stop
-              offset="1"
-              stop-color="#E4FFF0"
-            />
-          </linearGradient>
-        </defs>
-      </svg>
     </span>
   </RouterLink>
 </template>
@@ -190,18 +156,29 @@ const formattedDate = computed(() => {
 .daily-report-banner__report-icon {
   position: absolute;
   z-index: 1;
-  top: 29px;
-  right: 37px;
+  top: 27px;
+  right: 35px;
   display: block;
-  width: 35px;
-  height: 35px;
-  filter: drop-shadow(0 0 8px rgb(255 229 114 / 70%));
+  width: 38px;
+  height: 38px;
 }
 
-.daily-report-banner__report-icon svg {
+.daily-report-banner__report-icon img {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: contain;
+}
+
+.daily-report-banner__money-blur {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: linear-gradient(198deg, var(--yellow-400), var(--yellow-100));
+  filter: blur(5px);
+  opacity: 0.8;
 }
 
 .daily-report-banner__glow {
