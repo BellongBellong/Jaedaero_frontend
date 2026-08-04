@@ -1,12 +1,30 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
 
 import { getDashboard } from '@/features/dashboard/api/dashboard.api'
+import DailyReportBanner from '@/features/dashboard/components/DailyReportBanner.vue'
+import FinancialDdayCard from '@/features/dashboard/components/FinancialDdayCard.vue'
 
 const dashboard = ref(null)
 const loading = ref(true)
 const errorMessage = ref('')
+
+const dailyReport = computed(() => ({
+  greeting: dashboard.value?.dailyBriefing?.greeting ?? '저녁은 맛있게 드셨나요?',
+  title: dashboard.value?.dailyBriefing?.title ?? '오늘의 금융 AI 리포트',
+  date: dashboard.value?.dailyBriefing?.date ?? dashboard.value?.asOf ?? '2026-07-29',
+}))
+
+const financialCard = computed(() => ({
+  financialDday: dashboard.value?.dischargeDday ?? 54,
+  actualDday: 60,
+  actualDischargeDate: dashboard.value?.actualDischargeDate ?? '2026-09-26',
+  differenceDays: dashboard.value?.financialDischargeDifferenceDays ?? 4,
+  achievementRate: dashboard.value?.goalAchievementRate ?? 80.2,
+  currentAmount: dashboard.value?.projectedAssetAtDischarge ?? 1354,
+  netAsset: dashboard.value?.totalAsset ? dashboard.value.totalAsset / 10_000 : 800,
+  targetAmount: dashboard.value?.targetAmount ? dashboard.value.targetAmount / 10_000 : 1700,
+}))
 
 onMounted(async () => {
   try {
@@ -21,56 +39,32 @@ onMounted(async () => {
 
 <template>
   <main class="dashboard screen content-screen app-page">
-    <p class="eyebrow">
-      온보딩 완료
-    </p>
-    <h1>제대로 시작할 준비가 됐어요 🎉</h1>
-    <p v-if="loading">
-      자산 정보를 불러오는 중...
-    </p>
     <p
-      v-else-if="errorMessage"
-      class="form-error"
+      v-if="errorMessage"
+      class="dashboard__notice"
     >
-      {{ errorMessage }}
+      샘플 데이터로 카드를 보여드리고 있어요.
     </p>
-    <article v-else-if="dashboard">
-      <span>현재 총자산</span>
-      <strong>{{ Number(dashboard.totalAsset || 0).toLocaleString('ko-KR') }}원</strong>
-    </article>
-    <RouterLink :to="{ name: 'transactions' }">
-      거래내역 보기
-    </RouterLink>
+
+    <DailyReportBanner v-bind="dailyReport" />
+    <FinancialDdayCard v-bind="financialCard" />
   </main>
 </template>
 
 <style scoped>
-.eyebrow {
-  color: var(--green-700);
-  font-weight: var(--weight-bold);
-}
-h1 {
-  max-width: 310px;
-  font-size: var(--text-h3);
-  line-height: var(--leading-normal);
-}
-article {
-  display: grid;
-  gap: 8px;
-  padding: var(--space-24);
-  margin-top: var(--space-32);
-  border-radius: var(--radius-lg);
-  background: var(--gray-900);
-  color: var(--white);
-}
-article strong {
-  font-size: var(--text-h4);
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background:
+    radial-gradient(circle at 94% 78%, rgb(98 255 156 / 35%), transparent 36%),
+    radial-gradient(circle at 0% 88%, rgb(255 229 114 / 50%), transparent 42%), var(--ui-background);
 }
 
-a {
-  display: inline-block;
-  margin-top: var(--space-24);
-  color: var(--green-800);
-  font-weight: var(--weight-bold);
+.dashboard__notice {
+  margin: 0;
+  color: var(--gray-500);
+  font-size: 12px;
+  text-align: center;
 }
 </style>
