@@ -1,0 +1,27 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="33.5212" height="31.8736" viewBox="0 0 33.5212 31.8736" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 2117904667">
+<line id="Line 157" x1="4.97266" y1="1.6" x2="4.97265" y2="30.2734" stroke="url(#paint0_linear_0_4)" stroke-width="3.2" stroke-linecap="round"/>
+<line id="Line 159" x1="28.7164" y1="1.6" x2="28.7164" y2="30.2734" stroke="url(#paint1_linear_0_4)" stroke-width="3.2" stroke-linecap="round"/>
+<line id="Line 158" x1="16.6809" y1="1.6" x2="16.6809" y2="30.2734" stroke="url(#paint2_linear_0_4)" stroke-width="3.2" stroke-linecap="round"/>
+<circle id="Ellipse 5555" cx="4.98837" cy="22.2537" r="3.5123" fill="#FFE26D"/>
+<circle id="Ellipse 5556" cx="16.7605" cy="9.87402" r="3.5123" fill="#FF9B7A"/>
+<circle id="Ellipse 5558" cx="28.5328" cy="22.2545" r="3.5123" fill="#41503D"/>
+<circle id="Ellipse 5552" cx="4.98837" cy="22.2532" r="4.98837" fill="#FFE572" fill-opacity="0.2"/>
+<circle id="Ellipse 5557" cx="16.7605" cy="9.87431" r="4.98837" fill="#E37255" fill-opacity="0.2"/>
+<circle id="Ellipse 5559" cx="28.5328" cy="22.254" r="4.98837" fill="#41503D" fill-opacity="0.2"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_4" x1="2.87266" y1="-9.17922e-08" x2="2.87265" y2="31.8734" gradientUnits="userSpaceOnUse">
+<stop stop-color="#62FF9C"/>
+<stop offset="1" stop-color="#F3FFF8"/>
+</linearGradient>
+<linearGradient id="paint1_linear_0_4" x1="26.6164" y1="-9.17922e-08" x2="26.6164" y2="31.8734" gradientUnits="userSpaceOnUse">
+<stop stop-color="#62FF9C"/>
+<stop offset="1" stop-color="#F3FFF8"/>
+</linearGradient>
+<linearGradient id="paint2_linear_0_4" x1="14.5809" y1="-9.17922e-08" x2="14.5809" y2="31.8734" gradientUnits="userSpaceOnUse">
+<stop stop-color="#62FF9C"/>
+<stop offset="1" stop-color="#F3FFF8"/>
+</linearGradient>
+</defs>
+</svg>
