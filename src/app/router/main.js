@@ -28,6 +28,12 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'profile', headerTitle: '마이페이지' },
       },
       {
+        path: 'mypage/connected-banks',
+        name: 'connected-banks',
+        component: () => import('@/features/accounts/views/ConnectedBanksView.vue'),
+        meta: { requiresAuth: true, hideHeader: true, hideBottomNavigation: true },
+      },
+      {
         path: 'transactions',
         name: 'transactions',
         component: () => import('@/features/transactions/views/TransactionHistoryView.vue'),
@@ -43,7 +49,12 @@ const mainRoutes = [
         path: 'ai-financial-report',
         name: 'ai-financial-report',
         component: () => import('@/features/reports/views/AiFinancialReportView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'ai-coach', headerTitle: 'AI 금융 리포트' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '오늘의 AI 투자 리포트',
+          headerBadge: 'BETA',
+        },
       },
       {
         path: 'ai-asset-analysis-result',
