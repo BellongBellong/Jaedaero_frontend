@@ -23,7 +23,7 @@ const route = useRoute()
     <main class="main-layout__content">
       <RouterView />
     </main>
-    <BottomNavigation />
+    <BottomNavigation v-if="!route.meta.hideBottomNavigation" />
   </MobileFrame>
 </template>
 
