@@ -3,11 +3,13 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import generalAccountIcon from '@/assets/onboarding/icons/account-general.svg'
+import accountEmptyMascot from '@/assets/onboarding/icons/account-empty-mascot.svg'
 import militarySavingsAccountIcon from '@/assets/onboarding/icons/account-military-savings.svg'
 import recommendedAccountIcon from '@/assets/onboarding/icons/account-recommended.svg'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import {
   connectAccount,
+  getAccounts,
   getCodefBanks,
   getCodefSecurities,
 } from '@/features/accounts/api/accounts.api'
@@ -25,6 +27,7 @@ const errorMessage = ref('')
 const institutionModalOpen = ref(false)
 const pendingOrganizationCode = ref('')
 const accountsModalOpen = ref(false)
+const accountsEmptyModalOpen = ref(false)
 const discoveredAccounts = ref([])
 const selectedAccountIds = ref([])
 const requiredAccountNoticeId = ref(null)
@@ -83,6 +86,7 @@ const form = ref({
   password: '',
   birthDate: '',
 })
+const allowsSecurities = computed(() => route.params.assetType === 'personal-assets')
 
 const canSubmit = computed(
   () => form.value.organizationCode && form.value.loginId && form.value.password && !loading.value,
@@ -203,7 +207,7 @@ watch(
 )
 
 function selectBusinessType(type) {
-  if (loading.value) return
+  if (loading.value || (type === 'ST' && !allowsSecurities.value)) return
   form.value.businessType = type
   errorMessage.value = ''
   pendingOrganizationCode.value = form.value.organizationCode
@@ -213,6 +217,11 @@ function selectBusinessType(type) {
 function closeInstitutionModal() {
   institutionModalOpen.value = false
   pendingOrganizationCode.value = ''
+}
+
+function retryAccountConnection() {
+  accountsEmptyModalOpen.value = false
+  errorMessage.value = ''
 }
 
 function confirmInstitution() {
@@ -231,14 +240,21 @@ function accountId(account, index) {
   return account.id ?? `discovered-${index}`
 }
 
-function accountRequirement(account, index) {
-  if (account.accountType === 'MILITARY_SAVINGS' || index === 0) return 'required'
-  if (account.accountType === 'CHECKING' || index === 1) return 'recommended'
+function accountRequirement(account) {
+  const role = account.accountRole || account.accountType
+
+  if (route.params.assetType === 'military-savings' && role === 'MILITARY_SAVINGS') {
+    return 'required'
+  }
+  if (route.params.assetType === 'salary-account' && ['CHECKING', 'SALARY'].includes(role)) {
+    return 'required'
+  }
+  if (route.params.assetType !== 'personal-assets' && role === 'CHECKING') return 'recommended'
   return 'optional'
 }
 
-function accountIcon(account, index) {
-  const requirement = accountRequirement(account, index)
+function accountIcon(account) {
+  const requirement = accountRequirement(account)
   if (requirement === 'required') return militarySavingsAccountIcon
   if (requirement === 'recommended') return recommendedAccountIcon
   return generalAccountIcon
@@ -260,7 +276,7 @@ function accountRoleForRoute() {
 
 function toggleAccount(account, index) {
   const id = accountId(account, index)
-  if (accountRequirement(account, index) === 'required') {
+  if (accountRequirement(account) === 'required') {
     requiredAccountNoticeId.value = id
     return
   }
@@ -309,10 +325,12 @@ async function submit() {
   if (!canSubmit.value) return
 
   loading.value = true
+  accountsEmptyModalOpen.value = false
   errorMessage.value = ''
   try {
-    const result = await connectAccount({
-      userId: Number(localStorage.getItem('userId')) || undefined,
+    const userId = Number(localStorage.getItem('userId')) || undefined
+    await connectAccount({
+      userId,
       organizationCode: form.value.organizationCode,
       businessType: form.value.businessType,
       loginId: form.value.loginId,
@@ -321,33 +339,36 @@ async function submit() {
       accountRole: accountRoleForRoute(),
       isPrimary: true,
     })
-    const returnedAccounts = Array.isArray(result?.accounts) ? result.accounts : []
-    discoveredAccounts.value = returnedAccounts.length
-      ? returnedAccounts
-      : [
-          {
-            id: 'military-savings',
-            accountName: '장병내일준비적금',
-            openedAt: '2026-08-08',
-            accountType: 'MILITARY_SAVINGS',
-          },
-          {
-            id: 'salary-account',
-            accountName: '나라사랑통장',
-            accountNumberMasked: '671002-04-078777',
-            accountType: 'CHECKING',
-          },
-          {
-            id: 'checking-account',
-            accountName: '입출금 통장',
-            accountNumberMasked: '671002-04-078777',
-            accountType: 'DEPOSIT',
-          },
-        ]
+    const connectedAccounts = await getAccounts(userId)
+    const institutionName = normalizeInstitutionName(selectedInstitution.value?.displayName)
+    discoveredAccounts.value = (Array.isArray(connectedAccounts) ? connectedAccounts : []).filter(
+      (account) => {
+        if (account.organizationCode) {
+          return account.organizationCode === form.value.organizationCode
+        }
+
+        const accountInstitutionName = normalizeInstitutionName(
+          account.bankName || account.institutionName || account.organizationName,
+        )
+        if (!accountInstitutionName) return false
+
+        return (
+          accountInstitutionName === institutionName ||
+          accountInstitutionName.includes(institutionName) ||
+          institutionName.includes(accountInstitutionName)
+        )
+      },
+    )
+
+    if (!discoveredAccounts.value.length) {
+      accountsEmptyModalOpen.value = true
+      return
+    }
+
     selectedAccountIds.value = discoveredAccounts.value
       .map((account, index) => ({
         id: accountId(account, index),
-        requirement: accountRequirement(account, index),
+        requirement: accountRequirement(account),
       }))
       .filter(({ requirement }) => requirement !== 'optional')
       .map(({ id }) => id)
@@ -363,12 +384,17 @@ async function submit() {
 
 onMounted(async () => {
   try {
-    const [bankList, securitiesList] = await Promise.all([getCodefBanks(), getCodefSecurities()])
-    banks.value = bankList
-    securities.value = securitiesList
+    if (allowsSecurities.value) {
+      const [bankList, securitiesList] = await Promise.all([getCodefBanks(), getCodefSecurities()])
+      banks.value = bankList
+      securities.value = securitiesList
+    } else {
+      banks.value = await getCodefBanks()
+      securities.value = []
+    }
   } catch {
     banks.value = fallbackBanks
-    securities.value = fallbackSecurities
+    securities.value = allowsSecurities.value ? fallbackSecurities : []
   } finally {
     loadingInstitutions.value = false
   }
@@ -443,6 +469,7 @@ onMounted(async () => {
               }}
             </button>
             <button
+              v-if="allowsSecurities"
               type="button"
               :class="{ selected: form.businessType === 'ST' }"
               @click="selectBusinessType('ST')"
@@ -632,6 +659,106 @@ onMounted(async () => {
 
     <Transition name="institution-sheet">
       <div
+        v-if="loading && selectedInstitution"
+        class="institution-backdrop account-status-backdrop"
+      >
+        <section
+          class="account-status-sheet loading-sheet"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="loading-copy">
+            <h2>
+              선택한 은행으로<br>
+              계좌 정보를 불러오고있어요.
+            </h2>
+            <p>10초에서 1분 정도 소요됩니다</p>
+          </div>
+          <div class="loading-bank-card">
+            <span class="selected-institution-logo">
+              <img
+                :src="institutionLogo(selectedInstitution, false)"
+                alt=""
+              >
+            </span>
+            <span class="selected-institution-copy">
+              <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
+              <b>{{ selectedInstitution.displayName }}</b>
+            </span>
+            <span
+              class="loading-check"
+              aria-hidden="true"
+            >✓</span>
+          </div>
+        </section>
+      </div>
+    </Transition>
+
+    <Transition name="institution-sheet">
+      <div
+        v-if="accountsEmptyModalOpen"
+        class="institution-backdrop account-status-backdrop"
+      >
+        <section
+          class="account-status-sheet empty-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="empty-account-title"
+        >
+          <button
+            type="button"
+            class="sheet-close"
+            aria-label="계좌 불러오기 닫기"
+            @click="retryAccountConnection"
+          >
+            ×
+          </button>
+          <header>
+            <h2 id="empty-account-title">
+              계좌 불러오기
+            </h2>
+            <p>연동할 계좌를 모두 선택해주세요</p>
+          </header>
+          <div class="empty-bank-summary">
+            <span class="selected-institution-logo">
+              <img
+                v-if="selectedInstitution"
+                :src="institutionLogo(selectedInstitution, false)"
+                alt=""
+              >
+            </span>
+            <span class="selected-institution-copy">
+              <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
+              <b>{{ selectedInstitution?.displayName }}</b>
+            </span>
+            <span
+              class="loading-check"
+              aria-hidden="true"
+            >✓</span>
+          </div>
+          <div class="empty-account-content">
+            <img
+              :src="accountEmptyMascot"
+              alt=""
+            >
+            <h3>앗, 계좌가 발견되지 않았어요</h3>
+            <p>
+              은행 정보를 다시 확인해보거나<br>
+              다른 은행으로 연동해보세요
+            </p>
+            <button
+              type="button"
+              @click="retryAccountConnection"
+            >
+              다시 연결하러가기
+            </button>
+          </div>
+        </section>
+      </div>
+    </Transition>
+
+    <Transition name="institution-sheet">
+      <div
         v-if="accountsModalOpen"
         class="institution-backdrop"
       >
@@ -677,17 +804,17 @@ onMounted(async () => {
                 @click="toggleAccount(account, index)"
               >
                 <img
-                  :src="accountIcon(account, index)"
+                  :src="accountIcon(account)"
                   alt=""
                 >
                 <span class="discovered-account-copy">
                   <span>
                     <b>{{ account.accountName || '금융 계좌' }}</b>
-                    <small :class="accountRequirement(account, index)">
+                    <small :class="accountRequirement(account)">
                       {{
-                        accountRequirement(account, index) === 'required'
+                        accountRequirement(account) === 'required'
                           ? '필수'
-                          : accountRequirement(account, index) === 'recommended'
+                          : accountRequirement(account) === 'recommended'
                             ? '권장'
                             : '선택'
                       }}
@@ -1151,6 +1278,119 @@ select:focus {
   padding: 38px 16px 12px;
   border-radius: 24px 24px 0 0;
   background: #fff;
+}
+
+.account-status-backdrop {
+  align-items: center;
+  padding: 0;
+}
+
+.account-status-sheet {
+  position: relative;
+  width: 100%;
+  border-radius: 30px;
+  background: #fff;
+}
+
+.loading-sheet {
+  min-height: 427px;
+  padding: 109px 27px 30px;
+}
+
+.loading-copy {
+  text-align: center;
+}
+
+.loading-copy h2 {
+  margin: 0;
+  color: #333;
+  font-size: 23px;
+  line-height: 35px;
+}
+
+.loading-copy p {
+  margin: 5px 0 27px;
+  color: #999;
+  font-size: 14px;
+}
+
+.loading-bank-card {
+  display: flex;
+  min-height: 90px;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 27px;
+  background: #fff;
+  box-shadow: 0 0 12px rgb(88 244 154 / 28%);
+}
+
+.loading-check {
+  margin-left: auto;
+  color: #58f49a;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.empty-sheet {
+  min-height: 695px;
+  padding: 66px 30px 30px;
+}
+
+.empty-sheet > header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 24px;
+}
+
+.empty-sheet > header p {
+  margin: 4px 0 26px;
+  color: #777;
+  font-size: 14px;
+}
+
+.empty-bank-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.empty-account-content {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding-top: 69px;
+  text-align: center;
+}
+
+.empty-account-content > img {
+  width: 55px;
+  height: 66px;
+  margin-bottom: 39px;
+}
+
+.empty-account-content h3 {
+  margin: 0 0 12px;
+  color: #c4c4c4;
+  font-size: 22px;
+}
+
+.empty-account-content p {
+  margin: 0 0 27px;
+  color: #888;
+  font-size: 14px;
+  line-height: 23px;
+}
+
+.empty-account-content button {
+  width: 257px;
+  min-height: 56px;
+  border: 0;
+  border-radius: 28px;
+  background: #ececec;
+  color: #c5c5c5;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .accounts-sheet h2 {
