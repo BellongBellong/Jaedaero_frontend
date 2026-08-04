@@ -103,6 +103,89 @@
       }
     }
   ],
+  "dashboardResponses": [
+    {
+      "asOf": "2026-07-29T20:00:00+09:00",
+      "nickname": "aaa",
+      "rank": "PRIVATE",
+      "dischargeDday": 60,
+      "financialDischargeDday": 54,
+      "totalAsset": 8000000,
+      "monthlyAssetChange": 15000,
+      "targetAmount": 17000000,
+      "goalAchievementRate": 80.2,
+      "remainingTargetAmount": 3366000,
+      "actualDischargeDate": "2026-09-26",
+      "financialDischargeDate": "2026-09-20",
+      "financialDischargeDifferenceDays": 6,
+      "projectedAssetAtDischarge": 13540000,
+      "assetSnapshot": {
+        "income": 1905000,
+        "previousIncome": 1800000,
+        "investment": 420000,
+        "investmentChange": 15000,
+        "spending": 154000,
+        "spendingTarget": 100000
+      },
+      "dailyBriefing": {
+        "id": 1,
+        "greeting": "저녁은 맛있게 드셨나요?",
+        "title": "오늘의 금융 AI 리포트",
+        "date": "2026-07-29"
+      },
+      "todayMission": {
+        "id": 1,
+        "title": "오늘의 리포트 확인",
+        "completed": true
+      },
+      "upcomingEvents": [
+        {
+          "id": 1,
+          "title": "연가",
+          "date": "2026-08-14",
+          "dday": 1
+        },
+        {
+          "id": 2,
+          "title": "말출",
+          "date": "2026-08-14",
+          "dday": 20
+        }
+      ],
+      "assetForecast": [
+        {
+          "month": "2026-02",
+          "expectedAsset": 8000000,
+          "targetAsset": 8200000
+        },
+        {
+          "month": "2026-03",
+          "expectedAsset": 9300000,
+          "targetAsset": 9800000
+        },
+        {
+          "month": "2026-04",
+          "expectedAsset": 10800000,
+          "targetAsset": 11500000
+        },
+        {
+          "month": "2026-05",
+          "expectedAsset": 12100000,
+          "targetAsset": 13200000
+        },
+        {
+          "month": "2026-06",
+          "expectedAsset": 13900000,
+          "targetAsset": 15100000
+        },
+        {
+          "month": "2026-07",
+          "expectedAsset": 15400000,
+          "targetAsset": 17000000
+        }
+      ]
+    }
+  ],
   "assetProjections": [
     {
       "id": 1,
@@ -521,7 +604,6 @@
   "refreshTokenResponses": [],
   "investmentPreferencePreviews": [],
   "codefConnections": [],
-  "dashboardResponses": [],
   "cashflowForecasts": [],
   "aiAnalyses": [],
   "strategyApplications": [],
