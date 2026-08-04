@@ -99,10 +99,10 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 
 ### ProfileAppearanceRequest
 
-| 필드                     | 타입     | 필수 | 설명               |
-| ------------------------ | -------- | ---: | ------------------ |
-| `profileImage`           | `string` |    O | 프리셋 이미지 코드 |
-| `profileBackgroundColor` | `string` |    O | `#RRGGBB`          |
+| 필드                     | 타입     | 필수 | 설명                                                  |
+| ------------------------ | -------- | ---: | ----------------------------------------------------- |
+| `profileImage`           | `string` |    O | 프리셋 이미지 코드                                    |
+| `profileBackgroundColor` | `string` |    O | `#RRGGBB`                                             |
 | `profileSource`          | `enum`   |    O | `GREEN`, `OLIVE`, `YELLOW`, `ORANGE`, `GRAY`, `BLACK` |
 
 ## 3. 약관 동의 화면
@@ -322,10 +322,53 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | `simulationId`         | `number \| null`                  |    O |
 | `analysisType`         | `AnalysisType`                    |    O |
 | `summary`              | `string`                          |    O |
-| `causes`               | `object[]`                        |    O |
+| `causes`               | `AiAnalysisCause[]`               |    O |
 | `recommendedScenarios` | `AiRecommendedScenarioResponse[]` |    O |
+| `spendingPattern`      | `SpendingPatternResponse`         |    O |
+| `expectedEffect`       | `AiExpectedEffectResponse`        |    O |
+| `recommendedProducts`  | `AiRecommendedProductResponse[]`  |    O |
 | `warnings`             | `string[]`                        |    O |
 | `generatedAt`          | `string(date-time)`               |    O |
+
+> `spendingPattern`, `expectedEffect`, `recommendedProducts`와 `causes` 항목 구조는 AI 분석 화면(3-2) 구현을 위한 확장 필드로, 백엔드 확정 전까지 목 서버(`mock-server/db.json`) 기준으로 관리합니다.
+
+### AiAnalysisCause
+
+| 필드          | 타입                                | 필수 |
+| ------------- | ----------------------------------- | ---: |
+| `code`        | `string`                            |    O |
+| `title`       | `string`                            |    O |
+| `status`      | `CAUTION \| CHECK_REQUIRED \| GOOD` |    O |
+| `statusLabel` | `string`                            |    O |
+| `description` | `string`                            |    O |
+
+### SpendingPatternResponse
+
+| 필드                 | 타입                                                | 필수 |
+| -------------------- | --------------------------------------------------- | ---: |
+| `baseMonthLabel`     | `string`                                            |    O |
+| `totalExpenseAmount` | `number`                                            |    O |
+| `categories`         | `{ code: string, label: string, amount: number }[]` |    O |
+| `insight`            | `{ message: string, highlight: string \| null }`    |    O |
+
+### AiExpectedEffectResponse
+
+| 필드                             | 타입     | 필수 |
+| -------------------------------- | -------- | ---: |
+| `currentProjectedAsset`          | `number` |    O |
+| `strategyProjectedAsset`         | `number` |    O |
+| `additionalAmount`               | `number` |    O |
+| `currentFinancialDischargeLabel` | `string` |    O |
+| `advancedDays`                   | `number` |    O |
+
+### AiRecommendedProductResponse
+
+| 필드        | 타입          | 필수 |
+| ----------- | ------------- | ---: |
+| `productId` | `number`      |    O |
+| `name`      | `string`      |    O |
+| `rating`    | `number(1~5)` |    O |
+| `tags`      | `string[]`    |    O |
 
 ### AiRecommendedScenarioResponse
 
