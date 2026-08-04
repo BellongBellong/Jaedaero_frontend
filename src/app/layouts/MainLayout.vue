@@ -9,16 +9,21 @@ const route = useRoute()
 </script>
 
 <template>
-  <MobileFrame>
+  <MobileFrame
+    :class="{
+      'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
+    }"
+  >
     <AppHeader
       v-if="!route.meta.hideHeader"
       :title="route.meta.headerTitle"
+      :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
     />
     <main class="main-layout__content">
       <RouterView />
     </main>
-    <BottomNavigation />
+    <BottomNavigation v-if="!route.meta.hideBottomNavigation" />
   </MobileFrame>
 </template>
 
@@ -27,6 +32,12 @@ const route = useRoute()
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+:global(.mobile-frame.mobile-frame--ai-coach) {
+  background:
+    radial-gradient(circle at 92% 8%, rgb(98 255 156 / 52%) 0, rgb(98 255 156 / 0%) 34%),
+    var(--gray-100);
 }
 
 .main-layout__content :deep(.screen) {

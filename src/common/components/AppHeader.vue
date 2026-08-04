@@ -9,6 +9,7 @@ import NotificationButton from '@/common/components/NotificationButton.vue'
 
 defineProps({
   title: { type: String, default: '' },
+  badge: { type: String, default: '' },
   variant: { type: String, default: 'back' },
 })
 
@@ -46,7 +47,15 @@ const mode = ref('military')
         >
       </button>
       <div>
-        <h1>{{ title }}</h1>
+        <div class="app-header__title-row">
+          <h1>{{ title }}</h1>
+          <span
+            v-if="badge"
+            class="app-header__badge"
+          >
+            {{ badge }}
+          </span>
+        </div>
       </div>
     </template>
   </header>
@@ -87,6 +96,20 @@ const mode = ref('military')
 .app-header__back img {
   width: 10px;
   height: 17px;
+}
+.app-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.app-header__badge {
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background: var(--olive-100);
+  color: var(--olive-500);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-normal);
 }
 h1 {
   color: var(--ui-ext);
