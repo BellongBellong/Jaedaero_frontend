@@ -63,7 +63,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: 'AI 자산 분석 결과',
+          hideHeader: true,
         },
       },
       {
