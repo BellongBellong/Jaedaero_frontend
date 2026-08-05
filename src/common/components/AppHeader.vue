@@ -1,6 +1,8 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import jaedaeroWordmark from '@/assets/JaedaeroWordmark.svg'
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import ModeSwitch from '@/common/components/ModeSwitch.vue'
 import NotificationButton from '@/common/components/NotificationButton.vue'
@@ -12,6 +14,7 @@ defineProps({
 })
 
 const router = useRouter()
+const mode = ref('military')
 </script>
 
 <template>
@@ -20,10 +23,14 @@ const router = useRouter()
     :class="`app-header--${variant}`"
   >
     <template v-if="variant === 'home'">
-      <strong class="app-header__brand">제대로</strong>
+      <img
+        class="app-header__brand"
+        :src="jaedaeroWordmark"
+        alt="제대로"
+      >
       <div class="app-header__actions">
-        <ModeSwitch />
-        <NotificationButton />
+        <ModeSwitch v-model="mode" />
+        <NotificationButton :mode="mode" />
       </div>
     </template>
     <template v-else>
@@ -70,10 +77,9 @@ const router = useRouter()
   justify-content: space-between;
 }
 .app-header__brand {
-  color: var(--ui-ext);
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
-  font-weight: var(--weight-bold);
+  display: block;
+  width: 65px;
+  height: 22px;
 }
 .app-header__actions {
   display: flex;
