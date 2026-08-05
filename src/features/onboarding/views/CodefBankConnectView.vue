@@ -7,12 +7,7 @@ import accountEmptyMascot from '@/assets/onboarding/icons/account-empty-mascot.s
 import militarySavingsAccountIcon from '@/assets/onboarding/icons/account-military-savings.svg'
 import recommendedAccountIcon from '@/assets/onboarding/icons/account-recommended.svg'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
-import {
-  connectAccount,
-  getAccounts,
-  getCodefBanks,
-  getCodefSecurities,
-} from '@/features/accounts/api/accounts.api'
+import { connectAccount, getAccounts } from '@/features/accounts/api/accounts.api'
 import {
   matchesAccountInstitution,
   normalizeInstitutionName,
@@ -380,7 +375,7 @@ async function submit() {
       },
       { signal: requestController.signal },
     )
-    const connectedAccounts = await getAccounts(userId, { signal: requestController.signal })
+    const connectedAccounts = await getAccounts({ signal: requestController.signal })
     discoveredAccounts.value = connectedAccounts.filter((account) =>
       matchesAccountInstitution(account, selectedInstitution.value),
     )
@@ -424,22 +419,10 @@ function cancelAccountRequest() {
   loading.value = false
 }
 
-onMounted(async () => {
-  try {
-    if (allowsSecurities.value) {
-      const [bankList, securitiesList] = await Promise.all([getCodefBanks(), getCodefSecurities()])
-      banks.value = bankList
-      securities.value = securitiesList
-    } else {
-      banks.value = await getCodefBanks()
-      securities.value = []
-    }
-  } catch {
-    banks.value = fallbackBanks
-    securities.value = allowsSecurities.value ? fallbackSecurities : []
-  } finally {
-    loadingInstitutions.value = false
-  }
+onMounted(() => {
+  banks.value = fallbackBanks
+  securities.value = allowsSecurities.value ? fallbackSecurities : []
+  loadingInstitutions.value = false
 })
 </script>
 

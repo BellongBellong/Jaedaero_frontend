@@ -6,7 +6,7 @@ export async function getChallengeGroup() {
   return data
 }
 
-export async function getInvestmentBadges(params = {}) {
-  const { data } = await apiClient.get(ENDPOINTS.users.investmentBadges, { params })
+export async function getInvestmentBadges() {
+  const { data } = await apiClient.get(ENDPOINTS.users.investmentBadges)
   return data
 }
