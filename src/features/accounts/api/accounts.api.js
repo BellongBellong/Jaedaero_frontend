@@ -19,11 +19,20 @@ export async function getAccounts(config = {}) {
       ...config.params,
     },
   })
-  const accounts = Array.isArray(data) ? data : data?.accounts || data?.content || []
+  const payload = data?.data || data
+  const accounts = Array.isArray(payload) ? payload : payload?.accounts || payload?.content || []
 
   return accounts.map((account) => ({
     ...account,
     accountId: account.accountId || account.id,
+    accountName:
+      account.accountName ||
+      account.productName ||
+      account.accountProductName ||
+      account.product ||
+      account.accountAlias ||
+      account.name ||
+      account.accountNumber,
     organizationCode: accountOrganizationCode(account),
     institutionName: accountInstitutionName(account),
   }))

@@ -2,7 +2,7 @@
   "users": [
     {
       "id": 1,
-      "nickname": "aaa",
+      "nickname": "qwe",
       "profileIcon": "army-bear",
       "profileBackgroundColor": "#E5FFF4",
       "onboardingCompleted": false,
@@ -690,6 +690,16 @@
       "aiServiceUseAgreed": true,
       "marketingInformationReceiptAgreed": true,
       "agreedAt": "2026-08-05T03:50:05.396Z"
+    },
+    {
+      "id": 13,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-05T07:37:03.657Z"
     }
   ],
   "loginResponses": [],
