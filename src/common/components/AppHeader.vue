@@ -66,10 +66,14 @@ const mode = ref('military')
   position: relative;
   z-index: var(--z-header);
   display: flex;
-  min-height: 76px;
+  flex: 0 0 calc(var(--app-header-height) + var(--safe-area-top));
+  width: 100%;
+  height: calc(var(--app-header-height) + var(--safe-area-top));
   align-items: flex-end;
   gap: var(--space-8);
-  padding: var(--space-10) var(--layout-page-padding);
+  padding: calc(var(--space-10) + var(--safe-area-top))
+    max(var(--layout-page-padding), var(--safe-area-right)) var(--space-10)
+    max(var(--layout-page-padding), var(--safe-area-left));
   background: transparent;
 }
 .app-header--home {
