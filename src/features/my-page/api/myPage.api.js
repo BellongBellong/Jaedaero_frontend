@@ -3,7 +3,12 @@ import { ENDPOINTS } from '@/common/api/endpoints'
 
 export async function getMyPageProfile() {
   const { data } = await apiClient.get(ENDPOINTS.users.me)
-  return data
+  const profile = data?.data || data?.user || data
+
+  return {
+    ...profile,
+    nickname: profile?.nickname || profile?.nickName || profile?.userNickname || profile?.name,
+  }
 }
 
 export async function checkNicknameAvailability(nickname) {

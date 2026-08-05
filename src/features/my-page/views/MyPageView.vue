@@ -361,7 +361,7 @@ onMounted(async () => {
         <span class="menu-icon bank"><img
           :src="bankIcon"
           alt=""
-        ></span><b>연결 계좌</b> <small>{{ connectedAccountCount }}개 연결됨</small><span class="chevron">›</span>
+        ></span><b>연결 은행</b> <small>{{ connectedAccountCount }}개 연결됨</small><span class="chevron">›</span>
       </button>
       <button
         type="button"
