@@ -48,6 +48,25 @@ function toBadgeArray(payload) {
   return payload?.content || payload?.items || payload?.data?.content || payload?.data?.items || []
 }
 
+function toCurrentBadgeStatuses(status) {
+  if (!status) return []
+
+  return [
+    {
+      missionType: 'SAFE',
+      grade: status.safeGrade,
+      missionCompletedCount: status.safeMissionCount,
+      achieved: Boolean(status.safeGrade),
+    },
+    {
+      missionType: 'AGGRESSIVE',
+      grade: status.aggressiveGrade,
+      missionCompletedCount: status.aggressiveMissionCount,
+      achieved: Boolean(status.aggressiveGrade),
+    },
+  ].filter((badge) => badge.grade)
+}
+
 function getBadgeType(badge) {
   const code = String(badge.badgeCode || '').toUpperCase()
   const type = String(
@@ -85,8 +104,8 @@ export function getBadgeImage(type, levelKey) {
   return badgeImages[imageType][levelKey]
 }
 
-export function getBadgeProgress(payload) {
-  const progresses = toBadgeArray(payload)
+export function getBadgeProgress(payload, badgeStatus) {
+  const progresses = [...toBadgeArray(payload), ...toCurrentBadgeStatuses(badgeStatus)]
     .map((badge) => {
       const type = getBadgeType(badge)
       if (!type) return null

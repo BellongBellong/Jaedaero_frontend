@@ -51,7 +51,9 @@ const defaultNotificationSettings = {
   leaveMode: true,
 }
 const notificationSettings = ref({ ...defaultNotificationSettings })
-const badgeProgresses = computed(() => getBadgeProgress(investmentBadges.value))
+const badgeProgresses = computed(() =>
+  getBadgeProgress(investmentBadges.value, profile.value?.investmentBadgeStatus),
+)
 const earnedInvestmentBadges = computed(() => getEarnedBadges(badgeProgresses.value))
 const selectedInvestmentBadge = computed(() =>
   getSelectedBadge(earnedInvestmentBadges.value, selectedBadgeId.value),
@@ -253,16 +255,17 @@ onMounted(async () => {
     localStorage.removeItem('jaedaero-notification-settings')
   }
 
-  const userId = Number(localStorage.getItem('userId'))
   const [profileResult, accountsResult, goalResult, badgesResult] = await Promise.allSettled([
     getMyPageProfile(),
-    userId ? getAccounts(userId) : Promise.resolve([]),
+    getAccounts(),
     getGoal(),
-    getInvestmentBadges({ page: 0, size: 20 }),
+    getInvestmentBadges(),
   ])
   if (profileResult.status === 'fulfilled') profile.value = profileResult.value
   if (accountsResult.status === 'fulfilled') {
-    connectedAccountCount.value = new Set(accountsResult.value.map(({ bankName }) => bankName)).size
+    connectedAccountCount.value = new Set(
+      accountsResult.value.map((account) => account.organizationCode || account.institutionName),
+    ).size
   }
   if (goalResult.status === 'fulfilled') goalAmount.value = goalResult.value?.targetAmount || 0
   if (badgesResult.status === 'fulfilled') investmentBadges.value = badgesResult.value

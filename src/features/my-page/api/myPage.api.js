@@ -27,7 +27,7 @@ export async function getGoal() {
 }
 
 export async function updateGoal(targetAmount) {
-  const { data } = await apiClient.post(ENDPOINTS.goals, { targetAmount })
+  const { data } = await apiClient.put(ENDPOINTS.goals, { targetAmount })
   return data
 }
 
