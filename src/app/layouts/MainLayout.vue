@@ -20,10 +20,20 @@ const route = useRoute()
       :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
     />
-    <main class="main-layout__content">
+
+    <main
+      class="main-layout__content"
+      :class="{ 'main-layout__content--without-navigation': route.meta.hideBottomNavigation }"
+    >
       <RouterView />
     </main>
-    <BottomNavigation v-if="!route.meta.hideBottomNavigation" />
+
+    <div
+      v-if="!route.meta.hideBottomNavigation"
+      class="main-layout__bottom"
+    >
+      <BottomNavigation />
+    </div>
   </MobileFrame>
 </template>
 
@@ -32,6 +42,30 @@ const route = useRoute()
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.main-layout__content::-webkit-scrollbar {
+  display: none;
+}
+
+.main-layout__bottom {
+  position: absolute;
+  z-index: var(--z-navigation, 20);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: calc(var(--bottom-navigation-area-height) + var(--safe-area-bottom));
+  padding-top: 8px;
+  padding-bottom: var(--safe-area-bottom);
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(250 250 250 / 0%), rgb(250 250 250 / 88%) 70%);
+}
+
+.main-layout__bottom > :deep(.bottom-navigation) {
+  pointer-events: auto;
 }
 
 :global(.mobile-frame.mobile-frame--ai-coach) {
@@ -42,12 +76,19 @@ const route = useRoute()
 
 .main-layout__content :deep(.screen) {
   min-height: 100%;
+  overflow: visible;
 }
 
 .main-layout__content :deep(.app-page) {
   min-height: 100%;
-  padding: var(--space-24) var(--layout-page-padding) var(--space-40);
+  padding: var(--space-24) max(var(--layout-page-padding), var(--safe-area-right))
+    calc(var(--page-bottom-navigation-space) + var(--safe-area-bottom))
+    max(var(--layout-page-padding), var(--safe-area-left));
   background: var(--ui-background);
   color: var(--ui-ext);
+}
+
+.main-layout__content--without-navigation :deep(.app-page) {
+  padding-bottom: calc(var(--space-40) + var(--safe-area-bottom));
 }
 </style>
