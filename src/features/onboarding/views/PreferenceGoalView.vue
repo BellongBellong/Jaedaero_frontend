@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import editPencil from '@/assets/onboarding/icons/edit-pencil.png'
+import confirmationEditIcon from '@/assets/onboarding/icons/confirmation-edit.svg'
 import profileAirforce from '@/assets/onboarding/profiles/profile-airforce.png'
 import profileArmy from '@/assets/onboarding/profiles/profile-army.png'
 import profileDefault from '@/assets/onboarding/profiles/profile-default.png'
@@ -181,7 +181,7 @@ function complete() {
                 <article>
                   <img
                     class="summary-pencil"
-                    :src="editPencil"
+                    :src="confirmationEditIcon"
                     alt=""
                   >
                   <span class="summary-icon">{{ selectedPreference.icon }}</span>
@@ -194,7 +194,7 @@ function complete() {
                 <article>
                   <img
                     class="summary-pencil"
-                    :src="editPencil"
+                    :src="confirmationEditIcon"
                     alt=""
                   >
                   <strong class="summary-amount">{{ formattedAmount }}</strong>
@@ -335,60 +335,63 @@ h2 {
 .confirm-modal {
   position: relative;
   width: min(calc(100% - 44px), 353px);
-  padding: 31px 14px 36px;
-  border-radius: 28px;
+  padding: 62px 14px 39px;
+  border-radius: 30px;
   background: #fff;
   box-shadow: 0 18px 50px rgb(0 0 0 / 18%);
 }
 .confirm-close {
   position: absolute;
-  top: 18px;
-  right: 22px;
+  top: 28px;
+  right: 29px;
   padding: 0;
   border: 0;
   background: transparent;
   color: #333;
-  font-size: 27px;
+  color: #555;
+  font-size: 29px;
   line-height: 1;
 }
 .confirm-avatar {
   display: grid;
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 22px;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 25px;
   overflow: hidden;
   place-items: center;
   border-radius: 50%;
   background: #edf1ec;
 }
 .confirm-avatar img {
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
 }
 .confirm-modal h2 {
-  margin: 0 0 34px;
-  color: #777;
+  margin: 0 0 33px;
+  color: #6d6d6d;
   font-size: 18px;
+  line-height: 27px;
   text-align: center;
 }
 .confirm-summary {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  padding: 27px 26px 25px;
-  margin-bottom: 54px;
-  border-radius: 31px;
-  background: #fafafa;
+  gap: 18px;
+  padding: 21px 18px 20px;
+  margin-bottom: 60px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #d5f7e3 0%, #f6f7d9 100%);
 }
 .summary-column {
   display: grid;
-  gap: 18px;
+  gap: 11px;
 }
 .summary-column h3 {
   margin: 0;
   color: #728a70;
-  font-size: 12px;
+  color: #758d77;
+  font-size: 11px;
   font-weight: 800;
   text-align: center;
   white-space: nowrap;
@@ -396,53 +399,53 @@ h2 {
 .confirm-summary article {
   position: relative;
   display: grid;
-  min-height: 121px;
+  min-height: 90px;
   justify-items: center;
   align-content: center;
-  padding: 18px 8px 12px;
-  border-radius: 14px;
+  padding: 13px 7px 10px;
+  border-radius: 16px;
   background: #fff;
 }
 .summary-icon {
-  margin-bottom: 6px;
-  font-size: 16px;
+  margin-bottom: 4px;
+  font-size: 14px;
 }
 .confirm-summary strong {
   color: #555;
-  font-size: 18px;
+  font-size: 15px;
 }
 .confirm-summary em {
-  padding: 7px 12px;
-  margin-top: 7px;
+  padding: 5px 8px;
+  margin-top: 6px;
   border-radius: 18px;
   background: #effff5;
   color: #28d67a;
-  font-size: 12px;
+  font-size: 10px;
   font-style: normal;
   white-space: nowrap;
 }
 .summary-pencil {
   position: absolute;
-  top: 19px;
-  right: 15px;
-  width: 10px;
-  height: 10px;
+  top: 13px;
+  right: 10px;
+  width: 12px;
+  height: 12px;
   object-fit: contain;
-  opacity: 0.45;
 }
 .confirm-summary .summary-amount {
-  padding: 12px 9px;
-  border-radius: 17px;
+  padding: 9px 8px;
+  border-radius: 13px;
   background: #fffdf4;
   color: #f2bd32;
-  font-size: 17px;
+  font-size: 14px;
   white-space: nowrap;
 }
 .confirm-modal .primary-button {
   min-height: 54px;
   background: #59f494;
-  color: #333;
-  font-size: 17px;
+  color: #15552e;
+  font-size: 15px;
+  font-weight: 700;
 }
 .modal-enter-active,
 .modal-leave-active {

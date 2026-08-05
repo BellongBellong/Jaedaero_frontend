@@ -2,10 +2,10 @@
   "users": [
     {
       "id": 1,
-      "nickname": "aaa",
+      "nickname": "bbb",
       "profileIcon": "army-bear",
       "profileBackgroundColor": "#E5FFF4",
-      "onboardingCompleted": true,
+      "onboardingCompleted": false,
       "initialInvestmentPreference": "BALANCED",
       "profileImage": "profile-army.png",
       "profileSource": "PRESET"
@@ -22,7 +22,9 @@
       "dischargeDate": "2027-03-01",
       "payday": 10,
       "monthlySalary": 1200000,
-      "militarySavingsMonthlyAmount": 400000
+      "militarySavingsMonthlyAmount": 400000,
+      "soldierType": "ARMY",
+      "rankName": "이병"
     }
   ],
   "goals": [
@@ -515,6 +517,36 @@
         "marketing"
       ],
       "agreedAt": "2026-07-31T02:49:04.345Z"
+    },
+    {
+      "id": 5,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-05T01:39:10.695Z"
+    },
+    {
+      "id": 6,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-05T01:42:09.967Z"
+    },
+    {
+      "id": 7,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-05T01:44:35.518Z"
     }
   ],
   "loginResponses": [],
