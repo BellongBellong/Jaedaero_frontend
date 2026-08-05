@@ -40,6 +40,18 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '거래내역' },
       },
       {
+        path: 'upcoming-events',
+        name: 'upcoming-events',
+        component: () => import('@/features/dashboard/views/UpcomingEventsView.vue'),
+        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '예정된 이벤트' },
+      },
+      {
+        path: 'monthly-asset-report',
+        name: 'monthly-asset-report',
+        component: () => import('@/features/dashboard/views/MonthlyAssetReportView.vue'),
+        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '이번 달 자산 현황' },
+      },
+      {
         path: 'transactions/detail',
         name: 'transaction-detail',
         component: () => import('@/features/transactions/views/TransactionDetailView.vue'),

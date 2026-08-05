@@ -1,76 +1,73 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-import { getDashboard } from '@/features/dashboard/api/dashboard.api'
+import DailyReportBanner from '@/features/dashboard/components/DailyReportBanner.vue'
+import DashboardAssetSwitcher from '@/features/dashboard/components/DashboardAssetSwitcher.vue'
+import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
+import FinancialDdayCard from '@/features/dashboard/components/FinancialDdayCard.vue'
+import TodayMissionCard from '@/features/dashboard/components/TodayMissionCard.vue'
+import UpcomingEventsCard from '@/features/dashboard/components/UpcomingEventsCard.vue'
+import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
+import { dashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
 
-const dashboard = ref(null)
-const loading = ref(true)
-const errorMessage = ref('')
+const router = useRouter()
+const showEventModal = ref(false)
+const { events: upcomingEvents, addEvent } = useUpcomingEvents()
 
-onMounted(async () => {
-  try {
-    dashboard.value = await getDashboard()
-  } catch {
-    errorMessage.value = '대시보드 정보를 불러오지 못했어요.'
-  } finally {
-    loading.value = false
-  }
-})
+function saveEvent(event) {
+  addEvent(event)
+  showEventModal.value = false
+}
 </script>
 
 <template>
   <main class="dashboard screen content-screen app-page">
-    <p class="eyebrow">
-      온보딩 완료
-    </p>
-    <h1>제대로 시작할 준비가 됐어요 🎉</h1>
-    <p v-if="loading">
-      자산 정보를 불러오는 중...
-    </p>
-    <p
-      v-else-if="errorMessage"
-      class="form-error"
-    >
-      {{ errorMessage }}
-    </p>
-    <article v-else-if="dashboard">
-      <span>현재 총자산</span>
-      <strong>{{ Number(dashboard.totalAsset || 0).toLocaleString('ko-KR') }}원</strong>
-    </article>
-    <RouterLink :to="{ name: 'transactions' }">
-      거래내역 보기
-    </RouterLink>
+    <DailyReportBanner v-bind="dashboardMock.dailyReport" />
+
+    <FinancialDdayCard v-bind="dashboardMock.financialDday" />
+
+    <div class="dashboard__quick-cards">
+      <UpcomingEventsCard
+        :events="upcomingEvents"
+        :remaining-count="Math.max(0, upcomingEvents.length - 2)"
+        @add="showEventModal = true"
+        @show-more="router.push({ name: 'upcoming-events' })"
+      />
+      <TodayMissionCard
+        :missions="dashboardMock.missions"
+        :remaining-count="Math.max(0, dashboardMock.missions.length - 2)"
+        @show-more="router.push({ name: 'challenge' })"
+      />
+    </div>
+
+    <DashboardAssetSwitcher
+      :monthly="dashboardMock.assetSummary.monthly"
+      :forecast="dashboardMock.assetSummary.forecast"
+      @view-report="router.push({ name: 'monthly-asset-report' })"
+    />
+
+    <EventAddModal
+      v-if="showEventModal"
+      @close="showEventModal = false"
+      @save="saveEvent"
+    />
   </main>
 </template>
 
 <style scoped>
-.eyebrow {
-  color: var(--green-700);
-  font-weight: var(--weight-bold);
-}
-h1 {
-  max-width: 310px;
-  font-size: var(--text-h3);
-  line-height: var(--leading-normal);
-}
-article {
-  display: grid;
-  gap: 8px;
-  padding: var(--space-24);
-  margin-top: var(--space-32);
-  border-radius: var(--radius-lg);
-  background: var(--gray-900);
-  color: var(--white);
-}
-article strong {
-  font-size: var(--text-h4);
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background:
+    radial-gradient(circle at 94% 78%, rgb(98 255 156 / 35%), transparent 36%),
+    radial-gradient(circle at 0% 88%, rgb(255 229 114 / 50%), transparent 42%), var(--ui-background);
 }
 
-a {
-  display: inline-block;
-  margin-top: var(--space-24);
-  color: var(--green-800);
-  font-weight: var(--weight-bold);
+.dashboard__quick-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 </style>
