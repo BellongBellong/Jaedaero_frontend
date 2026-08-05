@@ -154,7 +154,7 @@ onMounted(loadAccounts)
       <button
         type="button"
         class="add-button"
-        @click="router.push({ name: 'connect-accounts' })"
+        @click="router.push({ name: 'connect-accounts', query: { source: 'my-page' } })"
       >
         추가 연동하기
       </button>

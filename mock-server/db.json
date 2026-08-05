@@ -2,7 +2,7 @@
   "users": [
     {
       "id": 1,
-      "nickname": "bbb",
+      "nickname": "aaa",
       "profileIcon": "army-bear",
       "profileBackgroundColor": "#E5FFF4",
       "onboardingCompleted": false,
@@ -335,12 +335,22 @@
     {
       "id": 1,
       "userId": 1,
-      "badgeType": "BALANCED",
-      "level": 2,
-      "safeCount": 8,
-      "aggressiveCount": 7,
-      "missionsUntilNextLevel": 5,
+      "badgeType": "SAFE",
+      "level": 4,
+      "safeCount": 105,
+      "aggressiveCount": 0,
+      "missionsUntilNextLevel": 195,
       "unlockedAt": "2026-07-20T12:00:00+09:00"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "badgeType": "AGGRESSIVE",
+      "level": 3,
+      "safeCount": 0,
+      "aggressiveCount": 103,
+      "missionsUntilNextLevel": 197,
+      "unlockedAt": "2026-07-21T12:00:00+09:00"
     }
   ],
   "events": [
@@ -547,6 +557,56 @@
       "aiServiceUseAgreed": true,
       "marketingInformationReceiptAgreed": true,
       "agreedAt": "2026-08-05T01:44:35.518Z"
+    },
+    {
+      "id": 8,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-05T02:07:01.137Z"
+    },
+    {
+      "id": 9,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-05T02:27:46.725Z"
+    },
+    {
+      "id": 10,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-05T02:34:15.611Z"
+    },
+    {
+      "id": 11,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-05T02:43:43.226Z"
+    },
+    {
+      "id": 12,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-05T03:50:05.396Z"
     }
   ],
   "loginResponses": [],

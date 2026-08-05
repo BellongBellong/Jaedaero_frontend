@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import militarySavingsIcon from '@/assets/onboarding/icons/military-savings.svg'
 import personalAssetsIcon from '@/assets/onboarding/icons/personal-assets.svg'
@@ -8,6 +8,7 @@ import salaryAccountIcon from '@/assets/onboarding/icons/salary-account.svg'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 
+const route = useRoute()
 const router = useRouter()
 const selectedAsset = ref('')
 
@@ -19,7 +20,11 @@ function selectAsset(assetType) {
 
 function connect() {
   if (!canConnect.value) return
-  router.push({ name: 'connect-codef-bank', params: { assetType: selectedAsset.value } })
+  router.push({
+    name: 'connect-codef-bank',
+    params: { assetType: selectedAsset.value },
+    query: route.query,
+  })
 }
 </script>
 
