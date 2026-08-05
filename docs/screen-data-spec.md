@@ -322,6 +322,7 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | `simulationId`         | `number \| null`                  |    O |
 | `analysisType`         | `AnalysisType`                    |    O |
 | `summary`              | `string`                          |    O |
+| `summaryHighlight`     | `string \| null`                  |    X |
 | `causes`               | `AiAnalysisCause[]`               |    O |
 | `recommendedScenarios` | `AiRecommendedScenarioResponse[]` |    O |
 | `spendingPattern`      | `SpendingPatternResponse`         |    O |
@@ -363,12 +364,11 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 
 ### AiRecommendedProductResponse
 
-| 필드        | 타입          | 필수 |
-| ----------- | ------------- | ---: |
-| `productId` | `number`      |    O |
-| `name`      | `string`      |    O |
-| `rating`    | `number(1~5)` |    O |
-| `tags`      | `string[]`    |    O |
+| 필드        | 타입       | 필수 |
+| ----------- | ---------- | ---: |
+| `productId` | `number`   |    O |
+| `name`      | `string`   |    O |
+| `tags`      | `string[]` |    O |
 
 ### AiRecommendedScenarioResponse
 
@@ -534,6 +534,13 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | `reason`             | `string`            |    O |
 | `isBeta`             | `boolean`           |    O |
 | `dataAsOf`           | `string(date-time)` |    O |
+| `badge`              | `string \| null`    |    X |
+| `rateLabel`          | `string`            |    X |
+| `rateTone`           | `NEUTRAL \| YELLOW \| GREEN` |    X |
+| `minDepositLabel`    | `string`            |    X |
+| `maxDepositLabel`    | `string`            |    X |
+
+> `badge` 이하 필드는 투자상품 추천 화면(3-2) 구현을 위한 FE 확장 필드로, 백엔드 확정 전까지 목 서버 기준으로 관리합니다. `riskGrade`는 화면에서 1=매우낮음, 2=낮음, 3=보통, 4=높음, 5=매우높음 라벨로 표시합니다.
 
 ## 18. 군인 혜택 화면
 
