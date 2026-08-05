@@ -29,6 +29,7 @@ async function handleLogin(provider) {
 
       localStorage.setItem('accessToken', response.accessToken)
       localStorage.setItem('refreshToken', response.refreshToken)
+      localStorage.setItem('userId', String(response.user?.userId || 1))
       await router.push({
         name:
           (response.user?.onboardingCompleted ?? response.onboardingCompleted)

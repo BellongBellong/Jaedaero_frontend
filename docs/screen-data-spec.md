@@ -203,6 +203,8 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | 필드                  | 타입                | 필수 | 설명               |
 | --------------------- | ------------------- | ---: | ------------------ |
 | `id`                  | `number`            |    O | 계좌 ID            |
+| `organizationCode`    | `string`            |    O | CODEF 금융기관 코드 |
+| `institutionName`     | `string`            |    O | 금융기관 표시명     |
 | `bankName`            | `string`            |    O | 금융기관명         |
 | `accountName`         | `string`            |    O | 계좌명             |
 | `accountNumberMasked` | `string`            |    O | 마스킹 번호        |

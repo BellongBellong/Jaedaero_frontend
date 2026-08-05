@@ -13,6 +13,10 @@ import {
   getCodefBanks,
   getCodefSecurities,
 } from '@/features/accounts/api/accounts.api'
+import {
+  matchesAccountInstitution,
+  normalizeInstitutionName,
+} from '@/features/accounts/composables/institutionMapping'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
@@ -22,6 +26,7 @@ const onboarding = useOnboardingStore()
 const banks = ref([])
 const securities = ref([])
 const loading = ref(false)
+const accountRequestController = ref(null)
 const loadingInstitutions = ref(true)
 const errorMessage = ref('')
 const institutionModalOpen = ref(false)
@@ -87,6 +92,8 @@ const form = ref({
   birthDate: '',
 })
 const allowsSecurities = computed(() => route.params.assetType === 'personal-assets')
+const isMockMode =
+  import.meta.env.MODE === 'mock' || import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 
 const canSubmit = computed(
   () => form.value.organizationCode && form.value.loginId && form.value.password && !loading.value,
@@ -165,15 +172,9 @@ const securityLogoNames = [
   'IBK',
 ]
 
-function normalizeInstitutionName(name) {
-  return String(name || '')
-    .replace(/(주식회사|은행|뱅크|증권|금융투자|투자증권|\s)/g, '')
-    .toLowerCase()
-}
-
-function institutionLogo(institution, selected) {
+function institutionLogo(institution, selected, businessType = form.value.businessType) {
   const selectedSuffix = selected ? '-selected' : ''
-  if (form.value.businessType === 'BK') {
+  if (businessType === 'BK') {
     const logoKey =
       institution.logoKey ||
       bankLogoRules.find(([name]) => institution.displayName.includes(name))?.[1] ||
@@ -190,6 +191,14 @@ function institutionLogo(institution, selected) {
   return institutionAssets[
     `/src/assets/onboarding/institutions/security-${safeIndex}${selectedSuffix}.svg`
   ]
+}
+
+function isInstitutionConnected(institution) {
+  return connectedInstitutions.value.some(
+    (connection) =>
+      connection.businessType === form.value.businessType &&
+      connection.institution.organizationCode === institution.organizationCode,
+  )
 }
 
 function markConnected() {
@@ -225,25 +234,38 @@ function retryAccountConnection() {
 }
 
 function confirmInstitution() {
-  if (!pendingInstitution.value) return
+  if (!pendingInstitution.value || isInstitutionConnected(pendingInstitution.value)) return
   form.value.organizationCode = pendingOrganizationCode.value
   institutionModalOpen.value = false
   errorMessage.value = ''
 }
 
 function togglePendingInstitution(organizationCode) {
+  const institution = visibleInstitutions.value.find(
+    (item) => item.organizationCode === organizationCode,
+  )
+  if (!institution || isInstitutionConnected(institution)) return
+
   pendingOrganizationCode.value =
     pendingOrganizationCode.value === organizationCode ? '' : organizationCode
 }
 
 function accountId(account, index) {
-  return account.id ?? `discovered-${index}`
+  return account.accountId ?? account.id ?? `discovered-${index}`
 }
 
 function accountRequirement(account) {
-  const role = account.accountRole || account.accountType
+  const role = String(account.accountRole || account.accountType || '').toUpperCase()
+  const accountName = [account.productName, account.accountName, account.product]
+    .filter(Boolean)
+    .join(' ')
+    .replace(/\s/g, '')
+  const isMilitarySavings =
+    role === 'MILITARY_SAVINGS' ||
+    accountName.includes('장병내일준비적금') ||
+    accountName.includes('군인적금')
 
-  if (route.params.assetType === 'military-savings' && role === 'MILITARY_SAVINGS') {
+  if (isMilitarySavings) {
     return 'required'
   }
   if (route.params.assetType === 'salary-account' && ['CHECKING', 'SALARY'].includes(role)) {
@@ -265,13 +287,12 @@ function accountDetail(account) {
     const [year, month, day] = String(account.openedAt).slice(0, 10).split('-')
     return `가입일 : ${year}년 ${Number(month)}월 ${Number(day)}일`
   }
-  return account.accountNumberMasked || account.accountNumber || '계좌번호 정보 없음'
-}
-
-function accountRoleForRoute() {
-  if (route.params.assetType === 'military-savings') return 'MILITARY_SAVINGS'
-  if (route.params.assetType === 'salary-account') return 'CHECKING'
-  return form.value.businessType === 'ST' ? 'INVESTMENT' : 'DEPOSIT'
+  return (
+    account.accountMasked ||
+    account.accountNumberMasked ||
+    account.accountNumber ||
+    '계좌번호 정보 없음'
+  )
 }
 
 function toggleAccount(account, index) {
@@ -289,6 +310,13 @@ function toggleAccount(account, index) {
 
 function confirmAccounts() {
   if (!selectedAccountIds.value.length) return
+
+  if (!selectedInstitution.value || isInstitutionConnected(selectedInstitution.value)) {
+    accountsModalOpen.value = false
+    showConnectedSummary.value = true
+    return
+  }
+
   const selectedAccounts = discoveredAccounts.value.filter((account, index) =>
     selectedAccountIds.value.includes(accountId(account, index)),
   )
@@ -324,40 +352,32 @@ function nextFromSummary() {
 async function submit() {
   if (!canSubmit.value) return
 
+  const userId = Number(localStorage.getItem('userId')) || (isMockMode ? 1 : 0)
+  if (!userId) {
+    errorMessage.value = '로그인 사용자 정보를 찾을 수 없어요. 다시 로그인해주세요.'
+    return
+  }
+
+  const requestController = new AbortController()
+  accountRequestController.value = requestController
   loading.value = true
   accountsEmptyModalOpen.value = false
   errorMessage.value = ''
   try {
-    const userId = Number(localStorage.getItem('userId')) || undefined
-    await connectAccount({
-      userId,
-      organizationCode: form.value.organizationCode,
-      businessType: form.value.businessType,
-      loginId: form.value.loginId,
-      password: form.value.password,
-      birthDate: form.value.birthDate || undefined,
-      accountRole: accountRoleForRoute(),
-      isPrimary: true,
-    })
-    const connectedAccounts = await getAccounts(userId)
-    const institutionName = normalizeInstitutionName(selectedInstitution.value?.displayName)
-    discoveredAccounts.value = (Array.isArray(connectedAccounts) ? connectedAccounts : []).filter(
-      (account) => {
-        if (account.organizationCode) {
-          return account.organizationCode === form.value.organizationCode
-        }
-
-        const accountInstitutionName = normalizeInstitutionName(
-          account.bankName || account.institutionName || account.organizationName,
-        )
-        if (!accountInstitutionName) return false
-
-        return (
-          accountInstitutionName === institutionName ||
-          accountInstitutionName.includes(institutionName) ||
-          institutionName.includes(accountInstitutionName)
-        )
+    await connectAccount(
+      {
+        userId,
+        organizationCode: form.value.organizationCode,
+        businessType: form.value.businessType,
+        loginId: form.value.loginId,
+        password: form.value.password,
+        birthDate: form.value.birthDate || undefined,
       },
+      { signal: requestController.signal },
+    )
+    const connectedAccounts = await getAccounts(userId, { signal: requestController.signal })
+    discoveredAccounts.value = connectedAccounts.filter((account) =>
+      matchesAccountInstitution(account, selectedInstitution.value),
     )
 
     if (!discoveredAccounts.value.length) {
@@ -375,11 +395,28 @@ async function submit() {
     requiredAccountNoticeId.value = null
     accountsModalOpen.value = true
   } catch (error) {
+    if (error.code === 'ERR_CANCELED') return
+
+    const responseData = error.response?.data
     errorMessage.value =
-      error.response?.data?.message || '계좌 연결에 실패했습니다. 입력 정보를 확인해 주세요.'
+      responseData?.message ||
+      responseData?.error ||
+      (typeof responseData === 'string' && !responseData.includes('<!doctype')
+        ? responseData
+        : '') ||
+      '계좌 연결에 실패했습니다. 은행 정보 또는 서버 설정을 확인해 주세요.'
   } finally {
-    loading.value = false
+    if (accountRequestController.value === requestController) {
+      accountRequestController.value = null
+      loading.value = false
+    }
   }
+}
+
+function cancelAccountRequest() {
+  accountRequestController.value?.abort()
+  accountRequestController.value = null
+  loading.value = false
 }
 
 onMounted(async () => {
@@ -427,7 +464,12 @@ onMounted(async () => {
           :key="connection.id"
           class="connected-card"
         >
-          <span class="connected-card-icon">🏦</span>
+          <span class="connected-card-icon">
+            <img
+              :src="institutionLogo(connection.institution, false, connection.businessType)"
+              alt=""
+            >
+          </span>
           <span class="connected-card-copy">
             <span>
               <b>{{ connection.institution.displayName }}</b>
@@ -435,18 +477,19 @@ onMounted(async () => {
             </span>
             <em>
               {{
-                connection.accounts.map((account) => account.accountName || '금융 계좌').join(', ')
+                connection.accounts
+                  .map((account) => account.productName || account.accountName || '금융 계좌')
+                  .join(', ')
               }}
             </em>
           </span>
           <span
-            class="connected-card-arrow"
+            class="connected-card-check"
             aria-hidden="true"
-          >›</span>
+          >✓</span>
         </article>
         <p class="additional-tip">
-          💡 기타 개인계좌가 있다면 추가로 더 연동해보세요!<br>
-          나중에 추가 연동도 가능해요.
+          💡 군적금 계좌가 있다면 연동해보세요!
         </p>
       </div>
 
@@ -618,8 +661,16 @@ onMounted(async () => {
               :key="institution.organizationCode"
               type="button"
               class="institution-row"
-              :class="{ selected: pendingOrganizationCode === institution.organizationCode }"
-              :aria-label="`${institution.displayName} 선택`"
+              :class="{
+                selected: pendingOrganizationCode === institution.organizationCode,
+                connected: isInstitutionConnected(institution),
+              }"
+              :aria-label="
+                isInstitutionConnected(institution)
+                  ? `${institution.displayName} 연결됨`
+                  : `${institution.displayName} 선택`
+              "
+              :disabled="isInstitutionConnected(institution)"
               @click="togglePendingInstitution(institution.organizationCode)"
             >
               <img
@@ -631,6 +682,11 @@ onMounted(async () => {
                 "
                 alt=""
               >
+              <span
+                v-if="isInstitutionConnected(institution)"
+                class="institution-connected-check"
+                aria-hidden="true"
+              >✓</span>
             </button>
             <p
               v-if="loadingInstitutions"
@@ -667,6 +723,10 @@ onMounted(async () => {
           role="status"
           aria-live="polite"
         >
+          <span
+            class="loading-spinner"
+            aria-hidden="true"
+          />
           <div class="loading-copy">
             <h2>
               선택한 은행으로<br>
@@ -688,9 +748,16 @@ onMounted(async () => {
             <span
               class="loading-check"
               aria-hidden="true"
-            >✓</span>
+            />
           </div>
         </section>
+        <button
+          type="button"
+          class="loading-cancel"
+          @click="cancelAccountRequest"
+        >
+          취소
+        </button>
       </div>
     </Transition>
 
@@ -809,7 +876,7 @@ onMounted(async () => {
                 >
                 <span class="discovered-account-copy">
                   <span>
-                    <b>{{ account.accountName || '금융 계좌' }}</b>
+                    <b>{{ account.productName || account.accountName || '금융 계좌' }}</b>
                     <small :class="accountRequirement(account)">
                       {{
                         accountRequirement(account) === 'required'
@@ -868,7 +935,9 @@ onMounted(async () => {
 }
 
 .step-content {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   padding: 22px 6px 20px;
 }
 
@@ -910,42 +979,50 @@ onMounted(async () => {
 }
 
 .connected-summary {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 9px;
 }
 
 .connected-summary h2 {
-  margin: 0 10px 2px;
-  color: #7c8e77;
-  font-size: 16px;
+  margin: 0 8px 1px;
+  color: #6d906e;
+  font-size: 14px;
   line-height: 24px;
 }
 
 .connected-card {
   display: flex;
-  min-height: 88px;
+  min-height: 70px;
   align-items: center;
-  gap: 14px;
-  padding: 20px;
-  border-radius: 28px;
+  gap: 12px;
+  padding: 11px 16px;
+  border-radius: 24px;
   background: #fff;
 }
 
 .connected-card-icon {
   display: grid;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
   place-items: center;
-  border-radius: 14px;
+  border-radius: 13px;
   background: #f5f5f7;
-  font-size: 23px;
+  overflow: hidden;
+}
+
+.connected-card-icon img {
+  width: 42px;
+  height: 42px;
+  transform: scale(1.32);
 }
 
 .connected-card-copy {
   display: grid;
   min-width: 0;
-  gap: 6px;
+  gap: 3px;
 }
 
 .connected-card-copy > span {
@@ -955,49 +1032,51 @@ onMounted(async () => {
 }
 
 .connected-card-copy b {
-  font-size: 15px;
+  color: #333;
+  font-size: 14px;
 }
 
 .connected-card-copy small {
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 20px;
   background: #e4fff0;
   color: #22c55e;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
 }
 
 .connected-card-copy em {
   overflow: hidden;
-  max-width: 215px;
-  color: #999;
-  font-size: 11px;
+  max-width: 210px;
+  color: #9c9c9c;
+  font-size: 10px;
   font-style: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.connected-card-arrow {
+.connected-card-check {
   margin-left: auto;
-  color: #999;
-  font-size: 28px;
+  color: #56f497;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .additional-tip {
   padding: 10px 14px;
-  margin: 6px 0 0;
-  border-radius: 10px;
+  margin: auto 0 0;
+  border-radius: 12px;
   background: #effff5;
-  color: #657b6c;
-  font-size: 11px;
-  line-height: 17px;
+  color: #7c9b80;
+  font-size: 10px;
+  line-height: 16px;
 }
 
 .summary-actions {
   display: grid;
-  grid-template-columns: 1fr 1.35fr;
-  gap: 10px;
-  margin-left: 4px;
+  grid-template-columns: 0.68fr 1.55fr;
+  gap: 12px;
+  margin: 0 4px;
 }
 
 .summary-actions button {
@@ -1005,15 +1084,15 @@ onMounted(async () => {
   border: 0;
   border-radius: 28px;
   background: #ececec;
-  color: #777;
+  color: #999;
   cursor: pointer;
   font-size: 16px;
   font-weight: 700;
 }
 
 .summary-actions button:last-child {
-  background: #303030;
-  color: #fff;
+  background: #56f497;
+  color: #173522;
 }
 
 .account-fields {
@@ -1225,6 +1304,7 @@ select:focus {
 }
 
 .institution-row {
+  position: relative;
   display: grid;
   width: 74px;
   height: 74px;
@@ -1240,10 +1320,31 @@ select:focus {
   background: transparent;
 }
 
+.institution-row.connected {
+  cursor: default;
+  opacity: 0.62;
+}
+
 .institution-row img {
   display: block;
   width: 74px;
   height: 74px;
+}
+
+.institution-connected-check {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #56f497;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .institution-empty {
@@ -1282,6 +1383,8 @@ select:focus {
 
 .account-status-backdrop {
   align-items: center;
+  flex-direction: column;
+  justify-content: center;
   padding: 0;
 }
 
@@ -1293,8 +1396,21 @@ select:focus {
 }
 
 .loading-sheet {
-  min-height: 427px;
-  padding: 109px 27px 30px;
+  width: calc(100% - 52px);
+  min-height: 366px;
+  padding: 40px 20px 36px;
+  border-radius: 46px;
+}
+
+.loading-spinner {
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 31px;
+  border: 8px solid #ededed;
+  border-right-color: #58f49a;
+  border-radius: 50%;
+  animation: loading-spin 0.85s linear infinite;
 }
 
 .loading-copy {
@@ -1304,32 +1420,49 @@ select:focus {
 .loading-copy h2 {
   margin: 0;
   color: #333;
-  font-size: 23px;
-  line-height: 35px;
+  font-size: 20px;
+  line-height: 30px;
 }
 
 .loading-copy p {
-  margin: 5px 0 27px;
+  margin: 4px 0 25px;
   color: #999;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .loading-bank-card {
   display: flex;
-  min-height: 90px;
+  min-height: 88px;
   align-items: center;
-  gap: 14px;
-  padding: 20px;
-  border-radius: 27px;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid #ddffeb;
+  border-radius: 28px;
   background: #fff;
-  box-shadow: 0 0 12px rgb(88 244 154 / 28%);
+  box-shadow: 0 0 12px rgb(88 244 154 / 18%);
 }
 
 .loading-check {
-  margin-left: auto;
-  color: #58f49a;
-  font-size: 21px;
-  font-weight: 700;
+  display: none;
+}
+
+.loading-cancel {
+  width: calc(100% - 140px);
+  min-height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 28px;
+  margin-top: 76px;
+  background: #ececef;
+  color: #c5c5c5;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .empty-sheet {
