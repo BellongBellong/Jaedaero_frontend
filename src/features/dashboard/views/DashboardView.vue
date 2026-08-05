@@ -59,7 +59,8 @@ function saveEvent(event) {
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  width: 100%;
+  gap: var(--dashboard-gap);
   background:
     radial-gradient(circle at 94% 78%, rgb(98 255 156 / 35%), transparent 36%),
     radial-gradient(circle at 0% 88%, rgb(255 229 114 / 50%), transparent 42%), var(--ui-background);
@@ -68,6 +69,12 @@ function saveEvent(event) {
 .dashboard__quick-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--dashboard-gap);
+}
+
+@media (max-width: 350px) {
+  .dashboard__quick-cards {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

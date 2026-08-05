@@ -1,47 +1,157 @@
+export const dashboardResponses = [
+  {
+    asOf: '2026-07-29T20:00:00+09:00',
+    nickname: 'aaa',
+    rank: 'PRIVATE',
+    dischargeDday: 60,
+    financialDischargeDday: 54,
+    totalAsset: 8000000,
+    monthlyAssetChange: 15000,
+    targetAmount: 17000000,
+    goalAchievementRate: 80.2,
+    remainingTargetAmount: 3366000,
+    actualDischargeDate: '2026-09-26',
+    financialDischargeDate: '2026-09-20',
+    financialDischargeDifferenceDays: 6,
+    projectedAssetAtDischarge: 13540000,
+    assetSnapshot: {
+      income: 1905000,
+      previousIncome: 1800000,
+      investment: 420000,
+      investmentChange: 15000,
+      spending: 154000,
+      spendingTarget: 100000,
+    },
+    dailyBriefing: {
+      id: 1,
+      greeting: '저녁은 맛있게 드셨나요?',
+      title: '오늘의 금융 AI 리포트',
+      date: '2026-07-29',
+    },
+    todayMission: {
+      id: 1,
+      title: '오늘의 리포트 확인',
+      completed: true,
+    },
+    upcomingEvents: [
+      {
+        id: 1,
+        title: '연가',
+        date: '2026-08-14',
+        dday: 1,
+      },
+      {
+        id: 2,
+        title: '말출',
+        date: '2026-08-14',
+        dday: 20,
+      },
+    ],
+    assetForecast: [
+      { month: '2026-02', expectedAsset: 8000000, targetAsset: 8200000 },
+      { month: '2026-03', expectedAsset: 9300000, targetAsset: 9800000 },
+      { month: '2026-04', expectedAsset: 10800000, targetAsset: 11500000 },
+      { month: '2026-05', expectedAsset: 12100000, targetAsset: 13200000 },
+      { month: '2026-06', expectedAsset: 13900000, targetAsset: 15100000 },
+      { month: '2026-07', expectedAsset: 15400000, targetAsset: 17000000 },
+    ],
+  },
+]
+
+export const eventResponses = [
+  {
+    id: 1,
+    userId: 1,
+    eventType: 'PAYDAY',
+    title: '월급날',
+    startDate: '2026-08-10',
+    endDate: '2026-08-10',
+    expectedExpense: 0,
+    notificationEnabled: true,
+  },
+  {
+    id: 2,
+    userId: 1,
+    eventType: 'VACATION',
+    title: '8월 정기휴가',
+    startDate: '2026-08-07',
+    endDate: '2026-08-10',
+    expectedExpense: 300000,
+    notificationEnabled: true,
+    autoVacationMode: true,
+  },
+  {
+    id: 3,
+    userId: 1,
+    eventType: 'PROMOTION',
+    title: '병장 진급',
+    startDate: '2026-09-01',
+    endDate: '2026-09-01',
+    expectedExpense: 50000,
+    notificationEnabled: true,
+  },
+]
+
+const response = dashboardResponses[0]
+const toTenThousandWon = (amount) => Number(amount || 0) / 10000
+const incomeChangeRate = response.assetSnapshot.previousIncome
+  ? Math.round(
+      ((response.assetSnapshot.income - response.assetSnapshot.previousIncome) /
+        response.assetSnapshot.previousIncome) *
+        1000,
+    ) / 10
+  : 0
+const investmentChangeRate = response.assetSnapshot.investment
+  ? Math.round(
+      (response.assetSnapshot.investmentChange / response.assetSnapshot.investment) * 1000,
+    ) / 10
+  : 0
+
 export const dashboardMock = {
+  response,
   dailyReport: {
-    greeting: '저녁은 맛있게 드셨나요?',
-    title: '오늘의 금융 AI 리포트',
-    date: '2026-07-29',
+    greeting: response.dailyBriefing?.greeting,
+    title: response.dailyBriefing?.title,
   },
   financialDday: {
-    financialDday: 54,
-    actualDday: 60,
-    actualDischargeDate: '2026-09-26',
-    differenceDays: 4,
-    achievementRate: 80.2,
-    currentAmount: 1354,
-    netAsset: 800,
-    targetAmount: 1700,
+    financialDday: response.financialDischargeDday,
+    actualDday: response.dischargeDday,
+    financialDischargeDate: response.financialDischargeDate,
+    actualDischargeDate: response.actualDischargeDate,
+    achievementRate: response.goalAchievementRate,
+    currentAsset: toTenThousandWon(response.totalAsset),
+    targetAmount: toTenThousandWon(response.targetAmount),
   },
-  missions: [
-    { id: 1, title: '오늘의 리포트 확인', completed: true },
-    { id: 2, title: '나라사랑카드\n혜택 확인하기', completed: false },
-    { id: 3, title: '이번 달 소비 확인하기', completed: false },
-    { id: 4, title: '저축 목표 점검하기', completed: false },
-  ],
+  missions: response.todayMission ? [response.todayMission] : [],
+  events: eventResponses,
   assetSummary: {
     monthly: {
       income: {
-        amount: 1905000,
-        changeRate: 15,
-        description: '병장 월급 1,800,000원',
+        amount: response.assetSnapshot.income,
+        changeRate: incomeChangeRate,
+        description: `이전 수입 ${response.assetSnapshot.previousIncome.toLocaleString('ko-KR')}원`,
       },
       investment: {
-        amount: 420000,
-        changeAmount: 15000,
-        changeRate: 15,
+        amount: response.assetSnapshot.investment,
+        changeAmount: response.assetSnapshot.investmentChange,
+        changeRate: investmentChangeRate,
       },
       spending: {
-        amount: 154000,
-        targetAmount: 100000,
+        amount: response.assetSnapshot.spending,
+        targetAmount: response.assetSnapshot.spendingTarget,
       },
     },
     forecast: {
-      totalAmount: 18540000,
-      labels: ['2월', '3월', '4월', '5월', '6월', '현재'],
-      expected: [800, 980, 1160, 1320, 1560, 1740],
-      target: [800, 1050, 1290, 1510, 1780, 2050],
+      totalAmount: response.projectedAssetAtDischarge,
+      labels: (response.assetForecast ?? []).map(({ month }, index, items) =>
+        index === items.length - 1 ? '현재' : `${Number(month.slice(5))}월`,
+      ),
+      expected: (response.assetForecast ?? []).map(({ expectedAsset }) =>
+        toTenThousandWon(expectedAsset),
+      ),
+      target: (response.assetForecast ?? []).map(({ targetAsset }) =>
+        toTenThousandWon(targetAsset),
+      ),
     },
   },
 }
