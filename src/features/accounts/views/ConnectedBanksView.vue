@@ -9,6 +9,10 @@ import bankKakao from '@/assets/onboarding/institutions/bank-kakao.svg'
 import bankShinhan from '@/assets/onboarding/institutions/bank-shinhan.svg'
 import bankToss from '@/assets/onboarding/institutions/bank-toss.svg'
 import { getAccounts } from '@/features/accounts/api/accounts.api'
+import {
+  accountInstitutionKey,
+  accountInstitutionName,
+} from '@/features/accounts/composables/institutionMapping'
 
 const router = useRouter()
 const accounts = ref([])
@@ -37,12 +41,17 @@ const connectedBanks = computed(() => {
   const grouped = new Map()
 
   accounts.value.forEach((account) => {
-    const bankName = account.bankName || '연결 은행'
-    if (!grouped.has(bankName)) grouped.set(bankName, [])
-    grouped.get(bankName).push(account)
+    const institutionKey = accountInstitutionKey(account)
+    if (!grouped.has(institutionKey)) {
+      grouped.set(institutionKey, {
+        bankName: accountInstitutionName(account),
+        accounts: [],
+      })
+    }
+    grouped.get(institutionKey).accounts.push(account)
   })
 
-  return Array.from(grouped, ([bankName, bankAccounts]) => ({
+  return Array.from(grouped.values(), ({ bankName, accounts: bankAccounts }) => ({
     bankName,
     accounts: bankAccounts,
     descriptions: bankAccounts.map(
@@ -145,7 +154,7 @@ onMounted(loadAccounts)
       <button
         type="button"
         class="add-button"
-        @click="router.push({ name: 'connect-accounts' })"
+        @click="router.push({ name: 'connect-accounts', query: { source: 'my-page' } })"
       >
         추가 연동하기
       </button>

@@ -43,12 +43,20 @@ const paginate = (items, page = 0, size = 20) => {
 }
 
 server.post('/api/v1/auth/login', (req, res) => {
+  const user = first('users')
   const response = first('loginResponses', {
     accessToken: 'mock-access-token',
     refreshToken: 'mock-refresh-token',
-    onboardingCompleted: first('users')?.onboardingCompleted || false,
+    onboardingCompleted: user?.onboardingCompleted || false,
   })
-  res.status(200).json({ ...response, provider: req.body?.socialType || 'GOOGLE' })
+  res.status(200).json({
+    ...response,
+    user: response.user || {
+      userId: user?.id || 1,
+      onboardingCompleted: response.onboardingCompleted ?? user?.onboardingCompleted ?? false,
+    },
+    provider: req.body?.socialType || 'GOOGLE',
+  })
 })
 
 server.post('/api/v1/auth/refresh', (_req, res) => {
@@ -123,6 +131,24 @@ server.post('/api/v1/goals', (req, res) => {
   res.status(201).json(goal)
 })
 server.get('/api/v1/goals', (_req, res) => res.status(200).json(first('goals')))
+
+server.get('/api/v1/codef/institutions/banks', (_req, res) =>
+  res.status(200).json([
+    { organizationCode: '0004', displayName: '국민은행' },
+    { organizationCode: '0003', displayName: '기업은행' },
+    { organizationCode: '0088', displayName: '신한은행' },
+    { organizationCode: '0081', displayName: '하나은행' },
+    { organizationCode: '0011', displayName: '농협은행' },
+    { organizationCode: '0020', displayName: '우리은행' },
+  ]),
+)
+server.get('/api/v1/codef/institutions/securities', (_req, res) =>
+  res.status(200).json([
+    { organizationCode: '0238', displayName: '미래에셋증권' },
+    { organizationCode: '0243', displayName: '한국투자증권' },
+    { organizationCode: '0218', displayName: 'KB증권' },
+  ]),
+)
 
 server.post('/api/v1/accounts/connect', (_req, res) =>
   res.status(201).json(
