@@ -144,7 +144,7 @@ function selectTab(item) {
   align-items: center;
   justify-content: center;
   width: 270px;
-  height: 66px;
+  height: var(--bottom-navigation-height);
   padding: 8px 15px;
   margin: 0 auto;
   overflow: hidden;

@@ -9,10 +9,16 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  width: min(100%, var(--mobile-width));
-  height: min(100dvh, var(--mobile-height));
+  width: 100%;
+  height: 100dvh;
   margin: 0 auto;
   overflow: hidden;
   background: var(--ui-background);
+}
+
+@media (min-width: 600px) {
+  .mobile-frame {
+    max-width: var(--design-mobile-width);
+  }
 }
 </style>
