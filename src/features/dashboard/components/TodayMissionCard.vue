@@ -70,12 +70,13 @@ defineEmits(['mission-click', 'show-more'])
 .today-mission-card {
   display: flex;
   width: 100%;
-  height: 170px;
+  min-width: 0;
+  min-height: var(--dashboard-card-min-height);
   flex-direction: column;
-  gap: 12px;
-  padding: 20px 15px;
-  border-radius: 28px;
-  background: var(--green-100);
+  gap: var(--dashboard-gap);
+  padding: var(--dashboard-card-padding) var(--space-16);
+  border-radius: var(--dashboard-card-radius);
+  background: var(--dashboard-success-soft);
 }
 
 .today-mission-card h2 {
@@ -150,7 +151,7 @@ defineEmits(['mission-click', 'show-more'])
   padding: 0;
   border: 0;
   background: transparent;
-  color: #666;
+  color: var(--dashboard-muted-text);
   cursor: pointer;
   font-size: 11px;
   line-height: 1.5;
