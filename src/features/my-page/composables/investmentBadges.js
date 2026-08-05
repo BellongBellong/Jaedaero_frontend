@@ -131,7 +131,7 @@ export function getBadgeProgress(payload, badgeStatus) {
     })
     .filter(Boolean)
 
-  return [
+  const selectedProgresses = [
     ...progresses
       .reduce((byType, progress) => {
         const current = byType.get(progress.type)
@@ -151,6 +151,19 @@ export function getBadgeProgress(payload, badgeStatus) {
       }, new Map())
       .values(),
   ]
+
+  return selectedProgresses.map((progress) => ({
+    ...progress,
+    acquiredAtByLevel: progresses
+      .filter((candidate) => candidate.type === progress.type && candidate.acquiredAt)
+      .reduce(
+        (dates, candidate) => ({
+          ...dates,
+          [candidate.levelInfo.key]: candidate.acquiredAt,
+        }),
+        {},
+      ),
+  }))
 }
 
 export function getEarnedBadges(progresses) {
@@ -164,7 +177,8 @@ export function getEarnedBadges(progresses) {
       typeInfo: progress.typeInfo,
       levelInfo,
       missionCount: progress.missionCount,
-      acquiredAt: progress.unlockedAt || progress.acquiredAt,
+      acquiredAt:
+        progress.acquiredAtByLevel?.[levelInfo.key] || progress.unlockedAt || progress.acquiredAt,
       image: getBadgeImage(progress.type, levelInfo.key),
     })),
   )
