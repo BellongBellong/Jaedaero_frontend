@@ -8,8 +8,21 @@
 
 :root {
 
-   --mobile-width: 393px;
-   --mobile-height: 852px;
+   /* Figma reference size. Runtime PWA size follows the device viewport. */
+   --design-mobile-width: 393px;
+   --design-mobile-height: 852px;
+   --mobile-width: var(--design-mobile-width);
+   --mobile-height: var(--design-mobile-height);
+
+   /* Responsive app shell */
+   --safe-area-top: env(safe-area-inset-top, 0px);
+   --safe-area-right: env(safe-area-inset-right, 0px);
+   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+   --safe-area-left: env(safe-area-inset-left, 0px);
+   --app-header-height: 76px;
+   --bottom-navigation-height: 66px;
+   --bottom-navigation-area-height: 94px;
+   --page-bottom-navigation-space: 114px;
 
 
     /* ======================================================
