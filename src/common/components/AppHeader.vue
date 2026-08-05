@@ -66,7 +66,9 @@ const mode = ref('military')
   position: relative;
   z-index: var(--z-header);
   display: flex;
-  min-height: 76px;
+  flex: 0 0 76px;
+  width: 100%;
+  height: 76px;
   align-items: flex-end;
   gap: var(--space-8);
   padding: var(--space-10) var(--layout-page-padding);
