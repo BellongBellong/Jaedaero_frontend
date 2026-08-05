@@ -24,7 +24,7 @@ npm run mock
 ```
 
 ```text
-http://localhost:3001/api/v1
+http://localhost:8080/api/v1
 ```
 
 Vue와 동시 실행:
@@ -54,14 +54,14 @@ GET    /api/v1/market-reports/today
 ## Axios 환경변수
 
 ```env
-VITE_API_BASE_URL=http://localhost:3001/api/v1
+VITE_API_BASE_URL=/api/v1
 VITE_USE_MOCK_SERVER=true
 ```
 
 실제 백엔드 전환:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8080/api/v1
+VITE_API_BASE_URL=https://your-api.example.com/api/v1
 VITE_USE_MOCK_SERVER=false
 ```
 

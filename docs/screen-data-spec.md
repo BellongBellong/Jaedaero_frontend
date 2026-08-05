@@ -221,25 +221,21 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 - API: `GET /api/v1/dashboard`
 - Response: `DashboardResponse`
 
-| 필드                               | 타입                    | 필수 | 화면 사용처                 |
-| ---------------------------------- | ----------------------- | ---: | --------------------------- |
-| `asOf`                             | `string(date-time)`     |    O | 데이터 기준시각             |
-| `nickname`                         | `string`                |    O | 헤더                        |
-| `rank`                             | `string`                |    O | 헤더                        |
-| `dischargeDday`                    | `number`                |    O | D-day                       |
-| `totalAsset`                       | `number`                |    O | 총자산 카드                 |
-| `monthlyAssetChange`               | `number`                |    O | 전월 대비                   |
-| `targetAmount`                     | `number`                |    O | 목표 카드                   |
-| `goalAchievementRate`              | `number`                |    O | 목표 달성률                 |
-| `remainingTargetAmount`            | `number`                |    O | 남은 목표 금액              |
-| `actualDischargeDate`              | `string(date)`          |    O | 실제 전역일                 |
-| `financialDischargeDate`           | `string(date) \| null`  |    O | 재정적 전역일               |
-| `financialDischargeDifferenceDays` | `number \| null`        |    O | 날짜 차이                   |
-| `projectedAssetAtDischarge`        | `number`                |    O | 전역 예상 자산              |
-| `assetSnapshot`                    | `AssetSnapshotResponse` |    O | 자산 구성                   |
-| `dailyBriefing`                    | `object`                |    O | 이벤트형 브리핑             |
-| `todayMission`                     | `object \| null`        |    O | 오늘의 미션                 |
-| `upcomingEvents`                   | `object[]`              |    O | 예정 이벤트, 현재 읽기 전용 |
+| 필드                     | 타입           | 필수 | 화면 사용처                   |
+| ------------------------ | -------------- | ---: | ----------------------------- |
+| `achievementRate`        | `number`       |    O | 전역 목표 금액 달성률         |
+| `actualDischargeDate`    | `string(date)` |    O | 실제 전역일 및 D-day 계산     |
+| `currentAsset`           | `number`       |    O | 현재 순자산                   |
+| `deltaDaysVsActual`      | `number`       |    O | 실제·재정적 전역일 차이       |
+| `expectedAsset`          | `number`       |    O | 전역 예상 자산                |
+| `financialDischargeDate` | `string(date)` |    O | 재정적 전역일 및 D-day 계산   |
+| `thisMonthSaving`        | `number`       |    O | 이번 달 저축액                |
+| `thisMonthSpending`      | `number`       |    O | 이번 달 지출액                |
+
+금액 필드는 모두 원(`KRW`) 단위이며, 비율 필드는 `0~100` 사이의 퍼센트 값입니다.
+
+현재 응답에는 데일리 금융 리포트, 오늘의 미션, 예정 이벤트 데이터가 포함되지 않습니다.
+해당 UI를 동적으로 구성하려면 별도 API 또는 `DashboardResponse` 확장이 필요합니다.
 
 ## 9. 월별 캐시플로우 화면
 
