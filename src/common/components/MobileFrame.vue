@@ -7,16 +7,12 @@
 <style scoped>
 .mobile-frame {
   position: relative;
-
   display: flex;
   flex-direction: column;
-
   width: min(100%, var(--mobile-width));
-  min-height: 100dvh;
-
+  height: min(100dvh, var(--mobile-height));
   margin: 0 auto;
   overflow: hidden;
-
   background: var(--ui-background);
 }
 </style>

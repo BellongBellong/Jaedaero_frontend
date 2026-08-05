@@ -146,7 +146,7 @@ function selectTab(item) {
   width: 270px;
   height: 66px;
   padding: 8px 15px;
-  margin: 0 auto 20px;
+  margin: 0 auto;
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 62%);
   border-radius: 50px;
