@@ -21,6 +21,14 @@ function formatDate(date) {
 
   return month && day ? `${month}월 ${day}일` : date
 }
+
+function formatSchedule(event) {
+  const start = formatDate(event.startDate || event.date)
+  const endDate = event.endDate
+
+  if (!endDate || endDate === (event.startDate || event.date)) return start
+  return `${start} ~ ${formatDate(endDate)} (${event.durationDays}일)`
+}
 </script>
 
 <template>
@@ -51,7 +59,7 @@ function formatDate(date) {
       >
         <div>
           <strong>{{ event.title }}</strong>
-          <time :datetime="event.date">{{ formatDate(event.date) }}</time>
+          <time :datetime="event.startDate || event.date">{{ formatSchedule(event) }}</time>
         </div>
         <span>D-{{ event.dday }}</span>
       </li>
