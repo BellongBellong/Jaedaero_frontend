@@ -10,20 +10,14 @@ export async function connectAccount(payload, config = {}) {
   return data
 }
 
-export async function getCodefBanks() {
-  const { data } = await apiClient.get(ENDPOINTS.codef.banks)
-  return data
-}
-
-export async function getCodefSecurities() {
-  const { data } = await apiClient.get(ENDPOINTS.codef.securities)
-  return data
-}
-
-export async function getAccounts(userId, config = {}) {
+export async function getAccounts(config = {}) {
+  const userId = Number(localStorage.getItem('userId'))
   const { data } = await apiClient.get(ENDPOINTS.accounts.list, {
     ...config,
-    params: { userId },
+    params: {
+      ...(userId ? { userId } : {}),
+      ...config.params,
+    },
   })
   const accounts = Array.isArray(data) ? data : data?.accounts || data?.content || []
 
