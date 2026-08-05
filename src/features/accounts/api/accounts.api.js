@@ -11,8 +11,13 @@ export async function connectAccount(payload, config = {}) {
 }
 
 export async function getAccounts(config = {}) {
+  const userId = Number(localStorage.getItem('userId'))
   const { data } = await apiClient.get(ENDPOINTS.accounts.list, {
     ...config,
+    params: {
+      ...(userId ? { userId } : {}),
+      ...config.params,
+    },
   })
   const accounts = Array.isArray(data) ? data : data?.accounts || data?.content || []
 

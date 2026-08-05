@@ -263,7 +263,9 @@ onMounted(async () => {
   ])
   if (profileResult.status === 'fulfilled') profile.value = profileResult.value
   if (accountsResult.status === 'fulfilled') {
-    connectedAccountCount.value = new Set(accountsResult.value.map(({ bankName }) => bankName)).size
+    connectedAccountCount.value = new Set(
+      accountsResult.value.map((account) => account.organizationCode || account.institutionName),
+    ).size
   }
   if (goalResult.status === 'fulfilled') goalAmount.value = goalResult.value?.targetAmount || 0
   if (badgesResult.status === 'fulfilled') investmentBadges.value = badgesResult.value
