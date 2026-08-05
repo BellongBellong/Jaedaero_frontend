@@ -58,40 +58,47 @@ watch(
       <button
         type="button"
         class="close-button"
-        aria-label="목표 금액 변경 닫기"
+        aria-label="&#47785;&#54364; &#44552;&#50529; &#48320;&#44221; &#45803;&#44592;"
         @click="emit('close')"
       >
         &times;
       </button>
       <h2 id="goal-modal-title">
-        목표금액변경
+        &#47785;&#54364; &#44552;&#50529; &#48320;&#44221;
       </h2>
+      <p class="modal-description">
+        &#49352;&#47196;&#50868; &#47785;&#54364; &#44552;&#50529;&#51060;
+        &#51080;&#51012;&#44620;&#50836;?
+      </p>
       <div class="input-row">
         <label>
-          <span class="sr-only">새로운 목표 금액</span>
+          <span class="sr-only">&#49352;&#47196;&#50868; &#47785;&#54364; &#44552;&#50529;</span>
           <input
             :value="amountInput"
             type="text"
             inputmode="numeric"
             maxlength="16"
-            placeholder="목표금액설정"
+            placeholder="&#49352;&#47196;&#50868; &#47785;&#54364; &#44552;&#50529;"
             autofocus
             @input="handleInput"
             @keyup.enter="save"
           >
         </label>
-        <button
-          type="button"
-          class="confirm-button"
-          :disabled="!canSave"
-          @click="save"
-        >
-          {{ saving ? '저장 중' : '확인' }}
-        </button>
       </div>
-      <p :class="{ error: errorMessage }">
-        {{ errorMessage || '새로운 목표금액이 생겼나요?' }}
+      <p
+        v-if="errorMessage"
+        class="error-message"
+      >
+        {{ errorMessage }}
       </p>
+      <button
+        type="button"
+        class="confirm-button"
+        :disabled="!canSave"
+        @click="save"
+      >
+        {{ saving ? '\uC800\uC7A5 \uC911' : '\uBCC0\uACBD' }}
+      </button>
     </section>
   </div>
 </template>
@@ -109,24 +116,27 @@ watch(
 
 .goal-modal {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: min(100%, 383px);
-  min-height: 208px;
-  padding: 31px 15px 24px;
+  min-height: min(497px, calc(100dvh - 32px));
+  padding: 32px 15px 28px;
   border-radius: 30px;
   background: #fff;
 }
 
 h2 {
-  margin: 0 0 26px;
+  margin: 0;
   color: #333;
   font-size: 20px;
+  font-weight: 700;
   text-align: center;
 }
 
 .close-button {
   position: absolute;
-  top: 27px;
-  right: 29px;
+  top: 30px;
+  right: 31px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -135,21 +145,25 @@ h2 {
   line-height: 1;
 }
 
+.modal-description {
+  margin: 57px 15px 0;
+  color: #333;
+  font-size: 16px;
+}
+
 .input-row {
-  display: flex;
-  gap: 10px;
+  margin-top: 16px;
 }
 
 label {
-  min-width: 0;
-  flex: 1;
+  display: block;
 }
 
 input {
   width: 100%;
-  height: 43px;
-  padding: 0 20px;
-  border: 1px solid #ddd;
+  height: 44px;
+  padding: 0 21px;
+  border: 1px solid #e1e1e1;
   border-radius: 15px;
   outline: none;
   color: #555;
@@ -161,32 +175,30 @@ input:focus {
 }
 
 input::placeholder {
-  color: #888;
+  color: #777;
+}
+
+.error-message {
+  margin: 8px 15px 0;
+  color: #ff4b4b;
+  font-size: 13px;
 }
 
 .confirm-button {
-  width: 108px;
-  height: 43px;
+  width: 100%;
+  height: 56px;
+  margin-top: auto;
   border: 0;
-  border-radius: 15px;
+  border-radius: 28px;
   background: #58f49a;
-  color: #555;
+  color: #252525;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .confirm-button:disabled {
-  background: #ddd;
-  color: #999;
-}
-
-p {
-  margin: 9px 5px 0;
-  color: #aaa;
-  font-size: 13px;
-}
-
-p.error {
-  color: #ff4b4b;
+  background: #58f49a;
+  color: #252525;
 }
 
 .sr-only {

@@ -346,6 +346,11 @@ function startAdditionalConnection() {
 }
 
 function nextFromSummary() {
+  if (route.query.source === 'my-page') {
+    router.replace({ name: 'connected-banks' })
+    return
+  }
+
   router.push({ name: 'nickname' })
 }
 

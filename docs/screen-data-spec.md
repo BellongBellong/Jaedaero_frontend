@@ -458,6 +458,14 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | `missionsUntilNextLevel` | `number`            |    O |
 | `unlockedAt`             | `string(date-time)` |    O |
 
+`badgeGrade`는 `BRONZE`, `SILVER`, `GOLD`, `PLATINUM`, `DIAMOND` 중 하나입니다.
+완료 미션 수 기준은 각각 1회, 10회, 50회, 100회, 300회입니다. 화면에서는
+`missionCount`가 제공되면 이를 우선 사용하고, 없는 경우 `safeCount + aggressiveCount`로
+완료 미션 수를 계산합니다.
+
+대표 뱃지 선택은 현재 프런트엔드의 브라우저 저장소에 유지합니다. 기기 간 동기화가 필요하면
+대표 뱃지 ID를 저장하는 사용자 설정 API를 별도로 제공해야 합니다.
+
 ## 16. 전역 리포트 화면
 
 - 화면 ID: `REPORT_01_DISCHARGE`
