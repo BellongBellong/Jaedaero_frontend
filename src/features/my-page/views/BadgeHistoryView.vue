@@ -29,6 +29,14 @@ const activeEarnedBadges = computed(() =>
 const selectedBadge = computed(() =>
   getSelectedBadge(activeEarnedBadges.value, selectedBadgeId.value),
 )
+function findAcquiredAt(type, grade) {
+  return badges.value.find(
+    (badge) =>
+      String(badge.missionType).toUpperCase() === type &&
+      String(badge.grade).toUpperCase() === grade,
+  )?.acquiredAt
+}
+
 const badgeHistoryList = computed(() =>
   selectedBadge.value
     ? BADGE_LEVELS.map((levelInfo) => {
@@ -37,7 +45,11 @@ const badgeHistoryList = computed(() =>
         )
 
         return (
-          earnedBadge || {
+          (earnedBadge && {
+            ...earnedBadge,
+            acquiredAt:
+              earnedBadge.acquiredAt || findAcquiredAt(earnedBadge.type, earnedBadge.levelInfo.key),
+          }) || {
             id: `${selectedBadge.value.type}-${levelInfo.key}`,
             type: selectedBadge.value.type,
             typeInfo: selectedBadge.value.typeInfo,
@@ -73,7 +85,9 @@ const remainingMissions = computed(() =>
 
 function formatDate(value) {
   if (!value) return '획득일 정보 없음'
-  const date = new Date(value)
+  const date = Array.isArray(value)
+    ? new Date(value[0], value[1] - 1, value[2], value[3] || 0, value[4] || 0, value[5] || 0)
+    : new Date(value)
   return Number.isNaN(date.getTime()) ? '획득일 정보 없음' : date.toLocaleDateString('ko-KR')
 }
 
