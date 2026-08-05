@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import { getInvestmentBadges } from '@/features/challenges/api/challenges.api'
+import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
   BADGE_LEVELS,
   BADGE_SELECTION_STORAGE_KEY,
@@ -12,12 +13,13 @@ import {
 } from '@/features/my-page/composables/investmentBadges'
 
 const badges = ref([])
+const badgeStatus = ref(null)
 const loading = ref(true)
 const loadFailed = ref(false)
 const selectedBadgeId = ref(localStorage.getItem(BADGE_SELECTION_STORAGE_KEY) || '')
 const activeBadgeType = ref('')
 
-const badgeProgresses = computed(() => getBadgeProgress(badges.value))
+const badgeProgresses = computed(() => getBadgeProgress(badges.value, badgeStatus.value))
 const earnedBadges = computed(() => getEarnedBadges(badgeProgresses.value))
 const activeEarnedBadges = computed(() =>
   activeBadgeType.value
@@ -83,7 +85,9 @@ function selectBadge(badge) {
 
 onMounted(async () => {
   try {
-    badges.value = await getInvestmentBadges({ page: 0, size: 20 })
+    const [badgeHistory, profile] = await Promise.all([getInvestmentBadges(), getMyPageProfile()])
+    badges.value = badgeHistory
+    badgeStatus.value = profile?.investmentBadgeStatus || null
     activeBadgeType.value = getSelectedBadge(earnedBadges.value, selectedBadgeId.value)?.type || ''
   } catch {
     loadFailed.value = true

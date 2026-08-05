@@ -21,10 +21,6 @@ export const ENDPOINTS = {
     connect: '/accounts/connect',
     list: '/accounts',
   },
-  codef: {
-    banks: '/codef/institutions/banks',
-    securities: '/codef/institutions/securities',
-  },
   dashboard: '/dashboard',
   cashflow: '/cashflow',
   simulations: {

@@ -65,8 +65,7 @@ async function loadAccounts() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const userId = Number(localStorage.getItem('userId'))
-    accounts.value = await getAccounts(userId || undefined)
+    accounts.value = await getAccounts()
   } catch {
     errorMessage.value = '연동한 은행을 불러오지 못했어요.'
   } finally {
