@@ -37,3 +37,7 @@ export async function getAccounts(config = {}) {
     institutionName: accountInstitutionName(account),
   }))
 }
+
+export async function disconnectAccount(accountId) {
+  await apiClient.delete(ENDPOINTS.accounts.detail(accountId))
+}

@@ -1,17 +1,21 @@
 <script setup>
 import backIcon from '@/assets/onboarding/icons/step1-icon0.svg'
 
-defineProps({
+const props = defineProps({
   step: { type: Number, required: true },
   title: { type: String, required: true },
   description: { type: String, default: '' },
+  showProgress: { type: Boolean, default: true },
 })
 
 defineEmits(['back'])
 </script>
 
 <template>
-  <header class="step-header">
+  <header
+    class="step-header"
+    :class="{ 'step-header--without-progress': !props.showProgress }"
+  >
     <button
       class="back-button"
       aria-label="뒤로 가기"
@@ -22,7 +26,10 @@ defineEmits(['back'])
         alt=""
       >
     </button>
-    <div class="step-header__progress">
+    <div
+      v-if="props.showProgress"
+      class="step-header__progress"
+    >
       <strong>step {{ step }}</strong>
       <div class="progress-bars">
         <i
@@ -58,6 +65,9 @@ defineEmits(['back'])
 .back-button img {
   width: 24px;
   height: 24px;
+}
+.step-header--without-progress .back-button {
+  margin-bottom: 24px;
 }
 .step-header__progress {
   display: flex;

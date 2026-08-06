@@ -2,13 +2,12 @@
   "users": [
     {
       "id": 1,
-      "nickname": "qwe",
+      "nickname": "해병대",
       "profileIcon": "army-bear",
-      "profileBackgroundColor": "#E5FFF4",
       "onboardingCompleted": false,
       "initialInvestmentPreference": "BALANCED",
-      "profileImage": "profile-army.png",
-      "profileSource": "PRESET"
+      "profileImage": "NAVY",
+      "profileSource": "BLACK"
     }
   ],
   "soldierProfiles": [
@@ -940,6 +939,26 @@
       "aiServiceUseAgreed": true,
       "marketingInformationReceiptAgreed": true,
       "agreedAt": "2026-08-05T07:37:03.657Z"
+    },
+    {
+      "id": 14,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-06T05:27:34.068Z"
+    },
+    {
+      "id": 15,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "marketingInformationReceiptAgreed": true,
+      "agreedAt": "2026-08-06T05:32:56.400Z"
     }
   ],
   "loginResponses": [],
