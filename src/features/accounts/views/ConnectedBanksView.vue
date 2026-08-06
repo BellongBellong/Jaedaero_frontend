@@ -8,6 +8,8 @@ import bankKb from '@/assets/onboarding/institutions/bank-kb.svg'
 import bankKakao from '@/assets/onboarding/institutions/bank-kakao.svg'
 import bankShinhan from '@/assets/onboarding/institutions/bank-shinhan.svg'
 import bankToss from '@/assets/onboarding/institutions/bank-toss.svg'
+import securityDefault from '@/assets/onboarding/institutions/security-0.svg'
+import securityKoreaInvestment from '@/assets/onboarding/institutions/security-1.svg'
 import { getAccounts } from '@/features/accounts/api/accounts.api'
 import {
   accountInstitutionKey,
@@ -37,7 +39,22 @@ const accountTypeLabels = {
   SALARY: '급여 통장',
 }
 
-const connectedBanks = computed(() => {
+function institutionCategory(account) {
+  const businessType = String(
+    account.businessType || account.institutionType || account.financialBusinessType || '',
+  ).toUpperCase()
+  const institutionName = accountInstitutionName(account)
+
+  if (['ST', 'SECURITIES', 'SECURITY', 'INVESTMENT'].includes(businessType)) {
+    return 'securities'
+  }
+  if (account.accountType === 'INVESTMENT' || /증권|금융투자/.test(institutionName)) {
+    return 'securities'
+  }
+  return 'banks'
+}
+
+const connectedInstitutions = computed(() => {
   const grouped = new Map()
 
   accounts.value.forEach((account) => {
@@ -45,21 +62,47 @@ const connectedBanks = computed(() => {
     if (!grouped.has(institutionKey)) {
       grouped.set(institutionKey, {
         bankName: accountInstitutionName(account),
+        category: institutionCategory(account),
         accounts: [],
       })
     }
     grouped.get(institutionKey).accounts.push(account)
   })
 
-  return Array.from(grouped.values(), ({ bankName, accounts: bankAccounts }) => ({
-    bankName,
-    accounts: bankAccounts,
-    descriptions: bankAccounts.map(
-      ({ accountName, accountType }) =>
-        accountName || accountTypeLabels[accountType] || '연결 계좌',
-    ),
-  }))
+  return Array.from(
+    grouped,
+    ([institutionKey, { bankName, category, accounts: institutionAccounts }]) => ({
+      institutionKey,
+      bankName,
+      category,
+      accounts: institutionAccounts,
+      descriptions: institutionAccounts.map(
+        ({ accountName, accountType }) =>
+          accountName || accountTypeLabels[accountType] || '연결 계좌',
+      ),
+    }),
+  )
 })
+
+const institutionSections = computed(() => [
+  {
+    key: 'banks',
+    title: '연동한 은행 목록',
+    institutions: connectedInstitutions.value.filter(({ category }) => category === 'banks'),
+  },
+  {
+    key: 'securities',
+    title: '연동한 증권사 목록',
+    institutions: connectedInstitutions.value.filter(({ category }) => category === 'securities'),
+  },
+])
+
+function institutionIcon(institution) {
+  if (institution.category === 'securities') {
+    return institution.bankName === '한국투자증권' ? securityKoreaInvestment : securityDefault
+  }
+  return bankIcons[institution.bankName] || bankBuilding
+}
 
 async function loadAccounts() {
   loading.value = true
@@ -88,8 +131,6 @@ onMounted(loadAccounts)
     </button>
 
     <section class="content">
-      <h1>연동한 은행 목록</h1>
-
       <p
         v-if="loading"
         class="state-message"
@@ -109,37 +150,62 @@ onMounted(loadAccounts)
         </button>
       </div>
       <div
-        v-else-if="connectedBanks.length === 0"
+        v-else-if="connectedInstitutions.length === 0"
         class="state-message"
       >
         <p>아직 연동한 은행이 없어요.</p>
         <small>은행을 추가해 자산을 한눈에 관리해보세요.</small>
       </div>
 
-      <ul v-else>
-        <li
-          v-for="bank in connectedBanks"
-          :key="bank.bankName"
+      <template v-else>
+        <section
+          v-for="section in institutionSections"
+          v-show="section.institutions.length"
+          :key="section.key"
+          class="institution-section"
         >
-          <span class="bank-icon">
-            <img
-              :src="bankIcons[bank.bankName] || bankBuilding"
-              alt=""
+          <h1>{{ section.title }}</h1>
+          <ul>
+            <li
+              v-for="institution in section.institutions"
+              :key="institution.institutionKey"
+              tabindex="0"
+              role="button"
+              :aria-label="`${institution.bankName} 계좌 관리`"
+              @click="
+                router.push({
+                  name: 'connected-bank-management',
+                  params: { institutionKey: institution.institutionKey },
+                })
+              "
+              @keydown.enter="
+                router.push({
+                  name: 'connected-bank-management',
+                  params: { institutionKey: institution.institutionKey },
+                })
+              "
             >
-          </span>
-          <span class="bank-copy">
-            <span class="bank-heading">
-              <b>{{ bank.bankName }}</b>
-              <em>{{ bank.accounts.length }}개</em>
-            </span>
-            <small>{{ bank.descriptions.join(', ') }}</small>
-          </span>
-          <span
-            class="connected-check"
-            aria-label="연동 완료"
-          >✓</span>
-        </li>
-      </ul>
+              <span class="bank-icon">
+                <img
+                  :src="institutionIcon(institution)"
+                  alt=""
+                >
+              </span>
+              <span class="bank-copy">
+                <span class="bank-heading">
+                  <b>{{ institution.bankName }}</b>
+                  <em>{{ institution.accounts.length }}개</em>
+                </span>
+                <small>{{ institution.descriptions.join(', ') }}</small>
+              </span>
+              <span
+                class="connected-check"
+                aria-hidden="true"
+              >›</span>
+            </li>
+          </ul>
+        </section>
+      </template>
     </section>
 
     <footer>
@@ -153,7 +219,13 @@ onMounted(loadAccounts)
       <button
         type="button"
         class="add-button"
-        @click="router.push({ name: 'connect-accounts', query: { source: 'my-page' } })"
+        @click="
+          router.push({
+            name: 'connect-codef-bank',
+            params: { assetType: 'personal-assets' },
+            query: { source: 'my-page' },
+          })
+        "
       >
         추가 연동하기
       </button>
@@ -193,6 +265,10 @@ h1 {
   font-size: 15px;
 }
 
+.institution-section + .institution-section {
+  margin-top: 28px;
+}
+
 ul {
   display: grid;
   padding: 0;
@@ -209,6 +285,12 @@ li {
   padding: 16px 20px;
   border-radius: 27px;
   background: #fff;
+  cursor: pointer;
+}
+
+li:focus-visible {
+  outline: 2px solid #58f49a;
+  outline-offset: 2px;
 }
 
 .bank-icon {
