@@ -70,21 +70,6 @@ server.post('/api/v1/auth/refresh', (_req, res) => {
 })
 
 server.post('/api/v1/auth/logout', (_req, res) => res.status(204).end())
-server.get('/api/v1/users/me', (_req, res) => {
-  const user = first('users')
-
-  if (!user) return res.status(404).json({ message: 'User not found' })
-
-  const soldierProfile = list('soldierProfiles').find(
-    (profile) => Number(profile.userId) === Number(user.id),
-  )
-
-  return res.status(200).json({
-    ...user,
-    ...(soldierProfile || {}),
-    userId: user.id,
-  })
-})
 server.delete('/api/v1/users/me', (_req, res) => res.status(204).end())
 server.get('/api/v1/users/me', (_req, res) => {
   const user = first('users')

@@ -1,8 +1,6 @@
-import { computed, ref } from 'vue'
+import { computed, isRef, ref, unref, watch } from 'vue'
 
 import { dashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
-
-const events = ref(structuredClone(dashboardMock.events))
 
 function calculateDday(date) {
   const today = new Date()
@@ -19,10 +17,30 @@ function calculateDurationDays(startDate, endDate) {
   return Math.max(1, Math.round((end - start) / 86_400_000) + 1)
 }
 
-export function useUpcomingEvents() {
+export function useUpcomingEvents(initialEvents = dashboardMock.events) {
+  const events = ref([])
+
+  if (isRef(initialEvents)) {
+    watch(
+      initialEvents,
+      (value) => {
+        events.value = structuredClone(unref(value) ?? [])
+      },
+      { immediate: true },
+    )
+  } else {
+    events.value = structuredClone(initialEvents ?? [])
+  }
+
   const sortedEvents = computed(() =>
     [...events.value]
-      .sort((first, second) => first.startDate.localeCompare(second.startDate))
+      .sort((first, second) => {
+        const firstDate = first.startDate || first.date || ''
+        const secondDate = second.startDate || second.date || ''
+        const dateDifference = firstDate.localeCompare(secondDate)
+
+        return dateDifference || Number(first.id || 0) - Number(second.id || 0)
+      })
       .map((event) => ({
         ...event,
         durationDays: calculateDurationDays(event.startDate, event.endDate),

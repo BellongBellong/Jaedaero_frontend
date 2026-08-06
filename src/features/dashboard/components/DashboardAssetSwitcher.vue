@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 
-import DischargeAssetChart from '@/features/dashboard/components/DischargeAssetChart.vue'
+import AssetAccountSummary from '@/features/dashboard/components/AssetAccountSummary.vue'
 import MonthlyAssetOverview from '@/features/dashboard/components/MonthlyAssetOverview.vue'
 
 defineProps({
@@ -9,13 +9,13 @@ defineProps({
     type: Object,
     default: null,
   },
-  forecast: {
+  totalAssets: {
     type: Object,
     default: null,
   },
 })
 
-defineEmits(['view-report'])
+defineEmits(['view-report', 'view-assets'])
 
 const activeTab = ref('monthly')
 </script>
@@ -38,14 +38,14 @@ const activeTab = ref('monthly')
         이번 달 자산 현황
       </button>
       <button
-        id="forecast-assets-tab"
+        id="total-assets-tab"
         type="button"
         role="tab"
-        :aria-selected="activeTab === 'forecast'"
-        :class="{ 'asset-switcher__tab--active': activeTab === 'forecast' }"
-        @click="activeTab = 'forecast'"
+        :aria-selected="activeTab === 'total'"
+        :class="{ 'asset-switcher__tab--active': activeTab === 'total' }"
+        @click="activeTab = 'total'"
       >
-        전역 예상 자산
+        나의 총 자산
       </button>
     </div>
 
@@ -62,9 +62,12 @@ const activeTab = ref('monthly')
     <div
       v-else
       role="tabpanel"
-      aria-labelledby="forecast-assets-tab"
+      aria-labelledby="total-assets-tab"
     >
-      <DischargeAssetChart :data="forecast" />
+      <AssetAccountSummary
+        :data="totalAssets"
+        @view-all="$emit('view-assets')"
+      />
     </div>
   </section>
 </template>
