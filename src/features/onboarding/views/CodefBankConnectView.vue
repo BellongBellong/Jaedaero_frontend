@@ -87,6 +87,7 @@ const form = ref({
   birthDate: '',
 })
 const allowsSecurities = computed(() => route.params.assetType === 'personal-assets')
+const isAdditionalConnection = computed(() => route.query.source === 'my-page')
 const isMockMode =
   import.meta.env.MODE === 'mock' || import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 
@@ -303,6 +304,11 @@ function toggleAccount(account, index) {
     : [...selectedAccountIds.value, id]
 }
 
+function closeAccountsModal() {
+  accountsModalOpen.value = false
+  requiredAccountNoticeId.value = null
+}
+
 function confirmAccounts() {
   if (!selectedAccountIds.value.length) return
 
@@ -430,10 +436,13 @@ onMounted(() => {
   <main class="codef-connect screen">
     <OnboardingStepHeader
       :step="1"
+      :show-progress="!isAdditionalConnection"
       title="금융 연결"
       :description="
         showConnectedSummary
-          ? '군인 계좌가 있는 은행을 연결해주세요.'
+          ? isAdditionalConnection
+            ? '금융기관 연동이 완료되었어요.'
+            : '군인 계좌가 있는 은행을 연결해주세요.'
           : '연결할 금융기관의 인터넷뱅킹 정보를 입력해주세요.'
       "
       @back="router.back()"
@@ -445,7 +454,11 @@ onMounted(() => {
         class="connected-summary"
       >
         <h2>
-          연동한 {{ connectedInstitutions[0]?.businessType === 'BK' ? '은행' : '증권사' }} 목록
+          {{
+            isAdditionalConnection
+              ? '연동한 금융기관 목록'
+              : `연동한 ${connectedInstitutions[0]?.businessType === 'BK' ? '은행' : '증권사'} 목록`
+          }}
         </h2>
         <article
           v-for="connection in connectedInstitutions"
@@ -476,7 +489,10 @@ onMounted(() => {
             aria-hidden="true"
           >✓</span>
         </article>
-        <p class="additional-tip">
+        <p
+          v-if="!isAdditionalConnection"
+          class="additional-tip"
+        >
           💡 군적금 계좌가 있다면 연동해보세요!
         </p>
       </div>
@@ -595,7 +611,7 @@ onMounted(() => {
         type="button"
         @click="nextFromSummary"
       >
-        다음으로
+        {{ isAdditionalConnection ? '완료' : '다음으로' }}
       </button>
     </div>
 
@@ -816,6 +832,7 @@ onMounted(() => {
       <div
         v-if="accountsModalOpen"
         class="institution-backdrop"
+        @click.self="closeAccountsModal"
       >
         <section
           class="accounts-sheet"
@@ -823,6 +840,14 @@ onMounted(() => {
           aria-modal="true"
           aria-label="계좌 불러오기"
         >
+          <button
+            type="button"
+            class="sheet-close accounts-sheet-close"
+            aria-label="계좌 불러오기 닫기"
+            @click="closeAccountsModal"
+          >
+            ×
+          </button>
           <header>
             <h2>계좌 불러오기</h2>
             <p>
@@ -916,6 +941,10 @@ onMounted(() => {
 
 .codef-connect :deep(.back-button) {
   margin-bottom: 54px;
+}
+
+.codef-connect :deep(.step-header--without-progress .back-button) {
+  margin-bottom: 24px;
 }
 
 .codef-connect :deep(.step-header__progress) {
@@ -1362,11 +1391,21 @@ select:focus {
   position: relative;
   display: flex;
   width: 100%;
-  height: 100%;
+  height: min(78dvh, 660px);
   flex-direction: column;
-  padding: 38px 16px 12px;
+  padding: 30px 16px 12px;
   border-radius: 24px 24px 0 0;
   background: #fff;
+}
+
+.accounts-sheet-close {
+  top: 14px;
+  right: 16px;
+  z-index: 1;
+}
+
+.accounts-sheet > header {
+  padding-right: 36px;
 }
 
 .account-status-backdrop {
