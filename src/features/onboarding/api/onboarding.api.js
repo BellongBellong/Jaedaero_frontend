@@ -38,6 +38,6 @@ export async function previewInvestmentPreference(payload) {
 }
 
 export async function saveGoal(payload) {
-  const { data } = await apiClient.post(ENDPOINTS.goals, payload)
+  const { data } = await apiClient.put(ENDPOINTS.goals, payload)
   return data
 }

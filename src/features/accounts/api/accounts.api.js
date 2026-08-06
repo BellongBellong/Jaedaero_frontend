@@ -11,14 +11,8 @@ export async function connectAccount(payload, config = {}) {
 }
 
 export async function getAccounts(config = {}) {
-  const userId = Number(localStorage.getItem('userId'))
-  const { data } = await apiClient.get(ENDPOINTS.accounts.list, {
-    ...config,
-    params: {
-      ...(userId ? { userId } : {}),
-      ...config.params,
-    },
-  })
+  const userId = Number(localStorage.getItem('userId')) || 1
+  const { data } = await apiClient.get(ENDPOINTS.accounts.list(userId), config)
   const payload = data?.data || data
   const accounts = Array.isArray(payload) ? payload : payload?.accounts || payload?.content || []
 

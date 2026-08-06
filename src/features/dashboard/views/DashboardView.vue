@@ -1,11 +1,12 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import DailyReportBanner from '@/features/dashboard/components/DailyReportBanner.vue'
 import DashboardAssetSwitcher from '@/features/dashboard/components/DashboardAssetSwitcher.vue'
 import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
 import FinancialDdayCard from '@/features/dashboard/components/FinancialDdayCard.vue'
+import MissionListSheet from '@/features/dashboard/components/MissionListSheet.vue'
 import TodayMissionCard from '@/features/dashboard/components/TodayMissionCard.vue'
 import UpcomingEventsCard from '@/features/dashboard/components/UpcomingEventsCard.vue'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
@@ -13,7 +14,11 @@ import { dashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
 
 const router = useRouter()
 const showEventModal = ref(false)
+const showMissionSheet = ref(false)
 const { events: upcomingEvents, addEvent } = useUpcomingEvents()
+const todayMissions = computed(() =>
+  dashboardMock.missions.filter((mission) => mission.missionGroup === 'TODAY'),
+)
 
 function saveEvent(event) {
   addEvent(event)
@@ -35,9 +40,8 @@ function saveEvent(event) {
         @show-more="router.push({ name: 'upcoming-events' })"
       />
       <TodayMissionCard
-        :missions="dashboardMock.missions"
-        :remaining-count="Math.max(0, dashboardMock.missions.length - 2)"
-        @show-more="router.push({ name: 'challenge' })"
+        :missions="todayMissions"
+        @show-all="showMissionSheet = true"
       />
     </div>
 
@@ -51,6 +55,13 @@ function saveEvent(event) {
       v-if="showEventModal"
       @close="showEventModal = false"
       @save="saveEvent"
+    />
+
+    <MissionListSheet
+      v-if="showMissionSheet"
+      :missions="dashboardMock.missions"
+      @close="showMissionSheet = false"
+      @view-progress="router.push({ name: 'challenge' })"
     />
   </main>
 </template>

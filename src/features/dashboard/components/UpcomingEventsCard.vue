@@ -1,5 +1,5 @@
 <script setup>
-import plusIcon from '@/assets/icons/plusIcon.png'
+import plusIcon from '@/assets/icons/Category/plusIcon.svg'
 
 defineProps({
   events: {
@@ -27,7 +27,7 @@ function formatSchedule(event) {
   const endDate = event.endDate
 
   if (!endDate || endDate === event.startDate) return start
-  return `${start} ~ ${formatDate(endDate)} (${event.durationDays}일)`
+  return `${start} 시작`
 }
 </script>
 
@@ -88,10 +88,12 @@ function formatSchedule(event) {
   display: flex;
   width: 100%;
   min-width: 0;
-  min-height: var(--dashboard-card-min-height);
+  min-height: 0;
+  aspect-ratio: 1;
   flex-direction: column;
-  gap: var(--dashboard-card-gap);
-  padding: var(--dashboard-card-padding);
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-20);
   border-radius: var(--dashboard-card-radius);
   background: var(--dashboard-card-background);
 }

@@ -92,6 +92,53 @@ export const eventResponses = [
   },
 ]
 
+export const missionResponses = [
+  {
+    id: 1,
+    missionGroup: 'DAILY',
+    title: '데일리 금융리포트 보기',
+    description: '오늘의 금융 리포트를 확인해보세요',
+    missionType: 'COMMON',
+    rewardExperience: 5,
+    status: 'AVAILABLE',
+    progress: 0,
+    target: 1,
+  },
+  {
+    id: 2,
+    missionGroup: 'DAILY',
+    title: '데일리 시장리포트 보기',
+    description: '오늘의 AI 시장현황 리포트를 확인해보세요',
+    missionType: 'COMMON',
+    rewardExperience: 5,
+    status: 'AVAILABLE',
+    progress: 0,
+    target: 1,
+  },
+  {
+    id: 3,
+    missionGroup: 'TODAY',
+    title: '예금상품 살펴보기',
+    description: '나에게 맞는 예금 상품을 확인해보세요',
+    missionType: 'SAFE',
+    rewardExperience: 10,
+    status: 'IN_PROGRESS',
+    progress: 0,
+    target: 1,
+  },
+  {
+    id: 4,
+    missionGroup: 'TODAY',
+    title: '리밸런싱 제안 확인하기',
+    description: '오늘의 AI 시장현황 리포트를 확인해보세요',
+    missionType: 'AGGRESSIVE',
+    rewardExperience: 10,
+    status: 'AVAILABLE',
+    progress: 0,
+    target: 1,
+  },
+]
+
 const response = dashboardResponses[0]
 const toTenThousandWon = (amount) => Number(amount || 0) / 10000
 const incomeChangeRate = response.assetSnapshot.previousIncome
@@ -122,7 +169,10 @@ export const dashboardMock = {
     currentAsset: toTenThousandWon(response.totalAsset),
     targetAmount: toTenThousandWon(response.targetAmount),
   },
-  missions: response.todayMission ? [response.todayMission] : [],
+  missions: missionResponses.map((mission) => ({
+    ...mission,
+    completed: mission.status === 'COMPLETED',
+  })),
   events: eventResponses,
   assetSummary: {
     monthly: {
