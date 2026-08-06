@@ -74,7 +74,11 @@ function formatWon(value) {
         </div>
       </article>
 
-      <article class="monthly-assets__tile monthly-assets__tile--spending">
+      <RouterLink
+        class="monthly-assets__tile monthly-assets__tile--spending"
+        :to="{ name: 'monthly-asset-report' }"
+        aria-label="이번 달 자산 현황 리포트 보기"
+      >
         <div class="monthly-assets__heading">
           <img
             :src="consumptionBlock"
@@ -94,7 +98,7 @@ function formatWon(value) {
           <span :style="{ width: `${spendingRate}%` }" />
         </div>
         <small>목표 {{ formatWon(data.spending.targetAmount) }}</small>
-      </article>
+      </RouterLink>
     </div>
 
     <button
@@ -118,8 +122,9 @@ function formatWon(value) {
 <style scoped>
 .monthly-assets {
   display: flex;
+  width: 100%;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--dashboard-card-gap);
 }
 
 .monthly-assets article {
@@ -131,7 +136,7 @@ function formatWon(value) {
   min-height: 68px;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--dashboard-gap);
   padding: 10px 16px;
   border-radius: 20px;
   background: linear-gradient(90deg, rgb(255 255 255 / 20%), rgb(166 255 199 / 20%));
@@ -181,7 +186,7 @@ function formatWon(value) {
   padding: 2px 9px;
   border-radius: 20px;
   background: var(--green-100);
-  color: #22c55e;
+  color: var(--dashboard-success);
   font-size: 12px;
   font-weight: var(--weight-bold);
   white-space: nowrap;
@@ -190,7 +195,7 @@ function formatWon(value) {
 .monthly-assets__lower {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--dashboard-card-gap);
 }
 
 .monthly-assets__tile {
@@ -209,6 +214,21 @@ function formatWon(value) {
 
 .monthly-assets__tile--spending {
   background: linear-gradient(270deg, rgb(255 255 255 / 10%), rgb(255 163 131 / 12%));
+  color: var(--gray-900);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.monthly-assets__tile--spending:active {
+  transform: scale(0.98);
+}
+
+.monthly-assets__tile--spending:focus-visible {
+  outline: 3px solid var(--orange-200);
+  outline-offset: 2px;
 }
 
 .monthly-assets__tile .monthly-assets__heading {
@@ -219,8 +239,8 @@ function formatWon(value) {
   margin-left: auto;
   padding: 2px 7px;
   border-radius: 20px;
-  background: #ffe4dc;
-  color: #e37255;
+  background: var(--orange-100);
+  color: var(--orange-600);
   font-size: 11px;
   white-space: nowrap;
 }
@@ -234,7 +254,7 @@ function formatWon(value) {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #22c55e;
+  color: var(--dashboard-success);
   font-size: 11px;
 }
 
@@ -242,14 +262,14 @@ function formatWon(value) {
   height: 6px;
   overflow: hidden;
   border-radius: 3px;
-  background: #f0ede5;
+  background: var(--gray-200);
 }
 
 .monthly-assets__progress span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(270deg, #e37255, #ffd3c5);
+  background: linear-gradient(270deg, var(--orange-600), var(--orange-200));
 }
 
 .monthly-assets__tile--spending small {
@@ -261,7 +281,7 @@ function formatWon(value) {
   padding: 2px 0;
   border: 0;
   background: transparent;
-  color: #80917a;
+  color: var(--olive-400);
   cursor: pointer;
   font-size: 12px;
 }
@@ -279,5 +299,23 @@ function formatWon(value) {
   margin: 0;
   color: var(--gray-500);
   font-size: 13px;
+}
+
+@media (max-width: 350px) {
+  .monthly-assets__income,
+  .monthly-assets__income-value > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .monthly-assets__lower {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monthly-assets__tile--spending {
+    transition: none;
+  }
 }
 </style>

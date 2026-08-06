@@ -71,10 +71,11 @@ const activeTab = ref('monthly')
 
 <style scoped>
 .asset-switcher {
+  width: 100%;
   min-height: 282px;
-  padding: 20px;
-  border-radius: 28px;
-  background: var(--white);
+  padding: var(--dashboard-card-padding);
+  border-radius: var(--dashboard-card-radius);
+  background: var(--dashboard-card-background);
 }
 
 .asset-switcher__tabs {
@@ -102,5 +103,15 @@ const activeTab = ref('monthly')
   border-radius: 4px;
   outline: 2px solid var(--green-700);
   outline-offset: 3px;
+}
+
+@media (max-width: 350px) {
+  .asset-switcher__tabs {
+    gap: var(--space-12);
+  }
+
+  .asset-switcher__tabs button {
+    font-size: 13px;
+  }
 }
 </style>

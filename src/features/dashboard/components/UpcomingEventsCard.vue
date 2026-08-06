@@ -23,10 +23,10 @@ function formatDate(date) {
 }
 
 function formatSchedule(event) {
-  const start = formatDate(event.startDate || event.date)
+  const start = formatDate(event.startDate)
   const endDate = event.endDate
 
-  if (!endDate || endDate === (event.startDate || event.date)) return start
+  if (!endDate || endDate === event.startDate) return start
   return `${start} ~ ${formatDate(endDate)} (${event.durationDays}일)`
 }
 </script>
@@ -59,7 +59,7 @@ function formatSchedule(event) {
       >
         <div>
           <strong>{{ event.title }}</strong>
-          <time :datetime="event.startDate || event.date">{{ formatSchedule(event) }}</time>
+          <time :datetime="event.startDate">{{ formatSchedule(event) }}</time>
         </div>
         <span>D-{{ event.dday }}</span>
       </li>
@@ -87,12 +87,13 @@ function formatSchedule(event) {
 .upcoming-events-card {
   display: flex;
   width: 100%;
-  height: 170px;
+  min-width: 0;
+  min-height: var(--dashboard-card-min-height);
   flex-direction: column;
-  gap: 10px;
-  padding: 20px;
-  border-radius: 28px;
-  background: var(--white);
+  gap: var(--dashboard-card-gap);
+  padding: var(--dashboard-card-padding);
+  border-radius: var(--dashboard-card-radius);
+  background: var(--dashboard-card-background);
 }
 
 .upcoming-events-card__header {
@@ -155,7 +156,7 @@ function formatSchedule(event) {
 }
 
 .upcoming-events-card__event time {
-  color: #666;
+  color: var(--dashboard-muted-text);
   font-size: 11px;
   line-height: 1.3;
 }
@@ -164,8 +165,8 @@ function formatSchedule(event) {
   flex: 0 0 auto;
   padding: 2px 10px;
   border-radius: 20px;
-  background: var(--green-100);
-  color: #22c55e;
+  background: var(--dashboard-success-soft);
+  color: var(--dashboard-success);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -175,7 +176,7 @@ function formatSchedule(event) {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #666;
+  color: var(--dashboard-muted-text);
   cursor: pointer;
   font-size: 11px;
   line-height: 1.5;
