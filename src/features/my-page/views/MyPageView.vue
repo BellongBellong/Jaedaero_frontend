@@ -361,7 +361,7 @@ onMounted(async () => {
         <span class="menu-icon bank"><img
           :src="bankIcon"
           alt=""
-        ></span><b>연결 은행</b> <small>{{ connectedAccountCount }}개 연결됨</small><span class="chevron">›</span>
+        ></span><b>연결 금융기관</b> <small>{{ connectedAccountCount }}개 연결됨</small><span class="chevron">›</span>
       </button>
       <button
         type="button"
@@ -559,7 +559,8 @@ onMounted(async () => {
 
 <style scoped>
 .mypage {
-  padding: 24px 20px 14px;
+  padding: 24px 20px
+    calc(var(--page-bottom-navigation-space) + var(--safe-area-bottom) + var(--space-16));
   background: #fafafa;
   color: #333;
 }
