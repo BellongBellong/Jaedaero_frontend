@@ -1,5 +1,5 @@
 <script setup>
-import plusIcon from '@/assets/icons/plusIcon.png'
+import plusIcon from '@/assets/icons/Category/plusIcon.svg'
 import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
 import { ref } from 'vue'
@@ -18,7 +18,7 @@ function formatSchedule(event) {
   const endDate = event.endDate
 
   if (!endDate || endDate === event.startDate) return start
-  return `${start} ~ ${formatDate(endDate)} (${event.durationDays}일)`
+  return `${start} 시작`
 }
 
 function saveEvent(event) {
