@@ -34,6 +34,12 @@ const mainRoutes = [
         meta: { requiresAuth: true, hideHeader: true, hideBottomNavigation: true },
       },
       {
+        path: 'mypage/connected-banks/:institutionKey',
+        name: 'connected-bank-management',
+        component: () => import('@/features/accounts/views/AccountManagementView.vue'),
+        meta: { requiresAuth: true, hideHeader: true, hideBottomNavigation: true },
+      },
+      {
         path: 'transactions',
         name: 'transactions',
         component: () => import('@/features/transactions/views/TransactionHistoryView.vue'),
