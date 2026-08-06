@@ -40,7 +40,7 @@ function formatWon(value) {
     class="monthly-assets"
   >
     <article class="monthly-assets__income">
-      <div class="monthly-assets__heading">
+      <div class="monthly-assets__income-heading">
         <img
           :src="assetBlock"
           alt=""
@@ -49,11 +49,24 @@ function formatWon(value) {
         <span>수입</span>
       </div>
       <div class="monthly-assets__income-value">
-        <div>
+        <div class="monthly-assets__income-total">
           <strong>{{ formatWon(data.income.amount) }}</strong>
-          <span class="monthly-assets__badge">+{{ data.income.changeRate }}%</span>
+          <span
+            v-if="data.income.hasAdditionalIncome"
+            class="monthly-assets__badge"
+          >
+            +{{ data.income.changeRate }}%
+          </span>
         </div>
-        <small>{{ data.income.description }}</small>
+        <div class="monthly-assets__income-details">
+          <small> {{ data.income.salaryLabel }} {{ formatWon(data.income.salaryAmount) }} </small>
+          <small
+            v-if="data.income.otherIncomeAmount > 0"
+            class="monthly-assets__other-income"
+          >
+            기타 수익 {{ formatWon(data.income.otherIncomeAmount) }}
+          </small>
+        </div>
       </div>
     </article>
 
@@ -133,13 +146,29 @@ function formatWon(value) {
 
 .monthly-assets__income {
   display: flex;
-  min-height: 68px;
+  min-height: 76px;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--dashboard-gap);
-  padding: 10px 16px;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 10px var(--space-20);
   border-radius: 20px;
-  background: linear-gradient(90deg, rgb(255 255 255 / 20%), rgb(166 255 199 / 20%));
+  background: linear-gradient(90deg, rgb(166 255 199 / 20%), rgb(255 255 255 / 20%));
+}
+
+.monthly-assets__income-heading {
+  display: flex;
+  flex: 0 0 30px;
+  flex-direction: column;
+  align-items: center;
+  color: var(--green-700);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.monthly-assets__income-heading img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 
 .monthly-assets__heading {
@@ -161,13 +190,25 @@ function formatWon(value) {
 .monthly-assets__income-value {
   display: grid;
   min-width: 0;
-  gap: 2px;
+  align-self: stretch;
+  align-content: start;
+  gap: 4px;
+  padding: 2px 0;
 }
 
-.monthly-assets__income-value > div {
+.monthly-assets__income-total {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.monthly-assets__income-details {
+  display: grid;
+  gap: 0;
+}
+
+.monthly-assets__income-details .monthly-assets__other-income {
+  color: var(--dashboard-success);
 }
 
 .monthly-assets strong {
@@ -302,10 +343,9 @@ function formatWon(value) {
 }
 
 @media (max-width: 350px) {
-  .monthly-assets__income,
-  .monthly-assets__income-value > div {
-    align-items: flex-start;
-    flex-direction: column;
+  .monthly-assets__income {
+    padding-right: var(--space-12);
+    padding-left: var(--space-12);
   }
 
   .monthly-assets__lower {

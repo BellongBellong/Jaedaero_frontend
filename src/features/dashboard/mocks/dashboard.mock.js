@@ -1,6 +1,6 @@
 export const dashboardResponses = [
   {
-    asOf: '2026-07-29T20:00:00+09:00',
+    asOf: '2026-08-06T20:00:00+09:00',
     nickname: 'aaa',
     rank: 'PRIVATE',
     dischargeDday: 60,
@@ -55,6 +55,36 @@ export const dashboardResponses = [
       { month: '2026-06', expectedAsset: 13900000, targetAsset: 15100000 },
       { month: '2026-07', expectedAsset: 15400000, targetAsset: 17000000 },
     ],
+  },
+]
+
+export const soldierProfileResponse = {
+  userId: 1,
+  rank: 'PRIVATE',
+  rankName: '이병',
+  monthlySalary: 750000,
+}
+
+export const transactionResponses = [
+  {
+    id: 23,
+    userId: 1,
+    accountId: 2,
+    merchantName: '군 급여',
+    amount: 750000,
+    transactionType: 'INCOME',
+    category: 'SALARY',
+    transactionDate: '2026-08-05T09:00:00+09:00',
+  },
+  {
+    id: 25,
+    userId: 1,
+    accountId: 2,
+    merchantName: '중고거래 판매',
+    amount: 105000,
+    transactionType: 'INCOME',
+    category: 'OTHER_INCOME',
+    transactionDate: '2026-08-06T10:00:00+09:00',
   },
 ]
 
@@ -141,10 +171,26 @@ export const missionResponses = [
 
 const response = dashboardResponses[0]
 const toTenThousandWon = (amount) => Number(amount || 0) / 10000
-const incomeChangeRate = response.assetSnapshot.previousIncome
+const currentMonth = response.asOf.slice(0, 7)
+const monthlyIncomeTransactions = transactionResponses.filter(
+  (transaction) =>
+    transaction.userId === soldierProfileResponse.userId &&
+    transaction.transactionType === 'INCOME' &&
+    transaction.transactionDate.startsWith(currentMonth),
+)
+const monthlyIncomeAmount = monthlyIncomeTransactions.reduce(
+  (total, transaction) => total + Number(transaction.amount || 0),
+  0,
+)
+const salaryIncomeAmount = monthlyIncomeTransactions
+  .filter((transaction) => transaction.category === 'SALARY')
+  .reduce((total, transaction) => total + Number(transaction.amount || 0), 0)
+const otherIncomeAmount = Math.max(0, monthlyIncomeAmount - salaryIncomeAmount)
+const hasAdditionalIncome = monthlyIncomeAmount > soldierProfileResponse.monthlySalary
+const incomeChangeRate = hasAdditionalIncome
   ? Math.round(
-      ((response.assetSnapshot.income - response.assetSnapshot.previousIncome) /
-        response.assetSnapshot.previousIncome) *
+      ((monthlyIncomeAmount - soldierProfileResponse.monthlySalary) /
+        soldierProfileResponse.monthlySalary) *
         1000,
     ) / 10
   : 0
@@ -177,9 +223,12 @@ export const dashboardMock = {
   assetSummary: {
     monthly: {
       income: {
-        amount: response.assetSnapshot.income,
+        amount: monthlyIncomeAmount,
+        salaryAmount: soldierProfileResponse.monthlySalary,
+        salaryLabel: `${soldierProfileResponse.rankName} 월급`,
+        otherIncomeAmount,
+        hasAdditionalIncome,
         changeRate: incomeChangeRate,
-        description: `이전 수입 ${response.assetSnapshot.previousIncome.toLocaleString('ko-KR')}원`,
       },
       investment: {
         amount: response.assetSnapshot.investment,
