@@ -75,7 +75,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: 'AI 자산 분석 결과',
+          hideHeader: true,
         },
       },
       {
@@ -92,7 +92,7 @@ const mainRoutes = [
         path: 'ai-product-recommendation',
         name: 'ai-product-recommendation',
         component: () => import('@/features/simulations/views/AiProductRecommendationView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'ai-coach', headerTitle: 'AI 금융상품 추천' },
+        meta: { requiresAuth: true, bottomNavigation: 'ai-coach', hideHeader: true },
       },
       {
         path: 'rebalancing',

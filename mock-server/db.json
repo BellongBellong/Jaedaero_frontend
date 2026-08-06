@@ -294,6 +294,246 @@
       "classificationSource": "AI",
       "classificationConfidence": 0.47,
       "transactionDate": "2026-07-29T20:10:00+09:00"
+    },
+    {
+      "id": 5,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "BBQ치킨",
+      "amount": 22000,
+      "transactionType": "EXPENSE",
+      "category": "FOOD",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-01T19:12:00+09:00"
+    },
+    {
+      "id": 6,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "GS25",
+      "amount": 8900,
+      "transactionType": "EXPENSE",
+      "category": "FOOD",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-02T21:40:00+09:00"
+    },
+    {
+      "id": 7,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "맘스터치",
+      "amount": 12500,
+      "transactionType": "EXPENSE",
+      "category": "FOOD",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-03T12:31:00+09:00"
+    },
+    {
+      "id": 8,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "배달의민족",
+      "amount": 19800,
+      "transactionType": "EXPENSE",
+      "category": "FOOD",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-04T20:05:00+09:00"
+    },
+    {
+      "id": 9,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "스타벅스",
+      "amount": 6300,
+      "transactionType": "EXPENSE",
+      "category": "FOOD",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-05T09:22:00+09:00"
+    },
+    {
+      "id": 10,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "CU",
+      "amount": 12900,
+      "transactionType": "EXPENSE",
+      "category": "FOOD",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-05T22:14:00+09:00"
+    },
+    {
+      "id": 11,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "부대 PX",
+      "amount": 9800,
+      "transactionType": "EXPENSE",
+      "category": "PX",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-01T21:03:00+09:00"
+    },
+    {
+      "id": 12,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "부대 PX",
+      "amount": 7200,
+      "transactionType": "EXPENSE",
+      "category": "PX",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-02T20:47:00+09:00"
+    },
+    {
+      "id": 13,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "부대 PX",
+      "amount": 11500,
+      "transactionType": "EXPENSE",
+      "category": "PX",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-03T21:19:00+09:00"
+    },
+    {
+      "id": 14,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "부대 PX",
+      "amount": 6800,
+      "transactionType": "EXPENSE",
+      "category": "PX",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-04T21:36:00+09:00"
+    },
+    {
+      "id": 15,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "쿠팡",
+      "amount": 15900,
+      "transactionType": "EXPENSE",
+      "category": "SHOPPING",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-02T13:08:00+09:00"
+    },
+    {
+      "id": 16,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "무신사",
+      "amount": 13300,
+      "transactionType": "EXPENSE",
+      "category": "SHOPPING",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-04T18:44:00+09:00"
+    },
+    {
+      "id": 17,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "넷플릭스",
+      "amount": 13500,
+      "transactionType": "EXPENSE",
+      "category": "LEISURE",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-01T08:00:00+09:00"
+    },
+    {
+      "id": 18,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "CGV",
+      "amount": 14000,
+      "transactionType": "EXPENSE",
+      "category": "LEISURE",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-02T16:25:00+09:00"
+    },
+    {
+      "id": 19,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "멜론",
+      "amount": 8900,
+      "transactionType": "EXPENSE",
+      "category": "LEISURE",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-03T08:00:00+09:00"
+    },
+    {
+      "id": 20,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "다이소",
+      "amount": 5500,
+      "transactionType": "EXPENSE",
+      "category": "ETC",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-03T17:52:00+09:00"
+    },
+    {
+      "id": 21,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "편의점 택배",
+      "amount": 4000,
+      "transactionType": "EXPENSE",
+      "category": "UNCLASSIFIED",
+      "classificationSource": "AI",
+      "classificationConfidence": 0.42,
+      "transactionDate": "2026-08-04T11:10:00+09:00"
+    },
+    {
+      "id": 22,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "이발소",
+      "amount": 12000,
+      "transactionType": "EXPENSE",
+      "category": "ETC",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-05T15:30:00+09:00"
+    },
+    {
+      "id": 23,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "군 급여",
+      "amount": 1200000,
+      "transactionType": "INCOME",
+      "category": "SALARY",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-10T09:00:00+09:00"
+    },
+    {
+      "id": 24,
+      "userId": 1,
+      "accountId": 1,
+      "merchantName": "장병내일준비적금",
+      "amount": 400000,
+      "transactionType": "ASSET_TRANSFER",
+      "category": "SAVINGS",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-10T09:03:00+09:00"
     }
   ],
   "cashflowProjections": [
@@ -707,12 +947,166 @@
   "investmentPreferencePreviews": [],
   "codefConnections": [],
   "cashflowForecasts": [],
-  "aiAnalyses": [],
+  "aiAnalyses": [
+    {
+      "id": 1,
+      "simulationId": null,
+      "analysisType": "SPENDING",
+      "summary": "식비를 월 5만원 줄이고 CMA 자동저축을 추가하면 예상 전역 자산이 약 148만원 증가합니다.",
+      "summaryHighlight": "약 148만원 증가합니다",
+      "spendingPattern": {
+        "baseMonthLabel": "이번달",
+        "totalExpenseAmount": 195800,
+        "categories": [
+          {
+            "code": "FOOD",
+            "label": "식비",
+            "amount": 82400
+          },
+          {
+            "code": "PX",
+            "label": "PX",
+            "amount": 35300
+          },
+          {
+            "code": "SHOPPING",
+            "label": "쇼핑",
+            "amount": 29200
+          },
+          {
+            "code": "LEISURE",
+            "label": "여가",
+            "amount": 36400
+          },
+          {
+            "code": "ETC",
+            "label": "기타",
+            "amount": 21500
+          }
+        ],
+        "insight": {
+          "message": "식비 비중이 동기 대비 23% 높아요. 주로 야간 PX 소비가 집중됩니다.",
+          "highlight": "23% 높아요."
+        }
+      },
+      "causes": [
+        {
+          "code": "FOOD_INCREASE",
+          "title": "식비 증가",
+          "status": "CAUTION",
+          "statusLabel": "주의",
+          "description": "최근 외식이 증가했어요"
+        },
+        {
+          "code": "SUBSCRIPTION",
+          "title": "구독 서비스",
+          "status": "CHECK_REQUIRED",
+          "statusLabel": "확인 필요",
+          "description": "불필요한 자동결제가 있는지 확인해보세요"
+        },
+        {
+          "code": "SAVING_HABIT",
+          "title": "저축 습관",
+          "status": "GOOD",
+          "statusLabel": "양호",
+          "description": "군적금은 꾸준하게 유지되고 있습니다"
+        }
+      ],
+      "recommendedScenarios": [
+        {
+          "scenarioId": 1,
+          "title": "CMA 자동저축 추가",
+          "recommendedTarget": "MONTHLY_SAVING",
+          "expectedEffectAmount": 1480000,
+          "priority": "HIGH"
+        }
+      ],
+      "expectedEffect": {
+        "currentProjectedAsset": 18420000,
+        "strategyProjectedAsset": 19900000,
+        "additionalAmount": 1480000,
+        "currentFinancialDischargeLabel": "D+0",
+        "advancedDays": 14
+      },
+      "recommendedProducts": [
+        {
+          "productId": 1,
+          "name": "군인공제회",
+          "tags": [
+            "복무기간 적합",
+            "안정성 높음"
+          ]
+        },
+        {
+          "productId": 2,
+          "name": "CMA",
+          "tags": [
+            "생활비 관리",
+            "유동성 높음"
+          ]
+        }
+      ],
+      "warnings": [],
+      "generatedAt": "2026-08-01T09:00:00"
+    }
+  ],
   "strategyApplications": [],
   "soldierSavings": [],
   "challengeGroups": [],
   "dischargeReports": [],
-  "productRecommendations": [],
+  "productRecommendations": [
+    {
+      "id": 1,
+      "productName": "군인공제회 목돈급여",
+      "provider": "군인공제회 · 공제",
+      "productStatus": "AVAILABLE",
+      "investmentType": "SAFE",
+      "riskGrade": 1,
+      "expectedReturnRate": 5.2,
+      "reason": "시중 최고 수준 금리. 복리로 장기 운용 시 효과 극대화.",
+      "isBeta": false,
+      "dataAsOf": "2026-08-01T09:00:00",
+      "badge": "추천",
+      "rateLabel": "복리 적용",
+      "rateTone": "NEUTRAL",
+      "minDepositLabel": "5만원",
+      "maxDepositLabel": "상한없음"
+    },
+    {
+      "id": 2,
+      "productName": "CMA 통장",
+      "provider": "증권사 · 자유입출금",
+      "productStatus": "AVAILABLE",
+      "investmentType": "SAFE",
+      "riskGrade": 2,
+      "expectedReturnRate": 3.8,
+      "reason": "비상금·여유자금 운용. 언제든 출금 가능하며 일 단위 이자 지급.",
+      "isBeta": false,
+      "dataAsOf": "2026-08-01T09:00:00",
+      "badge": null,
+      "rateLabel": "일 단위 이자",
+      "rateTone": "YELLOW",
+      "minDepositLabel": "제한없음",
+      "maxDepositLabel": "제한없음"
+    },
+    {
+      "id": 3,
+      "productName": "나라사랑카드 CMA",
+      "provider": "하나금융 · 체크카드 연계",
+      "productStatus": "AVAILABLE",
+      "investmentType": "SAFE",
+      "riskGrade": 1,
+      "expectedReturnRate": 2.5,
+      "reason": "나라사랑통장과 연계. 군인 전용 할인·포인트 혜택 제공.",
+      "isBeta": false,
+      "dataAsOf": "2026-08-01T09:00:00",
+      "badge": null,
+      "rateLabel": "군인 전용 혜택",
+      "rateTone": "GREEN",
+      "minDepositLabel": "제한없음",
+      "maxDepositLabel": "제한없음"
+    }
+  ],
   "militaryBenefits": [],
   "rebalancingRecommendations": [],
   "deviceTokens": [],
