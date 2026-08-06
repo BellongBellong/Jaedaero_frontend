@@ -16,18 +16,30 @@ const props = defineProps({
   },
   date: {
     type: String,
-    default: '2026-07-29',
+    default: '',
   },
 })
 
 const formattedDate = computed(() => {
-  if (!props.date) return ''
+  const sourceDate = props.date ? new Date(props.date) : new Date()
 
-  const [, month, day] = props.date.slice(0, 10).split('-').map(Number)
+  if (Number.isNaN(sourceDate.getTime())) return props.date
 
-  if (!month || !day) return props.date
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: 'long',
+    day: 'numeric',
+  }).format(sourceDate)
+})
 
-  return `${month}월 ${day}일`
+const dateTime = computed(() => {
+  if (props.date) return props.date.slice(0, 10)
+
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
 })
 </script>
 
@@ -48,7 +60,7 @@ const formattedDate = computed(() => {
       <p>{{ greeting }}</p>
       <div class="daily-report-banner__title">
         <strong>{{ title }}</strong>
-        <time :datetime="date">{{ formattedDate }}</time>
+        <time :datetime="dateTime">{{ formattedDate }}</time>
       </div>
     </div>
 
@@ -78,12 +90,12 @@ const formattedDate = computed(() => {
   width: 100%;
   min-height: 84px;
   align-items: center;
-  gap: 10px;
-  padding: 20px 24px;
+  gap: var(--dashboard-card-gap);
+  padding: var(--dashboard-card-padding) var(--space-24);
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 18%);
-  border-radius: 28px;
-  background: linear-gradient(180deg, var(--green-700) 0%, #7ed269 100%);
+  border-radius: var(--dashboard-card-radius);
+  background: linear-gradient(180deg, var(--green-700) 0%, var(--green-400) 160%);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 20%),
     0 8px 18px rgb(32 186 92 / 13%);
@@ -117,6 +129,7 @@ const formattedDate = computed(() => {
   z-index: 1;
   display: flex;
   min-width: 0;
+  padding-right: 58px;
   flex-direction: column;
   justify-content: center;
   gap: 3px;
@@ -216,6 +229,10 @@ const formattedDate = computed(() => {
   .daily-report-banner__glow,
   .daily-report-banner__star {
     display: none;
+  }
+
+  .daily-report-banner__content {
+    padding-right: 0;
   }
 }
 

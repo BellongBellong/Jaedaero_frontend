@@ -321,6 +321,21 @@
   --layout-page-padding: 20px;
   --page-padding: var(--layout-page-padding);
 
+  /* ======================================================
+     DASHBOARD
+  ====================================================== */
+
+  --dashboard-gap: var(--space-12);
+  --dashboard-card-gap: var(--space-10);
+  --dashboard-card-padding: var(--space-20);
+  --dashboard-card-radius: var(--radius-xl);
+  --dashboard-card-background: var(--white);
+  --dashboard-card-min-height: 170px;
+  --dashboard-success: var(--green-700);
+  --dashboard-success-soft: var(--green-100);
+  --dashboard-muted-text: var(--gray-600);
+  --dashboard-track: var(--gray-300);
+
 
 
   /* ======================================================
