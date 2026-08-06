@@ -16,19 +16,15 @@ const props = defineProps({
     type: String,
     default: '2026-09-26',
   },
-  differenceDays: {
-    type: Number,
-    default: 4,
+  financialDischargeDate: {
+    type: String,
+    default: '2026-09-20',
   },
   achievementRate: {
     type: Number,
     default: 80.2,
   },
-  currentAmount: {
-    type: Number,
-    default: 1354,
-  },
-  netAsset: {
+  currentAsset: {
     type: Number,
     default: 800,
   },
@@ -39,12 +35,45 @@ const props = defineProps({
 })
 
 const normalizedRate = computed(() => Math.min(Math.max(props.achievementRate, 0), 100))
-const markerPosition = computed(() => `${normalizedRate.value}%`)
+const progressWidth = computed(() => `${normalizedRate.value}%`)
+const markerPosition = computed(() => `clamp(39px, ${normalizedRate.value}%, calc(100% - 39px))`)
+const isLowProgress = computed(() => normalizedRate.value < 45)
 
-const formattedDate = computed(() => {
+const formattedActualDate = computed(() => {
   if (!props.actualDischargeDate) return '-'
 
   return props.actualDischargeDate.replaceAll('-', '.')
+})
+
+function toUtcDate(date) {
+  const [year, month, day] = String(date).slice(0, 10).split('-').map(Number)
+
+  if (!year || !month || !day) return null
+
+  return Date.UTC(year, month - 1, day)
+}
+
+const dischargeDifferenceDays = computed(() => {
+  const financialDate = toUtcDate(props.financialDischargeDate)
+  const actualDate = toUtcDate(props.actualDischargeDate)
+
+  if (financialDate === null || actualDate === null) {
+    return props.actualDday - props.financialDday
+  }
+
+  return Math.round((actualDate - financialDate) / 86400000)
+})
+
+const dischargeMessage = computed(() => {
+  if (dischargeDifferenceDays.value > 0) {
+    return `실제 전역일보다 ${dischargeDifferenceDays.value}일 더 빨라요!`
+  }
+
+  if (dischargeDifferenceDays.value < 0) {
+    return `실제 전역일보다 ${Math.abs(dischargeDifferenceDays.value)}일 느려요!`
+  }
+
+  return '전역일에 맞춰 목표 자산을 달성할 것으로 예상돼요!'
 })
 
 function formatAmount(value) {
@@ -61,22 +90,25 @@ function formatAmount(value) {
         </p>
         <strong class="financial-dday-card__main-dday">D-{{ financialDday }}</strong>
         <p class="financial-dday-card__message">
-          실제 전역보다 {{ differenceDays }}일 빠른 것으로 예상돼요!
+          {{ dischargeMessage }}
         </p>
       </div>
 
       <div class="financial-dday-card__actual-date">
         <span>실제 전역일</span>
         <strong>D-{{ actualDday }}</strong>
-        <time :datetime="actualDischargeDate">{{ formattedDate }}</time>
+        <time :datetime="actualDischargeDate">{{ formattedActualDate }}</time>
       </div>
     </div>
 
-    <div class="financial-dday-card__progress-section">
+    <div
+      class="financial-dday-card__progress-section"
+      :class="{ 'financial-dday-card__progress-section--low': isLowProgress }"
+    >
       <div class="financial-dday-card__achievement">
         <p>전역 목표 금액 달성률</p>
         <strong>{{ achievementRate }}%</strong>
-        <span>순자산 {{ formatAmount(netAsset) }}만원</span>
+        <span>순자산 {{ formatAmount(currentAsset) }}만원</span>
       </div>
 
       <div
@@ -84,7 +116,7 @@ function formatAmount(value) {
         :style="{ left: markerPosition }"
       >
         <div class="financial-dday-card__amount-bubble">
-          <strong>{{ formatAmount(currentAmount) }}</strong>
+          <strong>{{ formatAmount(currentAsset) }}</strong>
           <span>만원</span>
         </div>
         <span class="financial-dday-card__bubble-tail" />
@@ -107,7 +139,7 @@ function formatAmount(value) {
           aria-valuemax="100"
           :aria-valuenow="normalizedRate"
         >
-          <span :style="{ width: markerPosition }" />
+          <span :style="{ width: progressWidth }" />
         </div>
         <p>목표 {{ formatAmount(targetAmount) }}만원</p>
       </div>
@@ -120,11 +152,11 @@ function formatAmount(value) {
   position: relative;
   isolation: isolate;
   width: 100%;
-  height: 362px;
-  padding: 37px 18px 22px;
+  min-height: clamp(340px, 92vw, 362px);
+  padding: clamp(28px, 8vw, 37px) clamp(14px, 4.6vw, 18px) var(--space-20);
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 72%);
-  border-radius: 28px;
+  border-radius: var(--dashboard-card-radius);
   background:
     linear-gradient(145deg, rgb(255 255 255 / 34%), rgb(255 255 255 / 12%)), rgb(255 255 255 / 20%);
   box-shadow:
@@ -156,7 +188,7 @@ function formatAmount(value) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: var(--dashboard-gap);
   padding: 0 2px;
 }
 
@@ -174,7 +206,7 @@ function formatAmount(value) {
 .financial-dday-card__main-dday {
   display: block;
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: clamp(34px, 10vw, 40px);
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.4;
@@ -186,12 +218,11 @@ function formatAmount(value) {
   padding: 2px 10px;
   overflow: hidden;
   border-radius: 20px;
-  background: var(--green-100);
-  color: #22c55e;
+  background: var(--dashboard-success-soft);
+  color: var(--dashboard-success);
   font-size: 12px;
   line-height: 1.5;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .financial-dday-card__actual-date {
@@ -228,16 +259,22 @@ function formatAmount(value) {
 
 .financial-dday-card__progress-section {
   position: relative;
-  height: 177px;
-  margin-top: 29px;
+  min-height: 177px;
+  margin-top: clamp(20px, 7vw, 29px);
   padding: 10px 8px 0;
 }
 
 .financial-dday-card__achievement {
   display: flex;
+  width: fit-content;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+}
+
+.financial-dday-card__progress-section--low .financial-dday-card__achievement {
+  margin-left: auto;
+  padding-right: 2px;
 }
 
 .financial-dday-card__achievement p {
@@ -257,7 +294,7 @@ function formatAmount(value) {
 }
 
 .financial-dday-card__achievement span {
-  color: #888;
+  color: var(--dashboard-muted-text);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -338,22 +375,35 @@ function formatAmount(value) {
 }
 
 .financial-dday-card__track {
+  position: relative;
   width: 100%;
   height: 7px;
-  overflow: hidden;
   border-radius: 999px;
-  background: var(--gray-300);
+  background: var(--dashboard-track);
 }
 
 .financial-dday-card__track span {
+  position: relative;
   display: block;
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--green-500), var(--green-800));
 }
 
+.financial-dday-card__track span::after {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--green-800);
+  content: '';
+  transform: translate(50%, -50%);
+}
+
 .financial-dday-card__goal p {
-  color: #888;
+  color: var(--dashboard-muted-text);
   font-size: 14px;
   line-height: 1.5;
 }

@@ -84,6 +84,7 @@ function formatManwon(value) {
 <style scoped>
 .asset-forecast {
   display: flex;
+  width: 100%;
   min-height: 220px;
   flex-direction: column;
 }
@@ -128,12 +129,12 @@ function formatManwon(value) {
 }
 
 .asset-forecast__line--target {
-  stroke: #5d7058;
+  stroke: var(--olive-500);
   stroke-dasharray: 6 6;
 }
 
 .asset-forecast__line--expected {
-  stroke: #70f6a4;
+  stroke: var(--green-400);
 }
 
 .asset-forecast__labels {

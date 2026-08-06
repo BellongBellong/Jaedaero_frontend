@@ -1,43 +1,8 @@
 import { computed, ref } from 'vue'
 
-const events = ref([
-  {
-    id: 1,
-    title: '연가',
-    date: '2026-08-14',
-    startDate: '2026-08-14',
-    endDate: '2026-08-14',
-    durationDays: 1,
-    dday: 1,
-  },
-  {
-    id: 2,
-    title: '말출',
-    date: '2026-08-14',
-    startDate: '2026-08-14',
-    endDate: '2026-08-16',
-    durationDays: 3,
-    dday: 20,
-  },
-  {
-    id: 3,
-    title: '급여일',
-    date: '2026-08-20',
-    startDate: '2026-08-20',
-    endDate: '2026-08-20',
-    durationDays: 1,
-    dday: 26,
-  },
-  {
-    id: 4,
-    title: '적금 납입일',
-    date: '2026-08-25',
-    startDate: '2026-08-25',
-    endDate: '2026-08-25',
-    durationDays: 1,
-    dday: 31,
-  },
-])
+import { dashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
+
+const events = ref(structuredClone(dashboardMock.events))
 
 function calculateDday(date) {
   const today = new Date()
@@ -47,20 +12,35 @@ function calculateDday(date) {
   return Math.max(0, Math.ceil((target - todayStart) / 86_400_000))
 }
 
+function calculateDurationDays(startDate, endDate) {
+  const start = new Date(`${startDate}T00:00:00`)
+  const end = new Date(`${endDate || startDate}T00:00:00`)
+
+  return Math.max(1, Math.round((end - start) / 86_400_000) + 1)
+}
+
 export function useUpcomingEvents() {
   const sortedEvents = computed(() =>
-    [...events.value].sort((first, second) => first.date.localeCompare(second.date)),
+    [...events.value]
+      .sort((first, second) => first.startDate.localeCompare(second.startDate))
+      .map((event) => ({
+        ...event,
+        durationDays: calculateDurationDays(event.startDate, event.endDate),
+        dday: calculateDday(event.startDate),
+      })),
   )
 
   function addEvent(event) {
     events.value.push({
       id: Date.now(),
+      userId: 1,
+      eventType: event.eventType || 'CUSTOM',
       title: event.title,
-      date: event.startDate || event.date,
       startDate: event.startDate || event.date,
       endDate: event.endDate || event.startDate || event.date,
-      durationDays: event.durationDays || 1,
-      dday: calculateDday(event.startDate || event.date),
+      expectedExpense: Number(event.expectedExpense || 0),
+      notificationEnabled: event.notificationEnabled ?? true,
+      ...(event.autoVacationMode === undefined ? {} : { autoVacationMode: event.autoVacationMode }),
     })
   }
 
