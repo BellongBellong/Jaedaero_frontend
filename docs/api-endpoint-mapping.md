@@ -13,11 +13,12 @@
 | 인증·온보딩              | 프로필 아이콘·배경색 설정 | PUT    | /api/v1/users/profile-appearance                              | ProfileAppearanceRequest         | 204 No Content                      |
 | 인증·온보딩              | 약관 동의 기록            | POST   | /api/v1/agreements                                            | UserAgreementRequest             | UserAgreementResponse               |
 | 인증·온보딩              | 군인 정보 등록            | POST   | /api/v1/onboarding/military-info                              | MilitaryInfoRequest              | SoldierProfileResponse              |
-| 인증·온보딩              | 투자성향 프리뷰           | POST   | /api/v1/onboarding/investment-preference                      | InvestmentPreferenceRequest      | InvestmentPreferencePreviewResponse |
-| 인증·온보딩              | 목표 설정                 | POST   | /api/v1/goals                                                 | GoalRequest                      | GoalResponse                        |
-| 인증·온보딩              | 목표 조회                 | GET    | /api/v1/goals                                                 | -                                | GoalResponse                        |
+| 인증·온보딩              | 투자성향 시드·목표 설정   | POST   | /api/v1/onboarding/investment-preference                      | InvestmentPreferenceRequest      | InvestmentPreferenceResponse        |
+| 마이페이지               | 회원 정보 조회            | GET    | /api/v1/users/me                                              | -                                | MyPageProfileResponse               |
+| 마이페이지               | 목표 금액 변경            | PUT    | /api/v1/goals                                                 | GoalRequest                      | GoalResponse                        |
+| 마이페이지               | 목표 조회                 | GET    | /api/v1/goals                                                 | -                                | GoalResponse                        |
 | CODEF 계좌 연동          | 계좌 연동 시작            | POST   | /api/v1/accounts/connect                                      | AccountConnectRequest            | CodefConnectionResponse             |
-| CODEF 계좌 연동          | 연동계좌 목록 조회        | GET    | /api/v1/accounts                                              | -                                | List<ConnectedAccountResponse>      |
+| CODEF 계좌 연동          | 연동계좌 목록 조회        | GET    | /api/v1/accounts/{userId}                                     | userId(path)                     | List<ConnectedAccountResponse>      |
 | 홈 대시보드 · 캐시플로우 | 홈 요약 조회              | GET    | /api/v1/dashboard                                             | -                                | DashboardResponse                   |
 | 홈 대시보드 · 캐시플로우 | 월별 자산 흐름 조회       | GET    | /api/v1/cashflow?months=                                      | months(query)                    | CashflowForecastResponse            |
 | What-if · AI 분석        | 시뮬레이션 실행           | POST   | /api/v1/simulations                                           | SimulationRequest                | SimulationResponse                  |
@@ -31,14 +32,17 @@
 | 거래내역 · 소비          | 거래 카테고리 수정        | PUT    | /api/v1/transactions/{transactionId}/category                 | TransactionCategoryUpdateRequest | TransactionResponse                 |
 | 장병내일준비적금         | 적금 정보 조회            | GET    | /api/v1/soldier-savings                                       | -                                | SoldierSavingResponse               |
 | 챌린지                   | 동기 그룹·랭킹 조회       | GET    | /api/v1/challenges/group                                      | -                                | ChallengeGroupResponse              |
-| 챌린지                   | 투자 뱃지 조회            | GET    | /api/v1/users/investment-badges?page=&size=                   | page,size(query)                 | List<InvestmentBadgeResponse>       |
+| 챌린지                   | 투자 뱃지 조회            | GET    | /api/v1/users/investment-badges                               | -                                | List<InvestmentBadgeResponse>       |
 | 챌린지                   | 오늘의 미션 목록          | GET    | /api/v1/missions/today                                        | -                                | List<MissionResponse>               |
 | 챌린지                   | 미션 완료                 | POST   | /api/v1/missions/{missionId}/complete                         | missionId(path)                  | MissionCompletionResponse           |
 | 리포트 · 추천 · 혜택     | 전역 리포트               | GET    | /api/v1/reports/discharge                                     | -                                | DischargeReportResponse             |
 | 리포트 · 추천 · 혜택     | 금융상품 추천             | GET    | /api/v1/products/recommendations                              | -                                | List<ProductRecommendationResponse> |
 | 리포트 · 추천 · 혜택     | 군인 혜택 목록            | GET    | /api/v1/benefits?category=&rank=                              | BenefitSearchRequest             | List<MilitaryBenefitResponse>       |
-| 투자 리밸런싱            | 리밸런싱 추천             | GET    | /api/v1/rebalancing/recommendations                           | -                                | RebalancingRecommendationResponse   |
-| 투자 리밸런싱            | 리밸런싱 적용             | POST   | /api/v1/rebalancing/recommendations/{rebalancingId}/apply     | rebalancingId(path)              | StrategyApplicationResponse         |
+| 적립식 투자 가이드       | 내 적립 계획 조회         | GET    | /api/v1/recurring-investment-plans/me                         | -                                | RecurringInvestmentPlanResponse     |
+| 적립식 투자 가이드       | 내 적립 계획 설정·변경    | PUT    | /api/v1/recurring-investment-plans/me                         | RecurringInvestmentPlanRequest   | RecurringInvestmentPlanResponse     |
+| 적립식 투자 가이드       | 최신 투자 가이드 조회     | GET    | /api/v1/investment-guidances/latest                           | -                                | InvestmentGuidanceResponse          |
+| 적립식 투자 가이드       | 투자 가이드 새로 계산     | POST   | /api/v1/investment-guidances                                  | -                                | InvestmentGuidanceResponse          |
+| 적립식 투자 가이드       | 투자 가이드 적용          | POST   | /api/v1/investment-guidances/{guidanceId}/apply               | guidanceId(path), InvestmentGuidanceApplyRequest | StrategyApplicationResponse |
 | 알림 · FCM               | 디바이스 토큰 등록        | POST   | /api/v1/device-tokens                                         | DeviceTokenRequest               | DeviceTokenResponse                 |
 | 알림 · FCM               | 알림 이력                 | GET    | /api/v1/notifications?page=&size=                             | page,size(query)                 | List<NotificationResponse>          |
 | 알림 · FCM               | 알림 읽음                 | PUT    | /api/v1/notifications/{notificationId}/read                   | notificationId(path)             | 204 No Content                      |
@@ -55,9 +59,7 @@
 | 이벤트 등록·수정·삭제      | `DashboardResponse.upcomingEvents`를 조회 전용으로 사용 | 이벤트 CRUD API 추가 여부         |
 | 휴가모드 종료              | 현재 상태 조회와 시작 API만 사용                        | 종료 또는 비활성화 API 추가 여부  |
 | 알림 수신 설정             | 알림 이력만 구현                                        | 알림 설정 조회·수정 API 추가 여부 |
-| 프로필 전체 조회           | 로그인 응답 또는 로컬 온보딩 상태 사용                  | `GET /users/me` 추가 여부         |
 | 연동 계좌 해제·수동 동기화 | 목록 조회와 연결 시작만 구현                            | 해제·재동기화 API 추가 여부       |
-| 목표 수정                  | `POST /goals`를 생성 또는 upsert로 간주                 | PUT/PATCH 분리 여부               |
 | 별도 데일리 금융 브리핑    | `DashboardResponse.dailyBriefing` 사용                  | 별도 브리핑 API 필요 여부         |
 
 명세에 없는 경로를 프론트엔드에서 임의로 호출하지 않습니다.

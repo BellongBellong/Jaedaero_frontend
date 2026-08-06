@@ -14,7 +14,7 @@ db.defaults({
   agreements: [],
   loginResponses: [],
   refreshTokenResponses: [],
-  investmentPreferencePreviews: [],
+  investmentPreferenceResponses: [],
   codefConnections: [],
   dashboardResponses: [],
   cashflowForecasts: [],
@@ -25,7 +25,8 @@ db.defaults({
   dischargeReports: [],
   productRecommendations: [],
   militaryBenefits: [],
-  rebalancingRecommendations: [],
+  recurringInvestmentPlans: [],
+  investmentGuidances: [],
   deviceTokens: [],
   leaveModes: [],
   todayMarketReports: [],
@@ -85,6 +86,19 @@ server.get('/api/v1/users/me', (_req, res) => {
   })
 })
 server.delete('/api/v1/users/me', (_req, res) => res.status(204).end())
+server.get('/api/v1/users/me', (_req, res) => {
+  const user = first('users')
+  const soldier = first('soldierProfiles')
+  const goal = first('goals')
+  res.status(200).json({
+    userId: user?.id || 1,
+    nickname: user?.nickname || '',
+    profileImage: user?.profileImage,
+    profileBackgroundColor: user?.profileBackgroundColor,
+    soldierProfile: soldier,
+    goal,
+  })
+})
 
 server.get('/api/v1/users/nickname/availability', (req, res) => {
   const nickname = String(req.query.nickname || '').trim()
@@ -128,10 +142,13 @@ server.post('/api/v1/onboarding/military-info', (req, res) => {
 })
 
 server.post('/api/v1/onboarding/investment-preference', (req, res) => {
-  const preview = first('investmentPreferencePreviews', {
-    expectedReturnRate: 3.2,
-    riskLevel: 'LOW',
-  })
+  const preview = first(
+    'investmentPreferenceResponses',
+    first('investmentPreferencePreviews', {
+      expectedReturnRate: 3.2,
+      riskLevel: 'LOW',
+    }),
+  )
   res.status(200).json({ ...preview, investmentPreference: req.body.investmentPreference })
 })
 
@@ -140,10 +157,10 @@ server.post('/api/v1/onboarding/complete', (_req, res) => {
   res.status(200).json({ onboardingCompleted: true })
 })
 
-server.post('/api/v1/goals', (req, res) => {
+server.put('/api/v1/goals', (req, res) => {
   const goal = { id: first('goals')?.id || 1, userId: 1, goalStatus: 'CHALLENGING', ...req.body }
   db.set('goals', [goal]).write()
-  res.status(201).json(goal)
+  res.status(200).json(goal)
 })
 server.get('/api/v1/goals', (_req, res) => res.status(200).json(first('goals')))
 
@@ -173,7 +190,12 @@ server.post('/api/v1/accounts/connect', (_req, res) =>
     }),
   ),
 )
-server.get('/api/v1/accounts', (_req, res) => res.status(200).json(list('connectedAccounts')))
+server.get('/api/v1/accounts/:userId', (req, res) => {
+  const userId = Number(req.params.userId)
+  res
+    .status(200)
+    .json(list('connectedAccounts').filter((account) => Number(account.userId) === userId))
+})
 
 server.get('/api/v1/dashboard', (_req, res) =>
   res.status(200).json(first('dashboardResponses', first('dashboardSummaries'))),
@@ -293,9 +315,9 @@ server.get('/api/v1/soldier-savings', (_req, res) =>
 server.get('/api/v1/challenges/group', (_req, res) =>
   res.status(200).json(first('challengeGroups', first('cohortComparisons'))),
 )
-server.get('/api/v1/users/investment-badges', (req, res) => {
-  res.status(200).json(paginate(list('investmentBadges'), req.query.page, req.query.size))
-})
+server.get('/api/v1/users/investment-badges', (_req, res) =>
+  res.status(200).json(list('investmentBadges')),
+)
 server.get('/api/v1/missions/today', (_req, res) => res.status(200).json(list('missions')))
 server.post('/api/v1/missions/:missionId/complete', (req, res) => {
   const chain = db.get('missions').find({ id: Number(req.params.missionId) })
@@ -322,22 +344,40 @@ server.get('/api/v1/benefits', (req, res) => {
   res.status(200).json(items)
 })
 
-server.get('/api/v1/rebalancing/recommendations', (_req, res) =>
-  res.status(200).json(
-    first('rebalancingRecommendations', {
-      status: 'NO_CHANGE_REQUIRED',
-      message: '현재 투자 구성을 유지해도 좋아요.',
-    }),
-  ),
+server.get('/api/v1/recurring-investment-plans/me', (_req, res) =>
+  res.status(200).json(first('recurringInvestmentPlans')),
 )
-server.post('/api/v1/rebalancing/recommendations/:rebalancingId/apply', (req, res) => {
+server.put('/api/v1/recurring-investment-plans/me', (req, res) => {
+  const updated = {
+    id: first('recurringInvestmentPlans')?.id || 1,
+    userId: 1,
+    ...req.body,
+    updatedAt: new Date().toISOString(),
+  }
+  db.set('recurringInvestmentPlans', [updated]).write()
+  res.status(200).json(updated)
+})
+server.get('/api/v1/investment-guidances/latest', (_req, res) =>
+  res.status(200).json(first('investmentGuidances')),
+)
+server.post('/api/v1/investment-guidances', (_req, res) => {
+  const created = {
+    ...(first('investmentGuidances') || {}),
+    id: nextId('investmentGuidances'),
+    createdAt: new Date().toISOString(),
+  }
+  db.get('investmentGuidances').push(created).write()
+  res.status(201).json(created)
+})
+server.post('/api/v1/investment-guidances/:guidanceId/apply', (req, res) => {
   const base = first('strategyApplications')
   const created = {
     ...base,
     id: nextId('strategyApplications'),
     analysisId: null,
-    sourceType: 'REBALANCING',
-    sourceId: Number(req.params.rebalancingId),
+    sourceType: 'INVESTMENT_GUIDANCE',
+    sourceId: Number(req.params.guidanceId),
+    ...req.body,
     appliedAt: new Date().toISOString(),
   }
   db.get('strategyApplications').push(created).write()
