@@ -625,33 +625,47 @@
   "missions": [
     {
       "id": 1,
-      "title": "금융 브리핑 확인",
+      "missionGroup": "DAILY",
+      "title": "데일리 금융리포트 보기",
+      "description": "오늘의 금융 리포트를 확인해보세요",
       "missionType": "COMMON",
       "rewardExperience": 5,
-      "status": "COMPLETED"
+      "status": "AVAILABLE",
+      "progress": 0,
+      "target": 1
     },
     {
       "id": 2,
-      "title": "휴가 예산 설정하기",
-      "missionType": "SAFE",
-      "rewardExperience": 10,
-      "status": "IN_PROGRESS"
+      "missionGroup": "DAILY",
+      "title": "데일리 시장리포트 보기",
+      "description": "오늘의 AI 시장현황 리포트를 확인해보세요",
+      "missionType": "COMMON",
+      "rewardExperience": 5,
+      "status": "AVAILABLE",
+      "progress": 0,
+      "target": 1
     },
     {
       "id": 3,
-      "title": "미분류 거래 3건 확인하기",
-      "missionType": "COMMON",
-      "rewardExperience": 5,
+      "missionGroup": "TODAY",
+      "title": "예금상품 살펴보기",
+      "description": "나에게 맞는 예금 상품을 확인해보세요",
+      "missionType": "SAFE",
+      "rewardExperience": 10,
       "status": "IN_PROGRESS",
-      "progress": 2,
-      "target": 3
+      "progress": 0,
+      "target": 1
     },
     {
       "id": 4,
-      "title": "ETF 기초 교육 완료하기",
+      "missionGroup": "TODAY",
+      "title": "리밸런싱 제안 확인하기",
+      "description": "오늘의 AI 시장현황 리포트를 확인해보세요",
       "missionType": "AGGRESSIVE",
       "rewardExperience": 10,
-      "status": "AVAILABLE"
+      "status": "AVAILABLE",
+      "progress": 0,
+      "target": 1
     }
   ],
   "investmentBadges": [
@@ -944,7 +958,7 @@
   ],
   "loginResponses": [],
   "refreshTokenResponses": [],
-  "investmentPreferencePreviews": [],
+  "investmentPreferenceResponses": [],
   "codefConnections": [],
   "cashflowForecasts": [],
   "aiAnalyses": [
@@ -1108,7 +1122,26 @@
     }
   ],
   "militaryBenefits": [],
-  "rebalancingRecommendations": [],
+  "recurringInvestmentPlans": [
+    {
+      "id": 1,
+      "userId": 1,
+      "monthlyAmount": 150000,
+      "investmentDay": 10,
+      "enabled": true,
+      "updatedAt": "2026-08-06T09:00:00+09:00"
+    }
+  ],
+  "investmentGuidances": [
+    {
+      "id": 1,
+      "userId": 1,
+      "recommendedMonthlyAmount": 150000,
+      "investmentPreference": "SAFE",
+      "summary": "현재 자산 흐름에 맞춰 안정형 적립식 투자를 유지해보세요.",
+      "createdAt": "2026-08-06T09:00:00+09:00"
+    }
+  ],
   "deviceTokens": [],
   "leaveModes": [],
   "todayMarketReports": []

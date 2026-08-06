@@ -19,7 +19,7 @@ export const ENDPOINTS = {
   goals: '/goals',
   accounts: {
     connect: '/accounts/connect',
-    list: '/accounts',
+    list: (userId) => `/accounts/${userId}`,
   },
   dashboard: '/dashboard',
   cashflow: '/cashflow',
@@ -52,9 +52,13 @@ export const ENDPOINTS = {
     recommendations: '/products/recommendations',
   },
   benefits: '/benefits',
-  rebalancing: {
-    recommendations: '/rebalancing/recommendations',
-    apply: (rebalancingId) => `/rebalancing/recommendations/${rebalancingId}/apply`,
+  recurringInvestmentPlans: {
+    me: '/recurring-investment-plans/me',
+  },
+  investmentGuidances: {
+    latest: '/investment-guidances/latest',
+    create: '/investment-guidances',
+    apply: (guidanceId) => `/investment-guidances/${guidanceId}/apply`,
   },
   deviceTokens: '/device-tokens',
   notifications: {
