@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import DailyReportBanner from '@/features/dashboard/components/DailyReportBanner.vue'
 import DashboardAssetSwitcher from '@/features/dashboard/components/DashboardAssetSwitcher.vue'
@@ -10,14 +10,23 @@ import MissionListSheet from '@/features/dashboard/components/MissionListSheet.v
 import TodayMissionCard from '@/features/dashboard/components/TodayMissionCard.vue'
 import UpcomingEventsCard from '@/features/dashboard/components/UpcomingEventsCard.vue'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
-import { dashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
+import { getDashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
 
+const route = useRoute()
 const router = useRouter()
 const showEventModal = ref(false)
 const showMissionSheet = ref(false)
-const { events: upcomingEvents, addEvent } = useUpcomingEvents()
+const dashboardMock = computed(() => {
+  const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
+  const scenario = Array.isArray(route.query.scenario)
+    ? route.query.scenario[0]
+    : route.query.scenario
+  return getDashboardMock({ persona, scenario })
+})
+const personaEvents = computed(() => dashboardMock.value.events)
+const { events: upcomingEvents, addEvent } = useUpcomingEvents(personaEvents)
 const todayMissions = computed(() =>
-  dashboardMock.missions.filter((mission) => mission.missionGroup === 'TODAY'),
+  dashboardMock.value.missions.filter((mission) => mission.missionGroup === 'TODAY'),
 )
 
 function saveEvent(event) {
@@ -47,8 +56,9 @@ function saveEvent(event) {
 
     <DashboardAssetSwitcher
       :monthly="dashboardMock.assetSummary.monthly"
-      :forecast="dashboardMock.assetSummary.forecast"
+      :total-assets="dashboardMock.assetSummary.total"
       @view-report="router.push({ name: 'monthly-asset-report' })"
+      @view-assets="router.push({ name: 'monthly-asset-report' })"
     />
 
     <EventAddModal

@@ -22,15 +22,48 @@ const spendingRate = computed(() => {
   const amount = props.data?.spending?.amount ?? 0
   const target = props.data?.spending?.targetAmount ?? 0
 
-  return target > 0 ? Math.min((amount / target) * 100, 100) : 0
+  return target > 0 ? (amount / target) * 100 : 0
 })
 
-const isSpendingOver = computed(
-  () => (props.data?.spending?.amount ?? 0) > (props.data?.spending?.targetAmount ?? 0),
+const spendingState = computed(() => {
+  const target = Number(props.data?.spending?.targetAmount || 0)
+  if (target <= 0) return 'no-target'
+
+  return Number(props.data?.spending?.amount || 0) > target ? 'over' : 'safe'
+})
+
+const spendingDifference = computed(
+  () => Number(props.data?.spending?.amount || 0) - Number(props.data?.spending?.targetAmount || 0),
 )
+
+const spendingRingStyle = computed(() => ({
+  '--spending-progress': `${Math.min(spendingRate.value, 100) * 3.6}deg`,
+  '--spending-over-progress': `${Math.min(Math.max(spendingRate.value - 100, 0), 100) * 3.6}deg`,
+}))
+
+const investmentState = computed(() => {
+  if (!props.data?.investment?.hasSecuritiesAccount) return 'disconnected'
+
+  const changeAmount = Number(props.data.investment.changeAmount || 0)
+  if (changeAmount > 0) return 'profit'
+  if (changeAmount < 0) return 'loss'
+  return 'steady'
+})
 
 function formatWon(value) {
   return `${Number(value || 0).toLocaleString('ko-KR')}원`
+}
+
+function formatSignedWon(value) {
+  const amount = Number(value || 0)
+  const sign = amount > 0 ? '+' : ''
+  return `${sign}${amount.toLocaleString('ko-KR')}원`
+}
+
+function formatSignedRate(value) {
+  const rate = Number(value || 0)
+  const sign = rate > 0 ? '+' : ''
+  return `${sign}${rate}%`
 }
 </script>
 
@@ -71,46 +104,128 @@ function formatWon(value) {
     </article>
 
     <div class="monthly-assets__lower">
-      <article class="monthly-assets__tile monthly-assets__tile--investment">
-        <div class="monthly-assets__heading">
-          <img
-            :src="investBlock"
-            alt=""
-            aria-hidden="true"
-          >
-          <span>투자</span>
+      <article
+        class="monthly-assets__tile monthly-assets__tile--investment"
+        :class="`monthly-assets__tile--investment-${investmentState}`"
+      >
+        <div class="monthly-assets__investment-content">
+          <div class="monthly-assets__investment-heading">
+            <img
+              :src="investBlock"
+              alt=""
+              aria-hidden="true"
+            >
+            <span>투자</span>
+          </div>
+
+          <div class="monthly-assets__investment-value">
+            <div class="monthly-assets__investment-total">
+              <strong>{{ formatWon(data.investment.amount) }}</strong>
+              <span
+                v-if="investmentState !== 'disconnected' && investmentState !== 'steady'"
+                class="monthly-assets__investment-badge"
+              >
+                {{ formatSignedRate(data.investment.changeRate) }}
+              </span>
+            </div>
+            <small
+              v-if="investmentState === 'disconnected'"
+              class="monthly-assets__investment-connect-copy"
+            >
+              증권계좌를 연결해주세요
+            </small>
+            <small
+              v-else
+              class="monthly-assets__investment-change"
+            >
+              수익
+              <b>{{ formatSignedWon(data.investment.changeAmount) }}</b>
+            </small>
+          </div>
         </div>
-        <strong>{{ formatWon(data.investment.amount) }}</strong>
-        <div class="monthly-assets__investment-change">
-          <span>+ {{ Number(data.investment.changeAmount).toLocaleString('ko-KR') }}</span>
-          <span class="monthly-assets__badge">+{{ data.investment.changeRate }}%</span>
-        </div>
+
+        <RouterLink
+          v-if="investmentState === 'disconnected'"
+          class="monthly-assets__investment-action"
+          :to="{
+            name: 'connect-codef-bank',
+            params: { assetType: 'personal-assets' },
+            query: { source: 'dashboard' },
+          }"
+        >
+          증권계좌연결
+        </RouterLink>
+        <span
+          v-else
+          class="monthly-assets__investment-action"
+        >
+          월납입목표
+        </span>
       </article>
 
       <RouterLink
         class="monthly-assets__tile monthly-assets__tile--spending"
+        :class="`monthly-assets__tile--spending-${spendingState}`"
         :to="{ name: 'monthly-asset-report' }"
-        aria-label="이번 달 자산 현황 리포트 보기"
+        aria-label="이번 달 지출 내역 보기"
       >
-        <div class="monthly-assets__heading">
-          <img
-            :src="consumptionBlock"
-            alt=""
-            aria-hidden="true"
-          >
-          <span>지출</span>
+        <div class="monthly-assets__spending-content">
+          <div class="monthly-assets__spending-heading">
+            <img
+              :src="consumptionBlock"
+              alt=""
+              aria-hidden="true"
+            >
+            <span>지출</span>
+          </div>
+
+          <div class="monthly-assets__spending-value">
+            <div class="monthly-assets__spending-total">
+              <strong>{{ formatWon(data.spending.amount) }}</strong>
+              <span
+                v-if="spendingState !== 'no-target'"
+                class="monthly-assets__spending-status"
+              >
+                {{ spendingState === 'over' ? '초과 ▲' : '여유' }}
+              </span>
+            </div>
+
+            <small v-if="spendingState === 'no-target'"> 지출목표를 아직 설정하지 않았어요 </small>
+            <small
+              v-else
+              class="monthly-assets__spending-comparison"
+            >
+              목표 보다
+              <b>{{ formatSignedWon(spendingDifference) }}</b>
+              {{ spendingState === 'over' ? '더 썼어요' : '덜 썼어요' }}
+            </small>
+          </div>
+        </div>
+
+        <div class="monthly-assets__spending-goal">
+          <small>목표 {{ formatWon(data.spending.targetAmount) }}</small>
           <span
-            class="monthly-assets__status"
-            :class="{ 'monthly-assets__status--safe': !isSpendingOver }"
+            class="monthly-assets__spending-ring"
+            :class="`monthly-assets__spending-ring--${spendingState}`"
+            :style="spendingRingStyle"
+            role="img"
+            :aria-label="
+              spendingState === 'no-target'
+                ? '지출 목표 미설정'
+                : `지출 목표 대비 ${Math.round(spendingRate)}퍼센트`
+            "
           >
-            {{ isSpendingOver ? '초과 ▲' : '여유' }}
+            <span class="monthly-assets__spending-ring-base" />
+            <span
+              v-if="spendingState !== 'no-target'"
+              class="monthly-assets__spending-ring-progress"
+            />
+            <span
+              v-if="spendingState === 'over'"
+              class="monthly-assets__spending-ring-over"
+            />
           </span>
         </div>
-        <strong>{{ formatWon(data.spending.amount) }}</strong>
-        <div class="monthly-assets__progress">
-          <span :style="{ width: `${spendingRate}%` }" />
-        </div>
-        <small>목표 {{ formatWon(data.spending.targetAmount) }}</small>
       </RouterLink>
     </div>
 
@@ -144,6 +259,33 @@ function formatWon(value) {
   color: var(--gray-900);
 }
 
+.monthly-assets__income,
+.monthly-assets__tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 58%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 76%),
+    inset 0 -1px 0 rgb(255 255 255 / 18%),
+    0 8px 24px rgb(51 51 51 / 5%);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+}
+
+.monthly-assets__income::before,
+.monthly-assets__tile::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 8% 0%, rgb(255 255 255 / 48%), transparent 42%),
+    linear-gradient(135deg, rgb(255 255 255 / 18%), transparent 62%);
+  content: '';
+  pointer-events: none;
+}
+
 .monthly-assets__income {
   display: flex;
   min-height: 76px;
@@ -152,7 +294,8 @@ function formatWon(value) {
   gap: 14px;
   padding: 10px var(--space-20);
   border-radius: 20px;
-  background: linear-gradient(90deg, rgb(166 255 199 / 20%), rgb(255 255 255 / 20%));
+  background:
+    linear-gradient(90deg, rgb(166 255 199 / 22%), rgb(255 255 255 / 12%)), rgb(255 255 255 / 16%);
 }
 
 .monthly-assets__income-heading {
@@ -250,11 +393,111 @@ function formatWon(value) {
 }
 
 .monthly-assets__tile--investment {
-  background: linear-gradient(270deg, rgb(255 255 255 / 10%), rgb(174 187 167 / 12%));
+  grid-column: 1 / -1;
+  min-height: 68px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px var(--space-20);
+  background:
+    linear-gradient(117.93deg, rgb(86 103 82 / 17%), rgb(255 255 255 / 8%)), rgb(255 255 255 / 12%);
+}
+
+.monthly-assets__investment-content {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+}
+
+.monthly-assets__investment-heading {
+  display: flex;
+  flex: 0 0 30px;
+  flex-direction: column;
+  align-items: center;
+  color: var(--olive-500);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.monthly-assets__investment-heading img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.monthly-assets__investment-value {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.monthly-assets__investment-total {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+}
+
+.monthly-assets__investment-badge {
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: rgb(228 255 240 / 45%);
+  color: var(--dashboard-success);
+  font-size: 12px;
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.monthly-assets__tile--investment-loss .monthly-assets__investment-badge {
+  background: var(--orange-100);
+  color: var(--orange-600);
+}
+
+.monthly-assets__investment-change {
+  color: var(--dashboard-success);
+}
+
+.monthly-assets__tile--investment-loss .monthly-assets__investment-change {
+  color: var(--orange-600);
+}
+
+.monthly-assets__investment-change b {
+  margin-left: 3px;
+}
+
+.monthly-assets__investment-connect-copy {
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.monthly-assets__investment-action {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgb(236 236 236 / 70%);
+  color: var(--gray-400);
+  font-size: 11px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.monthly-assets__tile--investment-disconnected .monthly-assets__investment-action {
+  color: var(--olive-500);
+  cursor: pointer;
 }
 
 .monthly-assets__tile--spending {
-  background: linear-gradient(270deg, rgb(255 255 255 / 10%), rgb(255 163 131 / 12%));
+  grid-column: 1 / -1;
+  min-height: 68px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px var(--space-20);
+  background:
+    linear-gradient(270deg, rgb(255 255 255 / 8%), rgb(255 163 131 / 13%)), rgb(255 255 255 / 12%);
   color: var(--gray-900);
   cursor: pointer;
   text-decoration: none;
@@ -272,49 +515,122 @@ function formatWon(value) {
   outline-offset: 2px;
 }
 
-.monthly-assets__tile .monthly-assets__heading {
-  gap: 6px;
+.monthly-assets__spending-content {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
 }
 
-.monthly-assets__status {
-  margin-left: auto;
-  padding: 2px 7px;
+.monthly-assets__spending-heading {
+  display: flex;
+  flex: 0 0 30px;
+  flex-direction: column;
+  align-items: center;
+  color: var(--orange-500);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.monthly-assets__tile--spending-no-target .monthly-assets__spending-heading {
+  color: var(--gray-600);
+}
+
+.monthly-assets__spending-heading img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.monthly-assets__spending-value {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.monthly-assets__spending-total {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+}
+
+.monthly-assets__spending-status {
+  padding: 2px 9px;
   border-radius: 20px;
-  background: var(--orange-100);
+  background: rgb(255 183 159 / 30%);
   color: var(--orange-600);
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: var(--weight-bold);
   white-space: nowrap;
 }
 
-.monthly-assets__status--safe {
-  background: var(--green-100);
-  color: var(--green-700);
-}
-
-.monthly-assets__investment-change {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.monthly-assets__tile--spending-safe .monthly-assets__spending-status {
+  background: rgb(228 255 240 / 35%);
   color: var(--dashboard-success);
-  font-size: 11px;
 }
 
-.monthly-assets__progress {
-  height: 6px;
-  overflow: hidden;
-  border-radius: 3px;
+.monthly-assets__spending-comparison {
+  white-space: nowrap;
+}
+
+.monthly-assets__spending-comparison b {
+  margin: 0 2px;
+  color: var(--orange-500);
+  font-size: 12px;
+}
+
+.monthly-assets__tile--spending-safe .monthly-assets__spending-comparison b {
+  color: var(--dashboard-success);
+}
+
+.monthly-assets__spending-goal {
+  display: grid;
+  flex: 0 0 auto;
+  justify-items: center;
+  gap: 4px;
+}
+
+.monthly-assets__spending-goal > small {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.monthly-assets__spending-ring {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.monthly-assets__spending-ring > span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 0);
+}
+
+.monthly-assets__spending-ring-base {
   background: var(--gray-200);
 }
 
-.monthly-assets__progress span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(270deg, var(--orange-600), var(--orange-200));
+.monthly-assets__spending-ring-progress {
+  background: conic-gradient(
+    from -90deg,
+    rgb(255 211 197 / 80%) 0deg,
+    rgb(227 114 85 / 80%) var(--spending-progress),
+    transparent var(--spending-progress)
+  );
 }
 
-.monthly-assets__tile--spending small {
-  align-self: flex-end;
+.monthly-assets__spending-ring-over {
+  background: conic-gradient(
+    from -90deg,
+    rgb(227 114 85 / 90%) 0deg,
+    rgb(255 155 122 / 82%) var(--spending-over-progress),
+    transparent var(--spending-over-progress)
+  );
 }
 
 .monthly-assets__report {
@@ -350,6 +666,33 @@ function formatWon(value) {
 
   .monthly-assets__lower {
     grid-template-columns: 1fr;
+  }
+
+  .monthly-assets__tile--investment {
+    padding-right: var(--space-12);
+    padding-left: var(--space-12);
+  }
+
+  .monthly-assets__investment-content {
+    gap: 8px;
+  }
+
+  .monthly-assets__investment-action {
+    padding-right: 7px;
+    padding-left: 7px;
+  }
+
+  .monthly-assets__tile--spending {
+    padding-right: var(--space-12);
+    padding-left: var(--space-12);
+  }
+
+  .monthly-assets__spending-content {
+    gap: 8px;
+  }
+
+  .monthly-assets__spending-comparison {
+    white-space: normal;
   }
 }
 

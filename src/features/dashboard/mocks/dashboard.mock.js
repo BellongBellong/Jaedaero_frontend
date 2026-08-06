@@ -1,3 +1,5 @@
+import { dashboardPersonaMocks } from '@/features/dashboard/mocks/dashboard.personas'
+
 export const dashboardResponses = [
   {
     asOf: '2026-08-06T20:00:00+09:00',
@@ -85,6 +87,76 @@ export const transactionResponses = [
     transactionType: 'INCOME',
     category: 'OTHER_INCOME',
     transactionDate: '2026-08-06T10:00:00+09:00',
+  },
+  {
+    id: 26,
+    userId: 1,
+    accountId: 2,
+    merchantName: '부대 PX',
+    amount: 84000,
+    transactionType: 'EXPENSE',
+    category: 'PX',
+    transactionDate: '2026-08-02T18:20:00+09:00',
+  },
+  {
+    id: 27,
+    userId: 1,
+    accountId: 2,
+    merchantName: '외출 식비',
+    amount: 40000,
+    transactionType: 'EXPENSE',
+    category: 'FOOD',
+    transactionDate: '2026-08-04T12:10:00+09:00',
+  },
+  {
+    id: 28,
+    userId: 1,
+    accountId: 2,
+    merchantName: '교통비',
+    amount: 30000,
+    transactionType: 'EXPENSE',
+    category: 'TRANSPORT',
+    transactionDate: '2026-08-05T16:30:00+09:00',
+  },
+]
+
+export const connectedAccountResponses = [
+  {
+    id: 1,
+    userId: 1,
+    bankName: 'KB국민은행',
+    accountName: '장병내일준비적금',
+    accountType: 'MILITARY_SAVINGS',
+    balance: 4850000,
+    monthlyPayment: 400000,
+  },
+  {
+    id: 2,
+    userId: 1,
+    bankName: '신한은행',
+    accountName: '나라사랑월급통장',
+    accountType: 'CHECKING',
+    balance: 1420000,
+    monthlyPayment: 0,
+  },
+  {
+    id: 3,
+    userId: 1,
+    bankName: '한국투자증권',
+    accountName: '종합계좌',
+    accountType: 'INVESTMENT',
+    balance: 420000,
+    monthlyPayment: 100000,
+  },
+]
+
+export const investmentChangeResponses = [
+  {
+    id: 1,
+    userId: 1,
+    accountId: 3,
+    changeAmount: 15000,
+    changedAt: '2026-08-06T16:00:00+09:00',
   },
 ]
 
@@ -194,13 +266,41 @@ const incomeChangeRate = hasAdditionalIncome
         1000,
     ) / 10
   : 0
-const investmentChangeRate = response.assetSnapshot.investment
-  ? Math.round(
-      (response.assetSnapshot.investmentChange / response.assetSnapshot.investment) * 1000,
-    ) / 10
+const monthlyExpenseTransactions = transactionResponses.filter(
+  (transaction) =>
+    transaction.userId === soldierProfileResponse.userId &&
+    transaction.transactionType === 'EXPENSE' &&
+    transaction.transactionDate.startsWith(currentMonth),
+)
+const monthlySpendingAmount = monthlyExpenseTransactions.reduce(
+  (total, transaction) => total + Number(transaction.amount || 0),
+  0,
+)
+const securitiesAccounts = connectedAccountResponses.filter(
+  (account) =>
+    account.userId === soldierProfileResponse.userId && account.accountType === 'INVESTMENT',
+)
+const securitiesAccountIds = new Set(securitiesAccounts.map(({ id }) => id))
+const monthlyInvestmentChanges = investmentChangeResponses.filter(
+  (change) =>
+    change.userId === soldierProfileResponse.userId &&
+    securitiesAccountIds.has(change.accountId) &&
+    change.changedAt.startsWith(currentMonth),
+)
+const investmentAmount = securitiesAccounts.reduce(
+  (total, account) => total + Number(account.balance || 0),
+  0,
+)
+const investmentChangeAmount = monthlyInvestmentChanges.reduce(
+  (total, change) => total + Number(change.changeAmount || 0),
+  0,
+)
+const investmentOpeningAmount = investmentAmount - investmentChangeAmount
+const investmentChangeRate = investmentOpeningAmount
+  ? Math.round((investmentChangeAmount / Math.abs(investmentOpeningAmount)) * 1000) / 10
   : 0
 
-export const dashboardMock = {
+const baseDashboardMock = {
   response,
   dailyReport: {
     greeting: response.dailyBriefing?.greeting,
@@ -231,14 +331,30 @@ export const dashboardMock = {
         changeRate: incomeChangeRate,
       },
       investment: {
-        amount: response.assetSnapshot.investment,
-        changeAmount: response.assetSnapshot.investmentChange,
+        hasSecuritiesAccount: securitiesAccounts.length > 0,
+        amount: investmentAmount,
+        changeAmount: investmentChangeAmount,
         changeRate: investmentChangeRate,
+        monthlyPaymentTarget: securitiesAccounts.reduce(
+          (total, account) => total + Number(account.monthlyPayment || 0),
+          0,
+        ),
       },
       spending: {
-        amount: response.assetSnapshot.spending,
+        amount: monthlySpendingAmount,
         targetAmount: response.assetSnapshot.spendingTarget,
       },
+    },
+    total: {
+      totalAsset: connectedAccountResponses.reduce(
+        (total, account) => total + Number(account.balance || 0),
+        0,
+      ),
+      accounts: connectedAccountResponses.map((account) => ({
+        ...account,
+        name: account.accountName,
+        amount: account.balance,
+      })),
     },
     forecast: {
       totalAmount: response.projectedAssetAtDischarge,
@@ -254,3 +370,139 @@ export const dashboardMock = {
     },
   },
 }
+
+function withInvestment(investment) {
+  return {
+    ...baseDashboardMock,
+    assetSummary: {
+      ...baseDashboardMock.assetSummary,
+      monthly: {
+        ...baseDashboardMock.assetSummary.monthly,
+        investment,
+      },
+    },
+  }
+}
+
+function withSpending(spending) {
+  return {
+    ...baseDashboardMock,
+    assetSummary: {
+      ...baseDashboardMock.assetSummary,
+      monthly: {
+        ...baseDashboardMock.assetSummary.monthly,
+        spending,
+      },
+    },
+  }
+}
+
+export const DASHBOARD_SCENARIOS = {
+  DEFAULT: 'default',
+  INVESTMENT_PROFIT: 'investment-profit',
+  INVESTMENT_LOSS: 'investment-loss',
+  INVESTMENT_STEADY: 'investment-steady',
+  NO_INVESTMENT_ACCOUNT: 'no-investment-account',
+  SPENDING_OVER: 'spending-over',
+  SPENDING_SAFE: 'spending-safe',
+  SPENDING_NO_TARGET: 'spending-no-target',
+}
+
+export const dashboardMockScenarios = {
+  [DASHBOARD_SCENARIOS.DEFAULT]: baseDashboardMock,
+  [DASHBOARD_SCENARIOS.INVESTMENT_PROFIT]: baseDashboardMock,
+  [DASHBOARD_SCENARIOS.INVESTMENT_LOSS]: withInvestment({
+    hasSecuritiesAccount: true,
+    amount: 420000,
+    changeAmount: -5000,
+    changeRate: -1.2,
+    monthlyPaymentTarget: 100000,
+  }),
+  [DASHBOARD_SCENARIOS.INVESTMENT_STEADY]: withInvestment({
+    hasSecuritiesAccount: true,
+    amount: 420000,
+    changeAmount: 0,
+    changeRate: 0,
+    monthlyPaymentTarget: 100000,
+  }),
+  [DASHBOARD_SCENARIOS.NO_INVESTMENT_ACCOUNT]: withInvestment({
+    hasSecuritiesAccount: false,
+    amount: 0,
+    changeAmount: 0,
+    changeRate: 0,
+    monthlyPaymentTarget: 0,
+  }),
+  [DASHBOARD_SCENARIOS.SPENDING_OVER]: withSpending({
+    amount: 154000,
+    targetAmount: 100000,
+  }),
+  [DASHBOARD_SCENARIOS.SPENDING_SAFE]: withSpending({
+    amount: 84000,
+    targetAmount: 100000,
+  }),
+  [DASHBOARD_SCENARIOS.SPENDING_NO_TARGET]: withSpending({
+    amount: 84000,
+    targetAmount: 0,
+  }),
+}
+
+function mergeDashboardMock(base, override = {}) {
+  return {
+    ...base,
+    ...override,
+    response: {
+      ...base.response,
+      ...override.response,
+    },
+    dailyReport: {
+      ...base.dailyReport,
+      ...override.dailyReport,
+    },
+    financialDday: {
+      ...base.financialDday,
+      ...override.financialDday,
+    },
+    missions: override.missions ?? base.missions,
+    events: override.events ?? base.events,
+    assetSummary: {
+      ...base.assetSummary,
+      ...override.assetSummary,
+      monthly: {
+        ...base.assetSummary.monthly,
+        ...override.assetSummary?.monthly,
+      },
+      forecast: {
+        ...base.assetSummary.forecast,
+        ...override.assetSummary?.forecast,
+      },
+    },
+  }
+}
+
+export function getDashboardMock(options = {}) {
+  const normalizedOptions = typeof options === 'string' ? { scenario: options } : options
+  const personaMock = dashboardPersonaMocks[normalizedOptions.persona] ?? {}
+  let result = mergeDashboardMock(baseDashboardMock, personaMock)
+
+  const scenario = normalizedOptions.scenario
+  if (scenario && scenario !== DASHBOARD_SCENARIOS.DEFAULT) {
+    const scenarioMock = dashboardMockScenarios[scenario]
+    if (scenarioMock) {
+      const scenarioMonthly = scenarioMock.assetSummary.monthly
+      const isSpendingScenario = scenario.startsWith('spending-')
+      result = mergeDashboardMock(result, {
+        assetSummary: {
+          monthly: {
+            ...(isSpendingScenario
+              ? { spending: scenarioMonthly.spending }
+              : { investment: scenarioMonthly.investment }),
+          },
+        },
+      })
+    }
+  }
+
+  return result
+}
+
+export const dashboardMock = mergeDashboardMock(baseDashboardMock)
