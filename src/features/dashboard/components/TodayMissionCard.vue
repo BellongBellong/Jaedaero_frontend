@@ -1,20 +1,15 @@
 <script setup>
-import greenArrowIcon from '@/assets/icons/greenArrowIcon.svg'
-import checkedIcon from '@/assets/icons/smallCheckbox.svg'
-import uncheckedIcon from '@/assets/icons/smallCheckboxfalse.svg'
+import checkboxFalseIcon from '@/assets/icons/Category/CheckboxFalse.svg'
+import checkboxIcon from '@/assets/icons/Category/CheckboxIcon.png'
 
 defineProps({
   missions: {
     type: Array,
     default: () => [],
   },
-  remainingCount: {
-    type: Number,
-    default: 0,
-  },
 })
 
-defineEmits(['mission-click', 'show-more'])
+defineEmits(['mission-click', 'show-all'])
 </script>
 
 <template>
@@ -32,18 +27,13 @@ defineEmits(['mission-click', 'show-more'])
         >
           <span class="today-mission-card__mission">
             <img
-              :src="mission.completed ? checkedIcon : uncheckedIcon"
+              class="today-mission-card__check"
+              :src="mission.completed ? checkboxIcon : checkboxFalseIcon"
               alt=""
               aria-hidden="true"
             >
             <strong>{{ mission.title }}</strong>
           </span>
-          <img
-            class="today-mission-card__arrow"
-            :src="greenArrowIcon"
-            alt=""
-            aria-hidden="true"
-          >
         </button>
       </li>
     </ul>
@@ -56,12 +46,12 @@ defineEmits(['mission-click', 'show-more'])
     </p>
 
     <button
-      v-if="remainingCount > 0"
+      v-if="missions.length"
       class="today-mission-card__more"
       type="button"
-      @click="$emit('show-more')"
+      @click="$emit('show-all')"
     >
-      {{ remainingCount }}개 더 보기
+      전체 보기
     </button>
   </section>
 </template>
@@ -71,10 +61,12 @@ defineEmits(['mission-click', 'show-more'])
   display: flex;
   width: 100%;
   min-width: 0;
-  min-height: var(--dashboard-card-min-height);
+  min-height: 0;
+  aspect-ratio: 1;
   flex-direction: column;
-  gap: var(--dashboard-gap);
-  padding: var(--dashboard-card-padding) var(--space-16);
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-20);
   border-radius: var(--dashboard-card-radius);
   background: var(--dashboard-success-soft);
 }
@@ -90,7 +82,7 @@ defineEmits(['mission-click', 'show-more'])
 .today-mission-card ul {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-8);
   padding: 0;
   margin: 0;
   list-style: none;
@@ -123,7 +115,7 @@ defineEmits(['mission-click', 'show-more'])
   gap: 4px;
 }
 
-.today-mission-card__mission img {
+.today-mission-card__check {
   flex: 0 0 auto;
   width: 10px;
   height: 10px;
@@ -131,24 +123,19 @@ defineEmits(['mission-click', 'show-more'])
 }
 
 .today-mission-card__mission strong {
+  display: block;
+  min-width: 0;
   overflow: hidden;
-  color: var(--gray-900);
+  color: var(--ui-sub-title);
   font-size: 12px;
   line-height: 1.35;
   text-overflow: ellipsis;
-  white-space: pre-line;
-}
-
-.today-mission-card__arrow {
-  flex: 0 0 auto;
-  width: 7px;
-  height: 11px;
-  object-fit: contain;
+  white-space: nowrap;
 }
 
 .today-mission-card__more {
   align-self: center;
-  padding: 0;
+  padding: 2px var(--space-8) 0;
   border: 0;
   background: transparent;
   color: var(--dashboard-muted-text);
