@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 
+import arrowIcon from '@/assets/icons/arrow.svg'
 import accountsavingBlock from '@/assets/icons/account/accountsavingBlock.png'
 import assetBlock from '@/assets/icons/account/assetBlock.png'
 import consumptionBlock from '@/assets/icons/account/consumptionBlock.png'
@@ -16,48 +17,33 @@ const props = defineProps({
 defineEmits(['view-all'])
 
 const accountIcons = {
-  militarySavings: accountsavingBlock,
-  salary: consumptionBlock,
-  asset: assetBlock,
+  account: consumptionBlock,
+  savings: accountsavingBlock,
   investment: investBlock,
 }
 
 function accountGroup(account) {
   const type = String(account.accountType || account.type || '').toUpperCase()
-  if (type === 'MILITARY_SAVINGS') return 'militarySavings'
-  if (['SALARY', 'CHECKING'].includes(type)) return 'salary'
   if (['INVESTMENT', 'SECURITIES', 'SECURITY'].includes(type)) return 'investment'
-  return 'asset'
+  if (['MILITARY_SAVINGS', 'SAVINGS', 'INSTALLMENT_SAVINGS'].includes(type)) return 'savings'
+  return 'account'
 }
 
-function isKookminSecurities(account) {
-  const label = `${account.bankName || ''} ${account.name || account.accountName || ''}`
-  return /국민|KB/i.test(label)
-}
-
-const visibleAccounts = computed(() => {
+const groupedAssets = computed(() => {
   const accounts = props.data?.accounts ?? []
-  const militarySavings = accounts
-    .filter((account) => accountGroup(account) === 'militarySavings')
-    .sort((first, second) => Number(second.amount || 0) - Number(first.amount || 0))[0]
-  const salary = accounts
-    .filter((account) => accountGroup(account) === 'salary')
-    .sort((first, second) => Number(second.amount || 0) - Number(first.amount || 0))[0]
-  const investment = accounts
-    .filter((account) => accountGroup(account) === 'investment')
-    .sort((first, second) => {
-      const preferredDifference =
-        Number(isKookminSecurities(second)) - Number(isKookminSecurities(first))
-      return preferredDifference || Number(second.amount || 0) - Number(first.amount || 0)
-    })[0]
+  const totals = accounts.reduce(
+    (result, account) => {
+      result[accountGroup(account)] += Number(account.amount ?? account.balance ?? 0)
+      return result
+    },
+    { account: 0, savings: 0, investment: 0 },
+  )
 
-  const prioritized = [militarySavings, salary, investment].filter(Boolean)
-  const prioritizedIds = new Set(prioritized.map(({ id }) => id))
-  const fallback = accounts
-    .filter((account) => !prioritizedIds.has(account.id))
-    .sort((first, second) => Number(second.amount || 0) - Number(first.amount || 0))
-
-  return [...prioritized, ...fallback].slice(0, 3)
+  return [
+    { id: 'account', label: '계좌 자산', amount: totals.account },
+    { id: 'savings', label: '적금 자산', amount: totals.savings },
+    { id: 'investment', label: '투자 자산', amount: totals.investment },
+  ]
 })
 
 const totalAsset = computed(() => {
@@ -86,39 +72,42 @@ function formatWon(value) {
     >
       <span>총 자산</span>
       <strong>{{ formatWon(totalAsset) }}</strong>
-      <span aria-hidden="true">›</span>
+      <img
+        class="asset-account-summary__arrow"
+        :src="arrowIcon"
+        alt=""
+        aria-hidden="true"
+      >
     </button>
 
-    <ul v-if="visibleAccounts.length">
+    <ul>
       <li
-        v-for="account in visibleAccounts"
-        :key="account.id"
+        v-for="asset in groupedAssets"
+        :key="asset.id"
       >
         <img
-          :src="accountIcons[accountGroup(account)] || assetBlock"
+          :src="accountIcons[asset.id] || assetBlock"
           alt=""
           aria-hidden="true"
         >
         <span class="asset-account-summary__copy">
-          <strong>{{ formatWon(account.amount) }}</strong>
-          <span>{{ account.name || account.accountName }}</span>
+          <strong>{{ formatWon(asset.amount) }}</strong>
+          <span>{{ asset.label }}</span>
         </span>
       </li>
     </ul>
-    <p
-      v-else
-      class="asset-account-summary__empty"
-    >
-      연결된 자산이 없어요.
-    </p>
 
     <button
-      v-if="visibleAccounts.length"
       type="button"
       class="asset-account-summary__more"
       @click="$emit('view-all')"
     >
-      전체 자산 보기 <span aria-hidden="true">›</span>
+      전체 자산 보기
+      <img
+        :src="arrowIcon"
+        alt=""
+        aria-hidden="true"
+      >
     </button>
   </div>
 
@@ -158,11 +147,10 @@ function formatWon(value) {
   letter-spacing: -0.02em;
 }
 
-.asset-account-summary__total > span:last-child {
+.asset-account-summary__arrow {
+  width: 7px;
+  height: 11px;
   margin-left: 2px;
-  color: var(--gray-400);
-  font-size: 26px;
-  line-height: 0.8;
 }
 
 .asset-account-summary ul {
@@ -229,7 +217,10 @@ function formatWon(value) {
 }
 
 .asset-account-summary__more {
+  display: flex;
+  align-items: center;
   justify-self: end;
+  gap: 5px;
   padding: 2px 0;
   border: 0;
   background: transparent;
@@ -238,9 +229,9 @@ function formatWon(value) {
   font-size: 12px;
 }
 
-.asset-account-summary__more span {
-  font-size: 20px;
-  vertical-align: -2px;
+.asset-account-summary__more img {
+  width: 7px;
+  height: 11px;
 }
 
 .asset-account-summary__empty {
