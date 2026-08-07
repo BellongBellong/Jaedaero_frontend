@@ -9,6 +9,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  selectedDate: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['select'])
@@ -17,7 +21,6 @@ const today = new Date()
 const currentYear = today.getFullYear()
 const todayValue = toDateString(today)
 const visibleDate = ref(new Date(currentYear, today.getMonth(), 1))
-const selectedDate = ref('')
 
 const isCurrentMonth = computed(
   () =>
@@ -96,16 +99,15 @@ function changeMonth(offset) {
     visibleDate.value.getMonth() + offset,
     1,
   )
-  selectedDate.value = ''
+  emit('select', toDateString(visibleDate.value))
 }
 
 function goToToday() {
   visibleDate.value = new Date(currentYear, today.getMonth(), 1)
-  selectedDate.value = ''
+  emit('select', todayValue)
 }
 
 function selectDate(value) {
-  selectedDate.value = value
   emit('select', value)
 }
 </script>
@@ -177,10 +179,10 @@ function selectDate(value) {
           v-else
           type="button"
           :aria-label="`${caption} ${day.day}일`"
-          :aria-pressed="selectedDate === day.value"
+          :aria-pressed="props.selectedDate === day.value"
           :class="{
             'mini-event-calendar__day--today': day.value === todayValue,
-            'mini-event-calendar__day--selected': selectedDate === day.value,
+            'mini-event-calendar__day--selected': props.selectedDate === day.value,
             'mini-event-calendar__sunday': day.weekday === 0,
             'mini-event-calendar__saturday': day.weekday === 6,
           }"

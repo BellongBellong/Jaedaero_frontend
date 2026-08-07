@@ -29,6 +29,10 @@ function formatSchedule(event) {
   if (!endDate || endDate === event.startDate) return start
   return `${start} 시작`
 }
+
+function formatDday(dday) {
+  return Number(dday) === 0 ? 'D-day' : `D-${dday}`
+}
 </script>
 
 <template>
@@ -61,7 +65,9 @@ function formatSchedule(event) {
           <strong>{{ event.title }}</strong>
           <time :datetime="event.startDate">{{ formatSchedule(event) }}</time>
         </div>
-        <span>D-{{ event.dday }}</span>
+        <span :class="{ 'upcoming-events-card__dday--today': Number(event.dday) === 0 }">
+          {{ formatDday(event.dday) }}
+        </span>
       </li>
     </ul>
 
@@ -111,18 +117,20 @@ function formatSchedule(event) {
 }
 
 .upcoming-events-card__header button {
-  width: 21px;
-  height: 21px;
+  display: grid;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
+  place-items: center;
 }
 
 .upcoming-events-card__header img {
   display: block;
-  width: 21px;
-  height: 21px;
+  width: 14px;
+  height: 14px;
 }
 
 .upcoming-events-card__list {
@@ -169,6 +177,11 @@ function formatSchedule(event) {
   color: var(--dashboard-success);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.upcoming-events-card__event > .upcoming-events-card__dday--today {
+  background: var(--orange-50);
+  color: var(--orange-600);
 }
 
 .upcoming-events-card__more {
