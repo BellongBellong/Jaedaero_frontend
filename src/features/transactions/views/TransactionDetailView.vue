@@ -1,39 +1,32 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
-import editIcon from '@/assets/onboarding/icons/edit-pencil.png'
+import editIcon from '@/assets/icons/pencilIcon.svg'
 import { transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
-import { transactionCategoryIcon } from '@/features/transactions/composables/transactionCategoryIconMapping'
+import CategoryChangeSheet from '@/features/transactions/components/CategoryChangeSheet.vue'
+import {
+  transactionCategoryIcon,
+  transactionCategoryLabel,
+} from '@/features/transactions/composables/transactionCategoryIconMapping'
 
 const route = useRoute()
 const router = useRouter()
 const transaction = computed(() =>
   transactionResponses.find((item) => String(item.id) === String(route.params.transactionId)),
 )
+const categorySheetOpen = ref(false)
+const selectedCategory = ref(
+  ['', 'UNCLASSIFIED'].includes(String(transaction.value?.category || '').toUpperCase())
+    ? 'ETC'
+    : String(transaction.value?.category || 'ETC').toUpperCase(),
+)
 const isIncome = computed(
   () => String(transaction.value?.transactionType).toUpperCase() === 'INCOME',
 )
-const isEtcCategory = computed(() =>
-  ['', 'ETC', 'UNCLASSIFIED'].includes(String(transaction.value?.category || '').toUpperCase()),
-)
+const isEtcCategory = computed(() => selectedCategory.value === 'ETC')
 
-const categoryLabels = {
-  SALARY: '급여',
-  OTHER_INCOME: '기타 수입',
-  FOOD: '식비',
-  PX: 'PX',
-  TRANSPORT: '교통',
-  SHOPPING: '쇼핑',
-  LEISURE: '여가',
-  CULTURE: '문화',
-  MEDICAL: '의료',
-  SAVINGS: '저축',
-  INVESTMENT: '투자',
-  ETC: '기타',
-  UNCLASSIFIED: '기타',
-}
 const typeLabels = {
   INCOME: '입금',
   EXPENSE: '출금',
@@ -63,8 +56,7 @@ function formatFullDate(value) {
 }
 
 const categoryLabel = computed(() => {
-  const category = String(transaction.value?.category || '').toUpperCase()
-  return categoryLabels[category] || '기타'
+  return transactionCategoryLabel(selectedCategory.value)
 })
 const detailRows = computed(() => [
   {
@@ -84,6 +76,12 @@ const detailRows = computed(() => [
   { label: '일시', value: formatFullDate(transaction.value?.transactionDate) },
   { label: '거래 후 잔액', value: formatOptionalWon(transaction.value?.balanceAfter) },
 ])
+
+function changeCategory(category) {
+  selectedCategory.value = category
+  if (transaction.value) transaction.value.category = category
+  categorySheetOpen.value = false
+}
 </script>
 
 <template>
@@ -108,7 +106,7 @@ const detailRows = computed(() => [
         <div>
           <span>
             <img
-              :src="transactionCategoryIcon(transaction.category)"
+              :src="transactionCategoryIcon(selectedCategory)"
               alt=""
               aria-hidden="true"
             >
@@ -133,10 +131,17 @@ const detailRows = computed(() => [
             class="transaction-detail__category-value"
           >
             {{ row.value }}
-            <img
-              :src="editIcon"
-              alt="카테고리 수정"
+            <button
+              type="button"
+              aria-label="카테고리 수정"
+              @click="categorySheetOpen = true"
             >
+              <img
+                :src="editIcon"
+                alt=""
+                aria-hidden="true"
+              >
+            </button>
           </span>
           <span v-else>{{ row.value }}</span>
           <p v-if="row.category && isEtcCategory">
@@ -144,6 +149,14 @@ const detailRows = computed(() => [
           </p>
         </div>
       </section>
+
+      <CategoryChangeSheet
+        v-if="categorySheetOpen"
+        :category="selectedCategory"
+        :merchant-name="displayValue(transaction.merchantName)"
+        @close="categorySheetOpen = false"
+        @confirm="changeCategory"
+      />
     </template>
 
     <p
@@ -281,10 +294,21 @@ const detailRows = computed(() => [
   gap: 6px;
 }
 
-.transaction-detail__category-value img {
+.transaction-detail__category-value button {
+  display: grid;
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  place-items: center;
+}
+
+.transaction-detail__category-value img {
+  width: 18px;
+  height: 18px;
   object-fit: contain;
 }
 

@@ -76,6 +76,7 @@
 | `AccountTransactionView.vue` | 계좌번호 복사, 잔액과 계좌별 거래내역 | `connectedAccountResponses`, `transactionResponses` | `GET /api/v1/accounts/{userId}`, `GET /api/v1/transactions?accountId=` | 목 연결 |
 | `TransactionFilterSheet.vue` | 전체·입금·출금 거래 필터 바텀시트 | 계좌별 거래내역의 `transactionType` | 별도 API 없음, 조회 결과 프론트 필터 | 연결 |
 | `TransactionDetailView.vue` | 거래 항목별 적요·카테고리·유형·입출금처·일시·잔액 | `transactionResponses[]` | 거래 단건 상세 조회 API | 목 연결, 단건 API 경로 확인 필요 |
+| `CategoryChangeSheet.vue` | 현재 카테고리와 카테고리 선택·변경 바텀시트 | 거래 단건의 `category` | `PUT /api/v1/transactions/{transactionId}/category` | UI·목 상태 연결 |
 | `DischargeAssetChart.vue` | 월별 예상 자산과 목표 자산 | `dashboardResponses[].assetForecast` | `GET /api/v1/cashflow?months=` | 목 연결 |
 
 ## 자산 현황 화면

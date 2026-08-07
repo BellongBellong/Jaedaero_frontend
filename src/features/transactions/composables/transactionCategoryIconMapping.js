@@ -28,6 +28,24 @@ const CATEGORY_ICON_MAP = {
   UNCLASSIFIED: etcIcon,
 }
 
+export const transactionCategoryOptions = [
+  { value: 'SALARY', label: '급여' },
+  { value: 'ASSET', label: '자산' },
+  { value: 'PX', label: 'PX·편의점' },
+  { value: 'FOOD', label: '식비' },
+  { value: 'SHOPPING', label: '쇼핑' },
+  { value: 'TRANSPORT', label: '교통' },
+  { value: 'LEISURE', label: '여가' },
+  { value: 'MEDICAL', label: '의료' },
+  { value: 'ETC', label: '기타' },
+]
+
 export function transactionCategoryIcon(category) {
   return CATEGORY_ICON_MAP[String(category || '').toUpperCase()] || etcIcon
+}
+
+export function transactionCategoryLabel(category) {
+  const normalized = String(category || '').toUpperCase()
+  if (normalized === 'UNCLASSIFIED') return '기타'
+  return transactionCategoryOptions.find(({ value }) => value === normalized)?.label || '기타'
 }
