@@ -37,6 +37,7 @@ const router = useRouter()
 const profile = ref(null)
 const connectedAccountCount = ref(0)
 const investmentBadges = ref([])
+const badgesLoading = ref(true)
 const selectedBadgeId = ref(localStorage.getItem(BADGE_SELECTION_STORAGE_KEY) || '')
 const activeDialog = ref('')
 const saving = ref(false)
@@ -269,6 +270,7 @@ onMounted(async () => {
   }
   if (goalResult.status === 'fulfilled') goalAmount.value = goalResult.value?.targetAmount || 0
   if (badgesResult.status === 'fulfilled') investmentBadges.value = badgesResult.value
+  badgesLoading.value = false
 })
 </script>
 
@@ -315,11 +317,26 @@ onMounted(async () => {
       </div>
       <button
         type="button"
-        :class="['badge-summary', { 'badge-summary--empty': badgePreviews.length === 0 }]"
+        :class="[
+          'badge-summary',
+          {
+            'badge-summary--loading': badgesLoading,
+            'badge-summary--empty': !badgesLoading && badgePreviews.length === 0,
+          },
+        ]"
         @click="router.push({ name: 'badge-history' })"
       >
         <span
-          v-if="badgePreviews.length"
+          v-if="badgesLoading"
+          class="badge-summary__loading"
+          aria-label="뱃지 정보를 불러오는 중"
+        >
+          <i />
+          <i />
+          <i />
+        </span>
+        <span
+          v-else-if="badgePreviews.length"
           class="badge-preview-list"
         >
           <span
@@ -366,7 +383,7 @@ onMounted(async () => {
           <small>금융 미션을 달성하고<br>뱃지를 획득해보세요</small>
         </span>
         <span
-          v-if="badgePreviews.length"
+          v-if="!badgesLoading && badgePreviews.length"
           class="badge-mission-summary"
         >
           <small>달성한 미션</small>
@@ -709,6 +726,36 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   background: #fff;
+}
+.badge-summary--loading {
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+.badge-summary__loading {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.badge-summary__loading i {
+  width: 42px;
+  height: 66px;
+  border-radius: 12px;
+  background: #f2f2f2;
+  animation: badge-skeleton-pulse 1.2s ease-in-out infinite;
+}
+.badge-summary__loading i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.badge-summary__loading i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes badge-skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
 }
 .badge-icon {
   display: grid;
