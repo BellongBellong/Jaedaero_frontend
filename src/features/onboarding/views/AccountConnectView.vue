@@ -7,10 +7,20 @@ import personalAssetsIcon from '@/assets/onboarding/icons/personal-assets.svg'
 import salaryAccountIcon from '@/assets/onboarding/icons/salary-account.svg'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
+import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const route = useRoute()
 const router = useRouter()
-const selectedAsset = ref('')
+const onboarding = useOnboardingStore()
+const selectedAsset = ref(
+  onboarding.form.accountsConnected
+    ? 'personal-assets'
+    : onboarding.form.salaryAccountConnected
+      ? 'salary-account'
+      : onboarding.form.militarySavingsConnected
+        ? 'military-savings'
+        : '',
+)
 
 const canConnect = computed(() => Boolean(selectedAsset.value))
 

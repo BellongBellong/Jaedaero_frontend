@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import generalAccountIcon from '@/assets/onboarding/icons/account-general.svg'
@@ -9,6 +9,8 @@ import recommendedAccountIcon from '@/assets/onboarding/icons/account-recommende
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import { connectAccount, getAccounts } from '@/features/accounts/api/accounts.api'
 import {
+  accountInstitutionName,
+  accountOrganizationCode,
   matchesAccountInstitution,
   normalizeInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
@@ -202,6 +204,64 @@ function markConnected() {
   if (route.params.assetType === 'salary-account') onboarding.form.salaryAccountConnected = true
   if (route.params.assetType === 'personal-assets') onboarding.form.accountsConnected = true
   onboarding.persist()
+}
+
+function accountBusinessType(account) {
+  const businessType = String(
+    account.businessType || account.institutionType || account.financialBusinessType || '',
+  ).toUpperCase()
+
+  if (
+    ['ST', 'SECURITIES', 'SECURITY', 'INVESTMENT'].includes(businessType) ||
+    account.accountType === 'INVESTMENT'
+  ) {
+    return 'ST'
+  }
+
+  return 'BK'
+}
+
+function restoreConnectedInstitutions(accounts) {
+  const institutions = [...fallbackBanks, ...fallbackSecurities]
+  const grouped = new Map()
+
+  accounts.forEach((account) => {
+    const businessType = accountBusinessType(account)
+    const organizationCode = accountOrganizationCode(account)
+    const institutionName = accountInstitutionName(account)
+    const key = `${businessType}-${organizationCode || normalizeInstitutionName(institutionName)}`
+
+    if (!grouped.has(key)) {
+      const institution = institutions.find(
+        (item) => item.organizationCode === organizationCode,
+      ) || {
+        organizationCode,
+        displayName: institutionName,
+      }
+
+      grouped.set(key, {
+        id: key,
+        businessType,
+        institution,
+        accounts: [],
+      })
+    }
+
+    grouped.get(key).accounts.push(account)
+  })
+
+  connectedInstitutions.value = Array.from(grouped.values())
+  showConnectedSummary.value = connectedInstitutions.value.length > 0
+}
+
+async function restoreConnectionState() {
+  try {
+    const accounts = await getAccounts()
+    restoreConnectedInstitutions(accounts)
+  } catch (error) {
+    errorMessage.value =
+      error.response?.data?.message || '기존 연동 계좌를 불러오지 못했습니다. 다시 시도해 주세요.'
+  }
 }
 
 watch(
@@ -419,17 +479,20 @@ async function submit() {
   }
 }
 
-function cancelAccountRequest() {
+function abortAccountRequest() {
   accountRequestController.value?.abort()
   accountRequestController.value = null
   loading.value = false
 }
 
-onMounted(() => {
+onMounted(async () => {
   banks.value = fallbackBanks
   securities.value = allowsSecurities.value ? fallbackSecurities : []
   loadingInstitutions.value = false
+  await restoreConnectionState()
 })
+
+onBeforeUnmount(abortAccountRequest)
 </script>
 
 <template>
@@ -755,13 +818,6 @@ onMounted(() => {
             />
           </div>
         </section>
-        <button
-          type="button"
-          class="loading-cancel"
-          @click="cancelAccountRequest"
-        >
-          취소
-        </button>
       </div>
     </Transition>
 
@@ -1471,19 +1527,6 @@ select:focus {
 
 .loading-check {
   display: none;
-}
-
-.loading-cancel {
-  width: calc(100% - 140px);
-  min-height: 56px;
-  padding: 0;
-  border: 0;
-  border-radius: 28px;
-  margin-top: 76px;
-  background: #ececef;
-  color: #c5c5c5;
-  cursor: pointer;
-  font-size: 14px;
 }
 
 @keyframes loading-spin {
