@@ -315,10 +315,13 @@ onMounted(async () => {
       </div>
       <button
         type="button"
-        class="badge-summary"
+        :class="['badge-summary', { 'badge-summary--empty': badgePreviews.length === 0 }]"
         @click="router.push({ name: 'badge-history' })"
       >
-        <span class="badge-preview-list">
+        <span
+          v-if="badgePreviews.length"
+          class="badge-preview-list"
+        >
           <span
             v-for="badge in badgePreviews"
             :key="badge.type"
@@ -332,15 +335,40 @@ onMounted(async () => {
             <b>{{ badge.levelInfo.label }}</b>
             <em>미션 달성 {{ badge.missionCount }}개</em>
           </span>
-          <span
-            v-if="badgePreviews.length === 0"
-            class="badge-preview badge-preview--empty"
-          >
-            <span aria-hidden="true">🏅</span>
-            <small>아직 획득한 뱃지가 없어요</small>
-          </span>
         </span>
-        <span class="badge-mission-summary">
+        <span
+          v-else
+          class="badge-empty-state"
+        >
+          <svg
+            class="badge-empty-state__icon"
+            viewBox="0 0 48 54"
+            aria-hidden="true"
+          >
+            <path d="M24 3 41 10v14c0 12-7.2 21-17 26C14.2 45 7 36 7 24V10L24 3Z" />
+            <circle
+              cx="24"
+              cy="24"
+              r="9"
+            />
+            <circle
+              cx="21"
+              cy="23"
+              r="1.3"
+            />
+            <circle
+              cx="27"
+              cy="23"
+              r="1.3"
+            />
+          </svg>
+          <strong>뱃지가 없어요</strong>
+          <small>금융 미션을 달성하고<br>뱃지를 획득해보세요</small>
+        </span>
+        <span
+          v-if="badgePreviews.length"
+          class="badge-mission-summary"
+        >
           <small>달성한 미션</small>
           <b>{{ totalCompletedMissions }}개</b>
           <em
@@ -677,6 +705,11 @@ onMounted(async () => {
   background: linear-gradient(110deg, #effff7 0%, #f7fff3 52%, #fff8db 100%);
   cursor: pointer;
 }
+.badge-summary--empty {
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
 .badge-icon {
   display: grid;
   width: 47px;
@@ -745,19 +778,38 @@ onMounted(async () => {
   line-height: 1.35;
   white-space: nowrap;
 }
-.badge-preview--empty {
+.badge-empty-state {
   display: grid;
-  width: 100%;
-  justify-items: start;
-  color: #aaa;
-  font-size: 24px;
-}
-.badge-preview--empty small {
-  padding: 0;
-  background: transparent;
+  justify-items: center;
+  gap: 5px;
   color: #999;
-  font-size: 9px;
-  font-weight: 500;
+  text-align: center;
+}
+.badge-empty-state__icon {
+  width: 42px;
+  height: 47px;
+  margin-bottom: 2px;
+  fill: none;
+  stroke: #e5e5e5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+.badge-empty-state__icon circle:last-child,
+.badge-empty-state__icon circle:nth-child(3) {
+  fill: #e5e5e5;
+  stroke: none;
+}
+.badge-empty-state strong {
+  color: #aaa;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge-empty-state small {
+  color: #999;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.45;
 }
 .badge-mission-summary {
   display: grid;
