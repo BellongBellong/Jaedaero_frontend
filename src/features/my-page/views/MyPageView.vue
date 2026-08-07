@@ -129,7 +129,7 @@ const militaryLabel = computed(() => {
     [militaryLabels[type], rankLabels[rank] || rank].filter(Boolean).join(' · ') || '군 복무 정보'
   )
 })
-const validNickname = computed(() => /^[가-힣a-zA-Z]{2,12}$/.test(nicknameInput.value))
+const validNickname = computed(() => /^[가-힣a-zA-Z0-9]{2,12}$/.test(nicknameInput.value))
 
 function openNicknameDialog() {
   nicknameInput.value = nickname.value
@@ -544,7 +544,7 @@ onMounted(async () => {
           v-else
           class="hint"
         >
-          ●&nbsp; 한글, 영문 최대 12자
+          ●&nbsp; 한글, 영문, 숫자 2~12자
         </p>
         <button
           v-if="nicknameStatus === 'available'"
