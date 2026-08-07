@@ -52,6 +52,10 @@
 | `DailyReportBanner.vue` | 인사말, 금융 AI 리포트 제목, 오늘 날짜 | `dashboardResponses[].dailyBriefing` | `GET /api/v1/dashboard`의 `dailyBriefing` | 목 연결 |
 | `FinancialDdayCard.vue` | 재정적 전역일, 실제 전역일, 현재 자산, 목표 달성률 | `dashboardResponses[]` | `GET /api/v1/dashboard` | 목 연결 |
 | `UpcomingEventsCard.vue` | 예정 이벤트 목록과 D-day | `eventResponses` | `GET /api/v1/dashboard`의 `upcomingEvents` | 조회 목 연결, 이벤트 CRUD API 미정 |
+| `EventAddModal.vue` | 이벤트명, 시작·종료일, 휴가 모드 자동 전환 여부 | 로컬 이벤트 상태, `localStorage` 휴가 일정 | 이벤트 생성 API의 `startDate`, `endDate`, `autoVacationMode` | UI·목 저장 연결, 생성 API 미정 |
+| `MiniEventCalendar.vue` | 월간 날짜, 오늘·선택일, 이벤트 기간 표시 | `eventResponses`의 `startDate`, `endDate` | 예정 이벤트 조회 API | 목 연결, 별도 캘린더 API 불필요 |
+| `SelectedEventList.vue` | 선택 날짜에 포함되는 일정과 오늘 기준 D-day | `eventResponses` | 예정 이벤트 조회 API | 목 연결 |
+| `EventTimeline.vue` | 가까운 일정순 제목·기간·D-day와 긴급도 | `eventResponses` | 예정 이벤트 조회 API | 목 연결 |
 | `TodayMissionCard.vue` | 오늘만 제공되는 `TODAY` 미션 | `missionResponses` | `GET /api/v1/missions/today` | 목 연결 |
 | `MissionListSheet.vue` | 데일리 미션과 오늘의 미션 전체 | `missionResponses` | `GET /api/v1/missions/today` | 목 연결 |
 | `DashboardAssetSwitcher.vue` | 이번 달 자산 현황과 나의 총 자산 전환 | `dashboardMock.assetSummary` | `GET /api/v1/dashboard`, `GET /api/v1/accounts/{userId}` | 목 연결 |
@@ -60,6 +64,106 @@
 | `MonthlyAssetOverview.vue` 지출 | 이번 달 지출 합계, 지출 목표와 초과 여부 | `dashboardResponses[].assetSnapshot` | `GET /api/v1/dashboard` 또는 `GET /api/v1/transactions?startDate=&endDate=` | 목 연결 |
 | `AssetAccountSummary.vue` | 총 자산과 대표 군 적금·월급 통장·투자계좌 | `connectedAccountResponses`, 퍼소나별 `assetSummary.total` | `GET /api/v1/accounts/{userId}` | 목 연결 |
 | `DischargeAssetChart.vue` | 월별 예상 자산과 목표 자산 | `dashboardResponses[].assetForecast` | `GET /api/v1/cashflow?months=` | 목 연결 |
+
+## 예정 이벤트 화면
+
+대시보드의 `UpcomingEventsCard.vue`와 전체 화면인 `/upcoming-events`가 같은
+`useUpcomingEvents.js` 상태를 사용합니다.
+
+### 이벤트 데이터 계약
+
+```json
+{
+  "id": 2,
+  "userId": 1,
+  "eventType": "VACATION",
+  "title": "8월 정기휴가",
+  "startDate": "2026-08-07",
+  "endDate": "2026-08-10",
+  "expectedExpense": 300000,
+  "notificationEnabled": true,
+  "autoVacationMode": true
+}
+```
+
+- `startDate`, `endDate`: `YYYY-MM-DD` 형식. 단일 일정은 두 값이 같습니다.
+- `autoVacationMode`: 이벤트 기간에 휴가 모드를 자동 적용할지 여부입니다.
+- `dday`, `durationDays`: 화면에서 계산하는 파생 값이며 서버 저장 필드는 아닙니다.
+- 목록은 오늘과 가까운 `startDate` 순으로 정렬합니다.
+
+### 대시보드 이벤트 카드
+
+- 최대 2개의 일정을 표시합니다.
+- 일정이 3개 이상이면 `{n}개 더 보기`, 2개 이하면 `이벤트 전체 보기`를 표시합니다.
+- 연속 일정은 종료일 대신 `{시작 월}월 {시작 일}일 시작`으로 표시합니다.
+- 당일 일정은 `D-0` 대신 빨간 라벨의 `D-day`로 표시합니다.
+- 플러스 버튼은 24px 클릭 영역 안에 14px 아이콘을 배치합니다.
+- 전체 보기 클릭 시 `/upcoming-events`로 이동합니다.
+
+### 월간 캘린더
+
+`MiniEventCalendar.vue`는 별도의 캘린더 API 없이 이벤트 기간으로 달력을 그립니다.
+
+- 진입 시 오늘 날짜와 현재 월을 선택합니다.
+- 올해는 `8월`, 다른 연도는 `2027년 1월` 형식으로 월 제목을 표시합니다.
+- `backArrowIconGreen.svg`, `nextArrowIcon.svg`로 이전·다음 달을 이동합니다.
+- 다른 월로 이동하면 해당 월 1일을 선택하고 `오늘` 버튼을 표시합니다.
+- `오늘` 버튼은 현재 월과 오늘 날짜로 돌아옵니다.
+- 오늘 날짜 숫자는 Deep Green 원, 사용자가 선택한 날짜 셀은 `green-100` 배경으로 표시합니다.
+- 이벤트 기간에 포함된 날짜는 숫자 아래에 일정 점을 표시합니다.
+- 날짜는 한 번에 하나만 선택할 수 있습니다.
+
+### 선택 날짜 일정
+
+`SelectedEventList.vue`는 선택한 날짜가 `startDate <= selectedDate <= endDate`인 이벤트를 표시합니다.
+
+- 제목은 `8월 15일 일정` 형식입니다.
+- D-day는 선택 날짜가 아니라 실제 오늘을 기준으로 계산합니다.
+- 일정 카드에는 드롭 섀도우 없이 반투명 그라데이션, 18px 블러, 유리 테두리를 적용합니다.
+- 일정이 없으면 `일정이 없습니다.`와 `일정 추가` 버튼을 표시합니다.
+- 빈 상태의 일정 추가 버튼은 기존 `EventAddModal.vue`를 엽니다.
+- 새 이벤트를 저장하면 해당 이벤트의 시작 날짜를 자동 선택합니다.
+
+### 일정 타임라인
+
+`EventTimeline.vue`는 모든 예정 일정을 오늘과 가까운 순서로 보여줍니다.
+
+- 단일 일정: `2026. 08. 01 · 금요일`
+- 연속 일정: `2026. 08. 01 ~ 2026. 08. 08 (7일)`
+- 마커 사이에는 위아래가 흐려지는 회색 세로 그라데이션 선을 사용합니다.
+- 일정 마커에는 구간 색상과 흰색 테두리만 적용하고 초록색 외곽선은 사용하지 않습니다.
+
+| 남은 기간 | 마커 및 D-day 라벨 |
+| --- | --- |
+| `D-day`, `D-1` | Orange |
+| `D-2` ~ `D-7` | Green |
+| `D-8` ~ `D-29` | Olive |
+| `D-30` 이상 | Gray |
+
+### 이벤트 추가 바텀 시트
+
+- 이벤트명은 최대 20자입니다.
+- 캘린더에서 시작일과 종료일을 선택하며 단일·연속 일정을 지원합니다.
+- 일정 입력에는 `CalenderIcon.svg` 에셋을 사용합니다.
+- `stateCheckBox.svg`, `stateCheckBoxTrue.svg`로 휴가 모드 자동 전환 여부를 선택합니다.
+- 저장 payload에는 `title`, `startDate`, `endDate`, `durationDays`,
+  `autoVacationMode`가 포함됩니다.
+- 상단 핸들을 아래로 드래그하거나 배경 또는 Escape 키를 누르면 닫힙니다.
+
+## 이벤트 기반 휴가 모드
+
+이벤트 추가 시 `autoVacationMode`를 체크하면 이벤트의 `startDate`부터 `endDate`까지를
+휴가 모드 자동 전환 기간으로 등록합니다. 현재는 이벤트 생성 API가 확정되지 않아
+`jaedaero-leave-mode-schedules` 키로 브라우저 `localStorage`에 임시 저장합니다.
+
+- 저장 필드: `eventId`, `userId`, `startDate`, `endDate`, `autoVacationMode`
+- 자동 전환: 오늘이 등록 기간에 포함되면 `ModeSwitch`를 `vacation`으로 변경
+- 자동 해제: 기간을 벗어나면 `military`로 변경
+- 재확인 시점: 헤더 마운트, 이벤트 목록 변경, 날짜가 바뀌는 자정 직후
+
+백엔드 이벤트 생성 API가 추가되면 `EventAddModal.vue`의 저장 payload를 그대로 전달하고,
+서버가 내려주는 이벤트 목록의 `autoVacationMode`와 기간을 기준으로 전환하도록
+로컬 저장 부분만 API 응답으로 교체합니다.
 
 ## 증권계좌 연결 동선
 
