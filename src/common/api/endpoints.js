@@ -19,7 +19,7 @@ export const ENDPOINTS = {
   goals: '/goals',
   accounts: {
     connect: '/accounts/connect',
-    list: (userId) => `/accounts/${userId}`,
+    list: '/accounts',
   },
   dashboard: '/dashboard',
   cashflow: '/cashflow',
