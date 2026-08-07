@@ -46,7 +46,7 @@ const profileSourceCodes = {
   '#F7F7F7': 'GRAY',
   '#333333': 'BLACK',
 }
-const validNickname = computed(() => /^[가-힣a-zA-Z]{2,12}$/.test(nickname.value))
+const validNickname = computed(() => /^[가-힣a-zA-Z0-9]{2,12}$/.test(nickname.value))
 
 async function validateNickname() {
   if (!validNickname.value) return
@@ -154,7 +154,7 @@ async function next() {
       >
         {{ errorMessage }}
       </p>
-      <small>한글, 영문 최대 12자</small>
+      <small>한글, 영문, 숫자 2~12자</small>
     </section>
     <PrimaryButton
       :disabled="status !== 'available'"
