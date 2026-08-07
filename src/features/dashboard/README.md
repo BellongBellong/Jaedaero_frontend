@@ -52,6 +52,8 @@
 | `DailyReportBanner.vue` | 인사말, 금융 AI 리포트 제목, 오늘 날짜 | `dashboardResponses[].dailyBriefing` | `GET /api/v1/dashboard`의 `dailyBriefing` | 목 연결 |
 | `FinancialDdayCard.vue` | 재정적 전역일, 실제 전역일, 현재 자산, 목표 달성률 | `dashboardResponses[]` | `GET /api/v1/dashboard` | 목 연결 |
 | `UpcomingEventsCard.vue` | 예정 이벤트 목록과 D-day | `eventResponses` | `GET /api/v1/dashboard`의 `upcomingEvents` | 조회 목 연결, 이벤트 CRUD API 미정 |
+| `EventAddModal.vue` | 이벤트명, 시작·종료일, 휴가 모드 자동 전환 여부 | 로컬 이벤트 상태, `localStorage` 휴가 일정 | 이벤트 생성 API의 `startDate`, `endDate`, `autoVacationMode` | UI·목 저장 연결, 생성 API 미정 |
+| `MiniEventCalendar.vue` | 월간 날짜, 오늘·선택일, 이벤트 기간 표시 | `eventResponses`의 `startDate`, `endDate` | 예정 이벤트 조회 API | 목 연결, 별도 캘린더 API 불필요 |
 | `TodayMissionCard.vue` | 오늘만 제공되는 `TODAY` 미션 | `missionResponses` | `GET /api/v1/missions/today` | 목 연결 |
 | `MissionListSheet.vue` | 데일리 미션과 오늘의 미션 전체 | `missionResponses` | `GET /api/v1/missions/today` | 목 연결 |
 | `DashboardAssetSwitcher.vue` | 이번 달 자산 현황과 나의 총 자산 전환 | `dashboardMock.assetSummary` | `GET /api/v1/dashboard`, `GET /api/v1/accounts/{userId}` | 목 연결 |
@@ -60,6 +62,21 @@
 | `MonthlyAssetOverview.vue` 지출 | 이번 달 지출 합계, 지출 목표와 초과 여부 | `dashboardResponses[].assetSnapshot` | `GET /api/v1/dashboard` 또는 `GET /api/v1/transactions?startDate=&endDate=` | 목 연결 |
 | `AssetAccountSummary.vue` | 총 자산과 대표 군 적금·월급 통장·투자계좌 | `connectedAccountResponses`, 퍼소나별 `assetSummary.total` | `GET /api/v1/accounts/{userId}` | 목 연결 |
 | `DischargeAssetChart.vue` | 월별 예상 자산과 목표 자산 | `dashboardResponses[].assetForecast` | `GET /api/v1/cashflow?months=` | 목 연결 |
+
+## 이벤트 기반 휴가 모드
+
+이벤트 추가 시 `autoVacationMode`를 체크하면 이벤트의 `startDate`부터 `endDate`까지를
+휴가 모드 자동 전환 기간으로 등록합니다. 현재는 이벤트 생성 API가 확정되지 않아
+`jaedaero-leave-mode-schedules` 키로 브라우저 `localStorage`에 임시 저장합니다.
+
+- 저장 필드: `eventId`, `userId`, `startDate`, `endDate`, `autoVacationMode`
+- 자동 전환: 오늘이 등록 기간에 포함되면 `ModeSwitch`를 `vacation`으로 변경
+- 자동 해제: 기간을 벗어나면 `military`로 변경
+- 재확인 시점: 헤더 마운트, 이벤트 목록 변경, 날짜가 바뀌는 자정 직후
+
+백엔드 이벤트 생성 API가 추가되면 `EventAddModal.vue`의 저장 payload를 그대로 전달하고,
+서버가 내려주는 이벤트 목록의 `autoVacationMode`와 기간을 기준으로 전환하도록
+로컬 저장 부분만 API 응답으로 교체합니다.
 
 ## 증권계좌 연결 동선
 

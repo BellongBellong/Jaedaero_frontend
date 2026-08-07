@@ -1,11 +1,12 @@
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import jaedaeroWordmark from '@/assets/JaedaeroWordmark.svg'
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import ModeSwitch from '@/common/components/ModeSwitch.vue'
 import NotificationButton from '@/common/components/NotificationButton.vue'
+import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
 defineProps({
   title: { type: String, default: '' },
@@ -14,7 +15,26 @@ defineProps({
 })
 
 const router = useRouter()
-const mode = ref('military')
+const { mode, setMode, refreshMode } = useLeaveModeSchedule()
+let dailyRefreshTimer
+
+function scheduleNextRefresh() {
+  const now = new Date()
+  const nextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1)
+  dailyRefreshTimer = window.setTimeout(() => {
+    refreshMode()
+    scheduleNextRefresh()
+  }, nextDay - now)
+}
+
+onMounted(() => {
+  refreshMode()
+  scheduleNextRefresh()
+})
+
+onBeforeUnmount(() => {
+  window.clearTimeout(dailyRefreshTimer)
+})
 </script>
 
 <template>
@@ -29,7 +49,10 @@ const mode = ref('military')
         alt="제대로"
       >
       <div class="app-header__actions">
-        <ModeSwitch v-model="mode" />
+        <ModeSwitch
+          :model-value="mode"
+          @update:model-value="setMode"
+        />
         <NotificationButton :mode="mode" />
       </div>
     </template>

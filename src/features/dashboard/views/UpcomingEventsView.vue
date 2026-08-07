@@ -1,6 +1,7 @@
 <script setup>
 import plusIcon from '@/assets/icons/Category/plusIcon.svg'
 import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
+import MiniEventCalendar from '@/features/dashboard/components/MiniEventCalendar.vue'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
 import { ref } from 'vue'
 
@@ -29,6 +30,32 @@ function saveEvent(event) {
 
 <template>
   <section class="events-page screen app-page">
+    <MiniEventCalendar :events="events" />
+
+    <section class="events-page__timeline">
+      <h2>일정 타임라인</h2>
+
+      <ul v-if="events.length">
+        <li
+          v-for="event in events"
+          :key="event.id"
+        >
+          <div>
+            <strong>{{ event.title }}</strong>
+            <time :datetime="event.startDate">{{ formatSchedule(event) }}</time>
+          </div>
+          <span>D-{{ event.dday }}</span>
+        </li>
+      </ul>
+
+      <p
+        v-else
+        class="events-page__empty"
+      >
+        예정된 이벤트가 없어요.
+      </p>
+    </section>
+
     <button
       class="events-page__add"
       type="button"
@@ -40,26 +67,6 @@ function saveEvent(event) {
       >
       이벤트 추가
     </button>
-
-    <ul v-if="events.length">
-      <li
-        v-for="event in events"
-        :key="event.id"
-      >
-        <div>
-          <strong>{{ event.title }}</strong>
-          <time :datetime="event.startDate">{{ formatSchedule(event) }}</time>
-        </div>
-        <span>D-{{ event.dday }}</span>
-      </li>
-    </ul>
-
-    <p
-      v-else
-      class="events-page__empty"
-    >
-      예정된 이벤트가 없어요.
-    </p>
 
     <EventAddModal
       v-if="showAddModal"
@@ -73,19 +80,23 @@ function saveEvent(event) {
 .events-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
+  background: linear-gradient(180deg, var(--green-100) 0%, var(--ui-background) 42%);
 }
 
 .events-page__add {
   display: flex;
+  width: fit-content;
   height: 46px;
   align-items: center;
   justify-content: center;
+  align-self: flex-end;
   gap: 8px;
+  padding: 0 20px;
   border: 0;
-  border-radius: 16px;
-  background: var(--green-100);
-  color: var(--green-700);
+  border-radius: var(--radius-full);
+  background: var(--green-500);
+  color: var(--gray-900);
   cursor: pointer;
   font-weight: var(--weight-bold);
 }
@@ -95,40 +106,75 @@ function saveEvent(event) {
   height: 18px;
 }
 
-.events-page ul {
+.events-page__timeline {
+  padding: var(--space-20);
+  border-radius: 26px;
+  background: var(--white);
+}
+
+.events-page__timeline h2 {
+  margin: 0 0 14px;
+  color: var(--ui-sub-title);
+  font-size: 14px;
+  font-weight: var(--weight-bold);
+}
+
+.events-page__timeline ul {
   display: grid;
-  gap: 10px;
+  gap: 0;
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
-.events-page li {
+.events-page__timeline li {
+  position: relative;
   display: flex;
-  min-height: 74px;
+  min-height: 62px;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 18px;
-  border-radius: 20px;
-  background: var(--white);
+  padding: 8px 0 8px 34px;
 }
 
-.events-page li div {
+.events-page__timeline li::before {
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  z-index: 1;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green-700);
+  content: '';
+  transform: translateY(-50%);
+}
+
+.events-page__timeline li:not(:last-child)::after {
+  position: absolute;
+  top: 50%;
+  bottom: -50%;
+  left: 9px;
+  width: 2px;
+  background: var(--green-100);
+  content: '';
+}
+
+.events-page__timeline li div {
   display: grid;
   gap: 3px;
 }
 
-.events-page li strong {
+.events-page__timeline li strong {
   color: var(--gray-900);
-  font-size: 15px;
+  font-size: 13px;
 }
 
-.events-page li time {
-  color: var(--gray-600);
-  font-size: 12px;
+.events-page__timeline li time {
+  color: var(--gray-500);
+  font-size: 11px;
 }
 
-.events-page li > span {
+.events-page__timeline li > span {
   padding: 3px 11px;
   border-radius: 999px;
   background: var(--green-100);

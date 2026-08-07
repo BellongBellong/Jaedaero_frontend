@@ -1,6 +1,7 @@
 import { computed, isRef, ref, unref, watch } from 'vue'
 
 import { dashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
+import { setEventLeaveModeSchedules } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
 function calculateDday(date) {
   const today = new Date()
@@ -25,11 +26,13 @@ export function useUpcomingEvents(initialEvents = dashboardMock.events) {
       initialEvents,
       (value) => {
         events.value = structuredClone(unref(value) ?? [])
+        setEventLeaveModeSchedules(events.value)
       },
       { immediate: true },
     )
   } else {
     events.value = structuredClone(initialEvents ?? [])
+    setEventLeaveModeSchedules(events.value)
   }
 
   const sortedEvents = computed(() =>
@@ -60,6 +63,7 @@ export function useUpcomingEvents(initialEvents = dashboardMock.events) {
       notificationEnabled: event.notificationEnabled ?? true,
       ...(event.autoVacationMode === undefined ? {} : { autoVacationMode: event.autoVacationMode }),
     })
+    setEventLeaveModeSchedules(events.value)
   }
 
   return {

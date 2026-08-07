@@ -73,12 +73,11 @@ function formatSchedule(event) {
     </p>
 
     <button
-      v-if="remainingCount > 0"
       class="upcoming-events-card__more"
       type="button"
       @click="$emit('show-more')"
     >
-      {{ remainingCount }}개 더 보기
+      {{ remainingCount > 0 ? `${remainingCount}개 더 보기` : '이벤트 전체 보기' }}
     </button>
   </section>
 </template>

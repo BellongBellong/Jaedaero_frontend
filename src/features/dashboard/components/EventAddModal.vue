@@ -1,11 +1,16 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
+import calendarIcon from '@/assets/icons/CalenderIcon.svg'
+import checkboxFalseIcon from '@/assets/icons/stateCheckBox.svg'
+import checkboxTrueIcon from '@/assets/icons/stateCheckBoxTrue.svg'
+
 const emit = defineEmits(['close', 'save'])
 
 const title = ref('')
 const startDate = ref('')
 const endDate = ref('')
+const autoVacationMode = ref(true)
 const calendarOpen = ref(false)
 const sheet = ref(null)
 const dragOffset = ref(0)
@@ -110,6 +115,7 @@ function save() {
     startDate: startDate.value,
     endDate: endDate.value || startDate.value,
     durationDays: durationDays.value,
+    autoVacationMode: autoVacationMode.value,
   })
 }
 
@@ -216,15 +222,11 @@ onBeforeUnmount(() => {
               @click="calendarOpen = !calendarOpen"
             >
               <span>{{ formattedSchedule }}</span>
-              <svg
-                viewBox="0 0 24 24"
+              <img
+                :src="calendarIcon"
+                alt=""
                 aria-hidden="true"
               >
-                <path
-                  d="M7 2v3M17 2v3M3.5 9h17M5.5 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"
-                />
-                <path d="M8 13h3v3H8z" />
-              </svg>
             </button>
 
             <div
@@ -298,6 +300,22 @@ onBeforeUnmount(() => {
               </button>
             </div>
           </div>
+
+          <label class="event-sheet__leave-mode">
+            <span class="event-sheet__leave-mode-copy">
+              <strong>휴가 모드 전환</strong>
+              <small>이벤트 기간에 휴가모드로 자동 전환됩니다.</small>
+            </span>
+            <input
+              v-model="autoVacationMode"
+              type="checkbox"
+            >
+            <img
+              :src="autoVacationMode ? checkboxTrueIcon : checkboxFalseIcon"
+              alt=""
+              aria-hidden="true"
+            >
+          </label>
         </div>
 
         <button
@@ -390,6 +408,59 @@ onBeforeUnmount(() => {
   gap: 10px;
 }
 
+label.event-sheet__leave-mode {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: 0 10px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.event-sheet__leave-mode-copy {
+  display: grid;
+  gap: 2px;
+}
+
+label.event-sheet__leave-mode > .event-sheet__leave-mode-copy {
+  padding: 0;
+}
+
+.event-sheet__leave-mode-copy strong {
+  color: var(--olive-400);
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.event-sheet__leave-mode-copy small {
+  color: var(--gray-400);
+  font-size: 11px;
+  font-weight: var(--weight-regular);
+  line-height: 1.4;
+}
+
+.event-sheet__leave-mode input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.event-sheet__leave-mode > img {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+}
+
+.event-sheet__leave-mode:focus-within {
+  outline: 2px solid var(--green-500);
+  outline-offset: 3px;
+}
+
 .event-sheet label > span,
 .event-sheet__schedule > span {
   padding: 0 10px;
@@ -398,7 +469,7 @@ onBeforeUnmount(() => {
   font-weight: var(--weight-bold);
 }
 
-.event-sheet input,
+.event-sheet input[type='text'],
 .event-sheet__date-button {
   width: 100%;
   min-height: 56px;
@@ -413,11 +484,11 @@ onBeforeUnmount(() => {
   font-weight: var(--weight-bold);
 }
 
-.event-sheet input::placeholder {
+.event-sheet input[type='text']::placeholder {
   color: var(--gray-400);
 }
 
-.event-sheet input:focus,
+.event-sheet input[type='text']:focus,
 .event-sheet__date-button:focus-visible,
 .event-sheet__date-button--selected {
   border-color: var(--green-500);
@@ -445,15 +516,10 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-.event-sheet__date-button svg {
+.event-sheet__date-button img {
   width: 24px;
   height: 24px;
   flex: 0 0 auto;
-  fill: none;
-  stroke: var(--gray-600);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2;
 }
 
 .event-calendar {
