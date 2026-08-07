@@ -91,7 +91,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: '왓이프 시뮬레이션',
+          headerTitle: 'What-if 시뮬레이션',
         },
       },
       {
