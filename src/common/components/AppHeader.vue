@@ -58,6 +58,7 @@ onBeforeUnmount(() => {
     </template>
     <template v-else>
       <button
+        v-if="variant === 'back'"
         class="app-header__back"
         type="button"
         aria-label="이전 페이지"

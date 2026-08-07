@@ -166,7 +166,8 @@ const analysisMenus = [
 <style scoped>
 .ai-coach-screen {
   min-height: 100%;
-  padding: 10px 20px 40px;
+  padding: 10px 20px
+    calc(var(--page-bottom-navigation-space) + var(--safe-area-bottom) + 20px);
   color: var(--gray-900);
 }
 
