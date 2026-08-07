@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 
+import arrowIcon from '@/assets/icons/arrow.svg'
 import assetBlock from '@/assets/icons/account/assetBlock.png'
 import consumptionBlock from '@/assets/icons/account/consumptionBlock.png'
 import investBlock from '@/assets/icons/account/investBlock.png'
@@ -235,7 +236,12 @@ function formatSignedRate(value) {
       type="button"
       @click="$emit('view-report')"
     >
-      전체 리포트 보기 <span aria-hidden="true">›</span>
+      전체 리포트 보기
+      <img
+        :src="arrowIcon"
+        alt=""
+        aria-hidden="true"
+      >
     </button>
   </div>
 
@@ -634,7 +640,10 @@ function formatSignedRate(value) {
 }
 
 .monthly-assets__report {
+  display: flex;
+  align-items: center;
   align-self: flex-end;
+  gap: 5px;
   padding: 2px 0;
   border: 0;
   background: transparent;
@@ -643,10 +652,9 @@ function formatSignedRate(value) {
   font-size: 12px;
 }
 
-.monthly-assets__report span {
-  color: var(--gray-400);
-  font-size: 20px;
-  vertical-align: -2px;
+.monthly-assets__report img {
+  width: 7px;
+  height: 11px;
 }
 
 .monthly-assets__empty {

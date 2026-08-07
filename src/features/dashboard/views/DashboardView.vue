@@ -58,7 +58,7 @@ function saveEvent(event) {
       :monthly="dashboardMock.assetSummary.monthly"
       :total-assets="dashboardMock.assetSummary.total"
       @view-report="router.push({ name: 'monthly-asset-report' })"
-      @view-assets="router.push({ name: 'monthly-asset-report' })"
+      @view-assets="router.push({ name: 'asset-overview', query: route.query })"
     />
 
     <EventAddModal

@@ -47,6 +47,10 @@
 현재 대시보드는 목데이터로 렌더링합니다. 아래의 “예정 API”는 백엔드 연결 시 사용할 데이터 계약이며,
 명세에 없는 API는 임의로 호출하지 않습니다.
 
+페이지 이동을 나타내는 `전체 보기`, `리포트 보기`, 총 자산 이동 버튼은 문자 화살표 대신
+`src/assets/icons/arrow.svg` 에셋을 공통으로 사용합니다. 캘린더 월 이동과 헤더 뒤로가기는
+각 용도에 맞는 별도 아이콘을 유지합니다.
+
 | 컴포넌트 | 표시 데이터 | 현재 목데이터 | 예정 API | 상태 |
 | --- | --- | --- | --- | --- |
 | `DailyReportBanner.vue` | 인사말, 금융 AI 리포트 제목, 오늘 날짜 | `dashboardResponses[].dailyBriefing` | `GET /api/v1/dashboard`의 `dailyBriefing` | 목 연결 |
@@ -62,8 +66,40 @@
 | `MonthlyAssetOverview.vue` 수입 | 이번 달 수입 합계, 복무별 월급, 기타 수입 | `soldierProfileResponse`, `transactionResponses` | `GET /api/v1/users/me`, `GET /api/v1/transactions?startDate=&endDate=` | 목 연결 |
 | `MonthlyAssetOverview.vue` 투자 | 증권계좌 잔액, 이번 달 변동액·변동률, 연결 여부 | `connectedAccountResponses`, `investmentChangeResponses` | `GET /api/v1/accounts/{userId}` + 월별 증권계좌 변동 조회 API | 목 연결, 변동 조회 API 확인 필요 |
 | `MonthlyAssetOverview.vue` 지출 | 이번 달 지출 합계, 지출 목표와 초과 여부 | `dashboardResponses[].assetSnapshot` | `GET /api/v1/dashboard` 또는 `GET /api/v1/transactions?startDate=&endDate=` | 목 연결 |
-| `AssetAccountSummary.vue` | 총 자산과 대표 군 적금·월급 통장·투자계좌 | `connectedAccountResponses`, 퍼소나별 `assetSummary.total` | `GET /api/v1/accounts/{userId}` | 목 연결 |
+| `AssetAccountSummary.vue` | 총 자산과 계좌·적금·투자 유형별 통합 자산 | `connectedAccountResponses`, 퍼소나별 `assetSummary.total` | `GET /api/v1/accounts/{userId}` | 목 연결 |
+| `AssetOverviewView.vue` | 총 자산 계좌 목록과 이번 달 지출 카드 | `assetSummary.total`, `assetSummary.monthly` | `GET /api/v1/accounts/{userId}`, `GET /api/v1/dashboard` | 목 연결 |
+| `AssetAccountCard.vue` | 총 자산, 대표 계좌 3개, 남은 계좌 수 | `connectedAccountResponses` | `GET /api/v1/accounts/{userId}` | 목 연결 |
+| `AssetAccountListItem.vue` | 은행 아이콘, 잔액, 계좌명을 표시하는 공통 계좌 행 | `connectedAccountResponses[]` | `GET /api/v1/accounts/{userId}` | 목 연결 |
+| `AccountAssetsView.vue` | 입출금·저축·투자 계좌 분류와 유형별 합계 | `connectedAccountResponses` | `GET /api/v1/accounts/{userId}` | 목 연결 |
+| `InvestmentAssetChart.vue` | 투자 원금·평가액·수익률과 최근 4개월 월별 수익률 | `assetSummary.monthly.investment` | 월별 증권계좌 수익률 조회 API | 요약 목 연결, 월별 이력 API 확인 필요 |
+| `InvestmentHoldingsList.vue` | 보유 투자 상품명·수량·평가액·수익률 | `investmentHoldingResponses` | 증권계좌 보유 상품 조회 API | 목 연결, API 경로 확인 필요 |
+| `AccountTransactionView.vue` | 계좌번호 복사, 잔액과 계좌별 거래내역 | `connectedAccountResponses`, `transactionResponses` | `GET /api/v1/accounts/{userId}`, `GET /api/v1/transactions?accountId=` | 목 연결 |
+| `TransactionFilterSheet.vue` | 전체·입금·출금 거래 필터 바텀시트 | 계좌별 거래내역의 `transactionType` | 별도 API 없음, 조회 결과 프론트 필터 | 연결 |
+| `TransactionDetailView.vue` | 거래 항목별 적요·카테고리·유형·입출금처·일시·잔액 | `transactionResponses[]` | 거래 단건 상세 조회 API | 목 연결, 단건 API 경로 확인 필요 |
 | `DischargeAssetChart.vue` | 월별 예상 자산과 목표 자산 | `dashboardResponses[].assetForecast` | `GET /api/v1/cashflow?months=` | 목 연결 |
+
+## 자산 현황 화면
+
+- 대시보드 `전체 자산 보기`에서 `/assets`로 이동합니다.
+- 대시보드의 `persona`, `scenario` 쿼리를 유지해 동일한 목데이터를 표시합니다.
+- 총 자산 카드에는 연결 계좌 중 앞의 3개를 표시합니다.
+- 계좌가 있으면 `계좌 {전체 연동 수}개 전체 보기`, 없으면 `계좌 전체 보기`를 표시합니다.
+- 계좌 보기 버튼은 `/assets/accounts`로 이동하며 기존 `AssetAccountListItem.vue`를
+  상세 화면에서도 재사용합니다.
+- 계좌 상세 화면의 `계좌` 탭은 입출금과 저축을 분리해 표시합니다.
+  - 입출금: `CHECKING`, `SALARY`, `ACCOUNT`, `ASSET`
+  - 저축: `MILITARY_SAVINGS`, `SAVINGS`, `INSTALLMENT_SAVINGS`
+- `투자` 탭은 `INVESTMENT`, `SECURITIES`, `SECURITY` 유형만 표시합니다.
+- 각 섹션의 금액은 해당 유형에 포함된 계좌 잔액의 합계로 계산합니다.
+- 투자 그래프는 최근 4개월의 월별 수익률을 표시합니다. 최대 범위는 `50%`이며,
+  실제 최고 수익률을 기준으로 세로축을 상대적으로 확대합니다. `history[]`에는
+  `date`와 `rate`를 전달하며, 이력이 없으면 현재 수익률을 기준으로 임시 월별 추이를
+  생성합니다. 그래프를 가리키면 월과 해당 월의 수익률을 표시합니다.
+- 두 번째 카드에는 이번 달 지출 합계와 월간 수입·투자·지출 블록을 표시합니다.
+- `전체 내역 보기`는 `/transactions`로 이동합니다.
+- 카드 헤더는 `AccountTitleHeader.vue`를 공통으로 사용합니다.
+- 은행 아이콘은 `institutionMapping.js`에서 정규화한 기관 코드·이름을
+  `bankAccountIconMapping.js`에서 `bank-account-lcon/account-list` 에셋에 연결합니다.
 
 ## 예정 이벤트 화면
 
