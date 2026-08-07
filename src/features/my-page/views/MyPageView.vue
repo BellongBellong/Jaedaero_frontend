@@ -37,6 +37,7 @@ const router = useRouter()
 const profile = ref(null)
 const connectedAccountCount = ref(0)
 const investmentBadges = ref([])
+const pageLoading = ref(true)
 const badgesLoading = ref(true)
 const selectedBadgeId = ref(localStorage.getItem(BADGE_SELECTION_STORAGE_KEY) || '')
 const activeDialog = ref('')
@@ -271,11 +272,15 @@ onMounted(async () => {
   if (goalResult.status === 'fulfilled') goalAmount.value = goalResult.value?.targetAmount || 0
   if (badgesResult.status === 'fulfilled') investmentBadges.value = badgesResult.value
   badgesLoading.value = false
+  pageLoading.value = false
 })
 </script>
 
 <template>
-  <main class="mypage screen">
+  <main
+    v-if="!pageLoading"
+    class="mypage screen"
+  >
     <section class="profile-section">
       <button
         type="button"
@@ -600,6 +605,36 @@ onMounted(async () => {
       </section>
     </div>
   </main>
+  <main
+    v-else
+    class="mypage mypage--loading screen"
+    aria-busy="true"
+    aria-label="마이페이지 정보를 불러오는 중"
+  >
+    <section class="mypage-loading-profile">
+      <span class="mypage-loading-avatar" />
+      <i />
+      <small />
+      <b />
+    </section>
+    <section class="mypage-loading-card mypage-loading-card--badge">
+      <i />
+      <div>
+        <span />
+        <span />
+        <span />
+      </div>
+    </section>
+    <section class="mypage-loading-card">
+      <i />
+      <i />
+      <i />
+    </section>
+    <section class="mypage-loading-card">
+      <i />
+      <i />
+    </section>
+  </main>
 </template>
 
 <style scoped>
@@ -608,6 +643,86 @@ onMounted(async () => {
     calc(var(--page-bottom-navigation-space) + var(--safe-area-bottom) + var(--space-16));
   background: #fafafa;
   color: #333;
+}
+.mypage--loading {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+.mypage--loading i,
+.mypage--loading span,
+.mypage--loading small,
+.mypage--loading b {
+  display: block;
+  border-radius: 12px;
+  background: #ededed;
+  animation: mypage-skeleton-pulse 1.2s ease-in-out infinite;
+}
+.mypage-loading-profile {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 20px 0 14px;
+}
+.mypage-loading-avatar {
+  width: 82px;
+  height: 82px;
+  border-radius: 50% !important;
+}
+.mypage-loading-profile i {
+  width: 90px;
+  height: 17px;
+}
+.mypage-loading-profile small {
+  width: 58px;
+  height: 12px;
+}
+.mypage-loading-profile b {
+  width: 108px;
+  height: 34px;
+  margin-top: 4px;
+  border-radius: 18px;
+}
+.mypage-loading-card {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 28px;
+  background: #fff;
+}
+.mypage-loading-card > i {
+  width: 100%;
+  height: 22px;
+}
+.mypage-loading-card--badge {
+  min-height: 180px;
+}
+.mypage-loading-card--badge > i {
+  width: 90px;
+  height: 14px;
+}
+.mypage-loading-card--badge > div {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 14px;
+}
+.mypage-loading-card--badge span {
+  width: 54px;
+  height: 74px;
+}
+.mypage-loading-card--badge span:nth-child(2) {
+  height: 92px;
+  animation-delay: 0.15s;
+}
+.mypage-loading-card--badge span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes mypage-skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
 }
 .profile-section {
   display: flex;
