@@ -91,7 +91,6 @@ function formatSchedule(event) {
   min-height: 0;
   aspect-ratio: 1;
   flex-direction: column;
-  justify-content: space-between;
   gap: var(--space-12);
   padding: var(--space-20);
   border-radius: var(--dashboard-card-radius);
@@ -175,6 +174,7 @@ function formatSchedule(event) {
 
 .upcoming-events-card__more {
   align-self: center;
+  margin-top: auto;
   padding: 0;
   border: 0;
   background: transparent;

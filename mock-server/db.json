@@ -20,7 +20,7 @@
       "promotionDate": "2026-09-01",
       "dischargeDate": "2027-03-01",
       "payday": 10,
-      "monthlySalary": 1200000,
+      "monthlySalary": 750000,
       "militarySavingsMonthlyAmount": 400000,
       "soldierType": "ARMY",
       "rankName": "이병"
@@ -515,12 +515,12 @@
       "userId": 1,
       "accountId": 2,
       "merchantName": "군 급여",
-      "amount": 1200000,
+      "amount": 750000,
       "transactionType": "INCOME",
       "category": "SALARY",
       "classificationSource": "RULE",
       "classificationConfidence": 1,
-      "transactionDate": "2026-08-10T09:00:00+09:00"
+      "transactionDate": "2026-08-05T09:00:00+09:00"
     },
     {
       "id": 24,
@@ -533,6 +533,18 @@
       "classificationSource": "RULE",
       "classificationConfidence": 1,
       "transactionDate": "2026-08-10T09:03:00+09:00"
+    },
+    {
+      "id": 25,
+      "userId": 1,
+      "accountId": 2,
+      "merchantName": "중고거래 판매",
+      "amount": 105000,
+      "transactionType": "INCOME",
+      "category": "OTHER_INCOME",
+      "classificationSource": "RULE",
+      "classificationConfidence": 1,
+      "transactionDate": "2026-08-06T10:00:00+09:00"
     }
   ],
   "cashflowProjections": [
