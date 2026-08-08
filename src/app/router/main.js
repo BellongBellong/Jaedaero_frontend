@@ -43,7 +43,7 @@ const mainRoutes = [
         path: 'transactions',
         name: 'transactions',
         component: () => import('@/features/transactions/views/TransactionHistoryView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '거래내역' },
+        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
       },
       {
         path: 'upcoming-events',
