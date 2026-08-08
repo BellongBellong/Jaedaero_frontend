@@ -126,6 +126,7 @@ export const connectedAccountResponses = [
     userId: 1,
     bankName: 'KB국민은행',
     accountName: '장병내일준비적금',
+    accountNumber: '67100204074821',
     accountType: 'MILITARY_SAVINGS',
     balance: 4850000,
     monthlyPayment: 400000,
@@ -135,6 +136,7 @@ export const connectedAccountResponses = [
     userId: 1,
     bankName: '신한은행',
     accountName: '나라사랑월급통장',
+    accountNumber: '110349201954',
     accountType: 'CHECKING',
     balance: 1420000,
     monthlyPayment: 0,
@@ -144,6 +146,7 @@ export const connectedAccountResponses = [
     userId: 1,
     bankName: '한국투자증권',
     accountName: '종합계좌',
+    accountNumber: '160012347734',
     accountType: 'INVESTMENT',
     balance: 420000,
     monthlyPayment: 100000,
@@ -157,6 +160,38 @@ export const investmentChangeResponses = [
     accountId: 3,
     changeAmount: 15000,
     changedAt: '2026-08-06T16:00:00+09:00',
+  },
+]
+
+export const investmentHoldingResponses = [
+  {
+    id: 1,
+    accountId: 3,
+    productCode: 'TIGER-SP500',
+    name: 'TIGER 미국S&P500',
+    quantity: 0.5,
+    quantityLabel: '0.5주',
+    valuationAmount: 180000,
+    returnRate: 9.1,
+  },
+  {
+    id: 2,
+    accountId: 3,
+    productCode: 'MMA-SAVINGS',
+    name: '군인공제회 저축',
+    quantityLabel: '납입액',
+    valuationAmount: 1200000,
+    returnRate: 5.2,
+  },
+  {
+    id: 3,
+    accountId: 3,
+    productCode: 'KODEX-200',
+    name: 'KODEX 200',
+    quantity: 2,
+    quantityLabel: '2주',
+    valuationAmount: 56000,
+    returnRate: 6.1,
   },
 ]
 
@@ -335,6 +370,9 @@ const baseDashboardMock = {
         amount: investmentAmount,
         changeAmount: investmentChangeAmount,
         changeRate: investmentChangeRate,
+        holdings: investmentHoldingResponses.filter((holding) =>
+          securitiesAccountIds.has(holding.accountId),
+        ),
         monthlyPaymentTarget: securitiesAccounts.reduce(
           (total, account) => total + Number(account.monthlyPayment || 0),
           0,

@@ -43,7 +43,7 @@ const mainRoutes = [
         path: 'transactions',
         name: 'transactions',
         component: () => import('@/features/transactions/views/TransactionHistoryView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '거래내역' },
+        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
       },
       {
         path: 'upcoming-events',
@@ -58,10 +58,28 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '이번 달 자산 현황' },
       },
       {
-        path: 'transactions/detail',
+        path: 'assets',
+        name: 'asset-overview',
+        component: () => import('@/features/dashboard/views/AssetOverviewView.vue'),
+        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '자산 현황' },
+      },
+      {
+        path: 'assets/accounts',
+        name: 'account-assets',
+        component: () => import('@/features/dashboard/views/AccountAssetsView.vue'),
+        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
+      },
+      {
+        path: 'transactions/detail/:transactionId',
         name: 'transaction-detail',
         component: () => import('@/features/transactions/views/TransactionDetailView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '거래 상세 내역' },
+        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
+      },
+      {
+        path: 'transactions/accounts/:accountId',
+        name: 'account-transactions',
+        component: () => import('@/features/transactions/views/AccountTransactionView.vue'),
+        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
       },
       {
         path: 'ai-financial-report',
@@ -91,7 +109,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: '왓이프 시뮬레이션',
+          headerTitle: 'What-if 시뮬레이션',
         },
       },
       {

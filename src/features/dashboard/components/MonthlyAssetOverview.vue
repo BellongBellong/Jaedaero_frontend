@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 
+import arrowIcon from '@/assets/icons/arrow.svg'
 import assetBlock from '@/assets/icons/account/assetBlock.png'
 import consumptionBlock from '@/assets/icons/account/consumptionBlock.png'
 import investBlock from '@/assets/icons/account/investBlock.png'
@@ -16,7 +17,7 @@ const props = defineProps({
   },
 })
 
-defineEmits(['view-report'])
+defineEmits(['view-report', 'view-spending'])
 
 const spendingRate = computed(() => {
   const amount = props.data?.spending?.amount ?? 0
@@ -163,11 +164,12 @@ function formatSignedRate(value) {
         </span>
       </article>
 
-      <RouterLink
+      <button
+        type="button"
         class="monthly-assets__tile monthly-assets__tile--spending"
         :class="`monthly-assets__tile--spending-${spendingState}`"
-        :to="{ name: 'monthly-asset-report' }"
         aria-label="이번 달 지출 내역 보기"
+        @click="$emit('view-spending')"
       >
         <div class="monthly-assets__spending-content">
           <div class="monthly-assets__spending-heading">
@@ -226,7 +228,7 @@ function formatSignedRate(value) {
             />
           </span>
         </div>
-      </RouterLink>
+      </button>
     </div>
 
     <button
@@ -235,7 +237,12 @@ function formatSignedRate(value) {
       type="button"
       @click="$emit('view-report')"
     >
-      전체 리포트 보기 <span aria-hidden="true">›</span>
+      이번 달 거래 내역 보기
+      <img
+        :src="arrowIcon"
+        alt=""
+        aria-hidden="true"
+      >
     </button>
   </div>
 
@@ -496,10 +503,13 @@ function formatSignedRate(value) {
   justify-content: space-between;
   gap: 12px;
   padding: 10px var(--space-20);
+  border: 1px solid rgb(255 255 255 / 58%);
   background:
     linear-gradient(270deg, rgb(255 255 255 / 8%), rgb(255 163 131 / 13%)), rgb(255 255 255 / 12%);
   color: var(--gray-900);
   cursor: pointer;
+  font: inherit;
+  text-align: left;
   text-decoration: none;
   transition:
     transform 160ms ease,
@@ -634,7 +644,10 @@ function formatSignedRate(value) {
 }
 
 .monthly-assets__report {
+  display: flex;
+  align-items: center;
   align-self: flex-end;
+  gap: 5px;
   padding: 2px 0;
   border: 0;
   background: transparent;
@@ -643,10 +656,9 @@ function formatSignedRate(value) {
   font-size: 12px;
 }
 
-.monthly-assets__report span {
-  color: var(--gray-400);
-  font-size: 20px;
-  vertical-align: -2px;
+.monthly-assets__report img {
+  width: 7px;
+  height: 11px;
 }
 
 .monthly-assets__empty {

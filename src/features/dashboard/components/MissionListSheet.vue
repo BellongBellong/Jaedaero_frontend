@@ -4,7 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import checkboxFalseIcon from '@/assets/icons/Category/CheckboxFalse.svg'
 import checkboxIcon from '@/assets/icons/Category/CheckboxIcon.png'
 import closeIcon from '@/assets/icons/Category/closeIcon.svg'
-import forwardArrowIcon from '@/assets/icons/Category/FowardArrowIcon.svg'
+import arrowIcon from '@/assets/icons/arrow.svg'
 
 const props = defineProps({
   missions: {
@@ -130,7 +130,7 @@ onBeforeUnmount(() => {
                 </span>
                 <img
                   class="mission-sheet__arrow"
-                  :src="forwardArrowIcon"
+                  :src="arrowIcon"
                   alt=""
                   aria-hidden="true"
                 >
@@ -152,7 +152,12 @@ onBeforeUnmount(() => {
         type="button"
         @click="emit('view-progress')"
       >
-        나의 미션 진행상황 보러가기 <span aria-hidden="true">›</span>
+        나의 미션 진행상황 보러가기
+        <img
+          :src="arrowIcon"
+          alt=""
+          aria-hidden="true"
+        >
       </button>
     </section>
   </div>
@@ -369,8 +374,12 @@ onBeforeUnmount(() => {
 }
 
 .mission-sheet__progress {
+  display: flex;
   width: 100%;
   min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   border: 0;
   border-top: 1px solid var(--gray-200);
   background: var(--white);
@@ -379,9 +388,9 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
-.mission-sheet__progress span {
-  font-size: 22px;
-  vertical-align: -2px;
+.mission-sheet__progress img {
+  width: 7px;
+  height: 11px;
 }
 
 @media (prefers-reduced-motion: reduce) {

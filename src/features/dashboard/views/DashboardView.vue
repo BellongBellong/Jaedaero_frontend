@@ -57,8 +57,16 @@ function saveEvent(event) {
     <DashboardAssetSwitcher
       :monthly="dashboardMock.assetSummary.monthly"
       :total-assets="dashboardMock.assetSummary.total"
-      @view-report="router.push({ name: 'monthly-asset-report' })"
-      @view-assets="router.push({ name: 'monthly-asset-report' })"
+      @view-report="
+        router.push({ name: 'transactions', query: { ...route.query, period: 'month' } })
+      "
+      @view-spending="
+        router.push({
+          name: 'transactions',
+          query: { ...route.query, period: 'month', type: 'EXPENSE' },
+        })
+      "
+      @view-assets="router.push({ name: 'asset-overview', query: route.query })"
     />
 
     <EventAddModal

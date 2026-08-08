@@ -15,7 +15,7 @@ defineProps({
   },
 })
 
-defineEmits(['view-report', 'view-assets'])
+defineEmits(['view-report', 'view-assets', 'view-spending'])
 
 const activeTab = ref('monthly')
 </script>
@@ -57,6 +57,7 @@ const activeTab = ref('monthly')
       <MonthlyAssetOverview
         :data="monthly"
         @view-report="$emit('view-report')"
+        @view-spending="$emit('view-spending')"
       />
     </div>
     <div

@@ -3,8 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
-import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
+import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import { getProductRecommendations } from '@/features/reports/api/reports.api'
+
+const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 
 const PRODUCT_EMOJIS = {
   '군인공제회 목돈급여': '🏅',
@@ -12,7 +14,6 @@ const PRODUCT_EMOJIS = {
   '나라사랑카드 CMA': '🏦',
 }
 
-// 피그마 도안 기준: 금리 톤이 아이콘 타일 배경·금리 색상 테마를 결정한다.
 const RATE_TONE_THEMES = {
   NEUTRAL: 'product-card--olive',
   YELLOW: 'product-card--yellow',
@@ -28,12 +29,14 @@ const RISK_GRADE_LABELS = {
 }
 
 const router = useRouter()
-const onboarding = useOnboardingStore()
-
 const products = ref([])
 const errorMessage = ref('')
-
-const nickname = computed(() => onboarding.form.nickname || '윤호')
+const scenario = ref({
+  annualReturnRate: 5,
+  investmentPercent: 30,
+  currentAsset: 0,
+  generatedAt: new Date().toISOString(),
+})
 
 const recommendedProducts = computed(() =>
   products.value.map((product) => ({
@@ -45,7 +48,28 @@ const recommendedProducts = computed(() =>
   })),
 )
 
+const analysisDate = computed(() => {
+  const date = new Date(scenario.value.generatedAt)
+
+  if (Number.isNaN(date.getTime())) return '-'
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .format(date)
+    .replaceAll(' ', '')
+})
+
 onMounted(async () => {
+  try {
+    const savedScenario = JSON.parse(sessionStorage.getItem(SIMULATION_STORAGE_KEY) || 'null')
+    if (savedScenario) scenario.value = { ...scenario.value, ...savedScenario }
+  } catch {
+    sessionStorage.removeItem(SIMULATION_STORAGE_KEY)
+  }
+
   try {
     const response = await getProductRecommendations()
     products.value = Array.isArray(response) ? response : []
@@ -73,14 +97,44 @@ onMounted(async () => {
       <h1>투자상품 추천</h1>
     </header>
 
-    <p class="product-screen__intro">
-      {{ nickname }}님의 전역 목표와 리스크 성향을<br>
-      바탕으로 선별한 투자상품 추천들이에요.
-    </p>
+    <section class="analysis-card">
+      <div class="analysis-card__head">
+        <span class="analysis-card__bot">
+          <img
+            :src="aiRecommendationBot"
+            alt=""
+            aria-hidden="true"
+          >
+        </span>
+        <div>
+          <strong>AI 분석 완료 <em>BETA</em></strong>
+          <time :datetime="scenario.generatedAt">{{ analysisDate }}</time>
+        </div>
+      </div>
+      <ul>
+        <li>
+          <span aria-hidden="true">✓</span>
+          예상 수익률 <b>{{ scenario.annualReturnRate }}%</b>
+        </li>
+        <li>
+          <span aria-hidden="true">✓</span>
+          투자 비율 <b>{{ scenario.investmentPercent }}%</b>
+        </li>
+        <li>
+          <span aria-hidden="true">✓</span>
+          현재 자금 반영
+        </li>
+      </ul>
+    </section>
+
+    <h2 class="product-screen__section-title">
+      추천 상품
+    </h2>
 
     <p
       v-if="errorMessage"
       class="product-screen__error"
+      role="alert"
     >
       {{ errorMessage }}
     </p>
@@ -143,37 +197,24 @@ onMounted(async () => {
 
 <style scoped>
 .product-screen {
-  /* 86px = 하단 네비게이션 높이(66px) + 하단 여백(20px) */
-  min-height: calc(100dvh - 86px);
-  padding: 0 var(--layout-page-padding) var(--space-40);
-  background:
-    radial-gradient(
-      ellipse 550px 720px at 92% 98%,
-      var(--yellow-400) 0%,
-      rgb(255 236 189 / 0%) 100%
-    ),
-    radial-gradient(
-      ellipse 150px 190px at 72% 24%,
-      var(--orange-200) 0%,
-      rgb(255 236 189 / 0%) 100%
-    ),
-    radial-gradient(circle 550px at 0% 102%, var(--green-500) 0%, rgb(98 255 156 / 0%) 100%),
-    #f6f6f6;
+  min-height: 100%;
+  padding: 0 var(--layout-page-padding) calc(var(--page-bottom-navigation-space) + 20px);
+  background: #f6f6f6;
+  color: var(--gray-900);
 }
 
 .product-screen__header {
   display: flex;
   min-height: 76px;
   align-items: center;
-  gap: 6px;
-  padding: var(--space-10) 0;
+  gap: 10px;
+  padding: 10px 0;
 }
 
 .product-screen__header h1 {
-  color: var(--gray-900);
-  font-size: var(--text-h5);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-normal);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
 .back-button {
@@ -181,6 +222,9 @@ onMounted(async () => {
   width: 24px;
   height: 24px;
   place-items: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .back-button img {
@@ -188,28 +232,125 @@ onMounted(async () => {
   height: 17px;
 }
 
-.product-screen__intro {
-  padding: 0 var(--space-20);
-  margin-top: var(--space-10);
-  color: var(--ui-sub-title);
-  font-size: var(--text-md);
-  letter-spacing: -0.32px;
-  line-height: var(--leading-normal);
+.back-button:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid var(--green-300);
+  outline-offset: 2px;
+}
+
+.analysis-card {
+  padding: 16px 20px;
+  margin-top: 6px;
+  border-radius: 26px;
+  background: linear-gradient(116deg, #fff9dc 0%, #dfffd4 48%, #c4ffd9 100%);
+}
+
+.analysis-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.analysis-card__bot {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 58%);
+}
+
+.analysis-card__bot img {
+  width: 27px;
+  height: 27px;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.analysis-card__head > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.analysis-card__head strong {
+  color: var(--gray-600);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.analysis-card__head em {
+  padding: 3px 9px;
+  margin-left: 6px;
+  border-radius: 20px;
+  background: var(--olive-100);
+  color: var(--olive-500);
+  font-size: 10px;
+  font-style: normal;
+}
+
+.analysis-card__head time {
+  color: var(--gray-500);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.analysis-card ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 18px;
+  margin-top: 8px;
+  border-radius: 17px;
+  background: rgb(255 255 255 / 90%);
+  list-style: none;
+}
+
+.analysis-card li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--gray-600);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.analysis-card li > span {
+  display: grid;
+  width: 14px;
+  height: 14px;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--yellow-400), var(--green-500));
+  color: #fff;
+  font-size: 10px;
+}
+
+.analysis-card li b {
+  color: var(--green-700);
+}
+
+.product-screen__section-title {
+  padding: 0 10px;
+  margin-top: 12px;
+  color: var(--gray-600);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .product-screen__error {
-  margin-top: var(--space-40);
+  margin-top: 40px;
   color: var(--orange-600);
-  font-size: var(--text-sm);
+  font-size: 12px;
   text-align: center;
 }
 
 .product-list {
   display: flex;
   flex-direction: column;
+  gap: 10px;
   padding: 0;
-  margin-top: var(--space-10);
-  gap: var(--space-10);
+  margin-top: 9px;
   list-style: none;
 }
 
@@ -224,7 +365,7 @@ onMounted(async () => {
 .product-card__head {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-12);
+  gap: 12px;
 }
 
 .product-card__icon {
@@ -233,7 +374,7 @@ onMounted(async () => {
   height: 44px;
   flex: none;
   place-items: center;
-  border-radius: var(--radius-md);
+  border-radius: 14px;
   font-size: 20px;
 }
 
@@ -257,34 +398,31 @@ onMounted(async () => {
 .product-card__name {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
+  gap: 8px;
 }
 
 .product-card__name strong {
   color: var(--gray-900);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-normal);
+  font-size: 14px;
+  line-height: 1.5;
   word-break: keep-all;
 }
 
 .product-card__badge {
   flex: none;
   padding: 2px 6px;
-  border-radius: var(--radius-full);
+  border-radius: 999px;
   background: rgb(98 255 156 / 25%);
   color: var(--green-900);
   font-size: 9px;
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-normal);
-  white-space: nowrap;
+  font-weight: 700;
 }
 
 .product-card__title p {
   margin-top: 2px;
   color: #aaa;
   font-size: 11px;
-  line-height: var(--leading-normal);
+  line-height: 1.5;
 }
 
 .product-card__rate {
@@ -294,15 +432,14 @@ onMounted(async () => {
 
 .product-card__rate strong {
   display: block;
-  font-size: var(--text-h5);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-normal);
+  font-size: 20px;
+  line-height: 1.5;
 }
 
 .product-card__rate span {
   display: block;
   font-size: 10px;
-  line-height: var(--leading-normal);
+  line-height: 1.5;
 }
 
 .product-card--olive .product-card__rate strong {
@@ -330,32 +467,47 @@ onMounted(async () => {
 }
 
 .product-card__description {
-  margin-top: var(--space-12);
+  margin-top: 12px;
   color: #666;
-  font-size: var(--text-xs);
+  font-size: 12px;
   line-height: 1.55;
 }
 
 .product-card__stats {
   display: flex;
-  margin-top: var(--space-12);
-  gap: var(--space-16);
+  gap: 16px;
+  margin-top: 12px;
 }
 
 .product-card__stats dt {
   color: #aaa;
   font-size: 10px;
-  line-height: var(--leading-normal);
+  line-height: 1.5;
 }
 
 .product-card__stats dd {
+  margin: 0;
   color: #555;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
+  font-size: 12px;
+  font-weight: 700;
   line-height: 1.5;
 }
 
 .product-card__stats dd.product-card__risk {
   color: var(--green-900);
+}
+
+@media (max-width: 360px) {
+  .product-card {
+    padding: 17px;
+  }
+
+  .product-card__head {
+    gap: 8px;
+  }
+
+  .product-card__stats {
+    gap: 12px;
+  }
 }
 </style>
