@@ -213,6 +213,18 @@
 현재 프로젝트에는 대시보드용 증권계좌 연결 모달이 없어서 기존 연결 화면을 재사용합니다.
 추후 증권사 전용 선택 흐름이 추가되면 `assetType`과 라우트만 교체합니다.
 
+## 통합 거래 내역 화면
+
+`TransactionHistoryView.vue`는 전체·계좌·투자 탭과 입금·출금 필터를 제공하며,
+계좌 상세 화면과 동일한 `AccountTransactionItem.vue`, `TransactionFilterSheet.vue`를 재사용합니다.
+
+- 자산 현황의 `전체 내역 보기`: 전체 거래를 표시합니다.
+- 대시보드의 `이번 달 거래 내역 보기`: `period=month`로 이번 달 거래를 표시합니다.
+- 대시보드 지출 현황: `period=month&type=EXPENSE`로 이번 달 출금만 표시합니다.
+- 거래 선택 시 `/transactions/detail/:transactionId` 상세 화면으로 이동합니다.
+- 현재 데이터: `dashboard.mock.js`의 `transactionResponses`
+- 교체 API: `GET /transactions` (`period`, `type`, 자산 유형 파라미터는 백엔드 명세에 맞춰 매핑)
+
 ## 컴포넌트 추가 시 문서 갱신 규칙
 
 새 대시보드 컴포넌트를 만들 때 아래 내용을 이 문서의 연결표에 함께 추가합니다.

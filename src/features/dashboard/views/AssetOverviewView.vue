@@ -42,7 +42,7 @@ function formatWon(value) {
       <button
         class="asset-overview__transactions"
         type="button"
-        @click="router.push({ name: 'transactions' })"
+        @click="router.push({ name: 'transactions', query: route.query })"
       >
         전체 내역 보기
         <img
