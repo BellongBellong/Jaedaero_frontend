@@ -9,24 +9,25 @@ import FinancialDdayCard from '@/features/dashboard/components/FinancialDdayCard
 import MissionListSheet from '@/features/dashboard/components/MissionListSheet.vue'
 import TodayMissionCard from '@/features/dashboard/components/TodayMissionCard.vue'
 import UpcomingEventsCard from '@/features/dashboard/components/UpcomingEventsCard.vue'
+import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
-import { getDashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
 
 const route = useRoute()
 const router = useRouter()
 const showEventModal = ref(false)
 const showMissionSheet = ref(false)
-const dashboardMock = computed(() => {
+const dashboardOptions = computed(() => {
   const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
   const scenario = Array.isArray(route.query.scenario)
     ? route.query.scenario[0]
     : route.query.scenario
-  return getDashboardMock({ persona, scenario })
+  return { persona, scenario }
 })
-const personaEvents = computed(() => dashboardMock.value.events)
+const { dashboard: dashboardData } = useDashboard(dashboardOptions)
+const personaEvents = computed(() => dashboardData.value.events)
 const { events: upcomingEvents, addEvent } = useUpcomingEvents(personaEvents)
 const todayMissions = computed(() =>
-  dashboardMock.value.missions.filter((mission) => mission.missionGroup === 'TODAY'),
+  dashboardData.value.missions.filter((mission) => mission.missionGroup === 'TODAY'),
 )
 
 function saveEvent(event) {
@@ -37,9 +38,9 @@ function saveEvent(event) {
 
 <template>
   <main class="dashboard screen content-screen app-page">
-    <DailyReportBanner v-bind="dashboardMock.dailyReport" />
+    <DailyReportBanner v-bind="dashboardData.dailyReport" />
 
-    <FinancialDdayCard v-bind="dashboardMock.financialDday" />
+    <FinancialDdayCard v-bind="dashboardData.financialDday" />
 
     <div class="dashboard__quick-cards">
       <UpcomingEventsCard
@@ -55,8 +56,8 @@ function saveEvent(event) {
     </div>
 
     <DashboardAssetSwitcher
-      :monthly="dashboardMock.assetSummary.monthly"
-      :total-assets="dashboardMock.assetSummary.total"
+      :monthly="dashboardData.assetSummary.monthly"
+      :total-assets="dashboardData.assetSummary.total"
       @view-report="
         router.push({ name: 'transactions', query: { ...route.query, period: 'month' } })
       "
@@ -77,7 +78,7 @@ function saveEvent(event) {
 
     <MissionListSheet
       v-if="showMissionSheet"
-      :missions="dashboardMock.missions"
+      :missions="dashboardData.missions"
       @close="showMissionSheet = false"
       @view-progress="router.push({ name: 'challenge' })"
     />
