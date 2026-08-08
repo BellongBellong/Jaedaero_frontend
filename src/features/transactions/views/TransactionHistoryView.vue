@@ -1,15 +1,17 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import dropdownIcon from '@/assets/icons/dropdownIcon.svg'
 import { getDashboardMock, transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
+import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import AccountTransactionItem from '@/features/transactions/components/AccountTransactionItem.vue'
 import TransactionFilterSheet from '@/features/transactions/components/TransactionFilterSheet.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { completeMissionAfterLoad } = useMissionCompletion(route, router)
 const tabs = [
   { value: 'ALL', label: '전체' },
   { value: 'ACCOUNT', label: '계좌' },
@@ -77,6 +79,10 @@ function openTransaction(transaction) {
     query: route.query,
   })
 }
+
+onMounted(() => {
+  completeMissionAfterLoad()
+})
 </script>
 
 <template>

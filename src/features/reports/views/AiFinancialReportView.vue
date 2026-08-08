@@ -1,4 +1,13 @@
 <script setup>
+import { onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
+
+const route = useRoute()
+const router = useRouter()
+const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+
 const marketRows = [
   { label: '코스피', value: '2,740.12', change: '+1.34%', tone: 'positive' },
   { label: '코스피', value: '2,740.12', change: '+1.34%', tone: 'positive' },
@@ -34,6 +43,10 @@ const recommendedActions = [
     description: '군인 할인 통신 플랜으로 월 최대 8,000원 절약 가능.',
   },
 ]
+
+onMounted(() => {
+  completeMissionAfterLoad()
+})
 </script>
 
 <template>

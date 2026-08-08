@@ -1,10 +1,15 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import AssetAccountSummary from '@/features/dashboard/components/AssetAccountSummary.vue'
 import AssetTransactionList from '@/features/dashboard/components/AssetTransactionList.vue'
 import { getMockAssetReport } from '@/features/dashboard/mocks/asset-report.mock'
+import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 
+const route = useRoute()
+const router = useRouter()
+const { completeMissionAfterLoad } = useMissionCompletion(route, router)
 const activeTab = ref('assets')
 const report = ref(null)
 const loading = ref(true)
@@ -12,6 +17,7 @@ const loading = ref(true)
 onMounted(async () => {
   report.value = await getMockAssetReport()
   loading.value = false
+  await completeMissionAfterLoad()
 })
 </script>
 

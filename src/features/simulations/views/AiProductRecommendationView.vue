@@ -1,10 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import { getProductRecommendations } from '@/features/reports/api/reports.api'
+import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 
 const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 
@@ -28,7 +29,9 @@ const RISK_GRADE_LABELS = {
   5: '매우높음',
 }
 
+const route = useRoute()
 const router = useRouter()
+const { completeMissionAfterLoad } = useMissionCompletion(route, router)
 const products = ref([])
 const errorMessage = ref('')
 const scenario = ref({
@@ -73,6 +76,7 @@ onMounted(async () => {
   try {
     const response = await getProductRecommendations()
     products.value = Array.isArray(response) ? response : []
+    await completeMissionAfterLoad()
   } catch {
     errorMessage.value = '추천 상품을 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
   }

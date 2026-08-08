@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import consumptionIcon from '@/assets/icons/account/consumptionBlock.png'
 import investIcon from '@/assets/icons/account/investBlock.png'
@@ -11,12 +11,15 @@ import { getCashflow } from '@/features/cashflow/api/cashflow.api'
 import { getDashboard } from '@/features/dashboard/api/dashboard.api'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import { runSimulation } from '@/features/simulations/api/simulations.api'
+import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 
 const MILITARY_SAVINGS_AMOUNT = 550_000
 const MILITARY_SAVINGS_RATE = 5
 const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 
+const route = useRoute()
 const router = useRouter()
+const { completeMissionAfterLoad } = useMissionCompletion(route, router)
 const dashboard = ref(null)
 const profile = ref(null)
 const cashflow = ref(null)
@@ -41,8 +44,8 @@ const monthlySalary = computed(() =>
     ),
   ),
 )
-const savingAmount = computed(() =>
-  Math.round((MILITARY_SAVINGS_AMOUNT * savingPercent.value) / 100 / 1000) * 1000,
+const savingAmount = computed(
+  () => Math.round((MILITARY_SAVINGS_AMOUNT * savingPercent.value) / 100 / 1000) * 1000,
 )
 const actualDischargeDday = computed(() => Number(dashboard.value?.dischargeDday || 0))
 const remainingMonths = computed(() => Math.max(1, Math.ceil(actualDischargeDday.value / 30)))
@@ -231,6 +234,7 @@ async function applySimulation() {
       targetAmount: targetAmount.value,
     })
     serverResult.value = response
+    await completeMissionAfterLoad()
     sessionStorage.setItem(
       SIMULATION_STORAGE_KEY,
       JSON.stringify(scenarioSnapshot(response?.id ?? null)),
@@ -244,7 +248,10 @@ async function applySimulation() {
 }
 
 function openRecommendations() {
-  sessionStorage.setItem(SIMULATION_STORAGE_KEY, JSON.stringify(scenarioSnapshot(serverResult.value?.id)))
+  sessionStorage.setItem(
+    SIMULATION_STORAGE_KEY,
+    JSON.stringify(scenarioSnapshot(serverResult.value?.id)),
+  )
   router.push({ name: 'ai-product-recommendation' })
 }
 
@@ -283,16 +290,18 @@ onMounted(async () => {
         </div>
         <div class="discharge-card__asset">
           <span>전역 예상 자산</span>
-          <strong>{{ formatMoney(canApply ? result.projectedAssetAtDischarge : dashboard?.projectedAssetAtDischarge) }}</strong>
+          <strong>{{
+            formatMoney(
+              canApply ? result.projectedAssetAtDischarge : dashboard?.projectedAssetAtDischarge,
+            )
+          }}</strong>
         </div>
       </section>
 
       <section class="allocation-card">
         <header>
           <h2>자금 배분</h2>
-          <p>
-            앞으로의 월급 배분에 따라 달라지는 전역 자산을 확인해요
-          </p>
+          <p>앞으로의 월급 배분에 따라 달라지는 전역 자산을 확인해요</p>
         </header>
 
         <div class="allocation-list">
@@ -865,7 +874,8 @@ onMounted(async () => {
   border-radius: 28px;
   background:
     linear-gradient(#fff, #fff) padding-box,
-    linear-gradient(105deg, var(--orange-600), var(--yellow-400), var(--green-500), var(--blue-800)) border-box;
+    linear-gradient(105deg, var(--orange-600), var(--yellow-400), var(--green-500), var(--blue-800))
+      border-box;
   color: var(--gray-900);
   text-align: left;
   cursor: pointer;
