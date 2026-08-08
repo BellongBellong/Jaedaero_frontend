@@ -31,6 +31,7 @@ const hasAdjusted = ref(false)
 const isApplying = ref(false)
 const serverResult = ref(null)
 const errorMessage = ref('')
+const allocationErrorMessage = ref('')
 const appliedMessage = ref('')
 
 const monthlySalary = computed(() =>
@@ -46,6 +47,12 @@ const monthlySalary = computed(() =>
 )
 const savingAmount = computed(
   () => Math.round((MILITARY_SAVINGS_AMOUNT * savingPercent.value) / 100 / 1000) * 1000,
+)
+const totalAllocatedAmount = computed(
+  () =>
+    amountFromPercent(spendingPercent.value) +
+    savingAmount.value +
+    amountFromPercent(investmentPercent.value),
 )
 const actualDischargeDday = computed(() => Number(dashboard.value?.dischargeDday || 0))
 const remainingMonths = computed(() => Math.max(1, Math.ceil(actualDischargeDday.value / 30)))
@@ -174,6 +181,7 @@ function updateAllocation(type, rawValue) {
   }
 
   hasAdjusted.value = true
+  allocationErrorMessage.value = ''
   appliedMessage.value = ''
   serverResult.value = null
 }
@@ -219,6 +227,13 @@ function scenarioSnapshot(simulationId = null) {
 
 async function applySimulation() {
   if (!canApply.value || isApplying.value) return
+
+  allocationErrorMessage.value = ''
+  if (totalAllocatedAmount.value > monthlySalary.value) {
+    allocationErrorMessage.value = '소비, 저축, 투자 금액의 합계는 월급을 초과할 수 없어요.'
+    appliedMessage.value = ''
+    return
+  }
 
   isApplying.value = true
   errorMessage.value = ''
@@ -411,6 +426,13 @@ onMounted(async () => {
         >
           {{ isApplying ? '계산을 적용하는 중...' : '시뮬레이션 대로 적용하기' }}
         </button>
+        <p
+          v-if="allocationErrorMessage"
+          class="result-message"
+          role="alert"
+        >
+          {{ allocationErrorMessage }}
+        </p>
         <p
           v-if="appliedMessage"
           class="result-message result-message--success"
