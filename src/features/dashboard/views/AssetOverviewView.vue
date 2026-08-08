@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import arrowIcon from '@/assets/icons/arrow.svg'
@@ -7,9 +7,11 @@ import AccountTitleHeader from '@/features/dashboard/components/AccountTitleHead
 import AssetAccountCard from '@/features/dashboard/components/AssetAccountCard.vue'
 import MonthlyAssetOverview from '@/features/dashboard/components/MonthlyAssetOverview.vue'
 import { getDashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
+import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 
 const route = useRoute()
 const router = useRouter()
+const { completeMissionAfterLoad } = useMissionCompletion(route, router)
 const dashboard = computed(() => {
   const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
   const scenario = Array.isArray(route.query.scenario)
@@ -21,6 +23,10 @@ const dashboard = computed(() => {
 function formatWon(value) {
   return `${Number(value || 0).toLocaleString('ko-KR')}원`
 }
+
+onMounted(() => {
+  completeMissionAfterLoad()
+})
 </script>
 
 <template>

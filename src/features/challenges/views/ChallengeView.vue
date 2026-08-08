@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import aggressiveGold from '@/assets/badges/aggressive/gold.svg'
 import aggressivePlatinum from '@/assets/badges/aggressive/platinum.svg'
@@ -11,22 +12,18 @@ import airForceCharacter from '@/assets/onboarding/characters/character-airforce
 import marineCharacter from '@/assets/onboarding/characters/character-marine.png'
 import navyCharacter from '@/assets/onboarding/characters/character-navy.png'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
+import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
 
-import {
-  completeMission,
-  getChallengeGroup,
-  getInvestmentBadges,
-  getTodayMissions,
-} from '../api/challenges.api'
+import { getChallengeGroup, getInvestmentBadges, getTodayMissions } from '../api/challenges.api'
 
 const activeTab = ref('missions')
+const router = useRouter()
 const loading = ref(true)
 const challenge = ref(null)
 const badges = ref([])
 const profile = ref(null)
 const apiMissions = ref([])
 const rankingPeriod = ref('CUMULATIVE')
-const completingMissionId = ref(null)
 const errorMessage = ref('')
 
 const characterImages = {
@@ -88,6 +85,7 @@ const groupedMissions = computed(() => {
     const groups = [
       { name: '오늘의 미션', categories: ['RECOMMENDED', 'TODAY'] },
       { name: '데일리 미션', categories: ['DAILY'] },
+      { name: '한 번 미션', categories: ['ONE_TIME'] },
       { name: '이벤트 미션', categories: ['EVENT', 'CONDITIONAL'] },
     ]
 
@@ -185,26 +183,19 @@ async function changeRankingPeriod() {
   }
 }
 
-async function handleMissionComplete(mission) {
-  if (mission.completed || completingMissionId.value) return
+async function openMission(mission) {
+  if (mission.completed) return
 
-  completingMissionId.value = mission.missionId
-  errorMessage.value = ''
-  try {
-    const result = unwrap(await completeMission(mission.missionId))
-    mission.completed = true
-    if (profile.value?.investmentBadgeStatus && result) {
-      profile.value.investmentBadgeStatus.aggressiveMissionCount =
-        result.aggressiveMissionCount ?? aggressiveCount.value
-      profile.value.investmentBadgeStatus.safeMissionCount =
-        result.safeMissionCount ?? safeCount.value
-    }
-  } catch (error) {
-    errorMessage.value =
-      error.response?.status === 409 ? '이미 완료한 미션이에요.' : '미션 완료에 실패했어요.'
-  } finally {
-    completingMissionId.value = null
+  const routeName = findMissionRoute(mission.actionType)
+  if (!routeName) {
+    errorMessage.value = '이 미션의 연결 화면은 준비 중이에요.'
+    return
   }
+
+  await router.push({
+    name: routeName,
+    query: { missionId: mission.missionId },
+  })
 }
 
 onMounted(loadChallenge)
@@ -332,14 +323,15 @@ onMounted(loadChallenge)
           v-for="mission in group.items"
           :key="mission.id"
           class="mission-card"
+          :class="{ 'mission-card--completed': mission.completed }"
+          role="button"
+          tabindex="0"
+          @click="openMission(mission)"
+          @keydown.enter="openMission(mission)"
         >
-          <button
+          <span
             class="mission-check"
             :class="{ completed: mission.completed }"
-            type="button"
-            :aria-label="`${mission.title} 완료`"
-            :disabled="mission.completed || completingMissionId === mission.missionId"
-            @click="handleMissionComplete(mission)"
           />
           <div>
             <strong>{{ mission.title }}</strong><span :class="`type-${mission.type}`">{{ mission.type }}</span><small>{{ mission.description }}</small>
@@ -611,6 +603,10 @@ onMounted(loadChallenge)
   margin: 10px 0;
   border-radius: 20px;
   background: #fff;
+  cursor: pointer;
+}
+.mission-card--completed {
+  cursor: default;
 }
 .mission-check {
   width: 24px;
