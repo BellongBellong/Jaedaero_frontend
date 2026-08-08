@@ -13,7 +13,12 @@ const mainRoutes = [
         path: 'ai-coach',
         name: 'ai-coach',
         component: () => import('@/features/ai-analysis/views/AiCoachView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'ai-coach', headerTitle: 'AI 코치' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: 'AI 코치',
+          headerVariant: 'title',
+        },
       },
       {
         path: 'challenge',
