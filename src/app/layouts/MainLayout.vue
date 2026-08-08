@@ -1,4 +1,5 @@
 <script setup>
+import { nextTick, ref, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
 import AppHeader from '@/common/components/AppHeader.vue'
@@ -6,6 +7,15 @@ import BottomNavigation from '@/common/components/BottomNavigation.vue'
 import MobileFrame from '@/common/components/MobileFrame.vue'
 
 const route = useRoute()
+const contentElement = ref(null)
+
+watch(
+  () => route.fullPath,
+  async () => {
+    await nextTick()
+    contentElement.value?.scrollTo({ left: 0, top: 0, behavior: 'auto' })
+  },
+)
 </script>
 
 <template>
@@ -22,6 +32,7 @@ const route = useRoute()
     />
 
     <main
+      ref="contentElement"
       class="main-layout__content"
       :class="{ 'main-layout__content--without-navigation': route.meta.hideBottomNavigation }"
     >
