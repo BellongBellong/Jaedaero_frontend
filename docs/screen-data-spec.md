@@ -285,6 +285,9 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | `monthlySpendingAmount`   | `number` |    O |
 | `monthlySavingAmount`     | `number` |    O |
 | `monthlyInvestmentAmount` | `number` |    O |
+| `spendingPercent`         | `number` |    X |
+| `savingPercent`           | `number` |    X |
+| `investmentPercent`       | `number` |    X |
 | `annualReturnRate`        | `number` |    O |
 | `vacationBudget`          | `number` |    O |
 | `targetAmount`            | `number` |    O |
@@ -297,7 +300,12 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | `projectedAssetAtDischarge` | `number`               |    O |
 | `financialDischargeDate`    | `string(date) \| null` |    O |
 | `differenceFromCurrent`     | `number`               |    O |
+| `spendingPercent`           | `number`               |    X |
+| `savingPercent`             | `number`               |    X |
+| `investmentPercent`         | `number`               |    X |
 | `createdAt`                 | `string(date-time)`    |    O |
+
+> `spendingPercent` · `savingPercent` · `investmentPercent`는 분석 기록 화면(3-4)이 사용자가 설정한 배분 비율을 그대로 보여주기 위한 FE 확장 필드로, 백엔드 확정 전까지 목 서버 기준으로 관리합니다. 시뮬레이션 화면의 슬라이더는 항목마다 기준 금액이 달라(저축은 군적금 한도, 소비·투자는 월급) **저장된 금액만으로는 비율을 역산할 수 없습니다.** 요청에 담아 보낸 값을 응답에 그대로 돌려주면 됩니다. 값이 없는 과거 기록은 세 항목 합 대비 비중으로 근사해 표시합니다.
 
 ## 11. AI 분석 화면
 
@@ -332,7 +340,7 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 
 > `spendingPattern`, `expectedEffect`, `recommendedProducts`와 `causes` 항목 구조는 AI 분석 화면(3-2) 구현을 위한 확장 필드로, 백엔드 확정 전까지 목 서버(`mock-server/db.json`) 기준으로 관리합니다.
 
-> `investmentPattern`과 `spendingPattern.changeRate`는 분석 기록 화면(3-4)의 카드 지표(`이번 달 소비` / `투자 자산`과 증감 배지)를 위해 필요한 값으로, **아직 백엔드에도 목 서버에도 없습니다.** 백엔드 추가 요청이 필요한 항목입니다. 응답에 없으면 프론트는 해당 지표 칸을 그리지 않습니다(대체값을 넣지 않음).
+> `investmentPattern`과 `spendingPattern.changeRate`는 분석 기록 화면(3-4)의 카드 지표(`이번 달 소비` / `투자 자산`과 증감 배지)를 위한 FE 확장 필드로, 백엔드 확정 전까지 목 서버(`mock-server/db.json`) 기준으로 관리합니다. **아직 백엔드에는 구현되지 않아 추가 요청이 필요합니다.** 응답에 없으면 프론트는 해당 지표 칸을 그리지 않습니다(대체값을 넣지 않음).
 
 ### InvestmentPatternResponse
 
@@ -357,6 +365,7 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | -------------------- | --------------------------------------------------- | ---: |
 | `baseMonthLabel`     | `string`                                            |    O |
 | `totalExpenseAmount` | `number`                                            |    O |
+| `changeRate`         | `number`                                            |    X |
 | `categories`         | `{ code: string, label: string, amount: number }[]` |    O |
 | `insight`            | `{ message: string, highlight: string \| null }`    |    O |
 

@@ -94,13 +94,41 @@ export function mapAiAnalysisRecord(analysis, appliedAnalysisIds = new Set()) {
   }
 }
 
-/** SimulationResponse를 분석 기록 카드 모델로 변환한다. */
-export function mapSimulationRecord(simulation) {
+/**
+ * 저축/투자/소비 비율을 만든다.
+ * 시뮬레이션 화면은 항목마다 기준 금액이 달라(저축은 군적금, 나머지는 월급) 금액에서 역산할 수 없다.
+ * 그래서 사용자가 설정한 비율이 응답에 있으면 그 값을 그대로 쓰고,
+ * 없는 과거 기록만 세 항목 합 대비 비중으로 근사한다.
+ */
+function toAllocationRatios(simulation) {
   const saving = toNumber(simulation?.monthlySavingAmount)
   const investment = toNumber(simulation?.monthlyInvestmentAmount)
   const spending = toNumber(simulation?.monthlySpendingAmount)
   const total = saving + investment + spending
 
+  const hasPercents = [
+    simulation?.savingPercent,
+    simulation?.investmentPercent,
+    simulation?.spendingPercent,
+  ].every((percent) => percent !== undefined && percent !== null)
+
+  if (hasPercents) {
+    return [
+      { label: `${Math.round(toNumber(simulation.savingPercent))}%`, tone: 'green' },
+      { label: `${Math.round(toNumber(simulation.investmentPercent))}%`, tone: 'olive' },
+      { label: `${Math.round(toNumber(simulation.spendingPercent))}%`, tone: 'orange' },
+    ]
+  }
+
+  return [
+    { label: toPercentLabel(saving, total), tone: 'green' },
+    { label: toPercentLabel(investment, total), tone: 'olive' },
+    { label: toPercentLabel(spending, total), tone: 'orange' },
+  ]
+}
+
+/** SimulationResponse를 분석 기록 카드 모델로 변환한다. */
+export function mapSimulationRecord(simulation) {
   return {
     id: `sim-${simulation?.id}`,
     sourceId: simulation?.id,
@@ -109,11 +137,7 @@ export function mapSimulationRecord(simulation) {
     date: formatDate(simulation?.createdAt),
     sortKey: simulation?.createdAt ?? '',
     summary: WHAT_IF_SUMMARY,
-    allocationRatios: [
-      { label: toPercentLabel(saving, total), tone: 'green' },
-      { label: toPercentLabel(investment, total), tone: 'olive' },
-      { label: toPercentLabel(spending, total), tone: 'orange' },
-    ],
+    allocationRatios: toAllocationRatios(simulation),
     projectedAsset: formatTenThousandWon(simulation?.projectedAssetAtDischarge),
   }
 }
