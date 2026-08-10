@@ -1,4 +1,4 @@
-import { computed, isRef, ref, unref, watch } from 'vue'
+import { computed, isRef, ref, toRaw, unref, watch } from 'vue'
 
 import { dashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
 import { setEventLeaveModeSchedules } from '@/features/leave-mode/composables/useLeaveModeSchedule'
@@ -25,13 +25,13 @@ export function useUpcomingEvents(initialEvents = dashboardMock.events) {
     watch(
       initialEvents,
       (value) => {
-        events.value = structuredClone(unref(value) ?? [])
+        events.value = structuredClone(toRaw(unref(value)) ?? [])
         setEventLeaveModeSchedules(events.value)
       },
       { immediate: true },
     )
   } else {
-    events.value = structuredClone(initialEvents ?? [])
+    events.value = structuredClone(toRaw(initialEvents) ?? [])
     setEventLeaveModeSchedules(events.value)
   }
 

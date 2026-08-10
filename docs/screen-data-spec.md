@@ -324,12 +324,22 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | `causes`               | `AiAnalysisCause[]`               |    O |
 | `recommendedScenarios` | `AiRecommendedScenarioResponse[]` |    O |
 | `spendingPattern`      | `SpendingPatternResponse`         |    O |
+| `investmentPattern`    | `InvestmentPatternResponse`       |    X |
 | `expectedEffect`       | `AiExpectedEffectResponse`        |    O |
 | `recommendedProducts`  | `AiRecommendedProductResponse[]`  |    O |
 | `warnings`             | `string[]`                        |    O |
 | `generatedAt`          | `string(date-time)`               |    O |
 
 > `spendingPattern`, `expectedEffect`, `recommendedProducts`와 `causes` 항목 구조는 AI 분석 화면(3-2) 구현을 위한 확장 필드로, 백엔드 확정 전까지 목 서버(`mock-server/db.json`) 기준으로 관리합니다.
+
+> `investmentPattern`과 `spendingPattern.changeRate`는 분석 기록 화면(3-4)의 카드 지표(`이번 달 소비` / `투자 자산`과 증감 배지)를 위해 필요한 값으로, **아직 백엔드에도 목 서버에도 없습니다.** 백엔드 추가 요청이 필요한 항목입니다. 응답에 없으면 프론트는 해당 지표 칸을 그리지 않습니다(대체값을 넣지 않음).
+
+### InvestmentPatternResponse
+
+| 필드                    | 타입     | 필수 | 설명                       |
+| ----------------------- | -------- | ---: | -------------------------- |
+| `totalInvestmentAmount` | `number` |    O | 기준 월의 투자 자산 금액   |
+| `changeRate`            | `number` |    X | 전월 대비 증감률(%), 음수 가능 |
 
 ### AiAnalysisCause
 

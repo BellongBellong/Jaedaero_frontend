@@ -255,6 +255,9 @@ server.post('/api/v1/ai-analyses', (req, res) => {
   db.get('aiAnalyses').push(created).write()
   res.status(201).json(created)
 })
+server.get('/api/v1/ai-analyses', (req, res) => {
+  res.status(200).json(paginate(list('aiAnalyses'), req.query.page, req.query.size))
+})
 server.get('/api/v1/ai-analyses/:analysisId', (req, res) => {
   const item = db
     .get('aiAnalyses')
