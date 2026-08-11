@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
@@ -7,11 +7,13 @@ import dropdownIcon from '@/assets/icons/dropdownIcon.svg'
 import { getDashboardMock, transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import AccountTransactionItem from '@/features/transactions/components/AccountTransactionItem.vue'
 import TransactionFilterSheet from '@/features/transactions/components/TransactionFilterSheet.vue'
+import { getTransactions } from '@/features/transactions/api/transactions.api'
 
 const route = useRoute()
 const router = useRouter()
 const copied = ref(false)
 const filterOpen = ref(false)
+const loadedTransactions = ref(transactionResponses)
 const transactionFilter = ref('ALL')
 const filterOptions = [
   { value: 'ALL', label: '전체' },
@@ -31,7 +33,7 @@ const account = computed(() =>
   ),
 )
 const accountTransactions = computed(() =>
-  transactionResponses
+  loadedTransactions.value
     .filter((transaction) => String(transaction.accountId) === String(route.params.accountId))
     .filter(
       (transaction) =>
@@ -71,6 +73,17 @@ function openTransaction(transaction) {
     query: route.query,
   })
 }
+
+onMounted(async () => {
+  const usesMockScenario = Boolean(route.query.persona || route.query.scenario)
+  if (usesMockScenario) return
+
+  try {
+    loadedTransactions.value = await getTransactions({ accountId: route.params.accountId })
+  } catch {
+    loadedTransactions.value = transactionResponses
+  }
+})
 </script>
 
 <template>

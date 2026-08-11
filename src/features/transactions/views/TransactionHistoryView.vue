@@ -8,6 +8,7 @@ import { getDashboardMock, transactionResponses } from '@/features/dashboard/moc
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import AccountTransactionItem from '@/features/transactions/components/AccountTransactionItem.vue'
 import TransactionFilterSheet from '@/features/transactions/components/TransactionFilterSheet.vue'
+import { getTransactions } from '@/features/transactions/api/transactions.api'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,6 +29,7 @@ const transactionFilter = ref(
   filterOptions.some(({ value }) => value === initialType) ? initialType : 'ALL',
 )
 const filterOpen = ref(false)
+const loadedTransactions = ref(transactionResponses)
 const dashboard = computed(() => {
   const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
   const scenario = Array.isArray(route.query.scenario)
@@ -52,7 +54,7 @@ const activeFilterLabel = computed(
 )
 const transactions = computed(() => {
   const now = new Date()
-  return transactionResponses
+  return loadedTransactions.value
     .filter((transaction) => {
       const investment = investmentAccountIds.value.has(String(transaction.accountId))
       if (activeTab.value === 'INVESTMENT') return investment
@@ -80,7 +82,27 @@ function openTransaction(transaction) {
   })
 }
 
-onMounted(() => {
+function monthRange() {
+  const now = new Date()
+  const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return {
+    startDate,
+    endDate: `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`,
+  }
+}
+
+onMounted(async () => {
+  const usesMockScenario = Boolean(route.query.persona || route.query.scenario)
+  if (!usesMockScenario) {
+    try {
+      loadedTransactions.value = await getTransactions(
+        route.query.period === 'month' ? monthRange() : {},
+      )
+    } catch {
+      loadedTransactions.value = transactionResponses
+    }
+  }
   completeMissionAfterLoad()
 })
 </script>
