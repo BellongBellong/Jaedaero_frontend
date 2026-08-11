@@ -56,6 +56,12 @@ const notificationSettings = ref({ ...defaultNotificationSettings })
 const badgeProgresses = computed(() =>
   getBadgeProgress(investmentBadges.value, profile.value?.investmentBadgeStatus),
 )
+const orderedBadgeProgresses = computed(() =>
+  [...badgeProgresses.value].sort((first, second) => {
+    const order = { AGGRESSIVE: 0, SAFE: 1, BALANCED: 1 }
+    return (order[first.type] ?? 2) - (order[second.type] ?? 2)
+  }),
+)
 const earnedInvestmentBadges = computed(() => getEarnedBadges(badgeProgresses.value))
 const selectedInvestmentBadge = computed(() =>
   getSelectedBadge(earnedInvestmentBadges.value, selectedBadgeId.value),
@@ -394,7 +400,7 @@ onMounted(async () => {
           <small>달성한 미션</small>
           <b>{{ totalCompletedMissions }}개</b>
           <em
-            v-for="badge in badgeProgresses"
+            v-for="badge in orderedBadgeProgresses"
             :key="badge.type"
           >{{ badge.typeInfo.label }} {{ badge.missionCount }}</em>
         </span>

@@ -1,4 +1,4 @@
-import { computed, isRef, ref, unref, watch } from 'vue'
+import { computed, isRef, ref, toRaw, unref, watch } from 'vue'
 
 import { dashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
 import { setEventLeaveModeSchedules } from '@/features/leave-mode/composables/useLeaveModeSchedule'
@@ -18,6 +18,12 @@ function calculateDurationDays(startDate, endDate) {
   return Math.max(1, Math.round((end - start) / 86_400_000) + 1)
 }
 
+function cloneEvents(value) {
+  if (!Array.isArray(value)) return []
+
+  return value.map((event) => ({ ...toRaw(event) }))
+}
+
 export function useUpcomingEvents(initialEvents = dashboardMock.events) {
   const events = ref([])
 
@@ -25,13 +31,13 @@ export function useUpcomingEvents(initialEvents = dashboardMock.events) {
     watch(
       initialEvents,
       (value) => {
-        events.value = structuredClone(unref(value) ?? [])
+        events.value = cloneEvents(unref(value))
         setEventLeaveModeSchedules(events.value)
       },
       { immediate: true },
     )
   } else {
-    events.value = structuredClone(initialEvents ?? [])
+    events.value = cloneEvents(initialEvents)
     setEventLeaveModeSchedules(events.value)
   }
 

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import DailyReportBanner from '@/features/dashboard/components/DailyReportBanner.vue'
@@ -11,11 +11,15 @@ import TodayMissionCard from '@/features/dashboard/components/TodayMissionCard.v
 import UpcomingEventsCard from '@/features/dashboard/components/UpcomingEventsCard.vue'
 import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
+import { getTodayMissions } from '@/features/missions/api/missions.api'
+import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
+import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
 
 const route = useRoute()
 const router = useRouter()
 const showEventModal = ref(false)
 const showMissionSheet = ref(false)
+const liveMissions = ref([])
 const dashboardOptions = computed(() => {
   const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
   const scenario = Array.isArray(route.query.scenario)
@@ -26,13 +30,56 @@ const dashboardOptions = computed(() => {
 const { dashboard: dashboardData } = useDashboard(dashboardOptions)
 const personaEvents = computed(() => dashboardData.value.events)
 const { events: upcomingEvents, addEvent } = useUpcomingEvents(personaEvents)
-const todayMissions = computed(() =>
-  dashboardData.value.missions.filter((mission) => mission.missionGroup === 'TODAY'),
+const allMissions = computed(() =>
+  liveMissions.value.length ? liveMissions.value : dashboardData.value.missions,
 )
+const todayMissions = computed(() =>
+  allMissions.value.filter((mission) => mission.missionGroup === 'TODAY'),
+)
+
+function normalizeMission(mission) {
+  const category = String(mission.missionCategory || mission.missionGroup || '').toUpperCase()
+  const missionGroup = ['RECOMMENDED', 'PERSONALIZED', 'TODAY'].includes(category)
+    ? 'TODAY'
+    : ['EVENT', 'CONDITIONAL', 'ONE_TIME'].includes(category)
+      ? 'EVENT'
+      : 'DAILY'
+
+  return {
+    ...mission,
+    id: mission.id ?? mission.missionId,
+    missionId: mission.missionId ?? mission.id,
+    missionGroup,
+    missionType: mission.missionType || 'COMMON',
+    completed: isMissionCompleted(mission),
+  }
+}
+
+onMounted(async () => {
+  try {
+    const response = await getTodayMissions()
+    const missions = response?.data ?? response
+    liveMissions.value = (Array.isArray(missions) ? missions : missions?.missions || []).map(
+      normalizeMission,
+    )
+  } catch {
+    liveMissions.value = []
+  }
+})
 
 function saveEvent(event) {
   addEvent(event)
   showEventModal.value = false
+}
+
+function openMission(mission) {
+  const routeName = findMissionRoute(mission.actionType)
+  if (!routeName) return
+
+  router.push({
+    name: routeName,
+    query: { missionId: mission.missionId ?? mission.id },
+  })
 }
 </script>
 
@@ -51,6 +98,7 @@ function saveEvent(event) {
       />
       <TodayMissionCard
         :missions="todayMissions"
+        @mission-click="openMission"
         @show-all="showMissionSheet = true"
       />
     </div>
@@ -78,8 +126,9 @@ function saveEvent(event) {
 
     <MissionListSheet
       v-if="showMissionSheet"
-      :missions="dashboardData.missions"
+      :missions="allMissions"
       @close="showMissionSheet = false"
+      @mission-click="openMission"
       @view-progress="router.push({ name: 'challenge' })"
     />
   </main>
