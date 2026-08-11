@@ -13,7 +13,7 @@ function recordTypeLabel(record) {
 
 function detailRoute(record) {
   return record.type === ANALYSIS_RECORD_TYPES.WHAT_IF
-    ? { name: 'what-if-simulation' }
+    ? { name: 'what-if-detail', params: { simulationId: record.sourceId ?? record.id } }
     : { name: 'ai-asset-analysis-result' }
 }
 </script>

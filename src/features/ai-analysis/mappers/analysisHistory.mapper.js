@@ -1,36 +1,17 @@
+import { formatDate, formatTenThousandWon, formatWon, toNumber, toPercent } from './format.js'
+
 export const ANALYSIS_RECORD_TYPES = {
   AI_ANALYSIS: 'AI_ANALYSIS',
   WHAT_IF: 'WHAT_IF',
 }
 
-const WON_PER_TEN_THOUSAND = 10_000
-
-const AI_ANALYSIS_TITLE = '오늘의 AI 투자 리포트'
-const WHAT_IF_TITLE = 'AI 추천 자산 계획'
+export const AI_ANALYSIS_TITLE = '오늘의 AI 투자 리포트'
+export const WHAT_IF_TITLE = 'AI 추천 자산 계획'
 
 const WHAT_IF_SUMMARY = '현재 자산 흐름을 기준으로 가장 적합한 계획이에요.'
 
-function toNumber(value, fallback = 0) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : fallback
-}
-
-function formatWon(value) {
-  return `${toNumber(value).toLocaleString('ko-KR')}원`
-}
-
-function formatTenThousandWon(value) {
-  return `${Math.round(toNumber(value) / WON_PER_TEN_THOUSAND).toLocaleString('ko-KR')}만원`
-}
-
-function formatDate(value) {
-  return String(value ?? '')
-    .slice(0, 10)
-    .replace(/-/g, '.')
-}
-
 function toPercentLabel(part, total) {
-  return `${total ? Math.round((toNumber(part) / total) * 100) : 0}%`
+  return `${toPercent(part, total)}%`
 }
 
 /** 전월 대비 증감률(%)을 배지로 만든다. 값이 없으면 배지를 만들지 않는다. */
