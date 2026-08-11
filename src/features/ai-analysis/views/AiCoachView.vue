@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import analysisIcon from '@/assets/ai-coach/analysis.svg'
@@ -7,17 +7,34 @@ import coachCharacter from '@/assets/ai-coach/coach-character.svg'
 import glidepathImage from '@/assets/ai-coach/glidepath.svg'
 import historyIcon from '@/assets/ai-coach/history.svg'
 import whatIfIcon from '@/assets/ai-coach/what-if.svg'
+import nextArrowIcon from '@/assets/icons/nextArrowIcon.svg'
+import { useTodayMarketReport } from '@/features/market-report/composables/useTodayMarketReport'
+import {
+  formatReportDate,
+  mapMarketIndicators,
+} from '@/features/market-report/mappers/marketReport.mapper'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const onboarding = useOnboardingStore()
 
 const nickname = computed(() => onboarding.form.nickname || '윤호')
 
-const marketRows = [
-  { label: '코스피', value: '2,740.12', change: '+1.34%', tone: 'positive' },
-  { label: '미국채 10년', value: '4.31%', change: '-0.05%', tone: 'negative' },
-  { label: '원/달러', value: '1,318', change: '-0.05%', tone: 'negative' },
+const fallbackMarketRows = [
+  { label: '코스피', value: '6,299.66', change: '▲ 40.89 · 0.65%', tone: 'positive' },
+  { label: '코스닥', value: '854.47', change: '▲ 55.66 · 6.97%', tone: 'positive' },
+  { label: '미국채 10년', value: '4.650%', change: '▼ 0.04%p · 0.85%', tone: 'negative' },
+  { label: '원/달러', value: '1,415.3원', change: '등락 정보 없음', tone: 'neutral' },
 ]
+
+const fallbackSummary =
+  '코스피와 코스닥이 상승세를 보인 가운데 원자재 가격 강세와 7월 인플레이션 지표에 시장의 관심이 집중되고 있습니다.'
+
+const { report, load } = useTodayMarketReport()
+const marketRows = computed(() => mapMarketIndicators(report.value?.indicators, fallbackMarketRows))
+const reportDate = computed(() => formatReportDate(report.value) || '2026. 08. 11 18시 기준')
+const reportSummary = computed(() => report.value?.summary || fallbackSummary)
+
+onMounted(load)
 
 const analysisMenus = [
   {
@@ -58,11 +75,11 @@ const analysisMenus = [
 
         <div class="report-card__body">
           <div class="report-card__heading">
-            <strong>오늘의 AI 투자 리포트</strong>
+            <strong>오늘의 AI 시장 리포트</strong>
             <span>BETA</span>
           </div>
           <p class="report-card__date">
-            2026. 07. 28 기준
+            {{ reportDate }}
           </p>
 
           <dl class="report-metrics">
@@ -80,9 +97,11 @@ const analysisMenus = [
           </dl>
 
           <p class="report-insight">
-            <span aria-hidden="true">💡</span>
-            군인공제회 금리가 <strong>5.2%</strong>로 시중은행 대비 유리한 환경이에요. 추가 납입을
-            검토해보세요.
+            <span class="report-insight__label">
+              <span class="report-insight__icon" aria-hidden="true">💡</span>
+              AI 요약
+            </span>
+            {{ reportSummary }}
           </p>
         </div>
 
@@ -91,7 +110,12 @@ const analysisMenus = [
           :to="{ name: 'ai-financial-report' }"
         >
           전체 리포트 보기
-          <span aria-hidden="true">›</span>
+          <img
+            class="report-card__chevron"
+            :src="nextArrowIcon"
+            alt=""
+            aria-hidden="true"
+          >
         </RouterLink>
       </article>
 
@@ -155,7 +179,12 @@ const analysisMenus = [
           </div>
           <span class="glidepath-card__link">
             투자 가이드 보기
-            <b aria-hidden="true">›</b>
+            <img
+              class="glidepath-card__chevron"
+              :src="nextArrowIcon"
+              alt=""
+              aria-hidden="true"
+            >
           </span>
         </div>
       </RouterLink>
@@ -166,7 +195,7 @@ const analysisMenus = [
 <style scoped>
 .ai-coach-screen {
   min-height: 100%;
-  padding: 10px 20px calc(var(--page-bottom-navigation-space) + var(--safe-area-bottom) + 20px);
+  padding: 10px 20px calc(var(--page-bottom-navigation-space) + var(--safe-area-bottom) + 40px);
   color: var(--gray-900);
 }
 
@@ -196,8 +225,10 @@ const analysisMenus = [
   min-height: 303px;
   flex-direction: column;
   overflow: visible;
+  border: 1px solid rgb(239 148 115 / 55%);
   border-radius: 28px;
-  background: var(--white);
+  background: linear-gradient(145deg, rgb(255 255 255 / 98%), rgb(255 255 255 / 92%));
+  box-shadow: 0 10px 24px rgb(232 155 131 / 10%);
 }
 
 .report-card__character {
@@ -313,6 +344,21 @@ const analysisMenus = [
   font-weight: var(--weight-bold);
 }
 
+.report-insight__label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 2px;
+  color: var(--gray-500);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+}
+
+.report-insight__icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
 .report-card__link {
   display: flex;
   min-height: 40px;
@@ -325,11 +371,13 @@ const analysisMenus = [
   line-height: 1.3;
 }
 
-.report-card__link span,
-.glidepath-card__link b {
-  font-size: 22px;
-  font-weight: var(--weight-regular);
-  line-height: 0.7;
+.report-card__chevron,
+.glidepath-card__chevron {
+  display: block;
+  width: 7px;
+  height: 11px;
+  object-fit: contain;
+  filter: grayscale(1) opacity(0.62);
 }
 
 .analysis-section h3 {
