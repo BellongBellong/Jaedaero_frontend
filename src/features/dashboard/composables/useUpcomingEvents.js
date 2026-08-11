@@ -31,13 +31,13 @@ export function useUpcomingEvents(initialEvents = dashboardMock.events) {
     watch(
       initialEvents,
       (value) => {
-        events.value = cloneEvents(unref(value))
+        events.value = structuredClone(toRaw(unref(value)) ?? [])
         setEventLeaveModeSchedules(events.value)
       },
       { immediate: true },
     )
   } else {
-    events.value = cloneEvents(initialEvents)
+    events.value = structuredClone(toRaw(initialEvents) ?? [])
     setEventLeaveModeSchedules(events.value)
   }
 

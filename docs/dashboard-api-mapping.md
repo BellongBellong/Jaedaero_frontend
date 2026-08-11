@@ -103,3 +103,35 @@ DashboardView.vue
 - `src/features/dashboard/mappers/dashboardResponse.mapper.js`: API 응답 → 화면 모델 변환
 - `src/features/dashboard/views/DashboardView.vue`: 화면 연결
 - `src/features/dashboard/mocks/dashboard.mock.js`: fallback 및 수동 테스트 시나리오
+
+## 캐시플로우 API
+
+- 요청: `GET /api/v1/cashflow?months={개월 수}`
+- 인증: `Authorization: Bearer {accessToken}` 및 개발용 `X-User-Id`
+- 화면 연결: What-if 시뮬레이션의 월별 예상 급여
+- 주요 응답 필드: `months[].expectedSalary`, `months[].expectedSavingAmount`,
+  `months[].expectedSpendingAmount`, `months[].expectedInvestmentAmount`,
+  `months[].expectedEndingAsset`
+
+운영 서버는 `X-User-Id`만 보낸 요청도 `CASHFLOW_UNAUTHENTICATED`로 거절합니다. 따라서 먼저
+로그인해 `localStorage.accessToken`이 저장되어 있어야 하며, 공통 API 클라이언트가 Bearer 토큰을
+자동으로 첨부합니다.
+
+## 거래내역 API
+
+- 요청: `GET /api/v1/transactions`
+- 선택 쿼리: `accountId`, `category`, `startDate`, `endDate`
+- 인증: `Authorization: Bearer {accessToken}` 및 개발용 `X-User-Id`
+- 화면 연결: 전체 거래내역, 계좌별 거래내역, 거래 상세
+
+| 백엔드 응답     | 화면 모델         | 변환                       |
+| --------------- | ----------------- | -------------------------- |
+| `transactionId` | `id`              | 상세 페이지 이동 키로 사용 |
+| `transactionAt` | `transactionDate` | 기존 날짜 포맷터와 호환    |
+| `description`   | `merchantName`    | 거래처/거래명으로 표시     |
+| `DEPOSIT`       | `INCOME`          | 입금 필터 및 초록 금액     |
+| `WITHDRAWAL`    | `EXPENSE`         | 출금 필터 및 일반 금액     |
+
+`type`과 `tab`은 서버가 지원하는 조회 파라미터가 아니므로 API 응답을 받은 뒤 화면에서
+필터링합니다. `period=month` 진입 시에는 현재 달의 시작일과 종료일을 `startDate`, `endDate`로
+전달합니다. 퍼소나·시나리오 쿼리가 있을 때는 의도적으로 목데이터를 사용합니다.

@@ -60,7 +60,7 @@ const monthlyIncomeSchedule = computed(() => {
   const apiMonths = Array.isArray(cashflow.value?.months) ? cashflow.value.months : []
 
   return Array.from({ length: remainingMonths.value }, (_, index) => {
-    const apiIncome = Number(apiMonths[index]?.income || 0)
+    const apiIncome = Number(apiMonths[index]?.expectedSalary || 0)
     return apiIncome > 0 ? apiIncome : monthlySalary.value
   })
 })
