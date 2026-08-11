@@ -33,7 +33,7 @@ const analysisMenus = [
   {
     label: '분석 기록',
     icon: historyIcon,
-    to: { name: 'ai-financial-report' },
+    to: { name: 'analysis-history' },
   },
 ]
 </script>
@@ -166,8 +166,7 @@ const analysisMenus = [
 <style scoped>
 .ai-coach-screen {
   min-height: 100%;
-  padding: 10px 20px
-    calc(var(--page-bottom-navigation-space) + var(--safe-area-bottom) + 20px);
+  padding: 10px 20px calc(var(--page-bottom-navigation-space) + var(--safe-area-bottom) + 20px);
   color: var(--gray-900);
 }
 

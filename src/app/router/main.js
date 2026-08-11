@@ -108,6 +108,16 @@ const mainRoutes = [
         },
       },
       {
+        path: 'analysis-history',
+        name: 'analysis-history',
+        component: () => import('@/features/ai-analysis/views/AnalysisHistoryView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: 'AI 분석 기록',
+        },
+      },
+      {
         path: 'what-if-simulation',
         name: 'what-if-simulation',
         component: () => import('@/features/simulations/views/WhatIfSimulationView.vue'),

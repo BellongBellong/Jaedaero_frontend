@@ -25,6 +25,7 @@
 | What-if · AI 분석        | 시뮬레이션 히스토리       | GET    | /api/v1/simulations?page=&size=                               | page,size(query)                 | List<SimulationResponse>            |
 | What-if · AI 분석        | 시뮬레이션 상세           | GET    | /api/v1/simulations/{simulationId}                            | simulationId(path)               | SimulationResponse                  |
 | What-if · AI 분석        | AI 분석 요청              | POST   | /api/v1/ai-analyses                                           | AiAnalysisRequest                | AiAnalysisResponse                  |
+| What-if · AI 분석        | AI 분석 기록 목록         | GET    | /api/v1/ai-analyses?page=&size=                               | page,size(query)                 | List<AiAnalysisResponse>            |
 | What-if · AI 분석        | AI 분석 상세              | GET    | /api/v1/ai-analyses/{analysisId}                              | analysisId(path)                 | AiAnalysisResponse                  |
 | What-if · AI 분석        | 추천 전략 적용            | POST   | /api/v1/ai-analyses/{analysisId}/apply                        | analysisId(path)                 | StrategyApplicationResponse         |
 | What-if · AI 분석        | 전략 적용 이력            | GET    | /api/v1/strategy-applications?page=&size=                     | page,size(query)                 | List<StrategyApplicationResponse>   |
