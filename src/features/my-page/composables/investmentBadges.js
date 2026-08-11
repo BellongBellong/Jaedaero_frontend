@@ -8,6 +8,11 @@ import safeDiamond from '@/assets/badges/safe/diamond.png'
 import safeGold from '@/assets/badges/safe/gold.png'
 import safePlatinum from '@/assets/badges/safe/platinum.png'
 import safeSilver from '@/assets/badges/safe/silver.png'
+import levelBronze from '@/assets/badges/levels/bronze.png'
+import levelDiamond from '@/assets/badges/levels/diamond.png'
+import levelGold from '@/assets/badges/levels/gold.png'
+import levelPlatinum from '@/assets/badges/levels/platinum.png'
+import levelSilver from '@/assets/badges/levels/silver.png'
 
 export const BADGE_SELECTION_STORAGE_KEY = 'jaedaero-selected-investment-badge'
 
@@ -18,6 +23,23 @@ export const BADGE_LEVELS = [
   { key: 'PLATINUM', label: 'Platinum', koreanLabel: '플래티넘', level: 4, missionCount: 100 },
   { key: 'DIAMOND', label: 'Diamond', koreanLabel: '다이아몬드', level: 5, missionCount: 300 },
 ]
+
+export function getBadgeTier(missionCount) {
+  const count = Number(missionCount) || 0
+
+  return (
+    [...BADGE_LEVELS].reverse().find(({ missionCount: threshold }) => count >= threshold) ||
+    BADGE_LEVELS[0]
+  )
+}
+
+export function getBadgeTarget(missionCount) {
+  const count = Number(missionCount) || 0
+  return (
+    BADGE_LEVELS.find(({ missionCount: threshold }) => threshold > count)?.missionCount ||
+    BADGE_LEVELS[BADGE_LEVELS.length - 1].missionCount
+  )
+}
 
 const badgeTypes = {
   SAFE: { label: '안정형', imageType: 'SAFE' },
@@ -40,6 +62,18 @@ const badgeImages = {
     PLATINUM: aggressivePlatinum,
     DIAMOND: aggressiveDiamond,
   },
+}
+
+const levelImages = {
+  BRONZE: levelBronze,
+  SILVER: levelSilver,
+  GOLD: levelGold,
+  PLATINUM: levelPlatinum,
+  DIAMOND: levelDiamond,
+}
+
+export function getBadgeLevelImage(levelKey) {
+  return levelImages[String(levelKey || '').toUpperCase()] || levelImages.BRONZE
 }
 
 function toBadgeArray(payload) {

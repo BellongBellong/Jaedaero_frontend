@@ -18,6 +18,12 @@ function calculateDurationDays(startDate, endDate) {
   return Math.max(1, Math.round((end - start) / 86_400_000) + 1)
 }
 
+function cloneEvents(value) {
+  if (!Array.isArray(value)) return []
+
+  return value.map((event) => ({ ...toRaw(event) }))
+}
+
 export function useUpcomingEvents(initialEvents = dashboardMock.events) {
   const events = ref([])
 
