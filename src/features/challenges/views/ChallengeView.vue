@@ -444,6 +444,16 @@ function selectRankingPeriod(period) {
   changeRankingPeriod()
 }
 
+function openMissionsTab() {
+  activeTab.value = 'missions'
+  modeMenuOpen.value = false
+}
+
+function openRankingTab() {
+  activeTab.value = 'ranking'
+  modeMenuOpen.value = false
+}
+
 function shiftRankingMonth(offset) {
   const [year, month] = String(rankingYearMonth.value || getCurrentYearMonth())
     .split('-')
@@ -490,20 +500,14 @@ onBeforeUnmount(() => {
       <button
         :class="{ active: activeTab === 'missions' }"
         type="button"
-        @click="
-          activeTab = 'missions'
-          modeMenuOpen = false
-        "
+        @click="openMissionsTab"
       >
         미션
       </button>
       <button
         :class="{ active: activeTab === 'ranking' }"
         type="button"
-        @click="
-          activeTab = 'ranking'
-          modeMenuOpen = false
-        "
+        @click="openRankingTab"
       >
         랭킹
       </button>
