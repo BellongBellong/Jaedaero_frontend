@@ -118,6 +118,16 @@ const mainRoutes = [
         },
       },
       {
+        path: 'analysis-history/what-if/:simulationId',
+        name: 'what-if-detail',
+        component: () => import('@/features/ai-analysis/views/WhatIfDetailView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '시뮬레이션 상세보기',
+        },
+      },
+      {
         path: 'what-if-simulation',
         name: 'what-if-simulation',
         component: () => import('@/features/simulations/views/WhatIfSimulationView.vue'),
