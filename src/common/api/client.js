@@ -51,9 +51,18 @@ apiClient.interceptors.response.use(
       } catch {
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
+        localStorage.removeItem('userId')
+
+        const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`)
+        window.location.replace(`/login?redirect=${redirect}`)
       }
-    } else if (error.response?.status === 401) {
+    } else if (error.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('userId')
+
+      const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`)
+      window.location.replace(`/login?redirect=${redirect}`)
     }
 
     return Promise.reject(error)

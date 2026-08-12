@@ -33,7 +33,7 @@ export function useDashboard(options) {
       source.value = 'api'
     } catch (requestError) {
       error.value = requestError
-      source.value = 'mock-fallback'
+      source.value = 'error'
     } finally {
       loading.value = false
     }

@@ -23,7 +23,12 @@ const dashboardOptions = computed(() => {
     : route.query.scenario
   return { persona, scenario }
 })
-const { dashboard: dashboardData } = useDashboard(dashboardOptions)
+const {
+  dashboard: dashboardData,
+  error: dashboardError,
+  loading: dashboardLoading,
+  reload: reloadDashboard,
+} = useDashboard(dashboardOptions)
 const personaEvents = computed(() => dashboardData.value.events)
 const { events: upcomingEvents, addEvent } = useUpcomingEvents(personaEvents)
 const todayMissions = computed(() =>
@@ -38,37 +43,62 @@ function saveEvent(event) {
 
 <template>
   <main class="dashboard screen content-screen app-page">
-    <DailyReportBanner v-bind="dashboardData.dailyReport" />
+    <section
+      v-if="dashboardLoading"
+      class="dashboard-state"
+      aria-live="polite"
+    >
+      <p>대시보드 정보를 불러오고 있어요.</p>
+    </section>
 
-    <FinancialDdayCard v-bind="dashboardData.financialDday" />
+    <section
+      v-else-if="dashboardError"
+      class="dashboard-state dashboard-state--error"
+      role="alert"
+    >
+      <strong>대시보드 정보를 불러오지 못했어요.</strong>
+      <p>{{ dashboardError.response?.data?.message || '잠시 후 다시 시도해주세요.' }}</p>
+      <button
+        type="button"
+        @click="reloadDashboard"
+      >
+        다시 시도
+      </button>
+    </section>
 
-    <div class="dashboard__quick-cards">
-      <UpcomingEventsCard
-        :events="upcomingEvents"
-        :remaining-count="Math.max(0, upcomingEvents.length - 2)"
-        @add="showEventModal = true"
-        @show-more="router.push({ name: 'upcoming-events' })"
+    <template v-else>
+      <DailyReportBanner v-bind="dashboardData.dailyReport" />
+
+      <FinancialDdayCard v-bind="dashboardData.financialDday" />
+
+      <div class="dashboard__quick-cards">
+        <UpcomingEventsCard
+          :events="upcomingEvents"
+          :remaining-count="Math.max(0, upcomingEvents.length - 2)"
+          @add="showEventModal = true"
+          @show-more="router.push({ name: 'upcoming-events' })"
+        />
+        <TodayMissionCard
+          :missions="todayMissions"
+          @show-all="showMissionSheet = true"
+        />
+      </div>
+
+      <DashboardAssetSwitcher
+        :monthly="dashboardData.assetSummary.monthly"
+        :total-assets="dashboardData.assetSummary.total"
+        @view-report="
+          router.push({ name: 'transactions', query: { ...route.query, period: 'month' } })
+        "
+        @view-spending="
+          router.push({
+            name: 'transactions',
+            query: { ...route.query, period: 'month', type: 'EXPENSE' },
+          })
+        "
+        @view-assets="router.push({ name: 'asset-overview', query: route.query })"
       />
-      <TodayMissionCard
-        :missions="todayMissions"
-        @show-all="showMissionSheet = true"
-      />
-    </div>
-
-    <DashboardAssetSwitcher
-      :monthly="dashboardData.assetSummary.monthly"
-      :total-assets="dashboardData.assetSummary.total"
-      @view-report="
-        router.push({ name: 'transactions', query: { ...route.query, period: 'month' } })
-      "
-      @view-spending="
-        router.push({
-          name: 'transactions',
-          query: { ...route.query, period: 'month', type: 'EXPENSE' },
-        })
-      "
-      @view-assets="router.push({ name: 'asset-overview', query: route.query })"
-    />
+    </template>
 
     <EventAddModal
       v-if="showEventModal"
@@ -100,6 +130,37 @@ function saveEvent(event) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--dashboard-gap);
+}
+
+.dashboard-state {
+  display: grid;
+  min-height: 320px;
+  padding: var(--space-24);
+  border-radius: var(--dashboard-card-radius);
+  background: rgb(255 255 255 / 72%);
+  color: var(--gray-600);
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.dashboard-state--error {
+  gap: var(--space-8);
+}
+
+.dashboard-state--error strong {
+  color: var(--gray-900);
+  font-size: var(--body-body-large-bold-font-size);
+}
+
+.dashboard-state--error button {
+  margin-top: var(--space-12);
+  padding: var(--space-10) var(--space-20);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--green-700);
+  color: var(--white);
+  font-weight: 700;
 }
 
 @media (max-width: 350px) {
