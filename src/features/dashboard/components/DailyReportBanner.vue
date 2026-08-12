@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 
 import reportMascot from '@/assets/ai-coach/coach-character.svg'
 import smallMoney from '@/assets/icons/Smallmoney.png'
+import starGradient from '@/assets/icons/starGradient.png'
 
 const props = defineProps({
   greeting: {
@@ -12,11 +13,16 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: '오늘의 금융 AI 리포트',
+    default: '오늘의 AI 시장 리포트',
   },
   date: {
     type: String,
     default: '',
+  },
+  variant: {
+    type: String,
+    default: 'military',
+    validator: (value) => ['military', 'vacation'].includes(value),
   },
 })
 
@@ -46,8 +52,9 @@ const dateTime = computed(() => {
 <template>
   <RouterLink
     class="daily-report-banner"
+    :class="`daily-report-banner--${variant}`"
     :to="{ name: 'ai-financial-report' }"
-    aria-label="오늘의 금융 AI 리포트 보기"
+    aria-label="오늘의 AI 시장 리포트 보기"
   >
     <img
       class="daily-report-banner__mascot"
@@ -64,13 +71,31 @@ const dateTime = computed(() => {
       </div>
     </div>
 
-    <span class="daily-report-banner__glow daily-report-banner__glow--small" />
-    <span
-      class="daily-report-banner__star"
-      aria-hidden="true"
-    >✦</span>
+    <template v-if="variant === 'vacation'">
+      <img
+        class="daily-report-banner__vacation-star daily-report-banner__vacation-star--small"
+        :src="starGradient"
+        alt=""
+        aria-hidden="true"
+      >
+      <img
+        class="daily-report-banner__vacation-star daily-report-banner__vacation-star--large"
+        :src="starGradient"
+        alt=""
+        aria-hidden="true"
+      >
+    </template>
+
+    <template v-else>
+      <span class="daily-report-banner__glow daily-report-banner__glow--small" />
+      <span
+        class="daily-report-banner__star"
+        aria-hidden="true"
+      >✦</span>
+    </template>
 
     <span
+      v-if="variant !== 'vacation'"
       class="daily-report-banner__report-icon"
       aria-hidden="true"
     >
@@ -104,6 +129,36 @@ const dateTime = computed(() => {
   transition:
     transform 180ms ease,
     filter 180ms ease;
+}
+
+.daily-report-banner--vacation {
+  min-height: 88px;
+  gap: var(--space-8);
+  padding-right: 18px;
+  padding-left: 18px;
+  border-color: rgb(255 255 255 / 26%);
+  background: linear-gradient(180deg, #009dff 0%, #65c6d4 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 28%),
+    0 8px 22px rgb(0 157 255 / 16%);
+}
+
+.daily-report-banner--vacation .daily-report-banner__content {
+  padding-right: 34px;
+}
+
+.daily-report-banner--vacation .daily-report-banner__title {
+  gap: 6px;
+}
+
+.daily-report-banner--vacation .daily-report-banner__title strong {
+  overflow: visible;
+  font-size: clamp(16px, 4.5vw, 18px);
+  text-overflow: clip;
+}
+
+.daily-report-banner--vacation:focus-visible {
+  outline-color: #7dccf7;
 }
 
 .daily-report-banner:active {
@@ -219,6 +274,29 @@ const dateTime = computed(() => {
   transform: rotate(12deg);
 }
 
+.daily-report-banner__vacation-star {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  object-fit: contain;
+}
+
+.daily-report-banner__vacation-star--small {
+  top: 5px;
+  right: 58px;
+  width: 30px;
+  height: 30px;
+  filter: blur(1px);
+  opacity: 0.82;
+}
+
+.daily-report-banner__vacation-star--large {
+  right: 4px;
+  bottom: -3px;
+  width: 62px;
+  height: 62px;
+}
+
 @media (max-width: 360px) {
   .daily-report-banner {
     padding-right: 18px;
@@ -227,7 +305,8 @@ const dateTime = computed(() => {
 
   .daily-report-banner__report-icon,
   .daily-report-banner__glow,
-  .daily-report-banner__star {
+  .daily-report-banner__star,
+  .daily-report-banner__vacation-star {
     display: none;
   }
 
