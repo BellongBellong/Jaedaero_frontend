@@ -6,8 +6,13 @@ import generalAccountIcon from '@/assets/onboarding/icons/account-general.svg'
 import accountEmptyMascot from '@/assets/onboarding/icons/account-empty-mascot.svg'
 import militarySavingsAccountIcon from '@/assets/onboarding/icons/account-military-savings.svg'
 import recommendedAccountIcon from '@/assets/onboarding/icons/account-recommended.svg'
+import { getApiErrorMessage } from '@/common/api/errorMessage'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
-import { connectAccount, getAccounts } from '@/features/accounts/api/accounts.api'
+import {
+  connectAccount,
+  disconnectAccount,
+  getAccounts,
+} from '@/features/accounts/api/accounts.api'
 import {
   accountInstitutionName,
   accountOrganizationCode,
@@ -32,6 +37,7 @@ const accountsModalOpen = ref(false)
 const accountsEmptyModalOpen = ref(false)
 const discoveredAccounts = ref([])
 const selectedAccountIds = ref([])
+const accountsConfirming = ref(false)
 const requiredAccountNoticeId = ref(null)
 const showConnectedSummary = ref(false)
 const connectedInstitutions = ref([])
@@ -45,8 +51,6 @@ const fallbackBanks = [
   { organizationCode: '0003', displayName: '기업은행', logoKey: 'ibk' },
   { organizationCode: '0088', displayName: '신한은행', logoKey: 'shinhan' },
   { organizationCode: '0081', displayName: '하나은행', logoKey: 'hana' },
-  { organizationCode: '0092', displayName: '토스뱅크', logoKey: 'toss' },
-  { organizationCode: '0090', displayName: '카카오뱅크', logoKey: 'kakao' },
   { organizationCode: '0071', displayName: '우체국', logoKey: 'woochekook' },
   { organizationCode: '0011', displayName: '농협은행', logoKey: 'nh' },
   { organizationCode: '0007', displayName: '수협은행', logoKey: 'sh' },
@@ -133,8 +137,6 @@ const bankLogoRules = [
   ['기업', 'ibk'],
   ['신한', 'shinhan'],
   ['하나', 'hana'],
-  ['토스', 'toss'],
-  ['카카오', 'kakao'],
   ['우체국', 'woochekook'],
   ['지역농협', 'nhlocal'],
   ['농협', 'nh'],
@@ -259,8 +261,11 @@ async function restoreConnectionState() {
     const accounts = await getAccounts()
     restoreConnectedInstitutions(accounts)
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message || '기존 연동 계좌를 불러오지 못했습니다. 다시 시도해 주세요.'
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '기존 연동 계좌를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
+      'account',
+    )
   }
 }
 
@@ -369,8 +374,8 @@ function closeAccountsModal() {
   requiredAccountNoticeId.value = null
 }
 
-function confirmAccounts() {
-  if (!selectedAccountIds.value.length) return
+async function confirmAccounts() {
+  if (!selectedAccountIds.value.length || accountsConfirming.value) return
 
   if (!selectedInstitution.value || isInstitutionConnected(selectedInstitution.value)) {
     accountsModalOpen.value = false
@@ -381,15 +386,36 @@ function confirmAccounts() {
   const selectedAccounts = discoveredAccounts.value.filter((account, index) =>
     selectedAccountIds.value.includes(accountId(account, index)),
   )
-  connectedInstitutions.value.push({
-    id: `${form.value.businessType}-${form.value.organizationCode}-${Date.now()}`,
-    businessType: form.value.businessType,
-    institution: { ...selectedInstitution.value },
-    accounts: selectedAccounts,
+  const selectedIds = new Set(selectedAccountIds.value)
+  const accountsToRemove = discoveredAccounts.value.filter((account, index) => {
+    const persistedId = account.accountId ?? account.id
+    return persistedId && !selectedIds.has(accountId(account, index))
   })
-  markConnected()
-  accountsModalOpen.value = false
-  showConnectedSummary.value = true
+
+  accountsConfirming.value = true
+  errorMessage.value = ''
+  try {
+    await Promise.all(
+      accountsToRemove.map((account) => disconnectAccount(account.accountId ?? account.id)),
+    )
+    connectedInstitutions.value.push({
+      id: `${form.value.businessType}-${form.value.organizationCode}-${Date.now()}`,
+      businessType: form.value.businessType,
+      institution: { ...selectedInstitution.value },
+      accounts: selectedAccounts,
+    })
+    markConnected()
+    accountsModalOpen.value = false
+    showConnectedSummary.value = true
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '선택한 계좌만 연결하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      'account',
+    )
+  } finally {
+    accountsConfirming.value = false
+  }
 }
 
 function startAdditionalConnection() {
@@ -416,7 +442,26 @@ function nextFromSummary() {
 }
 
 async function submit() {
-  if (!canSubmit.value) return
+  if (!form.value.businessType) {
+    errorMessage.value = '연결할 금융기관 종류를 먼저 선택해 주세요.'
+    return
+  }
+  if (!form.value.organizationCode) {
+    errorMessage.value = '연결할 금융기관을 선택해 주세요.'
+    return
+  }
+  if (!form.value.loginId.trim()) {
+    errorMessage.value = '금융기관 인터넷뱅킹 아이디를 입력해 주세요.'
+    return
+  }
+  if (!form.value.password) {
+    errorMessage.value = '금융기관 인터넷뱅킹 비밀번호를 입력해 주세요.'
+    return
+  }
+  if (form.value.birthDate && !/^\d{6}$/.test(form.value.birthDate)) {
+    errorMessage.value = '생년월일은 주민등록번호 앞 6자리로 입력해 주세요.'
+    return
+  }
 
   const userId = Number(localStorage.getItem('userId')) || (isMockMode ? 1 : 0)
   if (!userId) {
@@ -462,15 +507,11 @@ async function submit() {
     accountsModalOpen.value = true
   } catch (error) {
     if (error.code === 'ERR_CANCELED') return
-
-    const responseData = error.response?.data
-    errorMessage.value =
-      responseData?.message ||
-      responseData?.error ||
-      (typeof responseData === 'string' && !responseData.includes('<!doctype')
-        ? responseData
-        : '') ||
-      '계좌 연결에 실패했습니다. 은행 정보 또는 서버 설정을 확인해 주세요.'
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '계좌 연결에 실패했어요. 금융기관 정보를 확인하고 다시 시도해 주세요.',
+      'account',
+    )
   } finally {
     if (accountRequestController.value === requestController) {
       accountRequestController.value = null
@@ -680,7 +721,7 @@ onBeforeUnmount(abortAccountRequest)
 
     <PrimaryButton
       v-else
-      :disabled="!canSubmit"
+      :disabled="loading"
       @click="submit"
     >
       {{
@@ -970,10 +1011,10 @@ onBeforeUnmount(abortAccountRequest)
           </div>
 
           <PrimaryButton
-            :disabled="!selectedAccountIds.length"
+            :disabled="accountsConfirming || !selectedAccountIds.length"
             @click="confirmAccounts"
           >
-            선택한 계좌 불러오기
+            {{ accountsConfirming ? '계좌 저장 중...' : '선택한 계좌 불러오기' }}
           </PrimaryButton>
         </section>
       </div>

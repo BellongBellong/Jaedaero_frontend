@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { saveAgreements } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
@@ -13,13 +14,13 @@ const terms = [
   { id: 'privacy', label: '개인정보 수집·이용 동의', required: true },
   { id: 'finance', label: '금융정보 조회 동의', required: true },
   { id: 'ai', label: 'AI 서비스 이용약관', required: true },
-  { id: 'marketing', label: '마케팅 정보 수신 동의', required: false },
 ]
-const checked = ref([...onboarding.form.agreements])
+const termIds = terms.map((term) => term.id)
+const checked = ref(onboarding.form.agreements.filter((id) => termIds.includes(id)))
 const loading = ref(false)
 const errorMessage = ref('')
 const isOpen = ref(false)
-const allChecked = computed(() => checked.value.length === terms.length)
+const allChecked = computed(() => terms.every((term) => checked.value.includes(term.id)))
 const requiredChecked = computed(() =>
   terms.filter((term) => term.required).every((term) => checked.value.includes(term.id)),
 )
@@ -50,8 +51,12 @@ async function submit() {
     onboarding.form.agreements = checked.value
     onboarding.persist()
     router.push({ name: 'onboarding-intro' })
-  } catch {
-    errorMessage.value = '약관 동의를 저장하지 못했어요. 잠시 후 다시 시도해주세요.'
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '약관 동의를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      'terms',
+    )
   } finally {
     loading.value = false
   }
