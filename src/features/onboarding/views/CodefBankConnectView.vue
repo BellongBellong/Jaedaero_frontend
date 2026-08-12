@@ -721,6 +721,7 @@ onBeforeUnmount(abortAccountRequest)
 
     <PrimaryButton
       v-else
+      variant="green"
       :disabled="loading"
       @click="submit"
     >
@@ -1205,7 +1206,7 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .summary-actions button:last-child {
-  background: #56f497;
+  background: #62ff9c;
   color: #173522;
 }
 
@@ -1474,7 +1475,7 @@ select:focus {
   width: 100%;
   flex: 0 0 56px;
   margin: 10px 0 0;
-  background: #56f497;
+  background: #62ff9c;
   color: #173522;
   font-size: 13px;
 }
@@ -1767,7 +1768,7 @@ select:focus {
   width: 100%;
   flex: 0 0 56px;
   margin: 10px 0 0;
-  background: #56f497;
+  background: #62ff9c;
   color: #173522;
   font-size: 14px;
 }
