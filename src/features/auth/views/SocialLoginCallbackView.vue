@@ -3,11 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { login } from '@/features/auth/api/auth.api'
-import {
-  consumeLoginRedirect,
-  getRedirectUri,
-  validateSocialLoginCallback,
-} from '@/features/auth/oauth'
+import { getRedirectUri, validateSocialLoginCallback } from '@/features/auth/oauth'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,9 +23,9 @@ onMounted(async () => {
     localStorage.setItem('accessToken', response.accessToken)
     localStorage.setItem('refreshToken', response.refreshToken)
     if (response.user?.userId) localStorage.setItem('userId', String(response.user.userId))
-    await router.replace(
-      response.user?.onboardingCompleted ? consumeLoginRedirect() : { name: 'terms' },
-    )
+    await router.replace({
+      name: response.user?.onboardingCompleted ? 'dashboard' : 'terms',
+    })
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '소셜 로그인에 실패했습니다.'
   }

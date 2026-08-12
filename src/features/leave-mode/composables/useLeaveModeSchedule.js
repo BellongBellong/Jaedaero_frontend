@@ -1,12 +1,19 @@
 import { ref } from 'vue'
 
 const STORAGE_KEY = 'jaedaero-leave-mode-schedules'
-const mode = ref('military')
+const MODE_STORAGE_KEY = 'jaedaero-mode-preference'
+const mode = ref(readModePreference() || 'military')
 const schedules = ref(readSchedules())
+
+function readModePreference() {
+  if (typeof window === 'undefined') return null
+
+  const savedMode = window.localStorage.getItem(MODE_STORAGE_KEY)
+  return ['military', 'vacation'].includes(savedMode) ? savedMode : null
+}
 
 function readSchedules() {
   if (typeof window === 'undefined') return []
-
   try {
     const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '[]')
     return Array.isArray(saved) ? saved : []
@@ -34,6 +41,12 @@ function isActiveSchedule(schedule, date) {
 }
 
 export function refreshLeaveMode(date = new Date()) {
+  const preferredMode = readModePreference()
+  if (preferredMode) {
+    mode.value = preferredMode
+    return
+  }
+
   const today = localDateString(date)
   mode.value = schedules.value.some((schedule) => isActiveSchedule(schedule, today))
     ? 'vacation'
@@ -58,12 +71,10 @@ export function setEventLeaveModeSchedules(events = []) {
 export function useLeaveModeSchedule() {
   function setMode(nextMode) {
     mode.value = nextMode === 'vacation' ? 'vacation' : 'military'
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(MODE_STORAGE_KEY, mode.value)
+    }
   }
 
-  return {
-    mode,
-    schedules,
-    setMode,
-    refreshMode: refreshLeaveMode,
-  }
+  return { mode, schedules, setMode, refreshMode: refreshLeaveMode }
 }

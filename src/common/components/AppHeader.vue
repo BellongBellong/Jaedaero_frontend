@@ -32,9 +32,7 @@ onMounted(() => {
   scheduleNextRefresh()
 })
 
-onBeforeUnmount(() => {
-  window.clearTimeout(dailyRefreshTimer)
-})
+onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
 </script>
 
 <template>

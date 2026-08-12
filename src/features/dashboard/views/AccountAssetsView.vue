@@ -7,18 +7,12 @@ import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import AssetAccountListItem from '@/features/dashboard/components/AssetAccountListItem.vue'
 import InvestmentAssetChart from '@/features/dashboard/components/InvestmentAssetChart.vue'
 import InvestmentHoldingsList from '@/features/dashboard/components/InvestmentHoldingsList.vue'
-import { getDashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
+import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 
 const route = useRoute()
 const router = useRouter()
 const activeTab = ref('account')
-const dashboard = computed(() => {
-  const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
-  const scenario = Array.isArray(route.query.scenario)
-    ? route.query.scenario[0]
-    : route.query.scenario
-  return getDashboardMock({ persona, scenario })
-})
+const { dashboard, loading, error, reload } = useDashboard()
 const accounts = computed(() => dashboard.value.assetSummary.total.accounts ?? [])
 
 function accountType(account) {
@@ -74,54 +68,116 @@ function openAccount(account) {
       >
     </button>
 
-    <button
-      class="account-assets__total"
-      type="button"
-      @click="router.push({ name: 'asset-overview', query: route.query })"
+    <section
+      v-if="loading"
+      class="account-assets__state"
     >
-      <span>총 자산</span>
-      <strong>{{ formatWon(dashboard.assetSummary.total.totalAsset) }}</strong>
-      <img
-        :src="arrowIcon"
-        alt=""
-        aria-hidden="true"
-      >
-    </button>
-
-    <div
-      class="account-assets__tabs"
-      role="tablist"
-      aria-label="자산 유형"
+      자산 정보를 불러오고 있어요.
+    </section>
+    <section
+      v-else-if="error"
+      class="account-assets__state account-assets__state--error"
     >
+      <p>자산 정보를 불러오지 못했어요.</p>
       <button
         type="button"
-        role="tab"
-        :aria-selected="activeTab === 'account'"
-        :class="{ 'account-assets__tab--active': activeTab === 'account' }"
-        @click="activeTab = 'account'"
+        @click="reload"
       >
-        계좌
+        다시 시도
       </button>
-      <button
-        type="button"
-        role="tab"
-        :aria-selected="activeTab === 'investment'"
-        :class="{ 'account-assets__tab--active': activeTab === 'investment' }"
-        @click="activeTab = 'investment'"
-      >
-        투자
-      </button>
-    </div>
+    </section>
 
-    <template v-if="activeTab === 'account'">
-      <section class="account-assets__section">
+    <template v-else>
+      <button
+        class="account-assets__total"
+        type="button"
+        @click="router.push({ name: 'asset-overview', query: route.query })"
+      >
+        <span>총 자산</span>
+        <strong>{{ formatWon(dashboard.assetSummary.total.totalAsset) }}</strong>
+        <img
+          :src="arrowIcon"
+          alt=""
+          aria-hidden="true"
+        >
+      </button>
+
+      <div
+        class="account-assets__tabs"
+        role="tablist"
+        aria-label="자산 유형"
+      >
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="activeTab === 'account'"
+          :class="{ 'account-assets__tab--active': activeTab === 'account' }"
+          @click="activeTab = 'account'"
+        >
+          계좌
+        </button>
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="activeTab === 'investment'"
+          :class="{ 'account-assets__tab--active': activeTab === 'investment' }"
+          @click="activeTab = 'investment'"
+        >
+          투자
+        </button>
+      </div>
+
+      <template v-if="activeTab === 'account'">
+        <section class="account-assets__section">
+          <header>
+            <span>입출금</span>
+            <strong>{{ formatWon(sumAccounts(checkingAccounts)) }}</strong>
+          </header>
+          <ul v-if="checkingAccounts.length">
+            <AssetAccountListItem
+              v-for="account in checkingAccounts"
+              :key="account.id || account.accountId"
+              :account="account"
+              clickable
+              @select="openAccount"
+            />
+          </ul>
+          <p v-else>
+            연결된 입출금 계좌가 없어요.
+          </p>
+        </section>
+
+        <section class="account-assets__section">
+          <header>
+            <span>저축</span>
+            <strong>{{ formatWon(sumAccounts(savingsAccounts)) }}</strong>
+          </header>
+          <ul v-if="savingsAccounts.length">
+            <AssetAccountListItem
+              v-for="account in savingsAccounts"
+              :key="account.id || account.accountId"
+              :account="account"
+              clickable
+              @select="openAccount"
+            />
+          </ul>
+          <p v-else>
+            연결된 적금 계좌가 없어요.
+          </p>
+        </section>
+      </template>
+
+      <section
+        v-else
+        class="account-assets__section"
+      >
         <header>
-          <span>입출금</span>
-          <strong>{{ formatWon(sumAccounts(checkingAccounts)) }}</strong>
+          <span>투자 자산</span>
+          <strong>{{ formatWon(sumAccounts(investmentAccounts)) }}</strong>
         </header>
-        <ul v-if="checkingAccounts.length">
+        <ul v-if="investmentAccounts.length">
           <AssetAccountListItem
-            v-for="account in checkingAccounts"
+            v-for="account in investmentAccounts"
             :key="account.id || account.accountId"
             :account="account"
             clickable
@@ -129,67 +185,26 @@ function openAccount(account) {
           />
         </ul>
         <p v-else>
-          연결된 입출금 계좌가 없어요.
+          연결된 투자 계좌가 없어요.
         </p>
-      </section>
 
-      <section class="account-assets__section">
-        <header>
-          <span>저축</span>
-          <strong>{{ formatWon(sumAccounts(savingsAccounts)) }}</strong>
-        </header>
-        <ul v-if="savingsAccounts.length">
-          <AssetAccountListItem
-            v-for="account in savingsAccounts"
-            :key="account.id || account.accountId"
-            :account="account"
-            clickable
-            @select="openAccount"
+        <template v-if="investmentAccounts.length">
+          <h2 class="account-assets__chart-title">
+            투자 현황
+          </h2>
+          <InvestmentAssetChart
+            :amount="sumAccounts(investmentAccounts)"
+            :change-amount="investmentSummary.changeAmount"
+            :change-rate="investmentSummary.changeRate"
+            :history="investmentSummary.history"
           />
-        </ul>
-        <p v-else>
-          연결된 적금 계좌가 없어요.
-        </p>
+          <h2 class="account-assets__chart-title">
+            보유 상품
+          </h2>
+          <InvestmentHoldingsList :holdings="investmentSummary.holdings" />
+        </template>
       </section>
     </template>
-
-    <section
-      v-else
-      class="account-assets__section"
-    >
-      <header>
-        <span>투자 자산</span>
-        <strong>{{ formatWon(sumAccounts(investmentAccounts)) }}</strong>
-      </header>
-      <ul v-if="investmentAccounts.length">
-        <AssetAccountListItem
-          v-for="account in investmentAccounts"
-          :key="account.id || account.accountId"
-          :account="account"
-          clickable
-          @select="openAccount"
-        />
-      </ul>
-      <p v-else>
-        연결된 투자 계좌가 없어요.
-      </p>
-
-      <template v-if="investmentAccounts.length">
-        <h2 class="account-assets__chart-title">
-          투자 현황
-        </h2>
-        <InvestmentAssetChart
-          :amount="sumAccounts(investmentAccounts)"
-          :change-amount="investmentSummary.changeAmount"
-          :change-rate="investmentSummary.changeRate"
-          :history="investmentSummary.history"
-        />
-        <h2 class="account-assets__chart-title">
-          보유 상품
-        </h2>
-        <InvestmentHoldingsList :holdings="investmentSummary.holdings" />
-      </template>
-    </section>
   </main>
 </template>
 
@@ -199,6 +214,13 @@ function openAccount(account) {
   flex-direction: column;
   gap: 14px;
   background: var(--ui-background);
+}
+
+.account-assets__state {
+  padding: var(--space-24);
+  border-radius: 28px;
+  background: var(--white);
+  color: var(--gray-600);
 }
 
 .account-assets__back {

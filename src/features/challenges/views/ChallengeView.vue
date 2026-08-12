@@ -53,14 +53,14 @@ const missions = [
   {
     id: 3,
     group: '데일리 미션',
-    title: '데일리 금융리포트 보기',
+    title: '오늘의 AI 시장리포트',
     type: '공통',
-    description: '오늘의 금융 리포트를 확인해보세요',
+    description: '오늘의 AI 시장리포트를 확인해보세요',
   },
   {
     id: 4,
     group: '데일리 미션',
-    title: '데일리 시장리포트 보기',
+    title: '오늘의 AI 시장리포트',
     type: '공통',
     description: '오늘의 AI 시장현황 리포트를 확인해보세요',
   },

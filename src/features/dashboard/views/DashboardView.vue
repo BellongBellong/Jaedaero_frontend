@@ -1,21 +1,32 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import DailyReportBanner from '@/features/dashboard/components/DailyReportBanner.vue'
 import DashboardAssetSwitcher from '@/features/dashboard/components/DashboardAssetSwitcher.vue'
+import DashboardSkeleton from '@/features/dashboard/components/DashboardSkeleton.vue'
 import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
 import FinancialDdayCard from '@/features/dashboard/components/FinancialDdayCard.vue'
 import MissionListSheet from '@/features/dashboard/components/MissionListSheet.vue'
 import TodayMissionCard from '@/features/dashboard/components/TodayMissionCard.vue'
 import UpcomingEventsCard from '@/features/dashboard/components/UpcomingEventsCard.vue'
+import VacationBudgetCard from '@/features/dashboard/components/VacationBudgetCard.vue'
+import VacationBudgetSheet from '@/features/dashboard/components/VacationBudgetSheet.vue'
 import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
+import { useVacationBudget } from '@/features/leave-mode/composables/useVacationBudget'
+import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
+import { getTransactions } from '@/features/transactions/api/transactions.api'
 
 const route = useRoute()
 const router = useRouter()
 const showEventModal = ref(false)
 const showMissionSheet = ref(false)
+const showBudgetSheet = ref(false)
+const vacationSpentAmount = ref(0)
+const vacationSpendingLoading = ref(false)
+const { mode } = useLeaveModeSchedule()
+const isVacationMode = computed(() => mode.value === 'vacation')
 const dashboardOptions = computed(() => {
   const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
   const scenario = Array.isArray(route.query.scenario)
@@ -31,25 +42,81 @@ const {
 } = useDashboard(dashboardOptions)
 const personaEvents = computed(() => dashboardData.value.events)
 const { events: upcomingEvents, addEvent } = useUpcomingEvents(personaEvents)
+const activeVacation = computed(() => {
+  const currentDate = new Date()
+  const today = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`
+  return (
+    upcomingEvents.value.find((event) => {
+      if (!(event.eventType === 'VACATION' || event.autoVacationMode)) return false
+      const start = event.startDate || event.date
+      const end = event.endDate || start
+      return start <= today && today <= end
+    }) ||
+    (isVacationMode.value ? { id: 'manual-vacation', startDate: today, endDate: today } : null)
+  )
+})
+const { budget: vacationBudget, setBudget: setVacationBudget } = useVacationBudget(activeVacation)
 const todayMissions = computed(() =>
-  dashboardData.value.missions.filter((mission) => mission.missionGroup === 'TODAY'),
+  dashboardData.value.missions.filter((mission) =>
+    ['TODAY', 'RECOMMENDED'].includes(mission.missionGroup),
+  ),
+)
+const marketReportMission = computed(() =>
+  dashboardData.value.missions.find(
+    (mission) =>
+      ['VIEW_AI_REPORT', 'VIEW_FINANCE_REPORT'].includes(mission.actionType) ||
+      /AI.*시장.*리포트|시장.*리포트|데일리.*리포트/.test(mission.title || ''),
+  ),
+)
+const reportVisible = computed(() => !marketReportMission.value?.completed)
+const reportRoute = computed(() => ({
+  name: 'ai-financial-report',
+  query: marketReportMission.value?.id ? { missionId: marketReportMission.value.id } : {},
+}))
+
+watch(
+  activeVacation,
+  async (vacation) => {
+    vacationSpentAmount.value = 0
+    if (!vacation || vacation.id === 'manual-vacation') return
+
+    vacationSpendingLoading.value = true
+    try {
+      const startDate = vacation.startDate || vacation.date
+      const endDate = vacation.endDate || startDate
+      const transactions = await getTransactions({ startDate, endDate })
+      vacationSpentAmount.value = transactions
+        .filter((transaction) => String(transaction.transactionType).toUpperCase() === 'EXPENSE')
+        .reduce((total, transaction) => total + Math.abs(Number(transaction.amount || 0)), 0)
+    } catch {
+      vacationSpentAmount.value = 0
+    } finally {
+      vacationSpendingLoading.value = false
+    }
+  },
+  { immediate: true },
 )
 
 function saveEvent(event) {
   addEvent(event)
   showEventModal.value = false
 }
+
+function saveBudget(amount) {
+  setVacationBudget(amount)
+  showBudgetSheet.value = false
+}
 </script>
 
 <template>
-  <main class="dashboard screen content-screen app-page">
-    <section
+  <main
+    class="dashboard screen content-screen app-page"
+    :class="{ 'dashboard--vacation': isVacationMode }"
+  >
+    <DashboardSkeleton
       v-if="dashboardLoading"
-      class="dashboard-state"
-      aria-live="polite"
-    >
-      <p>대시보드 정보를 불러오고 있어요.</p>
-    </section>
+      :variant="isVacationMode ? 'vacation' : 'military'"
+    />
 
     <section
       v-else-if="dashboardError"
@@ -67,7 +134,26 @@ function saveEvent(event) {
     </section>
 
     <template v-else>
-      <DailyReportBanner v-bind="dashboardData.dailyReport" />
+      <DailyReportBanner
+        v-if="reportVisible"
+        v-bind="dashboardData.dailyReport"
+        :to="reportRoute"
+        :variant="isVacationMode ? 'vacation' : 'military'"
+        :greeting="
+          isVacationMode ? '즐거운 휴가 보내고 계신가요?' : dashboardData.dailyReport.greeting
+        "
+      />
+
+      <VacationBudgetCard
+        v-if="isVacationMode"
+        :spent-amount="vacationSpentAmount"
+        :budget="vacationBudget"
+        :loading="vacationSpendingLoading"
+        @edit="showBudgetSheet = true"
+        @view-transactions="
+          router.push({ name: 'transactions', query: { ...route.query, period: 'vacation' } })
+        "
+      />
 
       <FinancialDdayCard v-bind="dashboardData.financialDday" />
 
@@ -75,6 +161,7 @@ function saveEvent(event) {
         <UpcomingEventsCard
           :events="upcomingEvents"
           :remaining-count="Math.max(0, upcomingEvents.length - 2)"
+          :can-add="true"
           @add="showEventModal = true"
           @show-more="router.push({ name: 'upcoming-events' })"
         />
@@ -112,6 +199,14 @@ function saveEvent(event) {
       @close="showMissionSheet = false"
       @view-progress="router.push({ name: 'challenge' })"
     />
+
+    <VacationBudgetSheet
+      v-if="showBudgetSheet"
+      :model-value="vacationBudget"
+      @close="showBudgetSheet = false"
+      @save="saveBudget"
+      @delete="saveBudget(null)"
+    />
   </main>
 </template>
 
@@ -130,6 +225,10 @@ function saveEvent(event) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--dashboard-gap);
+}
+
+.dashboard--vacation {
+  background: transparent;
 }
 
 .dashboard-state {

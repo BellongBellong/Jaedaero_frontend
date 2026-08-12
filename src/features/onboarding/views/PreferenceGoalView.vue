@@ -87,9 +87,10 @@ async function complete() {
     onboarding.complete()
     await router.replace({ name: 'dashboard' })
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message ||
-      '대시보드 정보를 준비하지 못했어요. 잠시 후 다시 시도해주세요.'
+    const serverMessage = error.response?.data?.message
+    errorMessage.value = serverMessage
+      ? `대시보드 정보를 준비하지 못했어요. ${serverMessage}`
+      : '대시보드 정보를 준비하지 못했어요. 잠시 후 다시 시도해주세요.'
   } finally {
     completing.value = false
   }

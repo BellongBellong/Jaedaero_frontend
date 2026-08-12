@@ -18,8 +18,7 @@
 ```text
 DashboardView.vue
   → useDashboard.js
-  → dashboard.api.js
-  → GET /api/v1/dashboard
+  → GET /api/v1/dashboard + missions/today + accounts + market-reports/today
   → dashboardResponse.mapper.js
   → 기존 대시보드 화면 모델
 ```
@@ -34,14 +33,12 @@ DashboardView.vue
   → GET /api/v1/dashboard
 ```
 
-인증이 없는 사용자가 `requiresAuth` 화면에 접근하면 `/login`으로 이동합니다. 액세스 토큰이
-만료된 경우 공통 API 클라이언트가 한 번 갱신하며, 갱신에 실패하면 토큰을 정리하고 로그인
-페이지로 이동합니다. 로그인 성공 후에는 사용자가 원래 요청했던 내부 경로로 복귀합니다.
-
 - `/home`: 백엔드 API를 조회합니다.
 - `/home?persona=...` 또는 `/home?scenario=...`: 화면 상태 테스트를 위해 목데이터만 사용합니다.
 - API가 실패하면 목데이터로 대체하지 않고 오류 메시지와 `다시 시도` 버튼을 표시합니다.
   실패 원인은 `useDashboard()`의 `error`, 현재 데이터 출처는 `source`에서 확인할 수 있습니다.
+- 실제 사용자 화면의 예정 이벤트는 현재 빈 상태로 표시합니다. 배포 Swagger에 이벤트 조회·등록
+  API가 없으므로 DB 연동은 백엔드 이벤트 API가 추가된 뒤 진행해야 합니다.
 
 ## 응답 필드 매핑
 
@@ -49,11 +46,13 @@ DashboardView.vue
 | ------------------------------- | ---------------------------------------- | ------------------ | ------------------------- |
 | `financialDischargeDate`        | `financialDday.financialDischargeDate`   | 재정적 전역일      | 날짜 유지                 |
 | `actualDischargeDate`           | `financialDday.actualDischargeDate`      | 실제 전역일        | 날짜 유지                 |
-| 두 전역일 날짜                  | `financialDday`, `actualDday`            | D-day              | 오늘 기준으로 프론트 계산 |
+| 두 전역일 날짜                  | `financialDday`, `actualDday`            | D-day              | 로컬 오늘의 날짜와 UTC 날짜값으로 계산 |
+| `deltaDaysVsActual`             | `financialDday.differenceDays`           | 빠름·느림 안내 문구 | 백엔드 계산값을 그대로 사용 |
 | `currentAsset`                  | `financialDday.currentAsset`             | 순자산·말풍선      | 원 → 만원                 |
 | `currentAsset`                  | `assetSummary.total.totalAsset`          | 총 자산            | 원 유지                   |
 | `expectedAsset`                 | `assetSummary.forecast.totalAmount`      | 전역 예상 자산     | 원 유지                   |
 | `achievementRate`               | `financialDday.achievementRate`          | 목표 달성률        | `%` 유지                  |
+| `expectedAsset` / `achievementRate` | `financialDday.targetAmount`          | 목표 금액          | `예상 자산 ÷ 달성률`로 역산, 원 → 만원 |
 | `thisMonthIncome`               | `assetSummary.monthly.income.amount`     | 이번 달 수입       | 원 유지                   |
 | `thisMonthInvestment`           | `assetSummary.monthly.investment.amount` | 이번 달 투자       | 원 유지                   |
 | `monthlyInvestmentGoal`         | `investment.monthlyPaymentTarget`        | 월 납입 목표       | 원 유지                   |
@@ -106,9 +105,12 @@ DashboardView.vue
 
 | 상태  | Swagger 설명                                | 프론트 처리                                  |
 | ----- | ------------------------------------------- | -------------------------------------------- |
-| `401` | 인증 필요 (`CASHFLOW_UNAUTHENTICATED`)      | 토큰 갱신을 1회 시도하고 실패 시 목 fallback |
-| `403` | 접근 거부                                   | 목 fallback, `error`에 원인 보관             |
-| `404` | 캐시플로우 예측 없음 (`CASHFLOW_NOT_FOUND`) | 목 fallback, `error`에 원인 보관             |
+| `401` | 인증 필요 (`CASHFLOW_UNAUTHENTICATED`)      | 토큰 갱신을 1회 시도하고 실패 시 로그인 이동 |
+| `403` | 접근 거부                                   | 오류 상태 표시                              |
+| `404` | 캐시플로우 예측 없음 (`CASHFLOW_NOT_FOUND`) | 오류 상태 표시                              |
+
+실제 사용자 모드에서는 API 실패 시 목데이터를 노출하지 않습니다. 목데이터는
+`persona` 또는 `scenario` 쿼리가 있는 명시적 화면 테스트에서만 사용합니다.
 
 ## 관련 파일
 

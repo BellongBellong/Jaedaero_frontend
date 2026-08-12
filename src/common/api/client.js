@@ -48,13 +48,15 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`
 
         return apiClient(originalRequest)
-      } catch {
+      } catch (refreshError) {
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
         localStorage.removeItem('userId')
 
         const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`)
         window.location.replace(`/login?redirect=${redirect}`)
+
+        return Promise.reject(refreshError)
       }
     } else if (error.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem('accessToken')
