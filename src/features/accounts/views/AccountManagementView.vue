@@ -4,13 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 
 import accountIcon from '@/assets/onboarding/icons/account-general.svg'
 import militarySavingsIcon from '@/assets/onboarding/icons/account-military-savings.svg'
-import bankBuilding from '@/assets/onboarding/icons/bank-building.png'
-import bankIbk from '@/assets/onboarding/institutions/bank-ibk.svg'
-import bankKb from '@/assets/onboarding/institutions/bank-kb.svg'
-import bankKakao from '@/assets/onboarding/institutions/bank-kakao.svg'
-import bankShinhan from '@/assets/onboarding/institutions/bank-shinhan.svg'
-import bankToss from '@/assets/onboarding/institutions/bank-toss.svg'
 import { disconnectAccount, getAccounts } from '@/features/accounts/api/accounts.api'
+import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import {
   accountInstitutionKey,
   accountInstitutionName,
@@ -38,34 +33,25 @@ const accountTypeLabels = {
   SALARY: '급여 통장',
 }
 
-const bankIcons = {
-  KB국민은행: bankKb,
-  국민은행: bankKb,
-  'IBK 기업은행': bankIbk,
-  기업은행: bankIbk,
-  신한은행: bankShinhan,
-  토스뱅크: bankToss,
-  카카오뱅크: bankKakao,
+const securityLogoIndexByCode = {
+  '0238': 0,
+  '0243': 1,
+  '0218': 2,
+  '0240': 3,
+  '0247': 4,
+  '0261': 5,
+  '0264': 6,
+  '0266': 7,
+  '0209': 8,
+  '0267': 9,
+  '0269': 10,
+  '0270': 11,
+  '0278': 12,
+  '0279': 13,
+  '0280': 14,
+  '0287': 15,
+  '0225': 16,
 }
-const securityLogoNames = [
-  '미래에셋',
-  '한국투자',
-  'KB',
-  '삼성',
-  'NH',
-  '교보',
-  '키움',
-  'SK',
-  '유안타',
-  '대신',
-  '한화',
-  '하나',
-  '신한',
-  'DB',
-  '유진',
-  '메리츠',
-  'IBK',
-]
 
 const institutionAccounts = computed(() =>
   accounts.value.filter(
@@ -91,10 +77,9 @@ const isSecurities = computed(() => {
 })
 const institutionTypeLabel = computed(() => (isSecurities.value ? '증권사' : '은행'))
 const institutionImage = computed(() => {
-  if (!isSecurities.value) return bankIcons[bankName.value] || bankBuilding
+  if (!isSecurities.value) return bankAccountIcon(institutionAccounts.value[0])
 
-  const logoIndex = securityLogoNames.findIndex((name) => bankName.value.includes(name))
-  const safeIndex = logoIndex >= 0 ? logoIndex : 0
+  const safeIndex = securityLogoIndexByCode[String(route.params.institutionKey)] ?? 0
   return institutionAssets[`/src/assets/onboarding/institutions/security-${safeIndex}.svg`]
 })
 
@@ -421,13 +406,24 @@ onMounted(loadAccounts)
   margin-top: 19px;
   border: 0;
   border-radius: 28px;
-  background: #efefef;
-  color: #aaa;
+  background: #58f49a;
+  color: #333;
+  cursor: pointer;
   font-size: 16px;
   font-weight: 700;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 .disconnect-button:hover {
-  color: #777;
+  background: #3fe989;
+}
+.disconnect-button:active {
+  transform: scale(0.98);
+}
+.disconnect-button:focus-visible {
+  outline: 2px solid #333;
+  outline-offset: 2px;
 }
 .state-message {
   padding: 54px 20px;

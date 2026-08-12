@@ -9,6 +9,7 @@ import profileDefault from '@/assets/onboarding/profiles/profile-default.png'
 import profileMarine from '@/assets/onboarding/profiles/profile-marine.png'
 import profileNavy from '@/assets/onboarding/profiles/profile-navy.png'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import { previewInvestmentPreference } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
@@ -47,6 +48,13 @@ const estimatedDischargeAmount = computed(() => onboarding.form.challengeGroupTa
 const isAboveEstimatedAmount = computed(
   () => onboarding.form.targetAmount > estimatedDischargeAmount.value,
 )
+const goalTone = computed(() => {
+  const targetAmount = Number(onboarding.targetAmountInTenThousands)
+
+  if (targetAmount <= 2300) return 'green'
+  if (targetAmount <= 2600) return 'gray'
+  return 'red'
+})
 const requiredSavingsAmountInTenThousands = computed(() =>
   Math.max(0, onboarding.targetAmountInTenThousands - 2000),
 )
@@ -55,6 +63,15 @@ const formattedRequiredSavings = computed(
 )
 
 async function next() {
+  if (!onboarding.form.investmentPreference) {
+    errorMessage.value = '투자 성향을 선택해 주세요.'
+    return
+  }
+  if (!Number.isFinite(onboarding.form.targetAmount) || onboarding.form.targetAmount <= 0) {
+    errorMessage.value = '목표 금액을 1만원 이상 입력해 주세요.'
+    return
+  }
+
   loading.value = true
   errorMessage.value = ''
   try {
@@ -64,8 +81,12 @@ async function next() {
     })
     onboarding.persist()
     showConfirmModal.value = true
-  } catch {
-    errorMessage.value = '설정 내용을 저장하지 못했어요.'
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '투자 성향과 목표 금액을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      'preference',
+    )
   } finally {
     loading.value = false
   }
@@ -108,7 +129,7 @@ function complete() {
         <p>전역시에 모으고 싶은<br>목표 금액을 설정해주세요.</p>
         <label><input
           v-model.number="onboarding.targetAmountInTenThousands"
-          :class="{ warning: isAboveEstimatedAmount }"
+          :class="goalTone"
           type="number"
           min="0"
           step="100"
@@ -121,7 +142,7 @@ function complete() {
         </p>
         <div
           class="goal-breakdown"
-          :class="{ warning: isAboveEstimatedAmount }"
+          :class="goalTone"
         >
           <span>군적금 수령 예상금액 2,000만 원</span><b>＋</b><span>저축 {{ formattedRequiredSavings }}</span>
         </div>
@@ -280,7 +301,13 @@ h2 {
   font-weight: 700;
   text-align: center;
 }
-.goal-card input.warning {
+.goal-card input.green {
+  border-bottom-color: #3aed87;
+}
+.goal-card input.gray {
+  border-bottom-color: #aebbaa;
+}
+.goal-card input.red {
   border-bottom-color: #ff8a72;
 }
 .goal-warning {
@@ -317,7 +344,11 @@ h2 {
   color: #1dc767;
   font-size: 10px;
 }
-.goal-breakdown.warning span {
+.goal-breakdown.gray span {
+  background: #eef1ed;
+  color: #7d8e7c;
+}
+.goal-breakdown.red span {
   background: #fff4f1;
   color: #ff765c;
 }
