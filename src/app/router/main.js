@@ -7,7 +7,11 @@ const mainRoutes = [
         path: 'home',
         name: 'dashboard',
         component: () => import('@/features/dashboard/views/DashboardView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', headerVariant: 'home' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          headerVariant: 'home',
+        },
       },
       {
         path: 'ai-coach',
