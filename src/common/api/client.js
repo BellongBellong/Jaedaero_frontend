@@ -12,9 +12,12 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken')
+  const isAuthRequest = config.url?.includes('/auth/login') || config.url?.includes('/auth/refresh')
 
-  if (token) {
+  if (token && !isAuthRequest) {
     config.headers.Authorization = `Bearer ${token}`
+  } else if (isAuthRequest && config.headers?.Authorization) {
+    delete config.headers.Authorization
   }
 
   return config

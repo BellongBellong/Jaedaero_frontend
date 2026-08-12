@@ -1,19 +1,27 @@
 <script setup>
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
 import AppHeader from '@/common/components/AppHeader.vue'
 import BottomNavigation from '@/common/components/BottomNavigation.vue'
 import MobileFrame from '@/common/components/MobileFrame.vue'
+import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
 const route = useRoute()
 const contentElement = ref(null)
+const { mode } = useLeaveModeSchedule()
+
+const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
 
 watch(
   () => route.fullPath,
   async () => {
     await nextTick()
-    contentElement.value?.scrollTo({ left: 0, top: 0, behavior: 'auto' })
+    contentElement.value?.scrollTo({
+      left: 0,
+      top: 0,
+      behavior: 'auto',
+    })
   },
 )
 </script>
@@ -22,6 +30,8 @@ watch(
   <MobileFrame
     :class="{
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
+      'mobile-frame--investment-guide': route.name === 'investment-guide',
+      'mobile-frame--vacation': isVacationDashboard,
     }"
   >
     <AppHeader
@@ -34,7 +44,10 @@ watch(
     <main
       ref="contentElement"
       class="main-layout__content"
-      :class="{ 'main-layout__content--without-navigation': route.meta.hideBottomNavigation }"
+      :class="{
+        'main-layout__content--without-navigation': route.meta.hideBottomNavigation,
+        'main-layout__content--vacation': isVacationDashboard,
+      }"
     >
       <RouterView />
     </main>
@@ -42,6 +55,7 @@ watch(
     <div
       v-if="!route.meta.hideBottomNavigation"
       class="main-layout__bottom"
+      :class="{ 'main-layout__bottom--vacation': isVacationDashboard }"
     >
       <BottomNavigation />
     </div>
@@ -85,6 +99,30 @@ watch(
     var(--gray-100);
 }
 
+:global(.mobile-frame.mobile-frame--investment-guide) {
+  background: var(--ui-background);
+}
+
+:global(.mobile-frame.mobile-frame--investment-guide .app-header) {
+  background: var(--ui-background);
+}
+
+:global(.mobile-frame.mobile-frame--investment-guide .app-header h1) {
+  font-size: 18px;
+}
+
+:global(.mobile-frame.mobile-frame--vacation) {
+  background:
+    radial-gradient(
+      ellipse 125% 68% at 50% 100%,
+      rgb(152 204 255 / 100%) 0%,
+      rgb(152 204 255 / 58%) 34%,
+      rgb(152 204 255 / 20%) 58%,
+      rgb(152 204 255 / 0%) 76%
+    ),
+    #f6f6f6;
+}
+
 .main-layout__content :deep(.screen) {
   min-height: 100%;
   overflow: visible;
@@ -101,5 +139,13 @@ watch(
 
 .main-layout__content--without-navigation :deep(.app-page) {
   padding-bottom: calc(var(--space-40) + var(--safe-area-bottom));
+}
+
+.main-layout__content--vacation :deep(.app-page) {
+  background: transparent;
+}
+
+.main-layout__bottom--vacation {
+  background: linear-gradient(180deg, rgb(152 204 255 / 0%), rgb(152 204 255 / 30%) 70%);
 }
 </style>
