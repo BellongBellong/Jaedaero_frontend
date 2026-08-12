@@ -9,3 +9,11 @@ export async function getCashflow(months = 8) {
   })
   return data?.data ?? data
 }
+
+export async function generateCashflow() {
+  const userId = Number(localStorage.getItem('userId')) || 1
+  const { data } = await apiClient.post(ENDPOINTS.cashflow, null, {
+    headers: { 'X-User-Id': userId },
+  })
+  return data?.data ?? data
+}

@@ -17,7 +17,6 @@ function readSelectedMode() {
 
 function readSchedules() {
   if (typeof window === 'undefined') return []
-
   try {
     const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '[]')
     return Array.isArray(saved) ? saved : []
@@ -80,10 +79,5 @@ export function useLeaveModeSchedule() {
     }
   }
 
-  return {
-    mode,
-    schedules,
-    setMode,
-    refreshMode: refreshLeaveMode,
-  }
+  return { mode, schedules, setMode, refreshMode: refreshLeaveMode }
 }

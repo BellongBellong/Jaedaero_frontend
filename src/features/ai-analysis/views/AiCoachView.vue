@@ -101,7 +101,10 @@ const analysisMenus = [
 
           <p class="report-insight">
             <span class="report-insight__label">
-              <span class="report-insight__icon" aria-hidden="true">💡</span>
+              <span
+                class="report-insight__icon"
+                aria-hidden="true"
+              >💡</span>
               AI 요약
             </span>
             {{ reportSummary }}

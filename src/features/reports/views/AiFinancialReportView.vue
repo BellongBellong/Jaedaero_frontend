@@ -92,7 +92,10 @@ onMounted(() => {
       </dl>
 
       <p class="market-summary">
-        <span class="market-summary__icon" aria-hidden="true">💡</span>
+        <span
+          class="market-summary__icon"
+          aria-hidden="true"
+        >💡</span>
         <span>{{ marketSummary }}</span>
       </p>
 
@@ -119,7 +122,10 @@ onMounted(() => {
         참고한 기사 및 데이터 출처
       </button>
 
-      <div v-if="sourcesExpanded" class="sources-card">
+      <div
+        v-if="sourcesExpanded"
+        class="sources-card"
+      >
         <a
           v-for="source in sourceLinks"
           :key="source.url"

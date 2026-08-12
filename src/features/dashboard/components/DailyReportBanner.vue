@@ -9,15 +9,19 @@ import starGradient from '@/assets/icons/starGradient.png'
 const props = defineProps({
   greeting: {
     type: String,
-    default: '저녁은 맛있게 드셨나요?',
+    default: '오늘의 시장 흐름을 확인해보세요',
   },
   title: {
     type: String,
     default: '오늘의 AI 시장 리포트',
   },
   date: {
-    type: String,
+    type: [String, Array],
     default: '',
+  },
+  to: {
+    type: [String, Object],
+    default: () => ({ name: 'ai-financial-report' }),
   },
   variant: {
     type: String,
@@ -26,10 +30,20 @@ const props = defineProps({
   },
 })
 
-const formattedDate = computed(() => {
-  const sourceDate = props.date ? new Date(props.date) : new Date()
+const normalizedDate = computed(() => {
+  if (Array.isArray(props.date)) {
+    const [year, month, day] = props.date.map(Number)
+    if (!year || !month || !day) return ''
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  }
 
-  if (Number.isNaN(sourceDate.getTime())) return props.date
+  return String(props.date || '')
+})
+
+const formattedDate = computed(() => {
+  const sourceDate = normalizedDate.value ? new Date(normalizedDate.value) : new Date()
+
+  if (Number.isNaN(sourceDate.getTime())) return normalizedDate.value
 
   return new Intl.DateTimeFormat('ko-KR', {
     month: 'long',
@@ -38,7 +52,7 @@ const formattedDate = computed(() => {
 })
 
 const dateTime = computed(() => {
-  if (props.date) return props.date.slice(0, 10)
+  if (normalizedDate.value) return normalizedDate.value.slice(0, 10)
 
   const today = new Date()
   const year = today.getFullYear()
@@ -53,7 +67,7 @@ const dateTime = computed(() => {
   <RouterLink
     class="daily-report-banner"
     :class="`daily-report-banner--${variant}`"
-    :to="{ name: 'ai-financial-report' }"
+    :to="to"
     aria-label="오늘의 AI 시장 리포트 보기"
   >
     <img
@@ -165,6 +179,14 @@ const dateTime = computed(() => {
   transform: scale(0.985);
 }
 
+.daily-report-banner--vacation {
+  border-color: rgb(255 255 255 / 28%);
+  background: linear-gradient(180deg, #009dff 0%, #65c6d4 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 30%),
+    0 8px 22px rgb(0 157 255 / 16%);
+}
+
 .daily-report-banner:focus-visible {
   outline: 3px solid var(--green-300);
   outline-offset: 2px;
@@ -184,7 +206,7 @@ const dateTime = computed(() => {
   z-index: 1;
   display: flex;
   min-width: 0;
-  padding-right: 58px;
+  padding-right: 52px;
   flex-direction: column;
   justify-content: center;
   gap: 3px;
@@ -202,15 +224,16 @@ const dateTime = computed(() => {
   display: flex;
   min-width: 0;
   align-items: center;
+  flex-wrap: wrap;
   gap: 7px;
-  white-space: nowrap;
 }
 
 .daily-report-banner__title strong {
-  overflow: hidden;
+  min-width: 0;
   font-size: 18px;
   line-height: 1.5;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: keep-all;
 }
 
 .daily-report-banner__title time {
@@ -312,6 +335,10 @@ const dateTime = computed(() => {
 
   .daily-report-banner__content {
     padding-right: 0;
+  }
+
+  .daily-report-banner__title strong {
+    font-size: 17px;
   }
 }
 

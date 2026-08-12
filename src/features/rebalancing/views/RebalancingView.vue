@@ -215,7 +215,6 @@ onMounted(async () => {
           </div>
         </article>
       </div>
-
     </template>
   </section>
 </template>

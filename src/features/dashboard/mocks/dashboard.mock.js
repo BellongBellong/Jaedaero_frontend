@@ -233,8 +233,8 @@ export const missionResponses = [
   {
     id: 1,
     missionGroup: 'DAILY',
-    title: '데일리 금융리포트 보기',
-    description: '오늘의 금융 리포트를 확인해보세요',
+    title: '오늘의 AI 시장리포트',
+    description: '오늘의 AI 시장리포트를 확인해보세요',
     missionType: 'COMMON',
     rewardExperience: 5,
     status: 'AVAILABLE',
@@ -244,7 +244,7 @@ export const missionResponses = [
   {
     id: 2,
     missionGroup: 'DAILY',
-    title: '데일리 시장리포트 보기',
+    title: '오늘의 AI 시장리포트',
     description: '오늘의 AI 시장현황 리포트를 확인해보세요',
     missionType: 'COMMON',
     rewardExperience: 5,

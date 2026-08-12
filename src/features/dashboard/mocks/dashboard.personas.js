@@ -49,7 +49,7 @@ export const dashboardPersonaMocks = {
     missions: [
       availableMission(101, '첫 금융리포트 확인'),
       availableMission(102, '군 적금 알아보기'),
-      availableMission(103, '데일리 시장리포트 보기', 'DAILY'),
+      availableMission(103, '오늘의 AI 시장리포트', 'DAILY'),
       availableMission(104, '소비 내역 확인하기', 'DAILY'),
     ],
     events: [],
@@ -120,8 +120,8 @@ export const dashboardPersonaMocks = {
     missions: [
       completedMission(201, '오늘의 소비리포트 확인'),
       availableMission(202, 'PX 소비 줄이기'),
-      completedMission(203, '데일리 금융리포트 보기', 'DAILY'),
-      completedMission(204, '데일리 시장리포트 보기', 'DAILY'),
+      completedMission(203, '오늘의 AI 시장리포트', 'DAILY'),
+      completedMission(204, '오늘의 AI 시장리포트', 'DAILY'),
     ],
     events: [
       {
@@ -210,8 +210,8 @@ export const dashboardPersonaMocks = {
     missions: [
       completedMission(301, '오늘의 투자리포트 확인'),
       availableMission(302, '월 투자 목표 확인하기'),
-      completedMission(303, '데일리 금융리포트 보기', 'DAILY'),
-      availableMission(304, '데일리 시장리포트 보기', 'DAILY'),
+      completedMission(303, '오늘의 AI 시장리포트', 'DAILY'),
+      availableMission(304, '오늘의 AI 시장리포트', 'DAILY'),
     ],
     events: [
       {
@@ -336,8 +336,8 @@ export const dashboardPersonaMocks = {
     missions: [
       completedMission(401, '오늘의 투자리포트 확인'),
       completedMission(402, '전역 목표 점검하기'),
-      completedMission(403, '데일리 금융리포트 보기', 'DAILY'),
-      completedMission(404, '데일리 시장리포트 보기', 'DAILY'),
+      completedMission(403, '오늘의 AI 시장리포트', 'DAILY'),
+      completedMission(404, '오늘의 AI 시장리포트', 'DAILY'),
     ],
     events: [
       {
