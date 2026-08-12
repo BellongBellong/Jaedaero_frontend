@@ -25,7 +25,9 @@ watch(
   <MobileFrame
     :class="{
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
+      'mobile-frame--investment-guide': route.name === 'investment-guide',
       'mobile-frame--vacation': isVacationDashboard,
+
     }"
   >
     <AppHeader
@@ -93,6 +95,16 @@ watch(
     var(--gray-100);
 }
 
+:global(.mobile-frame.mobile-frame--investment-guide) {
+  background: var(--ui-background);
+}
+
+:global(.mobile-frame.mobile-frame--investment-guide .app-header) {
+  background: var(--ui-background);
+}
+
+:global(.mobile-frame.mobile-frame--investment-guide .app-header h1) {
+  font-size: 18px;
 :global(.mobile-frame.mobile-frame--vacation) {
   background:
     radial-gradient(
