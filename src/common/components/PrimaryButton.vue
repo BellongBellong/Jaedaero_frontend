@@ -1,8 +1,18 @@
 <script setup>
-defineProps({
+const props = defineProps({
   disabled: Boolean,
   loading: Boolean,
   type: { type: String, default: 'button' },
+  variant: {
+    type: String,
+    default: 'dark',
+    validator: (value) => ['dark', 'green'].includes(value),
+  },
+  shape: {
+    type: String,
+    default: 'pill',
+    validator: (value) => ['pill', 'square'].includes(value),
+  },
 })
 
 defineEmits(['click'])
@@ -11,6 +21,7 @@ defineEmits(['click'])
 <template>
   <button
     class="primary-button"
+    :class="[`primary-button--${props.variant}`, `primary-button--${props.shape}`]"
     :type="type"
     :disabled="disabled || loading"
     @click="$emit('click', $event)"
@@ -26,11 +37,20 @@ defineEmits(['click'])
   padding: 0 22px;
   border: 0;
   border-radius: 29px;
-  background: #333;
-  color: #fff;
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
+}
+.primary-button--dark {
+  background: #333;
+  color: #fff;
+}
+.primary-button--green {
+  background: var(--green-500, #62ff9c);
+  color: var(--ui-text, #333);
+}
+.primary-button--square {
+  border-radius: 0;
 }
 .primary-button:disabled {
   background: #ededed;

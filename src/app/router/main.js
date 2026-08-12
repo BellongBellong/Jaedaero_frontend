@@ -7,7 +7,11 @@ const mainRoutes = [
         path: 'home',
         name: 'dashboard',
         component: () => import('@/features/dashboard/views/DashboardView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', headerVariant: 'home' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          headerVariant: 'home',
+        },
       },
       {
         path: 'ai-coach',
@@ -93,7 +97,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: '오늘의 AI 투자 리포트',
+          headerTitle: '오늘의 AI 시장 리포트',
           headerBadge: 'BETA',
         },
       },
@@ -105,6 +109,26 @@ const mainRoutes = [
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
           hideHeader: true,
+        },
+      },
+      {
+        path: 'analysis-history',
+        name: 'analysis-history',
+        component: () => import('@/features/ai-analysis/views/AnalysisHistoryView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: 'AI 분석 기록',
+        },
+      },
+      {
+        path: 'analysis-history/what-if/:simulationId',
+        name: 'what-if-detail',
+        component: () => import('@/features/ai-analysis/views/WhatIfDetailView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '시뮬레이션 상세보기',
         },
       },
       {
@@ -124,10 +148,18 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'ai-coach', hideHeader: true },
       },
       {
-        path: 'rebalancing',
-        name: 'rebalancing',
+        path: 'investment-guide',
+        name: 'investment-guide',
         component: () => import('@/features/rebalancing/views/RebalancingView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'ai-coach', headerTitle: '리밸런싱' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '적립식 투자 가이드',
+        },
+      },
+      {
+        path: 'rebalancing',
+        redirect: { name: 'investment-guide' },
       },
       {
         path: 'badge-history',

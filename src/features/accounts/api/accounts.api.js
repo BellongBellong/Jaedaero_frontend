@@ -43,6 +43,13 @@ export async function getAccounts(config = {}) {
   }))
 }
 
-export async function disconnectAccount(accountId) {
-  await apiClient.delete(ENDPOINTS.accounts.detail(accountId))
+export async function disconnectAccount(accountId, config = {}) {
+  const userId = Number(localStorage.getItem('userId')) || 1
+  await apiClient.delete(ENDPOINTS.accounts.detail(accountId), {
+    ...config,
+    params: {
+      userId,
+      ...config.params,
+    },
+  })
 }

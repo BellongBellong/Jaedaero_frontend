@@ -1,13 +1,16 @@
 import { ref } from 'vue'
 
 const STORAGE_KEY = 'jaedaero-leave-mode-schedules'
+const LEGACY_MODE_STORAGE_KEY = 'jaedaero-selected-mode'
 const MODE_STORAGE_KEY = 'jaedaero-mode-preference'
-const mode = ref(readModePreference() || 'military')
+const selectedMode = readSelectedMode()
+const mode = ref(selectedMode || 'military')
 const schedules = ref(readSchedules())
 
-function readModePreference() {
+function readSelectedMode() {
   if (typeof window === 'undefined') return null
 
+  window.localStorage.removeItem(LEGACY_MODE_STORAGE_KEY)
   const savedMode = window.localStorage.getItem(MODE_STORAGE_KEY)
   return ['military', 'vacation'].includes(savedMode) ? savedMode : null
 }
@@ -41,9 +44,9 @@ function isActiveSchedule(schedule, date) {
 }
 
 export function refreshLeaveMode(date = new Date()) {
-  const preferredMode = readModePreference()
-  if (preferredMode) {
-    mode.value = preferredMode
+  const savedMode = readSelectedMode()
+  if (savedMode) {
+    mode.value = savedMode
     return
   }
 

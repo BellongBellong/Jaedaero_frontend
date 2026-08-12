@@ -55,6 +55,14 @@ const investmentAccountIds = computed(
 const activeFilterLabel = computed(
   () => filterOptions.find(({ value }) => value === transactionFilter.value)?.label ?? '전체',
 )
+const isVacationPeriod = computed(() => route.query.period === 'vacation')
+const vacationPeriodLabel = computed(() => {
+  if (!isVacationPeriod.value) return ''
+  const title = String(route.query.vacationTitle || '휴가')
+  const startDate = String(route.query.startDate || '').replaceAll('-', '.')
+  const endDate = String(route.query.endDate || route.query.startDate || '').replaceAll('-', '.')
+  return `${title} · ${startDate} ~ ${endDate}`
+})
 const transactions = computed(() => {
   const now = new Date()
   return loadedTransactions.value
@@ -70,6 +78,12 @@ const transactions = computed(() => {
         String(transaction.transactionType).toUpperCase() === transactionFilter.value,
     )
     .filter((transaction) => {
+      if (isVacationPeriod.value) {
+        const date = String(transaction.transactionDate || '').slice(0, 10)
+        return (
+          String(route.query.startDate || '') <= date && date <= String(route.query.endDate || '')
+        )
+      }
       if (route.query.period !== 'month') return true
       const date = new Date(transaction.transactionDate)
       return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth()
@@ -98,9 +112,12 @@ function monthRange() {
 onMounted(async () => {
   if (!usesMockScenario.value) {
     try {
-      loadedTransactions.value = await getTransactions(
-        route.query.period === 'month' ? monthRange() : {},
-      )
+      const requestRange = isVacationPeriod.value
+        ? { startDate: route.query.startDate, endDate: route.query.endDate }
+        : route.query.period === 'month'
+          ? monthRange()
+          : {}
+      loadedTransactions.value = await getTransactions(requestRange)
     } catch (error) {
       loadError.value = error
       loadedTransactions.value = []
@@ -126,7 +143,15 @@ onMounted(async () => {
           aria-hidden="true"
         >
       </button>
-      <h1>거래 내역</h1>
+      <div>
+        <h1>{{ isVacationPeriod ? '휴가 거래 내역' : '거래 내역' }}</h1>
+        <p
+          v-if="isVacationPeriod"
+          class="transaction-history__period"
+        >
+          {{ vacationPeriodLabel }}
+        </p>
+      </div>
     </header>
 
     <div
@@ -232,6 +257,13 @@ onMounted(async () => {
   font-size: var(--body-heading-h5-bold-font-size, 20px);
   font-weight: var(--body-heading-h5-bold-font-weight, 700);
   line-height: var(--body-heading-h5-bold-line-height, 150%);
+}
+
+.transaction-history__period {
+  margin: 1px 0 0;
+  color: var(--gray-500);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .transaction-history__tabs {

@@ -56,6 +56,12 @@ const notificationSettings = ref({ ...defaultNotificationSettings })
 const badgeProgresses = computed(() =>
   getBadgeProgress(investmentBadges.value, profile.value?.investmentBadgeStatus),
 )
+const orderedBadgeProgresses = computed(() =>
+  [...badgeProgresses.value].sort((first, second) => {
+    const order = { AGGRESSIVE: 0, SAFE: 1, BALANCED: 1 }
+    return (order[first.type] ?? 2) - (order[second.type] ?? 2)
+  }),
+)
 const earnedInvestmentBadges = computed(() => getEarnedBadges(badgeProgresses.value))
 const selectedInvestmentBadge = computed(() =>
   getSelectedBadge(earnedInvestmentBadges.value, selectedBadgeId.value),
@@ -391,10 +397,10 @@ onMounted(async () => {
           v-if="!badgesLoading && badgePreviews.length"
           class="badge-mission-summary"
         >
-          <small>달성한 미션</small>
+          <small>달성한 총 미션</small>
           <b>{{ totalCompletedMissions }}개</b>
           <em
-            v-for="badge in badgeProgresses"
+            v-for="badge in orderedBadgeProgresses"
             :key="badge.type"
           >{{ badge.typeInfo.label }} {{ badge.missionCount }}</em>
         </span>
@@ -474,14 +480,16 @@ onMounted(async () => {
       @toggle="toggleNotification"
     />
 
-    <GoalAmountModal
-      v-if="activeDialog === 'goal'"
-      :amount="goalAmount"
-      :saving="saving"
-      :error-message="errorMessage"
-      @close="closeDialog"
-      @save="saveGoalAmount"
-    />
+    <Transition name="goal-sheet">
+      <GoalAmountModal
+        v-if="activeDialog === 'goal'"
+        :amount="goalAmount"
+        :saving="saving"
+        :error-message="errorMessage"
+        @close="closeDialog"
+        @save="saveGoalAmount"
+      />
+    </Transition>
 
     <div
       v-if="activeDialog === 'nickname'"
@@ -758,8 +766,9 @@ onMounted(async () => {
 }
 .profile-section h2 {
   margin: 16px 0 4px;
+  font-family: var(--font-display);
   font-size: 21px;
-  text-decoration: underline;
+  font-weight: 400;
 }
 .profile-section p {
   margin: 0 0 8px;
@@ -1080,6 +1089,7 @@ onMounted(async () => {
   height: 97px;
   flex: 1;
   align-self: stretch;
+  transform: translateY(50px);
   justify-items: center;
   align-content: center;
   gap: 4px;
@@ -1106,6 +1116,9 @@ onMounted(async () => {
   color: #888;
   font-size: 12px;
   line-height: 16px;
+}
+.badge-mission-summary b + em {
+  margin-top: 12px;
 }
 .badge-preview,
 .badge-preview:first-child {
@@ -1221,6 +1234,11 @@ onMounted(async () => {
   background: #fff;
   text-align: center;
 }
+.confirm-dialog {
+  width: min(100%, 280px);
+  padding: 22px 16px 16px;
+  border-radius: 20px;
+}
 .dialog-close {
   position: absolute;
   top: 26px;
@@ -1230,6 +1248,11 @@ onMounted(async () => {
   color: #444;
   font-size: 34px;
   line-height: 1;
+}
+.confirm-dialog .dialog-close {
+  top: 16px;
+  right: 16px;
+  font-size: 24px;
 }
 .dialog h2 {
   margin: 0 0 20px;
@@ -1288,16 +1311,13 @@ onMounted(async () => {
 }
 .confirm-dialog h2 {
   margin-top: 2px;
+  margin-bottom: 10px;
   color: #ff4141;
-  font-size: 32px;
-}
-.confirm-dialog .withdraw-title {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font-size: 20px;
 }
 .confirm-dialog > p:not(.error) {
-  margin: 0 0 24px;
-  font-size: 16px;
+  margin: 0 0 12px;
+  font-size: 13px;
 }
 .dialog-primary,
 .dialog-secondary {
@@ -1314,6 +1334,14 @@ onMounted(async () => {
 .dialog-secondary {
   margin-top: 14px;
   background: #e2fff0;
+}
+.confirm-dialog .dialog-primary,
+.confirm-dialog .dialog-secondary {
+  min-height: 42px;
+  font-size: 13px;
+}
+.confirm-dialog .dialog-secondary {
+  margin-top: 8px;
 }
 .dialog-primary.compact {
   margin-top: 22px;

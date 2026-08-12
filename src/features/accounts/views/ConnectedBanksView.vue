@@ -2,15 +2,9 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import bankBuilding from '@/assets/onboarding/icons/bank-building.png'
-import bankIbk from '@/assets/onboarding/institutions/bank-ibk.svg'
-import bankKb from '@/assets/onboarding/institutions/bank-kb.svg'
-import bankKakao from '@/assets/onboarding/institutions/bank-kakao.svg'
-import bankShinhan from '@/assets/onboarding/institutions/bank-shinhan.svg'
-import bankToss from '@/assets/onboarding/institutions/bank-toss.svg'
 import securityDefault from '@/assets/onboarding/institutions/security-0.svg'
-import securityKoreaInvestment from '@/assets/onboarding/institutions/security-1.svg'
 import { getAccounts } from '@/features/accounts/api/accounts.api'
+import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import {
   accountInstitutionKey,
   accountInstitutionName,
@@ -21,14 +15,29 @@ const accounts = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
 
-const bankIcons = {
-  KB국민은행: bankKb,
-  국민은행: bankKb,
-  'IBK 기업은행': bankIbk,
-  기업은행: bankIbk,
-  신한은행: bankShinhan,
-  토스뱅크: bankToss,
-  카카오뱅크: bankKakao,
+const securityAssets = import.meta.glob('@/assets/onboarding/institutions/security-*.svg', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+})
+const securityLogoIndexByCode = {
+  '0238': 0,
+  '0243': 1,
+  '0218': 2,
+  '0240': 3,
+  '0247': 4,
+  '0261': 5,
+  '0264': 6,
+  '0266': 7,
+  '0209': 8,
+  '0267': 9,
+  '0269': 10,
+  '0270': 11,
+  '0278': 12,
+  '0279': 13,
+  '0280': 14,
+  '0287': 15,
+  '0225': 16,
 }
 
 const accountTypeLabels = {
@@ -99,9 +108,13 @@ const institutionSections = computed(() => [
 
 function institutionIcon(institution) {
   if (institution.category === 'securities') {
-    return institution.bankName === '한국투자증권' ? securityKoreaInvestment : securityDefault
+    const logoIndex = securityLogoIndexByCode[institution.institutionKey]
+    return (
+      securityAssets[`/src/assets/onboarding/institutions/security-${logoIndex ?? 0}.svg`] ||
+      securityDefault
+    )
   }
-  return bankIcons[institution.bankName] || bankBuilding
+  return bankAccountIcon(institution.accounts[0])
 }
 
 async function loadAccounts() {

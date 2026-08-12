@@ -7,6 +7,8 @@ import {
   BADGE_LEVELS,
   BADGE_SELECTION_STORAGE_KEY,
   getBadgeProgress,
+  getBadgeTarget,
+  getBadgeTier,
   getEarnedBadges,
   getBadgeImage,
   getSelectedBadge,
@@ -82,6 +84,8 @@ const remainingMissions = computed(() =>
     ? Math.max(0, nextLevel.value.missionCount - selectedBadge.value.missionCount)
     : 0,
 )
+const selectedBadgeTier = computed(() => getBadgeTier(selectedBadge.value?.missionCount))
+const selectedBadgeTarget = computed(() => getBadgeTarget(selectedBadge.value?.missionCount))
 
 function formatDate(value) {
   if (!value) return '획득일 정보 없음'
@@ -115,7 +119,7 @@ onMounted(async () => {
   <main class="badge-history screen">
     <section
       v-if="selectedBadge"
-      class="badge-hero"
+      :class="['badge-hero', `tier-${selectedBadgeTier.key.toLowerCase()}`]"
     >
       <div class="badge-showcase">
         <button
@@ -152,12 +156,12 @@ onMounted(async () => {
       <p>미션 달성 {{ selectedBadge.missionCount }}회</p>
 
       <progress
-        :value="Math.min(selectedBadge.missionCount, BADGE_LEVELS.at(-1).missionCount)"
-        :max="BADGE_LEVELS.at(-1).missionCount"
+        :value="Math.min(selectedBadge.missionCount, selectedBadgeTarget)"
+        :max="selectedBadgeTarget"
       />
       <div class="mission-count">
         <span>현재 {{ selectedBadge.missionCount }}회</span>
-        <span>{{ BADGE_LEVELS.at(-1).missionCount }}회</span>
+        <span>{{ selectedBadgeTarget }}회</span>
       </div>
       <p
         v-if="nextLevel"
@@ -215,7 +219,7 @@ onMounted(async () => {
 <style scoped>
 .badge-history {
   min-height: 100%;
-  padding: 4px 28px 20px;
+  padding: 4px 28px calc(var(--page-bottom-navigation-space) + var(--safe-area-bottom));
   background: #fff;
 }
 .badge-hero {
@@ -312,8 +316,9 @@ onMounted(async () => {
 }
 progress {
   display: block;
-  width: 100%;
+  width: min(100%, 220px);
   height: 10px;
+  margin: 0 auto;
   border: 0;
   border-radius: 9px;
   overflow: hidden;
@@ -389,9 +394,9 @@ progress::-webkit-progress-value {
 }
 .mission-count {
   display: flex;
-  width: 100%;
+  width: min(100%, 220px);
   justify-content: space-between;
-  margin-top: 5px;
+  margin: 5px auto 0;
   color: #8a8a8a;
   font-size: 9px;
 }
@@ -400,6 +405,33 @@ progress::-webkit-progress-value {
   color: #777;
   font-size: 10px;
   line-height: 1.65;
+}
+.badge-hero.tier-bronze {
+  --tier-color: #a86f45;
+}
+.badge-hero.tier-silver {
+  --tier-color: #7d8b96;
+}
+.badge-hero.tier-gold {
+  --tier-color: #d3a50d;
+}
+.badge-hero.tier-platinum {
+  --tier-color: #65a4da;
+}
+.badge-hero.tier-diamond {
+  --tier-color: #8b6bd1;
+}
+.badge-hero progress {
+  accent-color: var(--tier-color);
+}
+.badge-hero progress::-webkit-progress-bar {
+  background: #e7ebed;
+}
+.badge-hero progress::-webkit-progress-value {
+  background: var(--tier-color);
+}
+.badge-hero progress::-moz-progress-bar {
+  background: var(--tier-color);
 }
 @media (max-height: 760px) {
   .badge-history {

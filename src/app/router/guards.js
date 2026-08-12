@@ -1,6 +1,8 @@
 export function registerRouterGuards(router) {
   router.beforeEach((to) => {
-    if (to.meta.requiresAuth && !localStorage.getItem('accessToken')) {
+    const accessToken = localStorage.getItem('accessToken')
+
+    if (to.meta.requiresAuth && !accessToken) {
       return {
         name: 'social-login',
         query: { redirect: to.fullPath },

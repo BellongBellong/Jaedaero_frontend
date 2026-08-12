@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import DailyReportBanner from '@/features/dashboard/components/DailyReportBanner.vue'
@@ -14,6 +14,10 @@ import VacationBudgetCard from '@/features/dashboard/components/VacationBudgetCa
 import VacationBudgetSheet from '@/features/dashboard/components/VacationBudgetSheet.vue'
 import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
+import { getTodayMissions } from '@/features/missions/api/missions.api'
+import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
+import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
+import { transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import { useVacationBudget } from '@/features/leave-mode/composables/useVacationBudget'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 import { getTransactions } from '@/features/transactions/api/transactions.api'
@@ -22,6 +26,7 @@ const route = useRoute()
 const router = useRouter()
 const showEventModal = ref(false)
 const showMissionSheet = ref(false)
+const liveMissions = ref([])
 const showBudgetSheet = ref(false)
 const vacationSpentAmount = ref(0)
 const vacationSpendingLoading = ref(false)
@@ -56,13 +61,14 @@ const activeVacation = computed(() => {
   )
 })
 const { budget: vacationBudget, setBudget: setVacationBudget } = useVacationBudget(activeVacation)
+const allMissions = computed(() =>
+  liveMissions.value.length ? liveMissions.value : dashboardData.value.missions,
+)
 const todayMissions = computed(() =>
-  dashboardData.value.missions.filter((mission) =>
-    ['TODAY', 'RECOMMENDED'].includes(mission.missionGroup),
-  ),
+  allMissions.value.filter((mission) => ['TODAY', 'RECOMMENDED'].includes(mission.missionGroup)),
 )
 const marketReportMission = computed(() =>
-  dashboardData.value.missions.find(
+  allMissions.value.find(
     (mission) =>
       ['VIEW_AI_REPORT', 'VIEW_FINANCE_REPORT'].includes(mission.actionType) ||
       /AI.*시장.*리포트|시장.*리포트|데일리.*리포트/.test(mission.title || ''),
@@ -74,6 +80,47 @@ const reportRoute = computed(() => ({
   query: marketReportMission.value?.id ? { missionId: marketReportMission.value.id } : {},
 }))
 
+function normalizeMission(mission) {
+  const category = String(mission.missionCategory || mission.missionGroup || '').toUpperCase()
+  const missionGroup = ['RECOMMENDED', 'PERSONALIZED', 'TODAY'].includes(category)
+    ? 'TODAY'
+    : ['EVENT', 'CONDITIONAL', 'ONE_TIME'].includes(category)
+      ? 'EVENT'
+      : 'DAILY'
+
+  return {
+    ...mission,
+    id: mission.id ?? mission.missionId,
+    missionId: mission.missionId ?? mission.id,
+    missionGroup,
+    missionType: mission.missionType || 'COMMON',
+    completed: isMissionCompleted(mission),
+  }
+}
+
+onMounted(async () => {
+  try {
+    const response = await getTodayMissions()
+    const missions = response?.data ?? response
+    liveMissions.value = (Array.isArray(missions) ? missions : missions?.missions || []).map(
+      normalizeMission,
+    )
+  } catch {
+    liveMissions.value = []
+  }
+})
+
+function isVacationExpense(transaction, vacation) {
+  const transactionDate = String(transaction.transactionDate || '').slice(0, 10)
+  const startDate = vacation.startDate || vacation.date
+  const endDate = vacation.endDate || startDate
+  return (
+    String(transaction.transactionType).toUpperCase() === 'EXPENSE' &&
+    startDate <= transactionDate &&
+    transactionDate <= endDate
+  )
+}
+
 watch(
   activeVacation,
   async (vacation) => {
@@ -84,9 +131,12 @@ watch(
     try {
       const startDate = vacation.startDate || vacation.date
       const endDate = vacation.endDate || startDate
-      const transactions = await getTransactions({ startDate, endDate })
+      const usesMockScenario = Boolean(route.query.persona || route.query.scenario)
+      const transactions = usesMockScenario
+        ? transactionResponses
+        : await getTransactions({ startDate, endDate })
       vacationSpentAmount.value = transactions
-        .filter((transaction) => String(transaction.transactionType).toUpperCase() === 'EXPENSE')
+        .filter((transaction) => isVacationExpense(transaction, vacation))
         .reduce((total, transaction) => total + Math.abs(Number(transaction.amount || 0)), 0)
     } catch {
       vacationSpentAmount.value = 0
@@ -102,9 +152,39 @@ function saveEvent(event) {
   showEventModal.value = false
 }
 
+function openMission(mission) {
+  const routeName = findMissionRoute(mission.actionType)
+  if (!routeName) return
+
+  router.push({
+    name: routeName,
+    query: { missionId: mission.missionId ?? mission.id },
+  })
+}
+
 function saveBudget(amount) {
   setVacationBudget(amount)
   showBudgetSheet.value = false
+}
+
+function deleteBudget() {
+  setVacationBudget(null)
+  showBudgetSheet.value = false
+}
+
+function openVacationTransactions() {
+  if (!activeVacation.value) return
+  const vacation = activeVacation.value
+  router.push({
+    name: 'transactions',
+    query: {
+      ...route.query,
+      period: 'vacation',
+      startDate: vacation.startDate || vacation.date,
+      endDate: vacation.endDate || vacation.startDate || vacation.date,
+      vacationTitle: vacation.title || '휴가',
+    },
+  })
 }
 </script>
 
@@ -150,9 +230,7 @@ function saveBudget(amount) {
         :budget="vacationBudget"
         :loading="vacationSpendingLoading"
         @edit="showBudgetSheet = true"
-        @view-transactions="
-          router.push({ name: 'transactions', query: { ...route.query, period: 'vacation' } })
-        "
+        @view-transactions="openVacationTransactions"
       />
 
       <FinancialDdayCard v-bind="dashboardData.financialDday" />
@@ -167,6 +245,7 @@ function saveBudget(amount) {
         />
         <TodayMissionCard
           :missions="todayMissions"
+          @mission-click="openMission"
           @show-all="showMissionSheet = true"
         />
       </div>
@@ -195,8 +274,9 @@ function saveBudget(amount) {
 
     <MissionListSheet
       v-if="showMissionSheet"
-      :missions="dashboardData.missions"
+      :missions="allMissions"
       @close="showMissionSheet = false"
+      @mission-click="openMission"
       @view-progress="router.push({ name: 'challenge' })"
     />
 
@@ -205,7 +285,7 @@ function saveBudget(amount) {
       :model-value="vacationBudget"
       @close="showBudgetSheet = false"
       @save="saveBudget"
-      @delete="saveBudget(null)"
+      @delete="deleteBudget"
     />
   </main>
 </template>

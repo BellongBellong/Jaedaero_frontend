@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import ProfileAppearanceSheet from '@/features/onboarding/components/ProfileAppearanceSheet.vue'
 import {
@@ -48,8 +49,17 @@ const profileSourceCodes = {
 }
 const validNickname = computed(() => /^[가-힣a-zA-Z0-9]{2,12}$/.test(nickname.value))
 
+function handleNicknameInput() {
+  status.value = 'idle'
+  errorMessage.value = ''
+}
+
 async function validateNickname() {
-  if (!validNickname.value) return
+  if (!validNickname.value) {
+    errorMessage.value = '닉네임은 한글, 영문, 숫자를 조합해 2~12자로 입력해 주세요.'
+    status.value = 'idle'
+    return
+  }
   const nicknameToCheck = nickname.value
   status.value = 'checking'
   errorMessage.value = ''
@@ -57,9 +67,13 @@ async function validateNickname() {
     const result = await checkNickname(nicknameToCheck)
     if (nickname.value !== nicknameToCheck) return
     status.value = result.available ? 'available' : 'duplicate'
-  } catch {
+  } catch (error) {
     if (nickname.value !== nicknameToCheck) return
-    errorMessage.value = '중복 확인 중 오류가 발생했어요.'
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '닉네임 중복 확인에 실패했어요. 잠시 후 다시 시도해 주세요.',
+      'nickname',
+    )
     status.value = 'idle'
   }
 }
@@ -78,8 +92,12 @@ async function saveAppearance(image, color) {
     onboarding.form.profileBackgroundColor = color
     onboarding.persist()
     showProfileSheet.value = false
-  } catch {
-    errorMessage.value = '프로필 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.'
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '프로필 정보를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      'nickname',
+    )
   } finally {
     appearanceLoading.value = false
   }
@@ -95,8 +113,12 @@ async function next() {
     await saveNickname(onboarding.form.nickname)
     onboarding.persist()
     router.push({ name: 'military-info' })
-  } catch {
-    errorMessage.value = '프로필 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.'
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '닉네임을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      'nickname',
+    )
   } finally {
     loading.value = false
   }
@@ -127,7 +149,7 @@ async function next() {
           v-model.trim="nickname"
           maxlength="12"
           placeholder="동의하고 시작하기"
-          @input="status = 'idle'"
+          @input="handleNicknameInput"
         >
         <button
           :disabled="!validNickname || status === 'checking'"
@@ -137,7 +159,13 @@ async function next() {
         </button>
       </div>
       <p
-        v-if="status === 'available'"
+        v-if="nickname && !validNickname"
+        class="form-error"
+      >
+        닉네임은 한글, 영문, 숫자를 조합해 2~12자로 입력해 주세요.
+      </p>
+      <p
+        v-else-if="status === 'available'"
         class="success"
       >
         사용 가능한 이름입니다.

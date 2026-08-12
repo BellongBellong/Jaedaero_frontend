@@ -20,6 +20,7 @@ export const ENDPOINTS = {
   accounts: {
     connect: '/accounts/connect',
     list: '/accounts',
+    detail: (accountId) => `/accounts/${accountId}`,
   },
   dashboard: '/dashboard',
   cashflow: '/cashflow',
@@ -28,6 +29,7 @@ export const ENDPOINTS = {
     detail: (simulationId) => `/simulations/${simulationId}`,
   },
   aiAnalyses: {
+    list: '/ai-analyses',
     create: '/ai-analyses',
     detail: (analysisId) => `/ai-analyses/${analysisId}`,
     apply: (analysisId) => `/ai-analyses/${analysisId}/apply`,

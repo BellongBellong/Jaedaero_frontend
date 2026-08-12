@@ -1,18 +1,30 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import aggressiveGold from '@/assets/badges/aggressive/gold.svg'
-import aggressivePlatinum from '@/assets/badges/aggressive/platinum.svg'
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
-import safeGold from '@/assets/badges/safe/gold.svg'
-import crown from '@/assets/icons/crown.svg'
-import armyCharacter from '@/assets/onboarding/characters/character-army.png'
-import airForceCharacter from '@/assets/onboarding/characters/character-airforce.png'
-import marineCharacter from '@/assets/onboarding/characters/character-marine.png'
-import navyCharacter from '@/assets/onboarding/characters/character-navy.png'
+import rankingCrownGold from '@/assets/ranking/crown-gold.svg'
+import rankingCrownSilver from '@/assets/ranking/crown-silver.svg'
+import rankingCharacterAirforce from '@/assets/ranking/characters/airforce.svg'
+import rankingCharacterArmy from '@/assets/ranking/characters/army.svg'
+import rankingCharacterMarine from '@/assets/ranking/characters/marine.svg'
+import rankingCharacterNavy from '@/assets/ranking/characters/navy.svg'
+import rankingFirstBase from '@/assets/ranking/podium/first-base.svg'
+import rankingFirstTop from '@/assets/ranking/podium/first-top.svg'
+import rankingSecondBase from '@/assets/ranking/podium/second-base.svg'
+import rankingSecondTop from '@/assets/ranking/podium/second-top.svg'
+import rankingThirdBase from '@/assets/ranking/podium/third-base.svg'
+import rankingThirdTop from '@/assets/ranking/podium/third-top.svg'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
+import {
+  getBadgeImage,
+  getBadgeLevelImage,
+  getBadgeProgress,
+  getBadgeTarget,
+  getBadgeTier,
+} from '@/features/my-page/composables/investmentBadges'
 import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
+import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
 
 import { getChallengeGroup, getInvestmentBadges, getTodayMissions } from '../api/challenges.api'
 
@@ -24,61 +36,40 @@ const badges = ref([])
 const profile = ref(null)
 const apiMissions = ref([])
 const rankingPeriod = ref('CUMULATIVE')
+const rankingYearMonth = ref(getCurrentYearMonth())
+const modeMenuOpen = ref(false)
 const errorMessage = ref('')
+const now = ref(new Date())
+let timerId
 
 const characterImages = {
-  ARMY: armyCharacter,
-  AIRFORCE: airForceCharacter,
-  AIR_FORCE: airForceCharacter,
-  NAVY: navyCharacter,
-  MARINE: marineCharacter,
-  MARINE_CORPS: marineCharacter,
+  ARMY: rankingCharacterArmy,
+  AIRFORCE: rankingCharacterAirforce,
+  AIR_FORCE: rankingCharacterAirforce,
+  NAVY: rankingCharacterMarine,
+  MARINE: rankingCharacterNavy,
+  MARINE_CORPS: rankingCharacterNavy,
+  PROFILE_ARMY_PNG: rankingCharacterArmy,
+  PROFILE_AIRFORCE_PNG: rankingCharacterAirforce,
+  PROFILE_NAVY_PNG: rankingCharacterMarine,
+  PROFILE_MARINE_PNG: rankingCharacterNavy,
+  DEFAULT: rankingCharacterArmy,
 }
 
-const missions = [
-  {
-    id: 1,
-    group: '오늘의 미션',
-    title: '예금상품 살펴보기',
-    type: '안정형',
-    description: '나에게 맞는 예금 상품을 확인해보세요',
-  },
-  {
-    id: 2,
-    group: '오늘의 미션',
-    title: '리밸런싱 제안 확인하기',
-    type: '공격형',
-    description: '오늘의 AI 시장현황 리포트를 확인해보세요',
-  },
-  {
-    id: 3,
-    group: '데일리 미션',
-    title: '오늘의 AI 시장리포트',
-    type: '공통',
-    description: '오늘의 AI 시장리포트를 확인해보세요',
-  },
-  {
-    id: 4,
-    group: '데일리 미션',
-    title: '오늘의 AI 시장리포트',
-    type: '공통',
-    description: '오늘의 AI 시장현황 리포트를 확인해보세요',
-  },
-  {
-    id: 5,
-    group: '이벤트 미션',
-    title: '첫 what-if 시뮬레이션 하기',
-    type: '안정형',
-    description: 'what-if 시뮬레이션으로 자산 분배 목표를 설정해보세요',
-  },
-  {
-    id: 6,
-    group: '이벤트 미션',
-    title: '적립식 투자 목표설정',
-    type: '공격형',
-    description: '구체적인 투자 목표를 설정해보세요',
-  },
-]
+const rankingProfileBackgrounds = {
+  GREEN: '#e5fff4',
+  OLIVE: '#aebbaa',
+  YELLOW: '#fff0b8',
+  ORANGE: '#ffb39f',
+  GRAY: '#f7f7f7',
+  BLACK: '#333333',
+}
+
+const rankingPodium = {
+  1: { base: rankingFirstBase, crown: rankingCrownGold, top: rankingFirstTop },
+  2: { base: rankingSecondBase, crown: rankingCrownSilver, top: rankingSecondTop },
+  3: { base: rankingThirdBase, crown: null, top: rankingThirdTop },
+}
 
 const groupedMissions = computed(() => {
   if (apiMissions.value.length) {
@@ -90,14 +81,24 @@ const groupedMissions = computed(() => {
     ]
 
     return groups
-      .map((group) => ({
+      .map((group, groupIndex) => ({
         name: group.name,
         items: apiMissions.value
-          .filter((mission) => group.categories.includes(mission.missionCategory))
+          .filter((mission) => {
+            const category = String(
+              mission.missionCategory || mission.missionGroup || mission.category || '',
+            ).toUpperCase()
+            const isDailyFallback = groupIndex === 1 && ['COMMON', 'GENERAL'].includes(category)
+            const isTodayFallback = groupIndex === 0 && !category
+
+            return group.categories.includes(category) || isDailyFallback || isTodayFallback
+          })
           .map((mission) => ({
             ...mission,
-            id: mission.missionId,
+            id: mission.missionId ?? mission.id,
+            missionId: mission.missionId ?? mission.id,
             group: group.name,
+            completed: isMissionCompleted(mission),
             type:
               mission.missionType === 'AGGRESSIVE'
                 ? '공격형'
@@ -109,11 +110,10 @@ const groupedMissions = computed(() => {
       .filter((group) => group.items.length)
   }
 
-  return ['오늘의 미션', '데일리 미션', '이벤트 미션'].map((name) => ({
-    name,
-    items: missions.filter((mission) => mission.group === name),
-  }))
+  return []
 })
+
+const apiGroupedMissions = computed(() => (apiMissions.value.length ? groupedMissions.value : []))
 
 const aggressiveCount = computed(() =>
   Number(profile.value?.investmentBadgeStatus?.aggressiveMissionCount ?? 0),
@@ -121,29 +121,280 @@ const aggressiveCount = computed(() =>
 const safeCount = computed(() =>
   Number(profile.value?.investmentBadgeStatus?.safeMissionCount ?? 0),
 )
-const hasBadge = computed(() => badges.value.length > 0)
-const myCharacter = computed(() => {
-  const branch = profile.value?.militaryBranch || profile.value?.branch || 'ARMY'
-  return characterImages[branch] || armyCharacter
+const badgeProgress = computed(() =>
+  getBadgeProgress(badges.value, profile.value?.investmentBadgeStatus),
+)
+const aggressiveBadge = computed(() =>
+  badgeProgress.value.find((badge) => badge.type === 'AGGRESSIVE'),
+)
+const safeBadge = computed(
+  () =>
+    badgeProgress.value.find((badge) => badge.type === 'SAFE') ||
+    badgeProgress.value.find((badge) => badge.type === 'BALANCED'),
+)
+const aggressiveTier = computed(() => getBadgeTier(aggressiveCount.value))
+const safeTier = computed(() => getBadgeTier(safeCount.value))
+const aggressiveTarget = computed(() => getBadgeTarget(aggressiveCount.value))
+const safeTarget = computed(() => getBadgeTarget(safeCount.value))
+const showAggressiveBadge = computed(
+  () => aggressiveCount.value > 0 && Boolean(aggressiveBadge.value),
+)
+const showSafeBadge = computed(() => safeCount.value > 0 && Boolean(safeBadge.value))
+const hasBadge = computed(() => showAggressiveBadge.value || showSafeBadge.value)
+
+function tierClass(tier) {
+  return `tier-${tier.key.toLowerCase()}`
+}
+const resetCountdown = computed(() => {
+  const tomorrow = new Date(now.value)
+  tomorrow.setHours(24, 0, 0, 0)
+  const remainingSeconds = Math.max(0, Math.floor((tomorrow - now.value) / 1000))
+  const hours = String(Math.floor(remainingSeconds / 3600)).padStart(2, '0')
+  const minutes = String(Math.floor((remainingSeconds % 3600) / 60)).padStart(2, '0')
+  const seconds = String(remainingSeconds % 60).padStart(2, '0')
+
+  return `${hours}:${minutes}:${seconds}`
+})
+const rankingSummary = computed(() => {
+  const source = challenge.value || {}
+  const result = source.monthlyResult || source.rankingResult || source.ranking || {}
+
+  return {
+    rank: result.myRankingNo ?? result.rank ?? source.myRankingNo ?? source.rank,
+    memberCount: result.memberCount ?? result.groupSize ?? source.memberCount ?? source.groupSize,
+    percentile:
+      result.myRankPercentile ??
+      result.myPercentile ??
+      source.myRankPercentile ??
+      source.myPercentile,
+    missionCount:
+      result.myMissionCompletionCount ??
+      result.missionCompletionCount ??
+      source.myMissionCompletionCount,
+    averageMissionCount:
+      result.groupAverageMissionCompletionCount ??
+      result.averageMissionCompletionCount ??
+      source.groupAverageMissionCompletionCount,
+    topTenMissionCount:
+      result.topTenPercentThreshold ??
+      result.topTenPercentMissionCompletionCount ??
+      source.topTenPercentThreshold,
+  }
+})
+const rankingChart = computed(() => {
+  const values = [
+    Number(rankingSummary.value.averageMissionCount) || 0,
+    Number(rankingSummary.value.missionCount) || 0,
+    Number(rankingSummary.value.topTenMissionCount) || 0,
+  ]
+  const max = Math.max(...values, 1, 50)
+
+  return values.map((value) => `${Math.max(value ? 12 : 0, (value / max) * 100)}%`)
+})
+const rankingChartMax = computed(() => {
+  const values = [
+    Number(rankingSummary.value.averageMissionCount) || 0,
+    Number(rankingSummary.value.missionCount) || 0,
+    Number(rankingSummary.value.topTenMissionCount) || 0,
+  ]
+  return Math.max(...values, 1, 50)
+})
+const rankingChartTicks = computed(() => {
+  const max = rankingChartMax.value
+  return Array.from({ length: 6 }, (_, index) => Math.round(max - (max / 5) * index))
+})
+const rankingAveragePosition = computed(() => {
+  const average = Number(rankingSummary.value.averageMissionCount) || 0
+  return `${(average / rankingChartMax.value) * 100}%`
+})
+const rankingComparison = computed(() => {
+  const mine = Number(rankingSummary.value.missionCount) || 0
+  const average = Number(rankingSummary.value.averageMissionCount) || 0
+  const difference = mine - average
+  return `${difference >= 0 ? '+' : ''}${difference}개`
+})
+const rankingTitle = computed(() => {
+  const title = challenge.value?.cohortName || challenge.value?.groupName || '입대 동기'
+  return title.endsWith('랭킹') ? title : `${title} 랭킹`
+})
+const rankingModeLabel = computed(() =>
+  rankingPeriod.value === 'MONTHLY' ? '이번달 랭킹' : '전체 랭킹',
+)
+const rankingMonthLabel = computed(() => {
+  const [, month] = String(rankingYearMonth.value || '').split('-')
+  return month ? `${Number(month)}월 랭킹` : '월 랭킹'
+})
+const isCurrentRankingMonth = computed(() => rankingYearMonth.value === getCurrentYearMonth())
+
+const enlistmentYear = computed(() => {
+  const value =
+    challenge.value?.enlistmentYear || challenge.value?.enlistmentDate?.slice?.(0, 4) || ''
+  const year = String(value)
+  return year.length === 4 ? year.slice(2) : year
+})
+const enlistmentMonth = computed(() => {
+  if (challenge.value?.enlistmentMonth) return challenge.value.enlistmentMonth
+  const date = challenge.value?.enlistmentDate
+  return date ? String(date).slice(5, 7).replace(/^0/, '') : ''
+})
+const currentRankingBadge = computed(() => {
+  return (
+    badgeProgress.value.find((badge) => badge.type === 'AGGRESSIVE') ||
+    badgeProgress.value.find((badge) => badge.type === 'SAFE')
+  )
 })
 
-const ranking = computed(() => {
-  const supplied = challenge.value?.topRankers || []
-  if (supplied.length) {
-    return supplied.slice(0, 3).map((member) => ({
-      ...member,
-      rank: member.rankingNo,
-      missionCount: member.missionCompletionCount,
-      character: characterImages[member.profileImage] || characterImages[member.soldierType],
-    }))
+function isCurrentRankingMember(member) {
+  if (member.isMe === true || member.isCurrentUser === true || member.currentUser === true) {
+    return true
   }
 
-  return [
-    { rank: 1, nickname: '째대로', missionCount: 60, character: armyCharacter },
-    { rank: 2, nickname: '박병장', missionCount: 57, character: navyCharacter },
-    { rank: 3, nickname: '성훈병', missionCount: 55, character: airForceCharacter },
-  ]
+  const memberId = member.userId ?? member.memberId ?? member.user?.id
+  const profileId = profile.value?.userId ?? profile.value?.memberId ?? profile.value?.id
+  if (memberId && profileId && String(memberId) === String(profileId)) return true
+
+  const memberNickname = member.nickname || member.nickName || member.userNickname
+  return Boolean(memberNickname && memberNickname === profile.value?.nickname)
+}
+
+function normalizeRankingBadgeType(value) {
+  const normalized = String(value || '').toUpperCase()
+  if (['AGGRESSIVE', '공격형'].includes(normalized)) return 'AGGRESSIVE'
+  if (['SAFE', 'BALANCED', '안정형'].includes(normalized)) return 'SAFE'
+  return null
+}
+
+function getRankingCharacter(member) {
+  const value =
+    member.profileImage ||
+    member.user?.profileImage ||
+    member.profile?.profileImage ||
+    member.characterImage ||
+    member.soldierType ||
+    member.branch ||
+    member.militaryBranch
+  const rawValue = String(value || '').trim()
+  if (/^(https?:|data:|\/)/i.test(rawValue)) return value
+
+  const normalized = rawValue.toUpperCase().replace(/[.\s-]+/g, '_')
+  return characterImages[normalized] || characterImages.DEFAULT
+}
+
+function getRankingProfileBackground(member) {
+  const source = String(member.profileSource || member.profile?.profileSource || '').toUpperCase()
+  return rankingProfileBackgrounds[source] || '#e5fff4'
+}
+
+function getRankingNo(member, fallback) {
+  const value = member.rankingNo ?? member.rank ?? member.ranking
+  const numericValue = Number(value)
+  if (Number.isFinite(numericValue) && numericValue > 0) return numericValue
+
+  const matchedValue = String(value || '').match(/\d+/)?.[0]
+  return Number(matchedValue) || fallback
+}
+
+const ranking = computed(() => {
+  const supplied = challenge.value?.topRankers || challenge.value?.topMembers || []
+  const normalizedMembers = supplied.map((member, index) => ({
+    ...member,
+    __rankingNo: getRankingNo(member, index + 1),
+  }))
+
+  return normalizedMembers
+    .sort((left, right) => left.__rankingNo - right.__rankingNo)
+    .slice(0, 3)
+    .map((member, index) => {
+      const rank = member.__rankingNo || index + 1
+      const missionCount = Number(
+        member.missionCompletionCount ??
+          member.completedMissionCount ??
+          member.missionCount ??
+          member.totalMissionCount ??
+          0,
+      )
+      const badge = member.badge || member.investmentBadge || member.currentBadge || {}
+      const memberType = normalizeRankingBadgeType(
+        member.highestBadgeType ||
+          member.investmentType ||
+          member.badgeType ||
+          member.missionType ||
+          member.type ||
+          badge.investmentType ||
+          badge.missionType ||
+          badge.badgeType ||
+          badge.type,
+      )
+      const ownBadge = isCurrentRankingMember(member)
+        ? memberType === 'SAFE'
+          ? safeBadge.value
+          : memberType === 'AGGRESSIVE'
+            ? aggressiveBadge.value
+            : currentRankingBadge.value
+        : null
+      const rawTier =
+        member.highestBadgeGrade ||
+        member.badgeGrade ||
+        member.grade ||
+        member.tier ||
+        member.badge?.badgeGrade ||
+        member.badge?.grade ||
+        member.badge?.tier ||
+        member.badge?.levelInfo?.key ||
+        badge.level ||
+        badge.levelInfo?.key ||
+        badge.tier ||
+        ownBadge?.levelInfo?.key
+      const tierKey = String(rawTier || '').toUpperCase()
+      const tierInfo = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND'].includes(tierKey)
+        ? { key: tierKey, label: `${tierKey[0]}${tierKey.slice(1).toLowerCase()}` }
+        : getBadgeTier(missionCount)
+      const hasEarnedBadge =
+        ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND'].includes(tierKey) || missionCount > 0
+      const podium = rankingPodium[rank] || rankingPodium[3]
+      return {
+        ...member,
+        rank,
+        nickname: member.nickname || member.nickName || member.userNickname || '-',
+        missionCount,
+        tier: tierInfo.label,
+        tierKey: tierInfo.key,
+        badgeImage:
+          member.badgeImage ||
+          member.badge?.imageUrl ||
+          member.badge?.image ||
+          badge.imageUrl ||
+          badge.image ||
+          (hasEarnedBadge && memberType
+            ? getBadgeImage(memberType, tierInfo.key)
+            : hasEarnedBadge
+              ? getBadgeLevelImage(tierInfo.key)
+              : ownBadge
+                ? getBadgeImage(ownBadge.type, ownBadge.levelInfo.key)
+                : null),
+        character: getRankingCharacter(member),
+        crown: podium.crown,
+        podiumBase: podium.base,
+        podiumTop: podium.top,
+        profileBackground: getRankingProfileBackground(member),
+      }
+    })
 })
+
+const apiRanking = computed(() => ranking.value)
+
+const rankingRequestParams = computed(() => ({
+  period: rankingPeriod.value,
+  ...(rankingPeriod.value === 'MONTHLY' && rankingYearMonth.value
+    ? { yearMonth: rankingYearMonth.value }
+    : {}),
+}))
+
+function getCurrentYearMonth() {
+  const date = new Date()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  return `${date.getFullYear()}-${month}`
+}
 
 function unwrap(value) {
   return value?.data ?? value ?? null
@@ -153,7 +404,7 @@ async function loadChallenge() {
   loading.value = true
   errorMessage.value = ''
   const [challengeResult, missionResult, badgeResult, profileResult] = await Promise.allSettled([
-    getChallengeGroup({ period: rankingPeriod.value }),
+    getChallengeGroup(rankingRequestParams.value),
     getTodayMissions(),
     getInvestmentBadges(),
     getMyPageProfile(),
@@ -176,16 +427,45 @@ async function loadChallenge() {
 }
 
 async function changeRankingPeriod() {
+  loading.value = true
+  errorMessage.value = ''
   try {
-    challenge.value = unwrap(await getChallengeGroup({ period: rankingPeriod.value }))
+    challenge.value = unwrap(await getChallengeGroup(rankingRequestParams.value))
   } catch {
     errorMessage.value = '랭킹 정보를 불러오지 못했어요.'
+  } finally {
+    loading.value = false
   }
 }
 
-async function openMission(mission) {
-  if (mission.completed) return
+function selectRankingPeriod(period) {
+  rankingPeriod.value = period
+  modeMenuOpen.value = false
+  changeRankingPeriod()
+}
 
+function openMissionsTab() {
+  activeTab.value = 'missions'
+  modeMenuOpen.value = false
+}
+
+function openRankingTab() {
+  activeTab.value = 'ranking'
+  modeMenuOpen.value = false
+}
+
+function shiftRankingMonth(offset) {
+  const [year, month] = String(rankingYearMonth.value || getCurrentYearMonth())
+    .split('-')
+    .map(Number)
+  const nextDate = new Date(year, month - 1 + offset, 1)
+  const nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`
+  if (nextYearMonth > getCurrentYearMonth()) return
+  rankingYearMonth.value = nextYearMonth
+  changeRankingPeriod()
+}
+
+async function openMission(mission) {
   const routeName = findMissionRoute(mission.actionType)
   if (!routeName) {
     errorMessage.value = '이 미션의 연결 화면은 준비 중이에요.'
@@ -194,11 +474,20 @@ async function openMission(mission) {
 
   await router.push({
     name: routeName,
-    query: { missionId: mission.missionId },
+    query: { missionId: mission.missionId ?? mission.id },
   })
 }
 
-onMounted(loadChallenge)
+onMounted(() => {
+  loadChallenge()
+  timerId = window.setInterval(() => {
+    now.value = new Date()
+  }, 1000)
+})
+
+onBeforeUnmount(() => {
+  window.clearInterval(timerId)
+})
 </script>
 
 <template>
@@ -211,14 +500,14 @@ onMounted(loadChallenge)
       <button
         :class="{ active: activeTab === 'missions' }"
         type="button"
-        @click="activeTab = 'missions'"
+        @click="openMissionsTab"
       >
         미션
       </button>
       <button
         :class="{ active: activeTab === 'ranking' }"
         type="button"
-        @click="activeTab = 'ranking'"
+        @click="openRankingTab"
       >
         랭킹
       </button>
@@ -260,64 +549,83 @@ onMounted(loadChallenge)
           >
         </div>
 
-        <template v-else>
-          <div class="badge-summary">
-            <article>
-              <img
-                :src="aggressivePlatinum"
-                alt="공격형 Platinum 뱃지"
-              >
-              <span>공격형</span><b>Platinum</b><small>미션 달성 {{ aggressiveCount }}개</small>
-            </article>
-            <article>
-              <img
-                :src="safeGold"
-                alt="안정형 Gold 뱃지"
-              >
-              <span>안정형</span><b>Gold</b><small>미션 달성 {{ safeCount }}개</small>
-            </article>
-            <aside>
-              달성한 총 미션<br><strong>{{ aggressiveCount + safeCount }}개</strong>
-            </aside>
-          </div>
-
-          <div class="progress-row">
+        <div
+          v-else
+          class="badge-summary"
+        >
+          <article v-if="showAggressiveBadge">
             <img
-              :src="aggressiveGold"
-              alt=""
-            ><span>공격형</span>
+              :src="getBadgeImage('AGGRESSIVE', aggressiveTier.key)"
+              :alt="`공격형 ${aggressiveTier.label} 뱃지`"
+            >
+            <span>공격형</span><b>{{ aggressiveTier.label }}</b><small>미션 달성 {{ aggressiveCount }}개</small>
+          </article>
+          <article v-if="showSafeBadge">
+            <img
+              :src="getBadgeImage(safeBadge?.type || 'SAFE', safeTier.key)"
+              :alt="`안정형 ${safeTier.label} 뱃지`"
+            >
+            <span>안정형</span><b>{{ safeTier.label }}</b><small>미션 달성 {{ safeCount }}개</small>
+          </article>
+          <aside>
+            <span>달성한 총 미션</span>
+            <strong>{{ aggressiveCount + safeCount }}개</strong>
+            <small>공격형 {{ aggressiveCount }}개</small>
+            <small>안정형 {{ safeCount }}개</small>
+          </aside>
+        </div>
+
+        <template v-if="hasBadge">
+          <div
+            v-if="showAggressiveBadge"
+            :class="['progress-row', tierClass(aggressiveTier)]"
+          >
+            <div class="progress-badge">
+              <img
+                :src="getBadgeImage('AGGRESSIVE', aggressiveTier.key)"
+                alt=""
+              >
+              <span>공격형</span>
+            </div>
             <div>
-              <b>Platinum</b><progress
+              <b :class="['tier-label', tierClass(aggressiveTier)]">{{ aggressiveTier.label }}</b><progress
+                :class="tierClass(aggressiveTier)"
                 :value="aggressiveCount"
-                max="300"
-              /><small>현재 {{ aggressiveCount }}개 <em>300개</em></small>
+                :max="aggressiveTarget"
+              /><small>현재 {{ aggressiveCount }}개 <em>{{ aggressiveTarget }}개</em></small>
             </div>
           </div>
-          <div class="progress-row">
-            <img
-              :src="safeGold"
-              alt=""
-            ><span>안정형</span>
+          <div
+            v-if="showSafeBadge"
+            :class="['progress-row', tierClass(safeTier)]"
+          >
+            <div class="progress-badge">
+              <img
+                :src="getBadgeImage(safeBadge?.type || 'SAFE', safeTier.key)"
+                alt=""
+              >
+              <span>안정형</span>
+            </div>
             <div>
-              <b class="gold">Gold</b><progress
-                class="gold-progress"
+              <b :class="['tier-label', tierClass(safeTier)]">{{ safeTier.label }}</b><progress
+                :class="tierClass(safeTier)"
                 :value="safeCount"
-                max="100"
-              /><small>현재 {{ safeCount }}개 <em>100개</em></small>
+                :max="safeTarget"
+              /><small>현재 {{ safeCount }}개 <em>{{ safeTarget }}개</em></small>
             </div>
           </div>
         </template>
       </section>
 
       <section
-        v-for="group in groupedMissions"
+        v-for="group in apiGroupedMissions"
         :key="group.name"
         class="mission-group"
         :class="{ event: group.name === '이벤트 미션' }"
       >
         <header>
           <h3>{{ group.name }}</h3>
-          <span v-if="group.name !== '이벤트 미션'">초기화까지 00:55:39</span>
+          <span v-if="group.name !== '이벤트 미션'">초기화까지 {{ resetCountdown }}</span>
         </header>
         <article
           v-for="mission in group.items"
@@ -343,80 +651,180 @@ onMounted(loadChallenge)
 
     <template v-else>
       <section class="ranking-section">
-        <select
-          v-model="rankingPeriod"
-          aria-label="랭킹 범위"
-          @change="changeRankingPeriod"
+        <div class="ranking-mode-picker">
+          <button
+            class="ranking-mode-trigger"
+            type="button"
+            @click="modeMenuOpen = !modeMenuOpen"
+          >
+            {{ rankingModeLabel }}
+            <i
+              class="ranking-mode-chevron"
+              aria-hidden="true"
+            />
+          </button>
+          <div
+            v-if="modeMenuOpen"
+            class="ranking-mode-menu"
+          >
+            <button
+              type="button"
+              @click="selectRankingPeriod('CUMULATIVE')"
+            >
+              전체 랭킹
+            </button>
+            <button
+              type="button"
+              @click="selectRankingPeriod('MONTHLY')"
+            >
+              이번달 랭킹
+            </button>
+          </div>
+        </div>
+        <div
+          v-if="rankingPeriod === 'MONTHLY'"
+          class="ranking-month-nav"
         >
-          <option value="CUMULATIVE">
-            전체 랭킹
-          </option>
-          <option value="MONTHLY">
-            월별 랭킹
-          </option>
-        </select>
-        <h2>{{ challenge?.cohortName || '입대 동기 랭킹' }}</h2>
+          <button
+            type="button"
+            aria-label="이전 달"
+            @click="shiftRankingMonth(-1)"
+          >
+            ‹
+          </button>
+          <h2>
+            {{ rankingMonthLabel }}
+          </h2>
+          <button
+            type="button"
+            aria-label="다음 달"
+            :disabled="isCurrentRankingMonth"
+            @click="shiftRankingMonth(1)"
+          >
+            ›
+          </button>
+        </div>
+        <h2 v-if="rankingPeriod !== 'MONTHLY'">
+          {{ rankingTitle }}
+        </h2>
         <strong>
-          {{ challenge?.soldierType || profile?.militaryBranch || 'ARMY' }} ·
-          {{ challenge?.enlistmentYear }}년 {{ challenge?.enlistmentMonth }}월 입대
+          {{ challenge?.soldierType || challenge?.branch || profile?.militaryBranch || 'ARMY' }} ·
+          {{ enlistmentYear }}년 {{ enlistmentMonth }}월 입대
         </strong>
-        <small>
+        <small v-if="rankingPeriod === 'MONTHLY'"> 집계 기준 : 매월 9일 </small>
+        <small v-else>
           집계 기준 : {{ challenge?.periodStartDate || '입대일' }} ~
           {{ challenge?.periodEndDate || '오늘' }}
         </small>
 
-        <div class="podium">
+        <div
+          v-if="apiRanking.length"
+          class="podium"
+        >
           <article
-            v-for="member in ranking"
+            v-for="member in apiRanking"
             :key="member.rank"
             :class="`rank-${member.rank}`"
           >
             <div class="member-label">
-              {{ member.nickname }}<small>미션 {{ member.missionCount }}개 달성</small>
+              <div class="member-name-row">
+                <img
+                  v-if="member.badgeImage"
+                  class="member-rank-badge"
+                  :src="member.badgeImage"
+                  :alt="`${member.tier} 랭크 뱃지`"
+                >
+                <strong :title="`${member.tier} · ${member.nickname}`">{{
+                  member.nickname
+                }}</strong>
+              </div>
+              <small>미션 {{ member.missionCount }}개 달성</small>
             </div>
-            <img
-              v-if="member.rank === 1"
-              class="crown"
-              :src="crown"
-              alt="1위 왕관"
-            >
-            <img
-              class="character"
-              :src="
-                member.nickname === profile?.nickname
-                  ? myCharacter
-                  : member.character || armyCharacter
-              "
-              alt=""
-            >
-            <div class="podium-block">
-              {{ member.rank }}
+            <div class="ranking-visual">
+              <img
+                v-if="member.crown"
+                class="ranking-crown"
+                :src="member.crown"
+                alt=""
+              >
+              <span
+                class="ranking-character-wrap"
+                :style="{ backgroundColor: member.profileBackground }"
+              >
+                <img
+                  class="ranking-character"
+                  :src="member.character"
+                  :alt="`${member.nickname} 캐릭터`"
+                >
+              </span>
+              <img
+                class="ranking-podium-top"
+                :src="member.podiumTop"
+                alt=""
+              >
+              <img
+                class="ranking-podium-base"
+                :src="member.podiumBase"
+                alt=""
+              >
+              <strong class="ranking-place">{{ member.rank }}</strong>
             </div>
           </article>
         </div>
+        <p
+          v-else
+          class="ranking-empty"
+        >
+          아직 랭킹 데이터가 없어요.
+        </p>
       </section>
 
       <section class="my-rank-card">
         <h3>나의 순위</h3>
         <div>
-          <strong>{{ challenge?.myRankingNo || '-' }}위</strong>
+          <strong>{{ rankingSummary.rank || '-' }}위</strong>
           <span>
-            전체 {{ challenge?.memberCount || 0 }}명 중 상위 {{ challenge?.myPercentile || 0 }}%
+            전체 {{ rankingSummary.memberCount || 0 }}명 중 상위
+            {{ rankingSummary.percentile || 0 }}%
           </span>
         </div>
         <div class="rank-stats">
-          <span>나<b>{{ challenge?.myMissionCompletionCount || 0 }}개</b></span>
-          <span>평균<b>{{ challenge?.groupAverageMissionCompletionCount || 0 }}개</b></span>
-          <span>상위 10%<b>{{ challenge?.topTenPercentThreshold || 0 }}개</b></span>
+          <span>나<b>{{ rankingSummary.missionCount || 0 }}개</b></span>
+          <span>평균<b>{{ rankingSummary.averageMissionCount || 0 }}개</b></span>
+          <span>상위 10%<b>{{ rankingSummary.topTenMissionCount || 0 }}개</b></span>
         </div>
         <div class="chart">
-          <i style="height: 45%" /><i
-            class="me"
-            style="height: 82%"
-          /><i style="height: 76%" />
+          <div
+            class="chart-axis"
+            aria-hidden="true"
+          >
+            <span
+              v-for="tick in rankingChartTicks"
+              :key="tick"
+              :style="{ bottom: `${(tick / rankingChartMax) * 100}%` }"
+            >{{ tick }}</span>
+          </div>
+          <div
+            class="chart-average-line"
+            :style="{ bottom: rankingAveragePosition }"
+            aria-hidden="true"
+          />
+          <div class="chart-callout">
+            동기 평균대비<br><strong>{{ rankingComparison }}</strong>
+          </div>
+          <div class="chart-bars">
+            <i :style="{ height: rankingChart[0] }" /><i
+              class="me"
+              :style="{ height: rankingChart[1] }"
+            /><i :style="{ height: rankingChart[2] }" />
+          </div>
         </div>
         <div class="chart-labels">
           <span>하위 25%</span><span>나</span><span>상위 10%</span>
+        </div>
+        <div class="chart-legend">
+          <span class="legend-me">나</span>
+          <span class="legend-average">동기 평균</span>
         </div>
       </section>
     </template>
@@ -460,9 +868,6 @@ onMounted(loadChallenge)
 }
 .achievement-section {
   padding: 0 0 14px;
-  background:
-    radial-gradient(circle at 45% 35%, #ceffd8 0, transparent 36%),
-    radial-gradient(circle at 75% 55%, #efffae 0, transparent 42%);
 }
 .achievement-section h2 {
   margin: 12px 0 20px;
@@ -475,8 +880,8 @@ onMounted(loadChallenge)
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  min-height: 145px;
+  gap: 22px;
+  min-height: 178px;
 }
 .badge-summary article {
   display: flex;
@@ -484,15 +889,26 @@ onMounted(loadChallenge)
   align-items: center;
   font-size: 12px;
 }
+.badge-summary article > span {
+  min-width: 96px;
+  padding: 6px 10px;
+  border-radius: 18px;
+  color: #555;
+  background: #edf0ed;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.1;
+  text-align: center;
+}
 .badge-summary article img {
-  width: 58px;
-  height: 58px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
 }
 .badge-summary article b {
   margin-top: 5px;
-  color: #999;
-  font-size: 15px;
+  color: #969696;
+  font-size: 22px;
 }
 .badge-summary article small {
   margin-top: 8px;
@@ -500,44 +916,83 @@ onMounted(loadChallenge)
   font-weight: 700;
 }
 .badge-summary aside {
-  padding: 15px 10px;
+  width: 134px;
+  min-width: 134px;
+  min-height: 142px;
+  padding: 18px 14px;
   border: 1px solid #fff;
-  border-radius: 11px;
-  background: #ffffff80;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 12px #00000008;
   color: #777;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.7;
+  text-align: center;
+}
+.badge-summary aside > span {
+  display: block;
+  line-height: 1.4;
 }
 .badge-summary aside strong {
+  display: block;
+  margin: 5px 0 12px;
   color: #999;
+  line-height: 1.3;
+}
+.badge-summary aside small {
+  display: block;
+  margin-top: 0;
+  color: #999;
+  font-size: 12px;
 }
 .empty-badge {
   display: grid;
   place-items: center;
-  min-height: 230px;
+  min-height: 173px;
 }
 .empty-badge img {
-  width: min(100%, 290px);
-  max-height: 220px;
+  width: min(100%, 313px);
+  height: 173px;
+  max-height: none;
 }
 .progress-row {
   display: grid;
-  grid-template-columns: 38px 52px 1fr;
+  grid-template-columns: 100px 1fr;
   align-items: center;
   gap: 6px;
   margin: 12px 0;
 }
-.progress-row > img {
-  width: 32px;
-  height: 32px;
+.progress-row + .progress-row {
+  padding-top: 14px;
+  border-top: 1px solid #edf0ed;
+}
+.progress-badge {
+  display: flex;
+  width: auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.progress-badge img {
+  width: 50px;
+  height: 50px;
   object-fit: contain;
 }
-.progress-row > span {
-  font-size: 11px;
+.progress-badge span {
+  min-width: 96px;
+  padding: 6px 10px;
+  border-radius: 18px;
+  color: #65736a;
+  background: #edf0ed;
+  font-size: 13px;
   font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
 }
-.progress-row > div {
+.progress-row > div:not(.progress-badge) {
   display: flex;
+  width: min(100%, 275px);
   flex-direction: column;
   gap: 5px;
 }
@@ -545,21 +1000,52 @@ onMounted(loadChallenge)
   align-self: flex-start;
   padding: 4px 10px;
   border-radius: 12px;
-  color: #65a4da;
-  background: #eef8ff;
   font-size: 11px;
 }
-.progress-row b.gold {
-  color: #d8aa18;
-  background: #fff7d3;
+.progress-row.tier-bronze {
+  --tier-color: #a86f45;
+  --tier-background: #f7e9df;
+}
+.progress-row.tier-silver {
+  --tier-color: #7d8b96;
+  --tier-background: #edf1f4;
+}
+.progress-row.tier-gold {
+  --tier-color: #d3a50d;
+  --tier-background: #fff5cf;
+}
+.progress-row.tier-platinum {
+  --tier-color: #65a4da;
+  --tier-background: #eef8ff;
+}
+.progress-row.tier-diamond {
+  --tier-color: #8b6bd1;
+  --tier-background: #f1edff;
+}
+.progress-row b.tier-label {
+  color: var(--tier-color);
+  background: var(--tier-background);
 }
 .progress-row progress {
   width: 100%;
   height: 9px;
-  accent-color: #76a9d5;
+  border: 0;
+  border-radius: 9px;
+  overflow: hidden;
+  accent-color: var(--tier-color);
+  appearance: none;
 }
-.progress-row progress.gold-progress {
-  accent-color: #d2b120;
+.progress-row progress::-webkit-progress-bar {
+  border-radius: 9px;
+  background: #e7ebed;
+}
+.progress-row progress::-webkit-progress-value {
+  border-radius: 9px;
+  background: var(--tier-color);
+}
+.progress-row progress::-moz-progress-bar {
+  border-radius: 9px;
+  background: var(--tier-color);
 }
 .progress-row small {
   color: #888;
@@ -659,20 +1145,112 @@ onMounted(loadChallenge)
   font-size: 24px;
 }
 .ranking-section {
+  position: relative;
   text-align: center;
+}
+.ranking-filters {
+  display: none;
+}
+.ranking-mode-picker {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  min-height: 38px;
+}
+.ranking-mode-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 0;
+  color: #757575;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ranking-mode-chevron {
+  width: 0;
+  height: 0;
+  border-top: 6px solid #757575;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+}
+.ranking-mode-menu {
+  position: absolute;
+  top: 34px;
+  right: 0;
+  display: grid;
+  width: 116px;
+  padding: 5px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 20px #00000014;
+}
+.ranking-mode-menu button {
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 7px;
+  color: #757575;
+  background: transparent;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.ranking-mode-menu button:hover {
+  background: #f3fff8;
+}
+.ranking-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 4px 0 2px;
+}
+.ranking-month-nav button {
+  width: 24px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  color: #bdbdbd;
+  background: transparent;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+.ranking-month-nav button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.ranking-month-nav h2 {
+  margin: 0;
+  font-size: 28px;
 }
 .ranking-section select {
   display: block;
   padding: 7px 30px 7px 15px;
-  margin: 4px 0 15px auto;
+  margin: 0;
   border: 0;
   border-radius: 18px;
   color: #777;
   background: #eafaf1;
 }
+.ranking-section input[type='month'] {
+  min-width: 116px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 18px;
+  color: #777;
+  background: #f3fff8;
+  font: inherit;
+  font-size: 12px;
+}
 .ranking-section h2 {
   margin: 0 0 5px;
-  font-size: 23px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.04em;
 }
 .ranking-section > strong {
   display: block;
@@ -686,62 +1264,153 @@ onMounted(loadChallenge)
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 245px;
-  margin-top: 15px;
+  height: 250px;
+  margin: 16px -4px 0;
 }
 .podium article {
   position: relative;
   display: flex;
+  align-items: center;
   flex-direction: column;
   justify-content: flex-end;
   width: 31%;
+  height: 100%;
 }
 .podium .rank-1 {
+  --base-height: 79px;
+  --base-width: 91px;
+  --stage-height: 196px;
+  --top-height: 18px;
+  --top-width: 91px;
+  --podium-offset-x: 0px;
   order: 2;
 }
 .podium .rank-2 {
+  --base-height: 56px;
+  --base-width: 89px;
+  --stage-height: 168px;
+  --top-height: 13px;
+  --top-width: 89px;
+  --podium-offset-x: 0px;
   order: 1;
 }
 .podium .rank-3 {
+  --base-height: 42px;
+  --base-width: 88px;
+  --stage-height: 124px;
+  --top-height: 12px;
+  --top-width: 88px;
+  --podium-offset-x: -4.5px;
   order: 3;
 }
 .member-label {
-  min-height: 42px;
-  padding: 5px;
+  position: absolute;
+  z-index: 2;
+  bottom: var(--stage-height);
+  right: 0;
+  left: 0;
+  display: grid;
+  justify-items: center;
+  min-height: 52px;
+  padding: 4px 2px;
   font-size: 11px;
+}
+.member-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  gap: 5px;
+}
+.member-rank-badge {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.member-label strong {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 3px 9px;
+  border: 1px solid #f4f4f4;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .member-label small {
   display: block;
-  margin-top: 5px;
+  margin-top: 2px;
   color: #aaa;
+  font-size: 10px;
 }
-.character {
-  z-index: 1;
-  width: 86px;
-  height: 80px;
-  margin: 0 auto -8px;
-  object-fit: contain;
+.ranking-visual {
+  position: relative;
+  width: 91px;
+  height: var(--stage-height);
+  flex: 0 0 auto;
+  margin: 0 auto;
 }
-.crown {
+.ranking-character-wrap {
   position: absolute;
   z-index: 2;
-  top: 30px;
+  bottom: calc(var(--base-height) + var(--top-height) - 4px);
   left: 50%;
-  width: 34px;
-  transform: translateX(-50%);
-}
-.podium-block {
-  display: grid;
-  place-items: center;
+  width: 70px;
   height: 70px;
-  color: #aaa;
-  background: #e5eee4;
-  font-size: 32px;
-  font-weight: 800;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  overflow: hidden;
 }
-.rank-1 .podium-block {
-  height: 98px;
-  background: #dbeed9;
+.ranking-character {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
+.ranking-crown,
+.ranking-podium-base,
+.ranking-podium-top {
+  position: absolute;
+  left: 50%;
+  object-fit: contain;
+  transform: translateX(calc(-50% + var(--podium-offset-x)));
+}
+.ranking-crown {
+  z-index: 4;
+  bottom: calc(var(--base-height) + var(--top-height) + 66px);
+  width: 30px;
+  height: 29px;
+}
+.ranking-podium-top {
+  z-index: 3;
+  bottom: var(--base-height);
+  width: var(--top-width);
+  height: var(--top-height);
+}
+.ranking-podium-base {
+  z-index: 1;
+  bottom: 0;
+  width: var(--base-width);
+  height: var(--base-height);
+}
+.ranking-place {
+  position: absolute;
+  z-index: 4;
+  bottom: 8px;
+  left: 0;
+  width: 100%;
+  transform: translateX(var(--podium-offset-x));
+  color: #a0a0a0;
+  font-size: 34px;
+  line-height: 1;
+}
+.ranking-empty {
+  padding: 90px 0 70px;
+  color: #aaa;
+  font-size: 12px;
 }
 .my-rank-card {
   padding: 20px;
@@ -784,19 +1453,66 @@ onMounted(loadChallenge)
   color: #444;
 }
 .chart {
-  display: flex !important;
-  align-items: flex-end !important;
-  justify-content: space-around;
-  height: 130px;
-  border-bottom: 1px solid #ddd;
-  background: repeating-linear-gradient(#fff 0 32px, #e8e8e8 33px);
+  position: relative;
+  height: 165px;
+  margin: 42px 0 0 34px;
+  border-bottom: 1px solid #dfe4e7;
+  background: repeating-linear-gradient(to top, transparent 0 32px, #e1e5e8 33px);
 }
-.chart i {
+.chart-axis {
+  position: absolute;
+  inset: 0 auto 0 -28px;
+  width: 24px;
+  color: #8fa1bd;
+  font-size: 10px;
+}
+.chart-axis span {
+  position: absolute;
+  right: 0;
+  transform: translateY(50%);
+}
+.chart-average-line {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  border-top: 2px solid #f28a1b;
+}
+.chart-callout {
+  position: absolute;
+  top: -38px;
+  left: 50%;
+  z-index: 3;
+  width: 108px;
+  padding: 6px 4px;
+  border: 1px solid #43ec91;
+  border-radius: 14px;
+  color: #6c7775;
+  background: #f5fff8;
+  font-size: 10px;
+  line-height: 1.1;
+  text-align: center;
+  transform: translateX(-50%);
+}
+.chart-callout strong {
+  font-size: 12px;
+}
+.chart-bars {
+  position: absolute;
+  right: 26px;
+  bottom: 0;
+  left: 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 100%;
+}
+.chart-bars i {
   width: 40px;
   border-radius: 10px 10px 0 0;
   background: #bbb;
 }
-.chart i.me {
+.chart-bars i.me {
   background: #55ee94;
 }
 .chart-labels {
@@ -805,6 +1521,31 @@ onMounted(loadChallenge)
   margin-top: 6px;
   color: #78849c;
   font-size: 10px;
+}
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 20px;
+  color: #333;
+  font-size: 10px;
+}
+.legend-me::before {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 5px;
+  content: '';
+  vertical-align: -1px;
+  background: #55ee94;
+}
+.legend-average::before {
+  display: inline-block;
+  width: 12px;
+  margin-right: 5px;
+  border-top: 1px solid #f28a1b;
+  content: '';
+  vertical-align: 3px;
 }
 .challenge-skeleton {
   display: flex;

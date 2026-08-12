@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import RankInsignia from '@/features/onboarding/components/RankInsignia.vue'
 import { saveMilitaryInfo } from '@/features/onboarding/api/onboarding.api'
@@ -32,6 +33,33 @@ const ranks = [
 ]
 
 async function next() {
+  if (!onboarding.form.militaryType || !onboarding.form.rank) {
+    errorMessage.value = '군종과 계급을 선택해 주세요.'
+    return
+  }
+  if (!onboarding.form.enlistmentDate) {
+    errorMessage.value = '입대일을 입력해 주세요.'
+    return
+  }
+  const enlistmentDate = String(onboarding.form.enlistmentDate).trim()
+  const dateParts = enlistmentDate.split('-').map(Number)
+  const parsedDate = new Date(`${enlistmentDate}T00:00:00`)
+  const isValidDate =
+    /^\d{4}-\d{2}-\d{2}$/.test(enlistmentDate) &&
+    dateParts.length === 3 &&
+    parsedDate.getFullYear() === dateParts[0] &&
+    parsedDate.getMonth() + 1 === dateParts[1] &&
+    parsedDate.getDate() === dateParts[2]
+
+  if (!isValidDate) {
+    errorMessage.value = '입대일이 올바르지 않습니다. 실제 입대한 날짜를 선택해 주세요.'
+    return
+  }
+  if (parsedDate > new Date()) {
+    errorMessage.value = '입대일은 오늘 이후 날짜로 입력할 수 없습니다.'
+    return
+  }
+
   loading.value = true
   errorMessage.value = ''
   try {
@@ -45,8 +73,12 @@ async function next() {
     )
     onboarding.persist()
     router.push({ name: 'preference-goal' })
-  } catch {
-    errorMessage.value = '군 정보를 저장하지 못했어요.'
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '군 정보를 저장하지 못했어요. 입력 내용을 확인하고 다시 시도해 주세요.',
+      'military',
+    )
   } finally {
     loading.value = false
   }
