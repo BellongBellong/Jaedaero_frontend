@@ -144,10 +144,18 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'ai-coach', hideHeader: true },
       },
       {
-        path: 'rebalancing',
-        name: 'rebalancing',
+        path: 'investment-guide',
+        name: 'investment-guide',
         component: () => import('@/features/rebalancing/views/RebalancingView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'ai-coach', headerTitle: '리밸런싱' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '적립식 투자 가이드',
+        },
+      },
+      {
+        path: 'rebalancing',
+        redirect: { name: 'investment-guide' },
       },
       {
         path: 'badge-history',

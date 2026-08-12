@@ -5,7 +5,7 @@ const missionActionRoutes = {
   VIEW_SPENDING_ANALYSIS: 'transactions',
   VIEW_ASSET_STATUS: 'asset-overview',
   VIEW_DEPOSIT_PRODUCT: 'ai-product-recommendation',
-  VIEW_REBALANCING: 'rebalancing',
+  VIEW_REBALANCING: 'investment-guide',
   RUN_WHAT_IF_SIMULATION: 'what-if-simulation',
   VIEW_MARKET_REPORT: 'ai-financial-report',
   VIEW_DAILY_REPORT: 'ai-financial-report',

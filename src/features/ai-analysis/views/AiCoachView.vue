@@ -31,7 +31,10 @@ const fallbackSummary =
 
 const { report, load } = useTodayMarketReport()
 const marketRows = computed(() => mapMarketIndicators(report.value?.indicators, fallbackMarketRows))
-const reportDate = computed(() => formatReportDate(report.value) || '2026. 08. 11 18시 기준')
+const reportDate = computed(() => {
+  const formattedDate = formatReportDate(report.value) || '2026. 08. 11 18시 기준'
+  return formattedDate.replace(/\s\d{1,2}시(?=\s기준)/, '')
+})
 const reportSummary = computed(() => report.value?.summary || fallbackSummary)
 
 onMounted(load)
@@ -148,7 +151,7 @@ const analysisMenus = [
 
       <RouterLink
         class="glidepath-card"
-        :to="{ name: 'rebalancing' }"
+        :to="{ name: 'investment-guide' }"
       >
         <h3>적립식투자 가이드</h3>
         <div class="glidepath-card__summary">
@@ -209,7 +212,7 @@ const analysisMenus = [
   display: flex;
   min-height: 76px;
   align-items: center;
-  padding: 10px 20px;
+  padding: 18px 0 2px;
 }
 
 .coach-intro h2 {
@@ -225,9 +228,11 @@ const analysisMenus = [
   min-height: 303px;
   flex-direction: column;
   overflow: visible;
-  border: 1px solid rgb(239 148 115 / 55%);
+  border: 3px solid transparent;
   border-radius: 28px;
-  background: linear-gradient(145deg, rgb(255 255 255 / 98%), rgb(255 255 255 / 92%));
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 99%), rgb(255 255 255 / 95%)) padding-box,
+    linear-gradient(90deg, #e37255 0%, #ffe26d 38%, #009dff 100%) border-box;
   box-shadow: 0 10px 24px rgb(232 155 131 / 10%);
 }
 
@@ -244,7 +249,7 @@ const analysisMenus = [
 
 .report-card__body {
   flex: 1;
-  padding: 20px 20px 16px;
+  padding: 20px 20px 10px;
 }
 
 .report-card__heading {
@@ -272,14 +277,14 @@ const analysisMenus = [
 .report-card__date {
   padding-top: 4px;
   color: #888;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
 .report-metrics {
   display: grid;
-  gap: 10px;
-  padding: 10px 10px 0;
+  gap: 12px;
+  padding: 16px 0 0;
 }
 
 .report-metrics__row {
@@ -298,7 +303,7 @@ const analysisMenus = [
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--gray-900);
+  color: #757575;
   font-size: 13px;
   font-weight: var(--weight-semibold);
 }
@@ -331,11 +336,11 @@ const analysisMenus = [
 .report-insight {
   min-height: 62px;
   padding: 12px;
-  margin-top: 10px;
+  margin-top: 14px;
   border-radius: 14px;
   background: var(--green-100);
   color: var(--gray-600);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.6;
 }
 
@@ -349,7 +354,7 @@ const analysisMenus = [
   align-items: center;
   gap: 4px;
   padding-bottom: 2px;
-  color: var(--gray-500);
+  color: #757575;
   font-size: 11px;
   font-weight: var(--weight-bold);
 }
@@ -361,13 +366,13 @@ const analysisMenus = [
 
 .report-card__link {
   display: flex;
-  min-height: 40px;
+  min-height: 32px;
   align-items: center;
   justify-content: flex-end;
-  gap: 2px;
-  padding: 10px;
+  gap: 4px;
+  padding: 4px 20px 8px 10px;
   color: var(--olive-400);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.3;
 }
 
@@ -378,6 +383,10 @@ const analysisMenus = [
   height: 11px;
   object-fit: contain;
   filter: grayscale(1) opacity(0.62);
+}
+
+.analysis-section {
+  padding-top: 10px;
 }
 
 .analysis-section h3 {
@@ -404,6 +413,7 @@ const analysisMenus = [
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 82%);
   border-radius: 50%;
@@ -411,8 +421,8 @@ const analysisMenus = [
 }
 
 .analysis-menu__item img {
-  width: 50px;
-  height: 50px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
 }
 
@@ -527,6 +537,7 @@ const analysisMenus = [
 .glidepath-card__link {
   display: flex;
   align-items: center;
+  gap: 6px;
   color: var(--olive-400);
   font-size: 12px;
   font-weight: var(--weight-bold);

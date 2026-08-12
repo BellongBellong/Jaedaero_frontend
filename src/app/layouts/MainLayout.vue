@@ -22,6 +22,7 @@ watch(
   <MobileFrame
     :class="{
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
+      'mobile-frame--investment-guide': route.name === 'investment-guide',
     }"
   >
     <AppHeader
@@ -83,6 +84,18 @@ watch(
   background:
     radial-gradient(circle at 92% 8%, rgb(98 255 156 / 52%) 0, rgb(98 255 156 / 0%) 34%),
     var(--gray-100);
+}
+
+:global(.mobile-frame.mobile-frame--investment-guide) {
+  background: var(--ui-background);
+}
+
+:global(.mobile-frame.mobile-frame--investment-guide .app-header) {
+  background: var(--ui-background);
+}
+
+:global(.mobile-frame.mobile-frame--investment-guide .app-header h1) {
+  font-size: 18px;
 }
 
 .main-layout__content :deep(.screen) {
