@@ -102,6 +102,7 @@ function connect() {
     </section>
 
     <PrimaryButton
+      variant="green"
       :disabled="!canConnect"
       @click="connect"
     >

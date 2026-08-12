@@ -27,6 +27,7 @@ const router = useRouter()
   position: relative;
   height: 799px;
   min-height: calc(100dvh - 53px);
+  overflow: visible;
   padding: 0 20px 74px;
   background:
     radial-gradient(
