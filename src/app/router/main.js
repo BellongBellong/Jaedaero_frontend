@@ -93,7 +93,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: '오늘의 AI 투자 리포트',
+          headerTitle: '오늘의 AI 시장 리포트',
           headerBadge: 'BETA',
         },
       },
