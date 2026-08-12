@@ -10,13 +10,18 @@ import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeave
 const route = useRoute()
 const contentElement = ref(null)
 const { mode } = useLeaveModeSchedule()
+
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
 
 watch(
   () => route.fullPath,
   async () => {
     await nextTick()
-    contentElement.value?.scrollTo({ left: 0, top: 0, behavior: 'auto' })
+    contentElement.value?.scrollTo({
+      left: 0,
+      top: 0,
+      behavior: 'auto',
+    })
   },
 )
 </script>
@@ -27,7 +32,6 @@ watch(
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
       'mobile-frame--investment-guide': route.name === 'investment-guide',
       'mobile-frame--vacation': isVacationDashboard,
-
     }"
   >
     <AppHeader
@@ -105,6 +109,8 @@ watch(
 
 :global(.mobile-frame.mobile-frame--investment-guide .app-header h1) {
   font-size: 18px;
+}
+
 :global(.mobile-frame.mobile-frame--vacation) {
   background:
     radial-gradient(
