@@ -162,6 +162,11 @@ function saveBudget(amount) {
   showBudgetSheet.value = false
 }
 
+function deleteBudget() {
+  setVacationBudget(null)
+  showBudgetSheet.value = false
+}
+
 function openVacationTransactions() {
   if (!activeVacation.value) return
   const vacation = activeVacation.value
@@ -249,6 +254,7 @@ function openVacationTransactions() {
       :model-value="vacationBudget"
       @close="showBudgetSheet = false"
       @save="saveBudget"
+      @delete="deleteBudget"
     />
   </main>
 </template>
