@@ -24,10 +24,22 @@ const fallbackMarketRows = [
 ]
 
 const fallbackSourceLinks = [
-  { title: 'Oil and gold stay near highs - InvestingLive', url: '#' },
-  { title: 'Gold rises for third straight session - Reuters', url: '#' },
-  { title: 'Oil prices rise, Asia stocks drift - Reuters', url: '#' },
-  { title: 'What to watch in the week ahead - CNBC', url: '#' },
+  {
+    title: 'Oil and gold stay near highs - InvestingLive',
+    url: 'https://investinglive.com/news/investinglive-asia-pacific-financial-market-news-oil-and-gold-stay-near-highs/',
+  },
+  {
+    title: 'Gold rises for third straight session - Reuters',
+    url: 'https://news.google.com/rss/articles/CBMipwFBVV95cUxOQ3pfajk5NldmMDliSlhNU3ZYd1J6UGt3cWM4ZHBzTkxnYTVGbnVWU0ZOVFFqLUk2eFYyQnhxdUxiUFp5Y0lXTnpEOGIwMHBveTR5bzBvZmxjWTA4TmR6OUt0U1ZSd2V0dDhkMlg4TkpFdlFCSEtJN3BXYXJQMFZLZDgyZjR6UTRXeU5fRFZ1MHM1WXpCMEtTOF9CNmptQTJmNzBQN1JyMA?oc=5',
+  },
+  {
+    title: 'Oil prices rise, Asia stocks drift - Reuters',
+    url: 'https://news.google.com/rss/articles/CBMigwFBVV95cUxPRnpVTlc5WDU3ZUFOMTJjSFRLNGFCWUItblV4clc0UnVXUi05VVBaRkFleHpsdWtmcl9YZDRtN3BkaDhqUy1PTWx1aDhjalNDc09RNGh5eDFYN2FnTGxraUlhRWtFUnl0UTJrbV82Yi1CaFEyNmNwaHlvQVdobElUNEZVaw?oc=5',
+  },
+  {
+    title: 'What to watch in the week ahead - CNBC',
+    url: 'https://www.cnbc.com/2026/08/09/here-are-the-2-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html',
+  },
 ]
 
 const fallbackSummary =
@@ -44,6 +56,11 @@ const marketContent = computed(() => report.value?.content || fallbackContent)
 const validUntilNotice = computed(
   () => formatValidUntil(report.value) || '8월 12일 17시까지 볼 수 있어요.',
 )
+
+function openSource(url) {
+  const sourceWindow = window.open(url, '_blank')
+  if (sourceWindow) sourceWindow.opener = null
+}
 
 onMounted(() => {
   completeMissionAfterLoad()
@@ -109,6 +126,7 @@ onMounted(() => {
           :href="source.url"
           target="_blank"
           rel="noopener noreferrer"
+          @click.prevent="openSource(source.url)"
         >
           {{ source.title }}
         </a>

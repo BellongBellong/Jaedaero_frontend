@@ -22,7 +22,12 @@ const activeStep = ref(null)
 
 function unwrapSimulations(response) {
   if (Array.isArray(response)) return response
-  return response?.simulations ?? response?.content ?? response?.data ?? []
+
+  const simulations = response?.simulations ?? response?.content ?? response?.data
+  if (Array.isArray(simulations)) return simulations
+  if (simulations && simulations !== response) return unwrapSimulations(simulations)
+
+  return []
 }
 
 function isMissingResource(reason) {
@@ -326,7 +331,11 @@ button.guide-card__header {
 }
 
 .guide-card--complete .guide-card__copy strong {
-  color: var(--gray-800);
+  color: #000;
+}
+
+.guide-card--complete .guide-card__check {
+  stroke: var(--green-600);
 }
 
 .guide-card__check {
