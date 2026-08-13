@@ -1,10 +1,10 @@
 <script setup>
 import { computed } from 'vue'
 
-import arrowIcon from '@/assets/icons/arrow.svg'
 import assetBlock from '@/assets/icons/account/assetBlock.png'
 import consumptionBlock from '@/assets/icons/account/consumptionBlock.png'
 import investBlock from '@/assets/icons/account/investBlock.png'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 
 const props = defineProps({
   data: {
@@ -87,7 +87,7 @@ function formatSignedRate(value) {
           <strong>{{ formatWon(data.income.amount) }}</strong>
           <span
             v-if="data.income.hasAdditionalIncome"
-            class="monthly-assets__badge"
+            class="monthly-assets__badge app-label label--safe"
           >
             +{{ data.income.changeRate }}%
           </span>
@@ -124,7 +124,8 @@ function formatSignedRate(value) {
               <strong>{{ formatWon(data.investment.amount) }}</strong>
               <span
                 v-if="investmentState !== 'disconnected' && investmentState !== 'steady'"
-                class="monthly-assets__investment-badge"
+                class="monthly-assets__investment-badge app-label"
+                :class="investmentState === 'loss' ? 'label--notification' : 'label--invest'"
               >
                 {{ formatSignedRate(data.investment.changeRate) }}
               </span>
@@ -186,7 +187,8 @@ function formatSignedRate(value) {
               <strong>{{ formatWon(data.spending.amount) }}</strong>
               <span
                 v-if="spendingState !== 'no-target'"
-                class="monthly-assets__spending-status"
+                class="monthly-assets__spending-status app-label"
+                :class="spendingState === 'over' ? 'label--notification' : 'label--safe'"
               >
                 {{ spendingState === 'over' ? '초과 ▲' : '여유' }}
               </span>
@@ -231,19 +233,13 @@ function formatSignedRate(value) {
       </button>
     </div>
 
-    <button
+    <DetailLinkButton
       v-if="showReportLink"
       class="monthly-assets__report"
-      type="button"
       @click="$emit('view-report')"
     >
       이번 달 거래 내역 보기
-      <img
-        :src="arrowIcon"
-        alt=""
-        aria-hidden="true"
-      >
-    </button>
+    </DetailLinkButton>
   </div>
 
   <p
@@ -373,16 +369,6 @@ function formatSignedRate(value) {
   line-height: 1.3;
 }
 
-.monthly-assets__badge {
-  padding: 2px 9px;
-  border-radius: 20px;
-  background: var(--green-100);
-  color: var(--dashboard-success);
-  font-size: 12px;
-  font-weight: var(--weight-bold);
-  white-space: nowrap;
-}
-
 .monthly-assets__lower {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -448,18 +434,7 @@ function formatSignedRate(value) {
 }
 
 .monthly-assets__investment-badge {
-  padding: 2px 9px;
-  border-radius: 20px;
-  background: rgb(228 255 240 / 45%);
-  color: var(--dashboard-success);
-  font-size: 12px;
-  font-weight: var(--weight-bold);
-  white-space: nowrap;
-}
-
-.monthly-assets__tile--investment-loss .monthly-assets__investment-badge {
-  background: var(--orange-100);
-  color: var(--orange-600);
+  flex: 0 0 auto;
 }
 
 .monthly-assets__investment-change {
@@ -566,18 +541,7 @@ function formatSignedRate(value) {
 }
 
 .monthly-assets__spending-status {
-  padding: 2px 9px;
-  border-radius: 20px;
-  background: rgb(255 183 159 / 30%);
-  color: var(--orange-600);
-  font-size: 12px;
-  font-weight: var(--weight-bold);
-  white-space: nowrap;
-}
-
-.monthly-assets__tile--spending-safe .monthly-assets__spending-status {
-  background: rgb(228 255 240 / 35%);
-  color: var(--dashboard-success);
+  flex: 0 0 auto;
 }
 
 .monthly-assets__spending-comparison {
@@ -644,21 +608,7 @@ function formatSignedRate(value) {
 }
 
 .monthly-assets__report {
-  display: flex;
-  align-items: center;
   align-self: flex-end;
-  gap: 5px;
-  padding: 2px 0;
-  border: 0;
-  background: transparent;
-  color: var(--olive-400);
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.monthly-assets__report img {
-  width: 7px;
-  height: 11px;
 }
 
 .monthly-assets__empty {

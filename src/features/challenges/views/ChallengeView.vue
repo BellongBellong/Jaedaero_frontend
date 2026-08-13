@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
+import CommonTabs from '@/common/components/common/CommonTabs.vue'
 import rankingCrownGold from '@/assets/ranking/crown-gold.svg'
 import rankingCrownSilver from '@/assets/ranking/crown-silver.svg'
 import rankingCharacterAirforce from '@/assets/ranking/characters/airforce.svg'
@@ -29,6 +30,10 @@ import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
 import { getChallengeGroup, getInvestmentBadges, getTodayMissions } from '../api/challenges.api'
 
 const activeTab = ref('missions')
+const challengeTabs = [
+  { label: '미션', value: 'missions' },
+  { label: '랭킹', value: 'ranking' },
+]
 const router = useRouter()
 const loading = ref(true)
 const challenge = ref(null)
@@ -444,16 +449,6 @@ function selectRankingPeriod(period) {
   changeRankingPeriod()
 }
 
-function openMissionsTab() {
-  activeTab.value = 'missions'
-  modeMenuOpen.value = false
-}
-
-function openRankingTab() {
-  activeTab.value = 'ranking'
-  modeMenuOpen.value = false
-}
-
 function shiftRankingMonth(offset) {
   const [year, month] = String(rankingYearMonth.value || getCurrentYearMonth())
     .split('-')
@@ -492,26 +487,12 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="challenge-page">
-    <div
+    <CommonTabs
+      v-model="activeTab"
       class="challenge-tabs"
-      role="tablist"
+      :items="challengeTabs"
       aria-label="챌린지 메뉴"
-    >
-      <button
-        :class="{ active: activeTab === 'missions' }"
-        type="button"
-        @click="openMissionsTab"
-      >
-        미션
-      </button>
-      <button
-        :class="{ active: activeTab === 'ranking' }"
-        type="button"
-        @click="openRankingTab"
-      >
-        랭킹
-      </button>
-    </div>
+    />
 
     <p
       v-if="errorMessage"
@@ -842,12 +823,8 @@ onBeforeUnmount(() => {
   position: sticky;
   z-index: calc(var(--z-header) - 1);
   top: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  height: 43px;
   margin-top: -12px;
   margin-bottom: 12px;
-  background: var(--ui-background);
   isolation: isolate;
 }
 .challenge-tabs::before {
@@ -856,19 +833,6 @@ onBeforeUnmount(() => {
   background: var(--ui-background);
   content: '';
   inset: 0 -20px;
-}
-.challenge-tabs button {
-  border: 0;
-  border-bottom: 2px solid transparent;
-  color: #b7b7b7;
-  background: transparent;
-  font-weight: 700;
-}
-.challenge-tabs button.active {
-  border-color: #18bd63;
-  color: #18bd63;
-  background: linear-gradient(110deg, #fff, #f4fff8);
-  border-radius: 14px 14px 0 0;
 }
 .challenge-error {
   padding: 9px 12px;

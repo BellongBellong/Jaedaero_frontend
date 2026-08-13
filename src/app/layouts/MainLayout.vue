@@ -125,7 +125,8 @@ function handleContentScroll(event) {
 }
 
 :global(.mobile-frame.mobile-frame--fixed-header-tabs .app-header) {
-  background: var(--ui-background);
+  background: rgb(243 255 248 / 20%);
+  backdrop-filter: blur(18px);
 }
 
 :global(.mobile-frame.mobile-frame--vacation) {

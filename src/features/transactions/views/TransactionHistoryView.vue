@@ -313,8 +313,9 @@ onMounted(async () => {
 }
 
 .transaction-history__filter img {
-  width: 14px;
-  height: 14px;
+  width: 8px;
+  height: 7px;
+  object-fit: contain;
 }
 
 .transaction-history__card ul {

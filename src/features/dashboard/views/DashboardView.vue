@@ -9,12 +9,16 @@ import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
 import FinancialDdayCard from '@/features/dashboard/components/FinancialDdayCard.vue'
 import MissionListSheet from '@/features/dashboard/components/MissionListSheet.vue'
 import TodayMissionCard from '@/features/dashboard/components/TodayMissionCard.vue'
+import TodayMilitaryBenefits from '@/features/dashboard/components/TodayMilitaryBenefits.vue'
 import UpcomingEventsCard from '@/features/dashboard/components/UpcomingEventsCard.vue'
 import VacationBudgetCard from '@/features/dashboard/components/VacationBudgetCard.vue'
 import VacationBudgetSheet from '@/features/dashboard/components/VacationBudgetSheet.vue'
 import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
 import { getTodayMissions } from '@/features/missions/api/missions.api'
+import { getBenefits } from '@/features/reports/api/reports.api'
+import { normalizeBenefits, selectDailyBenefits } from '@/features/benefits/utils/benefitMapper'
+import { benefitExamples } from '@/features/benefits/mocks/benefits.mock'
 import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
 import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
 import { transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
@@ -30,6 +34,8 @@ const liveMissions = ref([])
 const showBudgetSheet = ref(false)
 const vacationSpentAmount = ref(0)
 const vacationSpendingLoading = ref(false)
+const militaryBenefits = ref([])
+const benefitsLoading = ref(false)
 const { mode } = useLeaveModeSchedule()
 const isVacationMode = computed(() => mode.value === 'vacation')
 const dashboardOptions = computed(() => {
@@ -110,6 +116,27 @@ onMounted(async () => {
     liveMissions.value = []
   }
 })
+
+watch(
+  isVacationMode,
+  async (vacationMode) => {
+    if (!vacationMode || militaryBenefits.value.length) return
+
+    benefitsLoading.value = true
+    try {
+      const apiBenefits = normalizeBenefits(await getBenefits())
+      militaryBenefits.value = selectDailyBenefits(
+        apiBenefits.length ? apiBenefits : normalizeBenefits(benefitExamples),
+        4,
+      )
+    } catch {
+      militaryBenefits.value = selectDailyBenefits(normalizeBenefits(benefitExamples), 4)
+    } finally {
+      benefitsLoading.value = false
+    }
+  },
+  { immediate: true },
+)
 
 function isVacationExpense(transaction, vacation) {
   const transactionDate = String(transaction.transactionDate || '').slice(0, 10)
@@ -220,9 +247,6 @@ function openVacationTransactions() {
         v-bind="dashboardData.dailyReport"
         :to="reportRoute"
         :variant="isVacationMode ? 'vacation' : 'military'"
-        :greeting="
-          isVacationMode ? '즐거운 휴가 보내고 계신가요?' : dashboardData.dailyReport.greeting
-        "
       />
 
       <VacationBudgetCard
@@ -232,6 +256,13 @@ function openVacationTransactions() {
         :loading="vacationSpendingLoading"
         @edit="showBudgetSheet = true"
         @view-transactions="openVacationTransactions"
+      />
+
+      <TodayMilitaryBenefits
+        v-if="isVacationMode"
+        :benefits="militaryBenefits"
+        :loading="benefitsLoading"
+        @view-all="router.push({ name: 'benefits' })"
       />
 
       <FinancialDdayCard v-bind="dashboardData.financialDday" />

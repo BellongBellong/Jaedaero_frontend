@@ -1,7 +1,11 @@
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 import armyCharacter from '@/assets/icons/character/army.png'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+
+const router = useRouter()
 
 const props = defineProps({
   financialDday: {
@@ -18,7 +22,7 @@ const props = defineProps({
   },
   financialDischargeDate: {
     type: [String, Date, Array],
-    default: '2026-09-20',
+    default: null,
   },
   achievementRate: {
     type: Number,
@@ -52,6 +56,7 @@ const normalizedRate = computed(() => Math.min(Math.max(calculatedAchievementRat
 const progressWidth = computed(() => `${normalizedRate.value}%`)
 const markerPosition = computed(() => `clamp(39px, ${normalizedRate.value}%, calc(100% - 39px))`)
 const isLowProgress = computed(() => normalizedRate.value < 45)
+const hasFinancialDischargeDate = computed(() => Boolean(props.financialDischargeDate))
 
 const formattedActualDate = computed(() => {
   if (!props.actualDischargeDate) return '-'
@@ -124,10 +129,6 @@ function formatDday(value) {
 }
 
 const dischargeMessage = computed(() => {
-  if (!props.financialDischargeDate) {
-    return '재정적 전역일을 계산할 정보가 부족해요.'
-  }
-
   if (dischargeDifferenceDays.value > 0) {
     return `실제 전역일보다 ${dischargeDifferenceDays.value}일 더 빨라요!`
   }
@@ -138,6 +139,10 @@ const dischargeMessage = computed(() => {
 
   return '전역일에 맞춰 목표 자산을 달성할 것으로 예상돼요!'
 })
+
+function goToWhatIfSimulation() {
+  router.push({ name: 'what-if-simulation' })
+}
 
 function formatAmount(value) {
   return Number(value || 0).toLocaleString('ko-KR')
@@ -160,10 +165,29 @@ const formattedAchievementRate = computed(() => {
         <p class="financial-dday-card__label">
           재정적 전역일
         </p>
-        <strong class="financial-dday-card__main-dday">{{ formatDday(financialDday) }}</strong>
-        <p class="financial-dday-card__message">
-          {{ dischargeMessage }}
-        </p>
+        <template v-if="hasFinancialDischargeDate">
+          <strong class="financial-dday-card__main-dday">{{ formatDday(financialDday) }}</strong>
+          <p class="financial-dday-card__message">
+            {{ dischargeMessage }}
+          </p>
+        </template>
+        <div
+          v-else
+          class="financial-dday-card__what-if-guide"
+        >
+          <p>
+            What-if 시뮬레이션으로<br>
+            자산 분배 목표를 설정하고<br>
+            나의 재정적 전역일을 계산해보세요
+          </p>
+          <DetailLinkButton
+            class="financial-dday-card__what-if-link app-label label--safe"
+            aria-label="What-if 시뮬레이션 하러가기"
+            @click="goToWhatIfSimulation"
+          >
+            What-if 시뮬레이션 하러가기
+          </DetailLinkButton>
+        </div>
       </div>
 
       <div class="financial-dday-card__actual-date">
@@ -266,6 +290,27 @@ const formattedAchievementRate = computed(() => {
 
 .financial-dday-card__financial-date {
   min-width: 0;
+}
+
+.financial-dday-card__what-if-guide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.financial-dday-card__what-if-guide > p {
+  color: var(--gray-600);
+  font-family: var(--body-body-small-regular-font-family);
+  font-size: var(--body-body-small-regular-font-size);
+  font-weight: var(--body-body-small-regular-font-weight);
+  line-height: var(--body-body-small-regular-line-height);
+}
+
+.financial-dday-card__what-if-link {
+  max-width: 100%;
+  color: var(--green-700);
 }
 
 .financial-dday-card__label {
@@ -379,15 +424,32 @@ const formattedAchievementRate = computed(() => {
 }
 
 .financial-dday-card__amount-bubble {
+  position: relative;
+  z-index: 2;
   display: flex;
   width: max-content;
+  min-width: 76px;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   padding: 10px;
   border-radius: 20px;
-  background: linear-gradient(180deg, var(--green-500) 0%, var(--green-50) 100%);
+  background: linear-gradient(135deg, var(--green-300) 0%, var(--green-200) 100%);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.financial-dday-card__amount-bubble::after {
+  position: absolute;
+  z-index: 1;
+  bottom: -12px;
+  left: 50%;
+  width: 24px;
+  height: 15px;
+  background: var(--green-200);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  content: '';
+  transform: translateX(-50%);
 }
 
 .financial-dday-card__amount-bubble strong {
@@ -400,12 +462,7 @@ const formattedAchievementRate = computed(() => {
 
 .financial-dday-card__bubble-tail {
   display: block;
-  width: 0;
-  height: 0;
-  margin: -2px auto 0;
-  border-top: 14px solid var(--green-50);
-  border-right: 11px solid transparent;
-  border-left: 11px solid transparent;
+  height: 13px;
 }
 
 .financial-dday-card__character-wrap {

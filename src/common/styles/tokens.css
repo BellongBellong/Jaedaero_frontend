@@ -31,6 +31,28 @@
   
     --font-display: "감탄로드감탄체", sans-serif;
     --font-body: "Pretendard-Regular", "Pretendard", sans-serif;
+
+    /* Figma body typography */
+    --body-body-small-bold-font-family: "Pretendard-Bold", "Pretendard", sans-serif;
+    --body-body-small-bold-font-size: 14px;
+    --body-body-small-bold-line-height: 150%;
+    --body-body-small-bold-font-weight: 700;
+    --body-body-small-regular-font-family: "Pretendard-Regular", "Pretendard", sans-serif;
+    --body-body-small-regular-font-size: 14px;
+    --body-body-small-regular-line-height: 150%;
+    --body-body-small-regular-font-weight: 400;
+    --body-body-xsmall-bold-font-family: "Pretendard-Bold", "Pretendard", sans-serif;
+    --body-body-xsmall-bold-font-size: 12px;
+    --body-body-xsmall-bold-line-height: 150%;
+    --body-body-xsmall-bold-font-weight: 700;
+    --body-body-xsmall-regular-font-family: "Pretendard-Regular", "Pretendard", sans-serif;
+    --body-body-xsmall-regular-font-size: 12px;
+    --body-body-xsmall-regular-line-height: 130%;
+    --body-body-xsmall-regular-font-weight: 400;
+    --body-label-small-font-family: "Pretendard-Bold", "Pretendard", sans-serif;
+    --body-label-small-font-size: 12px;
+    --body-label-small-line-height: 150%;
+    --body-label-small-font-weight: 700;
   
     /* ======================================================
        PRIMITIVE / GREEN
@@ -186,6 +208,21 @@
   --brand-light-blue: var(--blue-200);
   --brand-blue: var(--blue-400);
   --brand-deep-blue: var(--blue-800);
+
+  /* Figma semantic export compatibility aliases.
+     CSS custom properties are case-sensitive, so keep these mapped to the
+     project's canonical kebab-case tokens. */
+  --Brand-Primary: var(--brand-primary);
+  --Brand-GREEN: var(--brand-green);
+  --Brand-DeepGreen: var(--brand-deep-green);
+  --Brand-ORANGE: var(--brand-orange);
+  --Brand-OLIVE: var(--brand-olive);
+  --Brand-YELLOW: var(--brand-yellow);
+  --Brand-white: var(--brand-white);
+  --UI-light-gray: var(--ui-light-gray);
+  --UI-text: var(--gray-900);
+  --UI-sub-title: var(--gray-600);
+  --UI-sub-title-light: var(--gray-400);
 
 
   /* ======================================================
