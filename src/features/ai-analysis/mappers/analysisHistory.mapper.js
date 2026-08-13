@@ -33,7 +33,7 @@ function orderKey(record) {
 /** 페이지네이션 응답과 배열 응답을 모두 목록으로 받아낸다. */
 function unwrapList(response) {
   if (Array.isArray(response)) return response
-  return response?.content ?? response?.data ?? []
+  return response?.simulations ?? response?.content ?? response?.data ?? []
 }
 
 /** AiAnalysisResponse를 분석 기록 카드 모델로 변환한다. */
@@ -87,17 +87,17 @@ function toAllocationRatios(simulation) {
   const spending = toNumber(simulation?.monthlySpendingAmount)
   const total = saving + investment + spending
 
-  const hasPercents = [
-    simulation?.savingPercent,
-    simulation?.investmentPercent,
-    simulation?.spendingPercent,
-  ].every((percent) => percent !== undefined && percent !== null)
+  const hasRates = [
+    simulation?.savingRate,
+    simulation?.investmentRate,
+    simulation?.spendingRate,
+  ].every((rate) => rate !== undefined && rate !== null)
 
-  if (hasPercents) {
+  if (hasRates) {
     return [
-      { label: `${Math.round(toNumber(simulation.savingPercent))}%`, tone: 'green' },
-      { label: `${Math.round(toNumber(simulation.investmentPercent))}%`, tone: 'olive' },
-      { label: `${Math.round(toNumber(simulation.spendingPercent))}%`, tone: 'orange' },
+      { label: `${Math.round(toNumber(simulation.savingRate))}%`, tone: 'green' },
+      { label: `${Math.round(toNumber(simulation.investmentRate))}%`, tone: 'olive' },
+      { label: `${Math.round(toNumber(simulation.spendingRate))}%`, tone: 'orange' },
     ]
   }
 
@@ -110,16 +110,23 @@ function toAllocationRatios(simulation) {
 
 /** SimulationResponse를 분석 기록 카드 모델로 변환한다. */
 export function mapSimulationRecord(simulation) {
+  const simulationId = simulation?.simulationId ?? simulation?.id
+  const createdAt = simulation?.createdAt
+
   return {
-    id: `sim-${simulation?.id}`,
-    sourceId: simulation?.id,
+    id: `sim-${simulationId}`,
+    sourceId: simulationId,
     type: ANALYSIS_RECORD_TYPES.WHAT_IF,
     title: WHAT_IF_TITLE,
-    date: formatDate(simulation?.createdAt),
-    sortKey: simulation?.createdAt ?? '',
+    // SimulationResponse에는 생성일이 없으므로 없는 날짜를 만들어내지 않는다.
+    date: createdAt ? formatDate(createdAt) : '',
+    // 저장 이력은 최신순이며 ID는 단조 증가하므로 생성일 부재 시 ID로 순서를 보존한다.
+    sortKey: createdAt ?? String(simulationId ?? '').padStart(16, '0'),
     summary: WHAT_IF_SUMMARY,
     allocationRatios: toAllocationRatios(simulation),
-    projectedAsset: formatTenThousandWon(simulation?.projectedAssetAtDischarge),
+    projectedAsset: formatTenThousandWon(
+      simulation?.expectedAsset ?? simulation?.projectedAssetAtDischarge,
+    ),
   }
 }
 

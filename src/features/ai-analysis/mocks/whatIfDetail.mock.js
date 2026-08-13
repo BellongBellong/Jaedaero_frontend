@@ -2,12 +2,13 @@
 export const whatIfDetailMock = {
   id: 5,
   title: 'AI 추천 자산 계획3',
-  applied: true,
+  saved: true,
   projectedAsset: '1,854만원',
   targetAmount: '1,800만원',
   targetReturnRate: '5%',
   financialDischargeDate: '2027.11.17',
   baseSalary: '125만원',
+  hasCalculationDetail: false,
   allocations: [
     { key: 'INVESTMENT', label: '투자', percent: 10, tone: 'olive' },
     { key: 'SAVING', label: '군적금', percent: 10, tone: 'green' },
@@ -19,6 +20,6 @@ export const whatIfDetailMock = {
     { label: '군적금 외 투자', value: '500,000원' },
     { label: '월 소비', value: '250,000원' },
     { label: '미 배분 금액', value: '375,000원' },
-    { label: '목표 투자 수익', value: '5%' },
+    { label: '예상 투자 연 수익률', value: '5%' },
   ],
 }

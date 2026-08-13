@@ -42,10 +42,10 @@ function resimulate() {
           <div class="summary-card__badges">
             <span class="pill pill--gray">What-if</span>
             <span
-              v-if="detail.applied"
+              v-if="detail.saved"
               class="pill pill--green"
             >
-              적용중인 전략
+              저장된 시뮬레이션
             </span>
           </div>
         </header>
@@ -75,6 +75,60 @@ function resimulate() {
           <div class="summary-card__stat">
             <dt>재정적 전역일</dt>
             <dd>{{ detail.financialDischargeDate }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article
+        v-if="detail.hasCalculationDetail"
+        class="panel"
+      >
+        <header class="panel__header">
+          <h2>전역 예상 자산 계산 내역</h2>
+          <span
+            class="calculation-status"
+            :class="{ 'calculation-status--error': !detail.calculationConsistent }"
+          >
+            {{ detail.calculationConsistent ? '합계 일치' : '합계 확인 필요' }}
+          </span>
+        </header>
+
+        <dl class="payment-list">
+          <div
+            v-for="row in detail.calculationRows"
+            :key="row.label"
+            class="payment-list__row"
+          >
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.value }}</dd>
+          </div>
+        </dl>
+
+        <p class="calculation-subtitle">
+          예상 혜택 상세
+        </p>
+        <dl class="payment-list">
+          <div
+            v-for="row in detail.benefitRows"
+            :key="row.label"
+            class="payment-list__row"
+          >
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.value }}</dd>
+          </div>
+        </dl>
+
+        <p class="calculation-subtitle">
+          수익 계산 기준 원금
+        </p>
+        <dl class="payment-list">
+          <div
+            v-for="row in detail.principalRows"
+            :key="row.label"
+            class="payment-list__row"
+          >
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.value }}</dd>
           </div>
         </dl>
       </article>
@@ -326,6 +380,28 @@ function resimulate() {
   font-size: 12px;
   line-height: 1.3;
   white-space: nowrap;
+}
+
+.calculation-status {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: var(--green-100);
+  color: var(--green-700);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.calculation-status--error {
+  background: #fff1ec;
+  color: var(--orange-700);
+}
+
+.calculation-subtitle {
+  margin: 4px 0 -4px;
+  color: var(--gray-500);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
 }
 
 /* ---- 월급 배분 그래프 ----
