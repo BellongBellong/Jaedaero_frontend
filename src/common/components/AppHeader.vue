@@ -106,9 +106,9 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
     max(var(--layout-page-padding), var(--safe-area-left));
   background: transparent;
   transition:
-    flex-basis 180ms ease,
-    height 180ms ease,
-    padding 180ms ease;
+    flex-basis 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .app-header--collapsed {
   flex-basis: 0;

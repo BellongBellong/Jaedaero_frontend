@@ -291,7 +291,7 @@ const analysisMenus = [
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 95%),
     0 0 0 1px rgb(60 50 75 / 6%);
-  animation: report-card-spin 8s linear infinite;
+  animation: report-card-spin 4.8s linear infinite;
 }
 
 /*
@@ -338,8 +338,8 @@ const analysisMenus = [
   pointer-events: none;
   will-change: transform;
   animation:
-    report-card-orbit 8s linear infinite,
-    report-card-bloom-breathe 5s ease-in-out infinite;
+    report-card-orbit 4.8s linear infinite,
+    report-card-bloom-breathe 3.2s ease-in-out infinite;
 }
 
 @keyframes report-card-spin {

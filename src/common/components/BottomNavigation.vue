@@ -214,12 +214,13 @@ function selectTab(item) {
 }
 
 .navigation-item {
-  display: grid;
+  display: flex;
   flex: 0 0 60px;
-  place-items: center;
   width: 60px;
   height: 50px;
-  padding: 2px 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   overflow: hidden;
   border: 0;
   border-radius: var(--radius-full);
@@ -241,8 +242,11 @@ function selectTab(item) {
 /* 선택 상태는 불투명도로 구분한다 — 이전에는 구분 자체가 없었다 */
 .navigation-item__icon {
   display: block;
-  width: 30px;
-  height: 30px;
+  flex: 0 0 auto;
+  /* 새 30px viewBox의 균일 여백을 감안해 이전과 같은 실제 도형 크기로 맞춘다. */
+  width: 34px;
+  height: 34px;
+  margin: 0;
   object-fit: contain;
   opacity: 0.6;
   transition: opacity var(--duration-normal) var(--ease-default);
