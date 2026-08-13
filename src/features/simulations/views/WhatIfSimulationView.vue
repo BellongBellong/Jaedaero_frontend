@@ -411,7 +411,7 @@ async function saveSimulation() {
       SIMULATION_STORAGE_KEY,
       JSON.stringify(scenarioSnapshot(response?.simulationId ?? null)),
     )
-    savedMessage.value = '시뮬레이션을 저장했어요.'
+    savedMessage.value = '시뮬레이션을 적용했어요.'
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
       error,
@@ -492,7 +492,10 @@ onBeforeUnmount(() => {
             v-for="row in allocationRows"
             :key="row.id"
             class="allocation-row"
-            :class="{ 'allocation-row--active': hasScenarioChanges }"
+            :class="{
+              'allocation-row--active': hasScenarioChanges,
+              'allocation-row--inactive': !hasScenarioChanges,
+            }"
           >
             <img
               :src="row.icon"
@@ -637,7 +640,13 @@ onBeforeUnmount(() => {
           :disabled="!canSave"
           @click="saveSimulation"
         >
-          {{ isSaving ? '시뮬레이션 저장 중...' : '시뮬레이션 저장하기' }}
+          {{
+            isSaving
+              ? '시뮬레이션 적용 중...'
+              : hasScenarioChanges
+                ? '시뮬레이션 대로 적용하기'
+                : '시뮬레이션 조건을 설정해주세요'
+          }}
         </button>
         <p
           v-if="allocationErrorMessage"
@@ -883,6 +892,29 @@ onBeforeUnmount(() => {
   border: 0;
   border-radius: 50%;
   background: var(--range-color);
+}
+
+.allocation-row--inactive input::-webkit-slider-runnable-track {
+  background: var(--gray-200);
+}
+
+.allocation-row--inactive input::-webkit-slider-thumb {
+  background: radial-gradient(circle at 48% 42%, #aaa 0 28%, #858585 66%, #aaa 100%);
+  box-shadow:
+    inset 0 1px 2px rgb(255 255 255 / 42%),
+    0 1px 3px rgb(0 0 0 / 26%);
+}
+
+.allocation-row--inactive input::-moz-range-progress,
+.allocation-row--inactive input::-moz-range-track {
+  background: var(--gray-200);
+}
+
+.allocation-row--inactive input::-moz-range-thumb {
+  background: radial-gradient(circle at 48% 42%, #aaa 0 28%, #858585 66%, #aaa 100%);
+  box-shadow:
+    inset 0 1px 2px rgb(255 255 255 / 42%),
+    0 1px 3px rgb(0 0 0 / 26%);
 }
 
 .allocation-row input:focus-visible {
@@ -1132,8 +1164,10 @@ onBeforeUnmount(() => {
 }
 
 .apply-button:disabled {
+  opacity: 1;
   background: var(--gray-200);
   color: var(--gray-400);
+  -webkit-text-fill-color: var(--gray-400);
   cursor: not-allowed;
 }
 
