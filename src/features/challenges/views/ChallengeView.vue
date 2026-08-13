@@ -839,10 +839,23 @@ onBeforeUnmount(() => {
   background: #fafafa;
 }
 .challenge-tabs {
+  position: sticky;
+  z-index: calc(var(--z-header) - 1);
+  top: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   height: 43px;
+  margin-top: -12px;
   margin-bottom: 12px;
+  background: var(--ui-background);
+  isolation: isolate;
+}
+.challenge-tabs::before {
+  position: absolute;
+  z-index: -1;
+  background: var(--ui-background);
+  content: '';
+  inset: 0 -20px;
 }
 .challenge-tabs button {
   border: 0;

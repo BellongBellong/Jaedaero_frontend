@@ -11,7 +11,7 @@ import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 
 const route = useRoute()
 const router = useRouter()
-const activeTab = ref('account')
+const activeTab = ref(route.query.tab === 'investment' ? 'investment' : 'account')
 const { dashboard, loading, error, reload } = useDashboard()
 const accounts = computed(() => dashboard.value.assetSummary.total.accounts ?? [])
 
@@ -187,6 +187,17 @@ function openAccount(account) {
         <p v-else>
           연결된 투자 계좌가 없어요.
         </p>
+        <RouterLink
+          v-if="!investmentAccounts.length"
+          class="account-assets__connect-investment"
+          :to="{
+            name: 'connect-codef-bank',
+            params: { assetType: 'securities' },
+            query: { source: 'investment-assets', mode: 'additional' },
+          }"
+        >
+          증권계좌 연결하기
+        </RouterLink>
 
         <template v-if="investmentAccounts.length">
           <h2 class="account-assets__chart-title">
@@ -325,6 +336,19 @@ function openAccount(account) {
   background: var(--white);
   color: var(--gray-400);
   font-size: 13px;
+}
+
+.account-assets__connect-investment {
+  display: grid;
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 26px;
+  background: var(--green-500);
+  color: var(--gray-900);
+  font-size: 14px;
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+  place-items: center;
 }
 
 .account-assets__chart-title {
