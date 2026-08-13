@@ -11,12 +11,16 @@ import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeave
 const DIRECTION_THRESHOLD = 6
 /* 이 지점을 지나야 네비가 줄어들기 시작한다 */
 const MINIMIZE_AFTER = 72
+/* 반대 방향으로 이 거리만큼 의도적으로 스크롤해야 다시 펼친다. */
+const DIRECTION_CONFIRMATION_DISTANCE = 28
 
 const route = useRoute()
 const contentElement = ref(null)
 const isHeaderCollapsed = ref(false)
 const isNavigationMinimized = ref(false)
 const lastScrollTop = ref(0)
+const scrollDirection = ref(null)
+const scrollDistanceInDirection = ref(0)
 const { mode } = useLeaveModeSchedule()
 
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
@@ -27,6 +31,8 @@ watch(
     isHeaderCollapsed.value = false
     isNavigationMinimized.value = false
     lastScrollTop.value = 0
+    scrollDirection.value = null
+    scrollDistanceInDirection.value = 0
     await nextTick()
     contentElement.value?.scrollTo({
       left: 0,
@@ -40,13 +46,38 @@ function handleContentScroll(event) {
   const scrollTop = event.currentTarget.scrollTop
   const delta = scrollTop - lastScrollTop.value
 
-  isHeaderCollapsed.value = route.meta.keepHeaderOnScroll ? false : scrollTop > 24
+  /*
+    헤더는 내릴 때 32px, 올릴 때 12px의 여유를 둔다. iOS 관성 스크롤의 작은
+    반동으로 닫힘/열림이 반복되지 않으면서도 Chrome과 같은 방향성은 유지한다.
+  */
+  if (route.meta.keepHeaderOnScroll) {
+    isHeaderCollapsed.value = false
+  } else if (isHeaderCollapsed.value ? scrollTop < 12 : scrollTop > 32) {
+    isHeaderCollapsed.value = !isHeaderCollapsed.value
+  }
 
-  /* 내리면 네비가 물러나고 올리면 돌아온다. 최상단에서는 항상 펼쳐둔다. */
+  /*
+    네비게이션도 첫 반대 방향 이벤트에 즉시 튀지 않게 한다. iOS는 감속 중
+    delta의 부호가 짧게 바뀌는 경우가 있어서, 28px의 실제 방향 전환을 확인한 뒤
+    움직인다.
+  */
   if (scrollTop <= MINIMIZE_AFTER) {
     isNavigationMinimized.value = false
+    scrollDirection.value = null
+    scrollDistanceInDirection.value = 0
   } else if (Math.abs(delta) >= DIRECTION_THRESHOLD) {
-    isNavigationMinimized.value = delta > 0
+    const nextDirection = delta > 0 ? 'down' : 'up'
+
+    if (nextDirection === scrollDirection.value) {
+      scrollDistanceInDirection.value += Math.abs(delta)
+    } else {
+      scrollDirection.value = nextDirection
+      scrollDistanceInDirection.value = Math.abs(delta)
+    }
+
+    if (scrollDistanceInDirection.value >= DIRECTION_CONFIRMATION_DISTANCE) {
+      isNavigationMinimized.value = nextDirection === 'down'
+    }
   }
 
   lastScrollTop.value = scrollTop
@@ -118,7 +149,8 @@ function handleContentScroll(event) {
   padding-top: 8px;
   padding-bottom: var(--safe-area-bottom);
   pointer-events: none;
-  background: linear-gradient(180deg, rgb(250 250 250 / 0%), rgb(250 250 250 / 88%) 70%);
+  /* 콘텐츠가 글래스 바와 하단 safe area 뒤로 자연스럽게 이어진다. */
+  background: transparent;
 }
 
 .main-layout__bottom > :deep(.bottom-navigation) {
@@ -189,6 +221,6 @@ function handleContentScroll(event) {
 }
 
 .main-layout__bottom--vacation {
-  background: linear-gradient(180deg, rgb(152 204 255 / 0%), rgb(152 204 255 / 30%) 70%);
+  background: transparent;
 }
 </style>
