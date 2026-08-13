@@ -25,6 +25,7 @@ export const ENDPOINTS = {
   dashboard: '/dashboard',
   cashflow: '/cashflow',
   simulations: {
+    defaults: '/simulations/defaults',
     list: '/simulations',
     detail: (simulationId) => `/simulations/${simulationId}`,
   },

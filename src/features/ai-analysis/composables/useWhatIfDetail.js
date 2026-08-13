@@ -9,12 +9,12 @@ import { whatIfDetailMock } from '@/features/ai-analysis/mocks/whatIfDetail.mock
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import { getSimulation, getSimulations } from '@/features/simulations/api/simulations.api'
 
-/** What-if 화면이 마지막으로 적용한 시나리오를 남겨두는 저장소 키. */
-const APPLIED_SIMULATION_KEY = 'jaedaero-latest-simulation'
+/** What-if 화면이 마지막으로 저장한 시나리오를 남겨두는 저장소 키. */
+const SAVED_SIMULATION_KEY = 'jaedaero-latest-simulation'
 
-function appliedSimulationId() {
+function savedSimulationId() {
   try {
-    return JSON.parse(sessionStorage.getItem(APPLIED_SIMULATION_KEY) || '{}')?.simulationId ?? null
+    return JSON.parse(sessionStorage.getItem(SAVED_SIMULATION_KEY) || '{}')?.simulationId ?? null
   } catch {
     return null
   }
@@ -64,7 +64,7 @@ export function useWhatIfDetail(simulationId) {
     const me = valueOf(profile)
     detail.value = mapWhatIfDetail(simulation.value, {
       monthlySalary: me?.monthlySalary ?? me?.soldierProfile?.monthlySalary,
-      applied: String(appliedSimulationId()) === String(simulationId),
+      saved: String(savedSimulationId()) === String(simulationId),
       title: titleFromList(valueOf(simulations), simulationId),
     })
     error.value = simulations.reason ?? profile.reason ?? null

@@ -42,10 +42,10 @@ function resimulate() {
           <div class="summary-card__badges">
             <span class="pill pill--gray">What-if</span>
             <span
-              v-if="detail.applied"
+              v-if="detail.saved"
               class="pill pill--green"
             >
-              적용중인 전략
+              저장된 시뮬레이션
             </span>
           </div>
         </header>
@@ -53,6 +53,7 @@ function resimulate() {
         <div class="summary-card__asset">
           <p>전역 예상 자산</p>
           <strong>{{ detail.projectedAsset }}</strong>
+          <small>군적금 이자·매칭지원금과 투자 예상 수익을 포함해요</small>
         </div>
 
         <dl class="summary-card__stats">
@@ -65,7 +66,7 @@ function resimulate() {
             aria-hidden="true"
           />
           <div class="summary-card__stat">
-            <dt>목표 수익률</dt>
+            <dt>목표 연 수익률</dt>
             <dd>{{ detail.targetReturnRate }}</dd>
           </div>
           <span
@@ -77,6 +78,66 @@ function resimulate() {
             <dd>{{ detail.financialDischargeDate }}</dd>
           </div>
         </dl>
+      </article>
+
+      <article
+        v-if="detail.hasCalculationDetail"
+        class="panel"
+      >
+        <header class="panel__header">
+          <h2>전역 예상 자산 계산 내역</h2>
+          <span
+            class="calculation-status"
+            :class="{ 'calculation-status--error': !detail.calculationConsistent }"
+          >
+            {{ detail.calculationConsistent ? '합계 일치' : '합계 확인 필요' }}
+          </span>
+        </header>
+
+        <dl class="payment-list">
+          <div
+            v-for="row in detail.calculationRows"
+            :key="row.label"
+            class="payment-list__row"
+          >
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.value }}</dd>
+          </div>
+        </dl>
+
+        <p class="calculation-subtitle">
+          예상 혜택 상세
+        </p>
+        <dl class="payment-list">
+          <div
+            v-for="row in detail.benefitRows"
+            :key="row.label"
+            class="payment-list__row"
+          >
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.value }}</dd>
+          </div>
+        </dl>
+
+        <p class="calculation-subtitle">
+          수익 계산 기준 원금
+        </p>
+        <dl class="payment-list">
+          <div
+            v-for="row in detail.principalRows"
+            :key="row.label"
+            class="payment-list__row"
+          >
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.value }}</dd>
+          </div>
+        </dl>
+        <p class="calculation-note">
+          군적금·투자 원금은 월급 배분에 이미 포함되어 최종 금액에 다시 더하지 않아요.
+          <span v-if="detail.calculationPolicyVersion">
+            계산 정책 {{ detail.calculationPolicyVersion }}
+          </span>
+        </p>
       </article>
 
       <article class="panel">
@@ -236,6 +297,19 @@ function resimulate() {
   line-height: 1.4;
 }
 
+.summary-card__asset small {
+  display: block;
+  width: fit-content;
+  padding: 3px 8px;
+  margin-top: 2px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 72%);
+  color: var(--olive-500);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+}
+
 .summary-card__stats {
   display: flex;
   align-items: center;
@@ -326,6 +400,45 @@ function resimulate() {
   font-size: 12px;
   line-height: 1.3;
   white-space: nowrap;
+}
+
+.calculation-status {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: var(--green-100);
+  color: var(--green-700);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.calculation-status--error {
+  background: #fff1ec;
+  color: var(--orange-700);
+}
+
+.calculation-subtitle {
+  margin: 4px 0 -4px;
+  color: var(--gray-500);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+}
+
+.calculation-note {
+  padding: 8px 10px;
+  margin: 2px 0 0;
+  border-radius: 10px;
+  background: var(--gray-50);
+  color: var(--gray-500);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.calculation-note span {
+  display: block;
+  margin-top: 3px;
+  color: var(--gray-400);
+  overflow-wrap: anywhere;
 }
 
 /* ---- 월급 배분 그래프 ----

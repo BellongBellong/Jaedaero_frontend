@@ -7,24 +7,61 @@ import { formatTenThousandWon, formatWon, toNumber, toPercent } from './format.j
  * 월급 배분은 기준 월급(`monthlySalary`) 대비 비중으로 계산하고,
  * 어디에도 배정되지 않은 금액을 '미배분'으로 채운다.
  */
-export function mapWhatIfDetail(simulation, { monthlySalary, applied = false, title } = {}) {
-  const salary = toNumber(monthlySalary)
+export function mapWhatIfDetail(simulation, { monthlySalary, saved = false, title } = {}) {
+  const salary = toNumber(simulation?.referenceMonthlyIncome ?? monthlySalary)
   const saving = toNumber(simulation?.monthlySavingAmount)
   const investment = toNumber(simulation?.monthlyInvestmentAmount)
   const spending = toNumber(simulation?.monthlySpendingAmount)
   // 시드처럼 배분 합계가 월급을 넘는 데이터가 있어 음수로 내려가지 않게 막는다.
   const unassigned = Math.max(0, salary - (saving + investment + spending))
-  const returnRate = toNumber(simulation?.annualReturnRate)
+  const returnRate = toNumber(simulation?.expectedReturnRate ?? simulation?.annualReturnRate)
+  const expectedAsset = toNumber(simulation?.expectedAsset ?? simulation?.projectedAssetAtDischarge)
+  const calculation = simulation?.calculationDetail
+  const effect = simulation?.expectedEffect
+  const projectedBenefit = toNumber(
+    effect?.projectedBenefitAmount,
+    toNumber(effect?.soldierSavingInterest) +
+      toNumber(effect?.governmentMatchingSupport) +
+      toNumber(effect?.expectedInvestmentReturn),
+  )
+  const recomposedAsset =
+    toNumber(calculation?.baseAsset) +
+    toNumber(calculation?.cashflowIncreaseAmount) +
+    projectedBenefit
 
   return {
-    id: simulation?.id,
+    id: simulation?.simulationId ?? simulation?.id,
     title: title || WHAT_IF_TITLE,
-    applied,
-    projectedAsset: formatTenThousandWon(simulation?.projectedAssetAtDischarge),
+    saved: Boolean(simulation?.isSaved ?? saved),
+    projectedAsset: formatTenThousandWon(expectedAsset),
     targetAmount: formatTenThousandWon(simulation?.targetAmount),
     targetReturnRate: `${returnRate}%`,
     financialDischargeDate: String(simulation?.financialDischargeDate ?? '').replace(/-/g, '.'),
     baseSalary: salary ? formatTenThousandWon(salary) : '-',
+    hasCalculationDetail: Boolean(calculation && effect),
+    calculationConsistent: expectedAsset === recomposedAsset,
+    calculationPolicyVersion: effect?.calculationPolicyVersion ?? '',
+    calculationRows: [
+      { label: '현재 기준 자산', value: formatWon(calculation?.baseAsset) },
+      { label: '급여에서 소비를 뺀 순증가', value: formatWon(calculation?.cashflowIncreaseAmount) },
+      { label: '예상 혜택 합계', value: formatWon(projectedBenefit) },
+    ],
+    benefitRows: [
+      {
+        label: `군적금 단리 이자 (연 ${toNumber(effect?.soldierSavingAnnualInterestRate, 5)}%)`,
+        value: formatWon(effect?.soldierSavingInterest),
+      },
+      { label: '예상 정부 매칭지원금', value: formatWon(effect?.governmentMatchingSupport) },
+      {
+        label: `예상 투자 수익 (연 ${toNumber(effect?.investmentAnnualReturnRate, returnRate)}%)`,
+        value: formatWon(effect?.expectedInvestmentReturn),
+      },
+    ],
+    principalRows: [
+      { label: '군적금 원금', value: formatWon(calculation?.soldierSavingPrincipal) },
+      { label: '투자 원금', value: formatWon(calculation?.investmentPrincipal) },
+      { label: '미배분 누적 원금', value: formatWon(calculation?.unallocatedPrincipal) },
+    ],
     allocations: [
       { key: 'INVESTMENT', label: '투자', percent: toPercent(investment, salary), tone: 'olive' },
       { key: 'SAVING', label: '군적금', percent: toPercent(saving, salary), tone: 'green' },
@@ -36,7 +73,7 @@ export function mapWhatIfDetail(simulation, { monthlySalary, applied = false, ti
       { label: '군적금 외 투자', value: formatWon(investment) },
       { label: '월 소비', value: formatWon(spending) },
       { label: '미 배분 금액', value: formatWon(unassigned) },
-      { label: '목표 투자 수익', value: `${returnRate}%` },
+      { label: '예상 투자 연 수익률', value: `${returnRate}%` },
     ],
   }
 }

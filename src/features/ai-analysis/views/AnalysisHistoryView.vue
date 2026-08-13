@@ -82,7 +82,9 @@ function detailRoute(record) {
           <header class="record-card__header">
             <div class="record-card__heading">
               <strong>{{ record.title }}</strong>
-              <p>{{ record.date }}</p>
+              <p v-if="record.date">
+                {{ record.date }}
+              </p>
             </div>
             <div class="record-card__badges">
               <span

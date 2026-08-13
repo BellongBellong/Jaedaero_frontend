@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import consumptionIcon from '@/assets/icons/account/consumptionBlock.png'
@@ -8,14 +8,13 @@ import savingsIcon from '@/assets/icons/account/savingsBlock.png'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import returnRateIconBackground from '@/assets/simulations/return-rate-icon-bg.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
-import { getCashflow } from '@/features/cashflow/api/cashflow.api'
 import { getDashboard } from '@/features/dashboard/api/dashboard.api'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
-import { runSimulation } from '@/features/simulations/api/simulations.api'
+import { getSimulationDefaults, runSimulation } from '@/features/simulations/api/simulations.api'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 
-const MILITARY_SAVINGS_AMOUNT = 550_000
-const MILITARY_SAVINGS_RATE = 5
+const PREVIEW_DELAY_MS = 250
+const ALLOCATION_STEP = 10_000
 const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 
 const route = useRoute()
@@ -23,46 +22,46 @@ const router = useRouter()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router)
 const dashboard = ref(null)
 const profile = ref(null)
-const cashflow = ref(null)
-const spendingPercent = ref(30)
-const savingPercent = ref(30)
-const investmentPercent = ref(30)
+const simulationDefaults = ref(null)
+const spendingAmount = ref(0)
+const savingAmount = ref(0)
+const investmentAmount = ref(0)
 const annualReturnRate = ref(5)
-const hasAdjusted = ref(false)
-const isApplying = ref(false)
+const isSaving = ref(false)
+const isPreviewing = ref(false)
 const serverResult = ref(null)
 const errorMessage = ref('')
+const previewErrorMessage = ref('')
 const allocationErrorMessage = ref('')
-const appliedMessage = ref('')
+const savedMessage = ref('')
+let previewTimer = null
+let previewRequestId = 0
 
-const monthlySalary = computed(() => {
-  const firstCashflowMonth = cashflow.value?.months?.[0]
-  const totalExpectedSalary = Number(cashflow.value?.expectedSalary || 0)
-
-  return Math.max(
-    0,
-    Number(
-      firstCashflowMonth?.expectedSalary ??
-        firstCashflowMonth?.income ??
-        (totalExpectedSalary > 0
-          ? Math.round(totalExpectedSalary / remainingMonths.value)
-          : undefined) ??
-        dashboard.value?.thisMonthIncome ??
-        profile.value?.monthlySalary ??
-        profile.value?.soldierProfile?.monthlySalary ??
-        dashboard.value?.assetSnapshot?.income ??
-        0,
+const monthlySalary = computed(() =>
+  Math.max(0, Number(simulationDefaults.value?.referenceMonthlyIncome || 0)),
+)
+const maximumSavingAmount = computed(() =>
+  floorToAllocationStep(Number(simulationDefaults.value?.maxMonthlySavingAmount || 0)),
+)
+const maximumSpendingAmount = computed(() =>
+  floorToAllocationStep(monthlySalary.value - savingAmount.value - investmentAmount.value),
+)
+const availableSavingAmount = computed(() =>
+  floorToAllocationStep(
+    Math.min(
+      maximumSavingAmount.value,
+      Math.max(0, monthlySalary.value - spendingAmount.value - investmentAmount.value),
     ),
-  )
-})
-const savingAmount = computed(
-  () => Math.round((MILITARY_SAVINGS_AMOUNT * savingPercent.value) / 100 / 1000) * 1000,
+  ),
+)
+const maximumInvestmentAmount = computed(() =>
+  floorToAllocationStep(monthlySalary.value - spendingAmount.value - savingAmount.value),
 )
 const totalAllocatedAmount = computed(
-  () =>
-    amountFromPercent(spendingPercent.value) +
-    savingAmount.value +
-    amountFromPercent(investmentPercent.value),
+  () => spendingAmount.value + savingAmount.value + investmentAmount.value,
+)
+const unallocatedAmount = computed(() =>
+  Math.max(0, monthlySalary.value - totalAllocatedAmount.value),
 )
 const actualDischargeDday = computed(() => {
   if (dashboard.value?.actualDischargeDate) {
@@ -71,158 +70,136 @@ const actualDischargeDday = computed(() => {
 
   return Number(dashboard.value?.dischargeDday || 0)
 })
-const remainingMonths = computed(() => Math.max(1, Math.ceil(actualDischargeDday.value / 30)))
-const monthlyIncomeSchedule = computed(() => {
-  const apiMonths = Array.isArray(cashflow.value?.months) ? cashflow.value.months : []
-
-  return Array.from({ length: remainingMonths.value }, (_, index) => {
-    const apiIncome = Number(apiMonths[index]?.expectedSalary ?? apiMonths[index]?.income ?? 0)
-    return apiIncome > 0 ? apiIncome : monthlySalary.value
-  })
-})
-const currentAsset = computed(() =>
-  Number(dashboard.value?.totalAsset ?? dashboard.value?.currentAsset ?? 0),
-)
-const dashboardExpectedAsset = computed(() =>
-  Number(dashboard.value?.expectedAsset ?? dashboard.value?.projectedAssetAtDischarge ?? 0),
-)
 const actualDischargeDate = computed(
   () => dashboard.value?.actualDischargeDate || profile.value?.dischargeDate || '',
 )
+const financialDischargeDate = computed(() => serverResult.value?.financialDischargeDate || '')
 const financialDischargeDday = computed(() => {
-  const serverDate =
-    serverResult.value?.financialDischargeDate ?? dashboard.value?.financialDischargeDate
-
-  if (serverDate) return daysFromToday(serverDate)
-
-  return Number(
-    dashboard.value?.financialDischargeDday ??
-      Math.max(
-        0,
-        actualDischargeDday.value -
-          Number(
-            dashboard.value?.deltaDaysVsActual ??
-              dashboard.value?.financialDischargeDifferenceDays ??
-              0,
-          ),
-      ),
-  )
+  if (!financialDischargeDate.value) return null
+  return daysFromToday(financialDischargeDate.value)
 })
-const advancedDays = computed(() =>
-  Math.max(0, actualDischargeDday.value - financialDischargeDday.value),
-)
+const advancedDays = computed(() => {
+  if (!Number.isFinite(financialDischargeDday.value)) return null
+  return Math.max(0, actualDischargeDday.value - financialDischargeDday.value)
+})
+const financialDischargeMessage = computed(() => {
+  if (isPreviewing.value) return '변경한 조건으로 재정적 전역일을 계산하고 있어요.'
+  if (!financialDischargeDate.value) return '재정적 전역일을 계산할 정보가 부족해요.'
+  if (advancedDays.value > 0) return `실제 전역보다 ${advancedDays.value}일 빠른 것으로 예상돼요!`
+  return '전역일에 맞춰 목표 자산을 달성할 것으로 예상돼요!'
+})
 
 const allocationRows = computed(() => [
   {
     id: 'spending',
     label: '소비',
     icon: consumptionIcon,
-    percent: spendingPercent.value,
-    amount: amountFromPercent(spendingPercent.value),
-    max: 100,
+    amount: spendingAmount.value,
+    maxAmount: maximumSpendingAmount.value,
+    percent: percentageOfIncome(spendingAmount.value),
     color: '#e37255',
   },
   {
     id: 'saving',
-    label: '저축',
+    label: '군적금',
     icon: savingsIcon,
-    percent: savingPercent.value,
     amount: savingAmount.value,
-    max: 100,
+    maxAmount: availableSavingAmount.value,
+    percent: percentageOfIncome(savingAmount.value),
     color: '#3be178',
   },
   {
     id: 'investment',
     label: '투자',
     icon: investIcon,
-    percent: investmentPercent.value,
-    amount: amountFromPercent(investmentPercent.value),
-    max: 100,
+    amount: investmentAmount.value,
+    maxAmount: maximumInvestmentAmount.value,
+    percent: percentageOfIncome(investmentAmount.value),
     color: '#7c8e77',
   },
 ])
 
-const clientCalculation = computed(() => {
-  const months = monthlyIncomeSchedule.value.length
-  const monthlyInvestmentRate = annualReturnRate.value / 100 / 12
-  let savingPrincipal = 0
-  let savingInterest = 0
-  let investmentPrincipal = 0
-  let futureInvestmentValue = 0
-
-  monthlyIncomeSchedule.value.forEach((income, index) => {
-    const monthlySaving = Math.min(savingAmount.value, income)
-    const monthlyInvestment = Math.round((income * investmentPercent.value) / 100 / 1000) * 1000
-    savingPrincipal += monthlySaving
-    savingInterest += monthlySaving * (months - index) * (MILITARY_SAVINGS_RATE / 100 / 12)
-    investmentPrincipal += monthlyInvestment
-    futureInvestmentValue =
-      (futureInvestmentValue + monthlyInvestment) * (1 + monthlyInvestmentRate)
-  })
-
-  savingInterest = Math.round(savingInterest)
-  const investmentReturn = Math.max(0, Math.round(futureInvestmentValue - investmentPrincipal))
-
+const result = computed(() => ({
+  baseAsset: Number(serverResult.value?.calculationDetail?.baseAsset ?? 0),
+  cashflowIncrease: Number(serverResult.value?.calculationDetail?.cashflowIncreaseAmount ?? 0),
+  savingPrincipal: Number(serverResult.value?.calculationDetail?.soldierSavingPrincipal ?? 0),
+  savingInterest: Number(serverResult.value?.expectedEffect?.soldierSavingInterest ?? 0),
+  governmentMatching: Number(serverResult.value?.expectedEffect?.governmentMatchingSupport ?? 0),
+  investmentPrincipal: Number(serverResult.value?.calculationDetail?.investmentPrincipal ?? 0),
+  unallocatedPrincipal: Number(serverResult.value?.calculationDetail?.unallocatedPrincipal ?? 0),
+  investmentReturn: Number(serverResult.value?.expectedEffect?.expectedInvestmentReturn ?? 0),
+  projectedBenefit: Number(serverResult.value?.expectedEffect?.projectedBenefitAmount ?? 0),
+  savingAnnualRate: Number(
+    serverResult.value?.expectedEffect?.soldierSavingAnnualInterestRate ?? 5,
+  ),
+  investmentAnnualRate: Number(
+    serverResult.value?.expectedEffect?.investmentAnnualReturnRate ?? annualReturnRate.value,
+  ),
+  policyVersion: serverResult.value?.expectedEffect?.calculationPolicyVersion ?? '',
+  expectedAsset: Number(serverResult.value?.expectedAsset ?? 0),
+}))
+const verification = computed(() => {
+  const recomposedAsset =
+    result.value.baseAsset + result.value.cashflowIncrease + result.value.projectedBenefit
   return {
-    savingPrincipal,
-    savingInterest,
-    investmentPrincipal,
-    investmentReturn,
-    projectedAssetAtDischarge:
-      currentAsset.value +
-      savingPrincipal +
-      savingInterest +
-      investmentPrincipal +
-      investmentReturn,
+    recomposedAsset,
+    difference: result.value.expectedAsset - recomposedAsset,
+    isConsistent: hasSimulationResult.value && result.value.expectedAsset === recomposedAsset,
   }
 })
-
-const result = computed(() => ({
-  ...clientCalculation.value,
-  projectedAssetAtDischarge: Number(
-    serverResult.value?.projectedAssetAtDischarge ??
-      clientCalculation.value.projectedAssetAtDischarge,
-  ),
-}))
-
-const canApply = computed(() =>
-  Boolean(hasAdjusted.value && monthlySalary.value && !errorMessage.value),
+const hasSimulationResult = computed(() =>
+  Boolean(serverResult.value && Number.isFinite(Number(serverResult.value?.expectedAsset))),
+)
+const hasSavedSimulation = computed(() =>
+  Boolean(!isPreviewing.value && serverResult.value?.isSaved && serverResult.value?.simulationId),
 )
 
-function amountFromPercent(percent) {
-  return Math.round((monthlySalary.value * percent) / 100 / 1000) * 1000
-}
+const canSave = computed(() =>
+  Boolean(
+    monthlySalary.value &&
+    hasSimulationResult.value &&
+    !isPreviewing.value &&
+    !isSaving.value &&
+    totalAllocatedAmount.value <= monthlySalary.value &&
+    !previewErrorMessage.value,
+  ),
+)
 
 function updateAllocation(type, rawValue) {
-  const value = Math.max(0, Math.min(100, Number(rawValue)))
+  const row = allocationRows.value.find((item) => item.id === type)
+  const value = floorToAllocationStep(Math.max(0, Math.min(row?.maxAmount ?? 0, Number(rawValue))))
 
   if (type === 'spending') {
-    spendingPercent.value = value
+    spendingAmount.value = value
   } else if (type === 'saving') {
-    savingPercent.value = value
+    savingAmount.value = value
   } else {
-    investmentPercent.value = value
+    investmentAmount.value = value
   }
 
-  hasAdjusted.value = true
   allocationErrorMessage.value = ''
-  appliedMessage.value = ''
-  serverResult.value = null
+  savedMessage.value = ''
+  errorMessage.value = ''
+  schedulePreview()
 }
 
 function changeReturnRate(change) {
   annualReturnRate.value = Math.max(0, Math.min(15, annualReturnRate.value + change))
-  hasAdjusted.value = true
-  appliedMessage.value = ''
-  serverResult.value = null
+  savedMessage.value = ''
+  errorMessage.value = ''
+  schedulePreview()
 }
 
 function rangeProgress(row) {
-  return `${row.max ? (row.percent / row.max) * 100 : 0}%`
+  return `${row.maxAmount ? (row.amount / row.maxAmount) * 100 : 0}%`
 }
 
 function formatMoney(value) {
   return `${Math.round(Number(value || 0)).toLocaleString('ko-KR')}원`
+}
+
+function formatDday(value) {
+  return Number.isFinite(value) ? `D-${value}` : '-'
 }
 
 function formatDate(value) {
@@ -263,84 +240,167 @@ function unwrapApiData(response) {
   return response?.data ?? response ?? null
 }
 
+function percentageOfIncome(amount) {
+  if (!monthlySalary.value) return 0
+  return Math.max(0, (Number(amount || 0) / monthlySalary.value) * 100)
+}
+
+function floorToAllocationStep(value) {
+  return Math.floor(Math.max(0, Number(value || 0)) / ALLOCATION_STEP) * ALLOCATION_STEP
+}
+
+function formatPercent(value) {
+  return `${Number(value || 0).toLocaleString('ko-KR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })}%`
+}
+
+function formatRate(value) {
+  return Number(value || 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })
+}
+
+function applySimulationDefaults(defaults) {
+  simulationDefaults.value = defaults
+  spendingAmount.value = floorToAllocationStep(defaults?.monthlySpendingAmount)
+  savingAmount.value = floorToAllocationStep(defaults?.monthlySavingAmount)
+  investmentAmount.value = floorToAllocationStep(defaults?.monthlyInvestmentAmount)
+
+  if (defaults?.expectedReturnRate !== undefined && defaults?.expectedReturnRate !== null) {
+    annualReturnRate.value = Math.max(0, Math.min(15, Number(defaults.expectedReturnRate)))
+  }
+}
+
+function simulationPayload(isSaved) {
+  return {
+    monthlySpendingAmount: spendingAmount.value,
+    monthlySavingAmount: savingAmount.value,
+    monthlyInvestmentAmount: investmentAmount.value,
+    expectedReturnRate: annualReturnRate.value,
+    isSaved,
+  }
+}
+
+async function loadPreview(requestId = ++previewRequestId) {
+  if (totalAllocatedAmount.value > monthlySalary.value) {
+    allocationErrorMessage.value = '소비, 저축, 투자 금액의 합계는 월급을 초과할 수 없어요.'
+    isPreviewing.value = false
+    return
+  }
+
+  previewErrorMessage.value = ''
+
+  try {
+    const response = await runSimulation(simulationPayload(false))
+    if (requestId !== previewRequestId) return
+    serverResult.value = response
+  } catch (error) {
+    if (requestId !== previewRequestId) return
+    previewErrorMessage.value = getApiErrorMessage(
+      error,
+      '시뮬레이션 계산 결과를 불러오지 못했어요.',
+    )
+  } finally {
+    if (requestId === previewRequestId) isPreviewing.value = false
+  }
+}
+
+function schedulePreview({ immediate = false } = {}) {
+  if (previewTimer) clearTimeout(previewTimer)
+
+  const requestId = ++previewRequestId
+  previewErrorMessage.value = ''
+  isPreviewing.value = true
+
+  if (immediate) {
+    loadPreview(requestId)
+    return
+  }
+
+  previewTimer = setTimeout(() => {
+    previewTimer = null
+    loadPreview(requestId)
+  }, PREVIEW_DELAY_MS)
+}
+
 function scenarioSnapshot(simulationId = null) {
   return {
     simulationId,
     annualReturnRate: annualReturnRate.value,
-    spendingPercent: spendingPercent.value,
-    savingPercent: savingPercent.value,
-    investmentPercent: investmentPercent.value,
-    monthlyInvestmentAmount: amountFromPercent(investmentPercent.value),
-    currentAsset: currentAsset.value,
+    monthlySpendingAmount: spendingAmount.value,
+    monthlySavingAmount: savingAmount.value,
+    monthlyInvestmentAmount: investmentAmount.value,
+    spendingPercent: percentageOfIncome(spendingAmount.value),
+    savingPercent: percentageOfIncome(savingAmount.value),
+    investmentPercent: percentageOfIncome(investmentAmount.value),
+    currentAsset: result.value.baseAsset,
+    expectedAsset: result.value.expectedAsset,
     generatedAt: new Date().toISOString(),
   }
 }
 
-async function applySimulation() {
-  if (!canApply.value || isApplying.value) return
+async function saveSimulation() {
+  if (!canSave.value || isSaving.value) return
 
   allocationErrorMessage.value = ''
   if (totalAllocatedAmount.value > monthlySalary.value) {
     allocationErrorMessage.value = '소비, 저축, 투자 금액의 합계는 월급을 초과할 수 없어요.'
-    appliedMessage.value = ''
+    savedMessage.value = ''
     return
   }
 
-  isApplying.value = true
+  isSaving.value = true
   errorMessage.value = ''
 
   try {
-    const response = await runSimulation({
-      monthlySpendingAmount: amountFromPercent(spendingPercent.value),
-      monthlySavingAmount: savingAmount.value,
-      monthlyInvestmentAmount: amountFromPercent(investmentPercent.value),
-      expectedReturnRate: annualReturnRate.value,
-    })
+    const response = await runSimulation(simulationPayload(true))
     serverResult.value = response
     await completeMissionAfterLoad()
     sessionStorage.setItem(
       SIMULATION_STORAGE_KEY,
-      JSON.stringify(scenarioSnapshot(response?.id ?? null)),
+      JSON.stringify(scenarioSnapshot(response?.simulationId ?? null)),
     )
-    appliedMessage.value = '시뮬레이션을 적용했어요.'
+    savedMessage.value = '시뮬레이션을 저장했어요.'
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
       error,
-      '시뮬레이션을 적용하지 못했어요. 잠시 후 다시 시도해주세요.',
+      '시뮬레이션을 저장하지 못했어요. 잠시 후 다시 시도해주세요.',
     )
   } finally {
-    isApplying.value = false
+    isSaving.value = false
   }
 }
 
 function openRecommendations() {
   sessionStorage.setItem(
     SIMULATION_STORAGE_KEY,
-    JSON.stringify(scenarioSnapshot(serverResult.value?.id)),
+    JSON.stringify(scenarioSnapshot(serverResult.value?.simulationId)),
   )
   router.push({ name: 'ai-product-recommendation' })
 }
 
 onMounted(async () => {
-  try {
-    const [dashboardResult, profileResult] = await Promise.allSettled([
-      getDashboard(),
-      getMyPageProfile(),
-    ])
+  const [dashboardResult, profileResult, defaultsResult] = await Promise.allSettled([
+    getDashboard(),
+    getMyPageProfile(),
+    getSimulationDefaults(),
+  ])
 
-    if (dashboardResult.status === 'rejected') throw dashboardResult.reason
+  dashboard.value =
+    dashboardResult.status === 'fulfilled' ? unwrapApiData(dashboardResult.value) : null
+  profile.value = profileResult.status === 'fulfilled' ? unwrapApiData(profileResult.value) : null
 
-    dashboard.value = unwrapApiData(dashboardResult.value)
-    profile.value = profileResult.status === 'fulfilled' ? unwrapApiData(profileResult.value) : null
-
-    try {
-      cashflow.value = await getCashflow(remainingMonths.value)
-    } catch {
-      cashflow.value = null
-    }
-  } catch {
+  if (defaultsResult.status === 'fulfilled') {
+    applySimulationDefaults(defaultsResult.value)
+    schedulePreview({ immediate: true })
+  } else {
     errorMessage.value = '시뮬레이션에 필요한 정보를 불러오지 못했어요.'
   }
+})
+
+onBeforeUnmount(() => {
+  if (previewTimer) clearTimeout(previewTimer)
+  previewRequestId += 1
 })
 </script>
 
@@ -350,19 +410,17 @@ onMounted(async () => {
       <section class="discharge-card">
         <div class="discharge-card__forecast">
           <span>재정적 전역일</span>
-          <strong>D-{{ financialDischargeDday }}</strong>
-          <small>실제 전역보다 {{ advancedDays }}일 빠른 것으로 예상돼요!</small>
+          <strong>{{ formatDday(financialDischargeDday) }}</strong>
+          <small>{{ financialDischargeMessage }}</small>
         </div>
         <div class="discharge-card__actual">
           <span>실제 전역일</span>
-          <strong>D-{{ actualDischargeDday }}</strong>
+          <strong>{{ formatDday(actualDischargeDday) }}</strong>
           <small>{{ formatDate(actualDischargeDate) }}</small>
         </div>
         <div class="discharge-card__asset">
           <span>전역 예상 자산</span>
-          <strong>{{
-            formatMoney(canApply ? result.projectedAssetAtDischarge : dashboardExpectedAsset)
-          }}</strong>
+          <strong>{{ hasSimulationResult ? formatMoney(result.expectedAsset) : '-' }}</strong>
         </div>
       </section>
 
@@ -370,50 +428,55 @@ onMounted(async () => {
         <header>
           <h2>자금 배분</h2>
           <p>앞으로의 월급 배분에 따라 달라지는 전역 자산을 확인해요</p>
+          <small>소비·투자는 월급과 같은 비율로 늘고, 군적금은 매월 같은 금액을 납입해요.</small>
         </header>
 
         <div class="allocation-list">
           <div
             v-for="row in allocationRows"
             :key="row.id"
-            class="allocation-row"
-            :class="{ 'allocation-row--active': hasAdjusted }"
+            class="allocation-row allocation-row--active"
           >
             <img
               :src="row.icon"
               alt=""
               aria-hidden="true"
-            />
+            >
             <label :for="`allocation-${row.id}`">{{ row.label }}</label>
             <input
               :id="`allocation-${row.id}`"
               type="range"
               min="0"
-              :max="row.max"
-              :value="row.percent"
-              :aria-label="`${row.label} 비율`"
+              :max="row.maxAmount"
+              :step="ALLOCATION_STEP"
+              :value="row.amount"
+              :aria-label="`${row.label} 월 금액`"
               :style="{
                 '--range-progress': rangeProgress(row),
-                '--range-color': hasAdjusted ? row.color : '#bdbdbd',
+                '--range-color': row.color,
               }"
               @input="updateAllocation(row.id, $event.target.value)"
-            />
-            <output :for="`allocation-${row.id}`">{{ row.percent }}%</output>
+            >
+            <output :for="`allocation-${row.id}`">{{ formatMoney(row.amount) }}</output>
             <span
               v-if="row.id === 'investment'"
               class="allocation-note"
             >
               군적금 외 모든 저축, 투자 자산 비율 설정
             </span>
-            <small>
-              {{ hasAdjusted ? formatMoney(row.amount) : '-' }}
-            </small>
+            <small> 기준 월급의 {{ formatPercent(row.percent) }} </small>
           </div>
+        </div>
+
+        <div class="allocation-summary">
+          <span>미배분 금액</span>
+          <strong>{{ formatMoney(unallocatedAmount) }}</strong>
+          <small>{{ formatPercent(percentageOfIncome(unallocatedAmount)) }}</small>
         </div>
       </section>
 
       <section class="return-card">
-        <h2>예상 수익률</h2>
+        <h2>예상 연 수익률</h2>
         <div class="return-control">
           <span
             class="return-control__icon"
@@ -422,13 +485,13 @@ onMounted(async () => {
             <img
               :src="returnRateIconBackground"
               alt=""
-            />
+            >
             <b>🤑</b>
           </span>
           <span>수익률</span>
           <button
             type="button"
-            aria-label="예상 수익률 1퍼센트 낮추기"
+            aria-label="예상 연 수익률 1퍼센트 낮추기"
             @click="changeReturnRate(-1)"
           >
             −
@@ -436,48 +499,105 @@ onMounted(async () => {
           <output>{{ annualReturnRate }} <b>%</b></output>
           <button
             type="button"
-            aria-label="예상 수익률 1퍼센트 높이기"
+            aria-label="예상 연 수익률 1퍼센트 높이기"
             @click="changeReturnRate(1)"
           >
             +
           </button>
         </div>
+        <p class="return-card__hint">
+          연 수익률을 월 단위로 환산해 기존 투자 원금과 매월 납입금의 예상 수익을 계산해요.
+        </p>
       </section>
 
       <section class="result-card">
-        <h2>AI 계산 결과</h2>
+        <h2>시뮬레이션 계산 결과</h2>
         <div class="result-panel">
-          <dl>
+          <h3>최종 금액 구성</h3>
+          <dl class="result-breakdown">
             <div>
-              <dt>저축 원금</dt>
-              <dd>{{ canApply ? formatMoney(result.savingPrincipal) : '- 원' }}</dd>
+              <dt>현재 기준 자산</dt>
+              <dd>{{ hasSimulationResult ? formatMoney(result.baseAsset) : '- 원' }}</dd>
             </div>
             <div>
-              <dt>군적금 이자 (연 5%)</dt>
-              <dd>{{ canApply ? formatMoney(result.savingInterest) : '- 원' }}</dd>
+              <dt>급여에서 소비를 뺀 순증가</dt>
+              <dd>{{ hasSimulationResult ? formatMoney(result.cashflowIncrease) : '- 원' }}</dd>
+            </div>
+            <div>
+              <dt>예상 혜택 합계</dt>
+              <dd>{{ hasSimulationResult ? formatMoney(result.projectedBenefit) : '- 원' }}</dd>
+            </div>
+          </dl>
+
+          <h3>예상 혜택 상세</h3>
+          <dl class="result-breakdown">
+            <div>
+              <dt>군적금 단리 이자 (연 {{ formatRate(result.savingAnnualRate) }}%)</dt>
+              <dd>{{ hasSimulationResult ? formatMoney(result.savingInterest) : '- 원' }}</dd>
+            </div>
+            <div>
+              <dt>예상 정부 매칭지원금</dt>
+              <dd>{{ hasSimulationResult ? formatMoney(result.governmentMatching) : '- 원' }}</dd>
+            </div>
+            <div>
+              <dt>예상 투자 수익 (연 {{ formatRate(result.investmentAnnualRate) }}%)</dt>
+              <dd>{{ hasSimulationResult ? formatMoney(result.investmentReturn) : '- 원' }}</dd>
+            </div>
+          </dl>
+
+          <h3>수익 계산 기준 원금</h3>
+          <dl class="result-breakdown">
+            <div>
+              <dt>군적금 원금</dt>
+              <dd>{{ hasSimulationResult ? formatMoney(result.savingPrincipal) : '- 원' }}</dd>
             </div>
             <div>
               <dt>투자 원금</dt>
-              <dd>{{ canApply ? formatMoney(result.investmentPrincipal) : '- 원' }}</dd>
+              <dd>{{ hasSimulationResult ? formatMoney(result.investmentPrincipal) : '- 원' }}</dd>
             </div>
             <div>
-              <dt>예상 투자 수익 (연 {{ annualReturnRate }}%)</dt>
-              <dd>{{ canApply ? formatMoney(result.investmentReturn) : '- 원' }}</dd>
+              <dt>미배분 누적 원금</dt>
+              <dd>{{ hasSimulationResult ? formatMoney(result.unallocatedPrincipal) : '- 원' }}</dd>
             </div>
           </dl>
+          <p class="result-panel__note">
+            군적금·투자 원금은 월급 배분에 이미 포함되어 최종 금액에 다시 더하지 않아요.
+          </p>
           <div class="result-total">
-            <strong>전역 예상 자산</strong>
-            <b>{{ canApply ? formatMoney(result.projectedAssetAtDischarge) : '-원' }}</b>
+            <span>
+              <strong>전역 예상 자산</strong>
+              <small>군적금 이자·매칭지원금과 투자 예상 수익을 포함해요</small>
+            </span>
+            <b>{{ hasSimulationResult ? formatMoney(result.expectedAsset) : '-원' }}</b>
           </div>
+          <p
+            v-if="hasSimulationResult"
+            class="result-verification"
+            :class="{ 'result-verification--error': !verification.isConsistent }"
+          >
+            {{
+              verification.isConsistent
+                ? '현재 자산 + 순증가 + 예상 혜택 합계가 일치해요.'
+                : `계산 상세와 최종 금액이 ${formatMoney(Math.abs(verification.difference))} 차이 나요.`
+            }}
+          </p>
         </div>
+
+        <p
+          v-if="isPreviewing"
+          class="result-message"
+          role="status"
+        >
+          변경한 조건으로 다시 계산하고 있어요.
+        </p>
 
         <button
           class="apply-button"
           type="button"
-          :disabled="!canApply || isApplying"
-          @click="applySimulation"
+          :disabled="!canSave"
+          @click="saveSimulation"
         >
-          {{ isApplying ? '계산을 적용하는 중...' : '시뮬레이션 대로 적용하기' }}
+          {{ isSaving ? '시뮬레이션 저장 중...' : '시뮬레이션 저장하기' }}
         </button>
         <p
           v-if="allocationErrorMessage"
@@ -487,23 +607,23 @@ onMounted(async () => {
           {{ allocationErrorMessage }}
         </p>
         <p
-          v-if="appliedMessage"
+          v-if="savedMessage"
           class="result-message result-message--success"
           role="status"
         >
-          {{ appliedMessage }}
+          {{ savedMessage }}
         </p>
         <p
-          v-if="errorMessage"
+          v-if="previewErrorMessage || errorMessage"
           class="result-message"
           role="alert"
         >
-          {{ errorMessage }}
+          {{ previewErrorMessage || errorMessage }}
         </p>
       </section>
 
       <button
-        v-if="canApply"
+        v-if="hasSavedSimulation"
         class="recommendation-button"
         type="button"
         @click="openRecommendations"
@@ -513,7 +633,7 @@ onMounted(async () => {
             :src="aiRecommendationBot"
             alt=""
             aria-hidden="true"
-          />
+          >
         </span>
         <span>
           <small>연 {{ annualReturnRate }}% 수익 맞춤 상품을 추천해드릴게요!</small>
@@ -650,6 +770,14 @@ onMounted(async () => {
   line-height: 1.5;
 }
 
+.allocation-card header small {
+  display: block;
+  margin-top: 4px;
+  color: var(--gray-500);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
 .allocation-list {
   display: flex;
   flex-direction: column;
@@ -659,9 +787,9 @@ onMounted(async () => {
 
 .allocation-row {
   display: grid;
-  grid-template-columns: 30px 36px minmax(80px, 1fr) 58px;
+  grid-template-columns: 30px 42px minmax(60px, 1fr) 86px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .allocation-row > img {
@@ -731,11 +859,11 @@ onMounted(async () => {
 }
 
 .allocation-row output {
-  padding: 9px 10px;
+  padding: 9px 6px;
   border-radius: 15px;
   background: var(--gray-50);
   color: var(--gray-400);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   text-align: center;
 }
@@ -776,9 +904,45 @@ onMounted(async () => {
   grid-column: 4;
 }
 
+.allocation-summary {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px solid var(--gray-200);
+  color: var(--gray-600);
+}
+
+.allocation-summary span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.allocation-summary strong {
+  color: var(--gray-900);
+  font-size: 13px;
+}
+
+.allocation-summary small {
+  min-width: 44px;
+  color: var(--green-700);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+}
+
 .return-card {
   padding: 14px 16px 16px;
   background: rgb(255 255 255 / 90%);
+}
+
+.return-card__hint {
+  margin: 8px 2px 0;
+  color: var(--gray-500);
+  font-size: 9px;
+  line-height: 1.45;
 }
 
 .return-control {
@@ -864,6 +1028,18 @@ onMounted(async () => {
   background: #fff;
 }
 
+.result-panel h3 {
+  margin: 12px 0 6px;
+  color: var(--gray-500);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.result-panel h3:first-child {
+  margin-top: 0;
+}
+
 .result-panel dl {
   display: flex;
   flex-direction: column;
@@ -894,6 +1070,16 @@ onMounted(async () => {
   font-weight: 600;
 }
 
+.result-panel__note {
+  padding: 7px 9px;
+  margin: 10px 0 0;
+  border-radius: 10px;
+  background: var(--gray-50);
+  color: var(--gray-500);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
 .result-total {
   padding-top: 10px;
   margin-top: 10px;
@@ -904,9 +1090,35 @@ onMounted(async () => {
   font-size: 14px;
 }
 
+.result-total > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.result-total small {
+  margin-top: 2px;
+  color: var(--gray-400);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
 .result-total b {
+  flex: none;
   color: var(--green-700);
   font-size: 16px;
+}
+
+.result-verification {
+  margin: 7px 0 0;
+  color: var(--green-700);
+  font-size: 9px;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.result-verification--error {
+  color: var(--orange-700);
 }
 
 .apply-button {
@@ -1001,8 +1213,8 @@ onMounted(async () => {
 
 @media (max-width: 360px) {
   .allocation-row {
-    grid-template-columns: 30px 32px minmax(64px, 1fr) 52px;
-    gap: 7px;
+    grid-template-columns: 28px 40px minmax(50px, 1fr) 80px;
+    gap: 6px;
   }
 
   .return-control {
