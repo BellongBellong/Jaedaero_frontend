@@ -4,7 +4,12 @@ import { useRoute, useRouter } from 'vue-router'
 
 import accountIcon from '@/assets/onboarding/icons/account-general.svg'
 import militarySavingsIcon from '@/assets/onboarding/icons/account-military-savings.svg'
-import { disconnectAccount, getAccounts } from '@/features/accounts/api/accounts.api'
+import {
+  disconnectAccount,
+  getAccounts,
+  reconnectAccount as reconnectAccountRequest,
+  rememberDisconnectedAccount,
+} from '@/features/accounts/api/accounts.api'
 import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import {
   accountConnectionStatus,
@@ -21,6 +26,9 @@ const loadError = ref('')
 const actionError = ref('')
 const selectedAccount = ref(null)
 const disconnecting = ref(false)
+const reconnectingAccountId = ref(null)
+const reconnectError = ref('')
+const reconnectErrorAccountId = ref(null)
 const institutionAssets = import.meta.glob('@/assets/onboarding/institutions/*.svg', {
   eager: true,
   import: 'default',
@@ -103,6 +111,33 @@ function displayAccountNumber(account) {
   )
 }
 
+function isDisconnected(account) {
+  return accountConnectionStatus(account) === 'disconnected'
+}
+
+async function reconnectAccount(account) {
+  const accountId = account.accountId || account.id
+  if (!accountId || reconnectingAccountId.value !== null) return
+
+  reconnectingAccountId.value = accountId
+  reconnectError.value = ''
+  reconnectErrorAccountId.value = null
+
+  try {
+    await reconnectAccountRequest(account)
+    accounts.value = accounts.value.map((item) =>
+      String(item.accountId || item.id) === String(accountId)
+        ? { ...item, accountStatus: 'ACTIVE', isActive: true }
+        : item,
+    )
+  } catch {
+    reconnectErrorAccountId.value = accountId
+    reconnectError.value = '다시 연동하지 못했어요. 잠시 후 다시 시도해 주세요.'
+  } finally {
+    reconnectingAccountId.value = null
+  }
+}
+
 async function loadAccounts() {
   loading.value = true
   loadError.value = ''
@@ -132,6 +167,7 @@ async function confirmDisconnect() {
   try {
     const disconnectedId = selectedAccount.value.accountId
     await disconnectAccount(disconnectedId)
+    rememberDisconnectedAccount(selectedAccount.value)
     accounts.value = accounts.value.map((account) =>
       account.accountId === disconnectedId
         ? { ...account, accountStatus: 'DISCONNECTED' }
@@ -237,10 +273,23 @@ onMounted(loadAccounts)
         <button
           type="button"
           class="disconnect-button"
-          @click="openDisconnectModal(account)"
+          :disabled="reconnectingAccountId !== null"
+          @click="
+            isDisconnected(account) ? reconnectAccount(account) : openDisconnectModal(account)
+          "
         >
-          연결 해제하기
+          {{
+            reconnectingAccountId === account.accountId
+              ? '연동 중...'
+              : isDisconnected(account)
+                ? '다시 연동하기'
+                : '연결 해제하기'
+          }}
         </button>
+        <small
+          v-if="reconnectErrorAccountId === account.accountId"
+          class="reconnect-error"
+        >{{ reconnectError }}</small>
       </li>
     </ul>
 
@@ -451,6 +500,17 @@ onMounted(loadAccounts)
 .disconnect-button:focus-visible {
   outline: 2px solid #333;
   outline-offset: 2px;
+}
+.disconnect-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.reconnect-error {
+  display: block;
+  margin-top: 9px;
+  color: #e45757;
+  font-size: 12px;
+  text-align: center;
 }
 .state-message {
   padding: 54px 20px;

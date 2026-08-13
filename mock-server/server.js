@@ -183,13 +183,24 @@ server.get('/api/v1/codef/institutions/securities', (_req, res) =>
 )
 
 server.post('/api/v1/accounts/connect', (req, res) => {
+  const accountId = Number(req.body?.accountId)
   const organizationCode = String(req.body?.organizationCode || '')
 
-  if (organizationCode) {
+  if (Number.isInteger(accountId) && accountId > 0) {
+    const account = db.get('connectedAccounts').find({ id: accountId }).value()
+
+    if (!account) return res.status(404).json({ message: 'Account not found' })
+
+    db.get('connectedAccounts')
+      .find({ id: accountId })
+      .assign({ accountStatus: 'ACTIVE', isActive: true })
+      .write()
+  } else if (organizationCode) {
     db.get('connectedAccounts')
       .filter((account) => String(account.organizationCode || '') === organizationCode)
       .each((account) => {
         account.accountStatus = 'ACTIVE'
+        account.isActive = true
       })
       .write()
   }
@@ -210,6 +221,14 @@ server.delete('/api/v1/accounts/:accountId', (req, res) => {
   const updated = { ...account, accountStatus: 'DISCONNECTED' }
   db.get('connectedAccounts').find({ id: accountId }).assign(updated).write()
   res.status(204).end()
+})
+server.get('/api/v1/accounts', (req, res) => {
+  const userId = Number(req.query.userId)
+  const accounts = Number.isNaN(userId)
+    ? list('connectedAccounts')
+    : list('connectedAccounts').filter((account) => Number(account.userId) === userId)
+
+  res.status(200).json(accounts)
 })
 server.get('/api/v1/accounts/:userId', (req, res) => {
   const userId = Number(req.params.userId)
