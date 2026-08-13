@@ -188,13 +188,7 @@ async function submitPlan() {
     const guidance = await createInvestmentGuidance()
     sessionStorage.setItem('latestInvestmentGuidance', JSON.stringify(guidance || {}))
     await holdLoadingUntilMinimum(loadingStartedAt)
-    router.replace({
-      name: 'investment-guide-result',
-      query:
-        guidance?.guidanceId || guidance?.id
-          ? { guidanceId: guidance.guidanceId || guidance.id }
-          : {},
-    })
+    router.replace({ name: 'investment-guide' })
   } catch (error) {
     saveError.value =
       error?.response?.data?.message || '적립 계획을 저장하지 못했어요. 잠시 후 다시 시도해주세요.'
