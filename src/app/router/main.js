@@ -167,6 +167,7 @@ const mainRoutes = [
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
           headerTitle: 'What-if 시뮬레이션',
+          hideBackOnScroll: true,
         },
       },
       {

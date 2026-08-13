@@ -13,6 +13,7 @@ defineProps({
   badge: { type: String, default: '' },
   variant: { type: String, default: 'back' },
   collapsed: { type: Boolean, default: false },
+  hideBackWhenCollapsed: { type: Boolean, default: false },
 })
 
 const router = useRouter()
@@ -41,7 +42,10 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
     class="app-header"
     :class="[
       `app-header--${variant}`,
-      { 'app-header--collapsed': collapsed && variant !== 'home' },
+      {
+        'app-header--collapsed': collapsed && variant !== 'home',
+        'app-header--hide-collapsed-back': hideBackWhenCollapsed,
+      },
     ]"
   >
     <template v-if="variant === 'home'">
@@ -122,6 +126,9 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
   left: max(var(--layout-page-padding), var(--safe-area-left));
   z-index: 1;
   margin: 0;
+}
+.app-header--collapsed.app-header--hide-collapsed-back .app-header__back {
+  display: none;
 }
 .app-header--home {
   align-items: center;
