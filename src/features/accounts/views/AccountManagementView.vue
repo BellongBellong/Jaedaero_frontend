@@ -7,6 +7,8 @@ import militarySavingsIcon from '@/assets/onboarding/icons/account-military-savi
 import { disconnectAccount, getAccounts } from '@/features/accounts/api/accounts.api'
 import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import {
+  accountConnectionStatus,
+  accountConnectionStatusLabel,
   accountInstitutionKey,
   accountInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
@@ -130,11 +132,12 @@ async function confirmDisconnect() {
   try {
     const disconnectedId = selectedAccount.value.accountId
     await disconnectAccount(disconnectedId)
-    accounts.value = accounts.value.filter((account) => account.accountId !== disconnectedId)
+    accounts.value = accounts.value.map((account) =>
+      account.accountId === disconnectedId
+        ? { ...account, accountStatus: 'DISCONNECTED' }
+        : account,
+    )
     selectedAccount.value = null
-    if (institutionAccounts.value.length === 0) {
-      await router.replace({ name: 'connected-banks' })
-    }
   } catch {
     actionError.value = '연결을 해제하지 못했어요. 잠시 후 다시 시도해주세요.'
   } finally {
@@ -217,7 +220,16 @@ onMounted(loadAccounts)
           <span class="account-copy">
             <span>
               <b>{{ displayAccountName(account) }}</b>
-              <em v-if="isMilitarySavings(account)">필수</em>
+              <span class="account-tags">
+                <em
+                  class="account-status"
+                  :class="`account-status--${accountConnectionStatus(account)}`"
+                >{{ accountConnectionStatusLabel(account) }}</em>
+                <em
+                  v-if="isMilitarySavings(account)"
+                  class="military-tag"
+                >필수</em>
+              </span>
             </span>
             <small>{{ displayAccountNumber(account) }}</small>
           </span>
@@ -381,6 +393,11 @@ onMounted(loadAccounts)
   align-items: center;
   gap: 9px;
 }
+.account-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .account-copy b {
   overflow: hidden;
   font-size: 17px;
@@ -390,11 +407,21 @@ onMounted(loadAccounts)
 .account-copy em {
   padding: 4px 9px;
   border-radius: 13px;
-  background: #e4fff0;
-  color: #20ba5c;
   font-size: 11px;
   font-style: normal;
   font-weight: 700;
+}
+.account-status--active {
+  background: #e4fff0;
+  color: #20ba5c;
+}
+.account-status--disconnected {
+  background: #fff0f0;
+  color: #e45757;
+}
+.military-tag {
+  background: #e4fff0;
+  color: #20ba5c;
 }
 .account-copy small {
   color: #999;

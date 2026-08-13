@@ -14,6 +14,7 @@ import {
   getAccounts,
 } from '@/features/accounts/api/accounts.api'
 import {
+  accountConnectionStatus,
   accountInstitutionName,
   accountOrganizationCode,
   matchesAccountInstitution,
@@ -204,7 +205,8 @@ function isInstitutionConnected(institution) {
   return connectedInstitutions.value.some(
     (connection) =>
       connection.businessType === form.value.businessType &&
-      connection.institution.organizationCode === institution.organizationCode,
+      connection.institution.organizationCode === institution.organizationCode &&
+      connection.accounts.some((account) => accountConnectionStatus(account) === 'active'),
   )
 }
 
@@ -406,12 +408,23 @@ async function confirmAccounts() {
     await Promise.all(
       accountsToRemove.map((account) => disconnectAccount(account.accountId ?? account.id)),
     )
-    connectedInstitutions.value.push({
+    const connection = {
       id: `${form.value.businessType}-${form.value.organizationCode}-${Date.now()}`,
       businessType: form.value.businessType,
       institution: { ...selectedInstitution.value },
       accounts: selectedAccounts,
-    })
+    }
+    const existingConnectionIndex = connectedInstitutions.value.findIndex(
+      (item) =>
+        item.businessType === connection.businessType &&
+        item.institution.organizationCode === connection.institution.organizationCode,
+    )
+
+    if (existingConnectionIndex >= 0) {
+      connectedInstitutions.value.splice(existingConnectionIndex, 1, connection)
+    } else {
+      connectedInstitutions.value.push(connection)
+    }
     markConnected()
     accountsModalOpen.value = false
     showConnectedSummary.value = true
@@ -613,7 +626,7 @@ onBeforeUnmount(abortAccountRequest)
           >✓</span>
         </article>
         <p
-          v-if="!isAdditionalConnection"
+          v-if="!isAdditionalConnection && form.businessType === 'BK'"
           class="additional-tip"
         >
           💡 군적금 계좌가 있다면 연동해보세요!
@@ -792,12 +805,11 @@ onBeforeUnmount(abortAccountRequest)
               한 번에 하나씩만 가능해요.
             </p>
           </header>
-          <p class="sheet-tip">
-            {{
-              isSecuritiesOnly
-                ? '💡 보유 중인 투자 자산이 있는 증권사를 선택해주세요.'
-                : '💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.'
-            }}
+          <p
+            v-if="form.businessType === 'BK'"
+            class="sheet-tip"
+          >
+            💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.
           </p>
           <div class="institution-list">
             <button
