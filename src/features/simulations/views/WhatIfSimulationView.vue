@@ -492,10 +492,7 @@ onBeforeUnmount(() => {
             v-for="row in allocationRows"
             :key="row.id"
             class="allocation-row"
-            :class="{
-              'allocation-row--active': hasScenarioChanges,
-              'allocation-row--inactive': !hasScenarioChanges,
-            }"
+            :class="{ 'allocation-row--active': hasScenarioChanges }"
           >
             <img
               :src="row.icon"
@@ -892,29 +889,6 @@ onBeforeUnmount(() => {
   border: 0;
   border-radius: 50%;
   background: var(--range-color);
-}
-
-.allocation-row--inactive input::-webkit-slider-runnable-track {
-  background: var(--gray-200);
-}
-
-.allocation-row--inactive input::-webkit-slider-thumb {
-  background: radial-gradient(circle at 48% 42%, #aaa 0 28%, #858585 66%, #aaa 100%);
-  box-shadow:
-    inset 0 1px 2px rgb(255 255 255 / 42%),
-    0 1px 3px rgb(0 0 0 / 26%);
-}
-
-.allocation-row--inactive input::-moz-range-progress,
-.allocation-row--inactive input::-moz-range-track {
-  background: var(--gray-200);
-}
-
-.allocation-row--inactive input::-moz-range-thumb {
-  background: radial-gradient(circle at 48% 42%, #aaa 0 28%, #858585 66%, #aaa 100%);
-  box-shadow:
-    inset 0 1px 2px rgb(255 255 255 / 42%),
-    0 1px 3px rgb(0 0 0 / 26%);
 }
 
 .allocation-row input:focus-visible {
