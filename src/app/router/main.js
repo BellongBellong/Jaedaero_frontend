@@ -28,13 +28,25 @@ const mainRoutes = [
         path: 'challenge',
         name: 'challenge',
         component: () => import('@/features/challenges/views/ChallengeView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'challenge', headerTitle: '챌린지' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'challenge',
+          headerTitle: '챌린지',
+          headerVariant: 'title',
+          stickyTabs: true,
+          keepHeaderOnScroll: true,
+        },
       },
       {
         path: 'mypage',
         name: 'mypage',
         component: () => import('@/features/my-page/views/MyPageView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'profile', headerTitle: '마이페이지' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'profile',
+          headerTitle: '마이페이지',
+          headerVariant: 'title',
+        },
       },
       {
         path: 'mypage/connected-banks',
@@ -52,7 +64,12 @@ const mainRoutes = [
         path: 'transactions',
         name: 'transactions',
         component: () => import('@/features/transactions/views/TransactionHistoryView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          hideHeader: true,
+          stickyTabs: true,
+        },
       },
       {
         path: 'upcoming-events',
@@ -64,7 +81,12 @@ const mainRoutes = [
         path: 'monthly-asset-report',
         name: 'monthly-asset-report',
         component: () => import('@/features/dashboard/views/MonthlyAssetReportView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '이번 달 자산 현황' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          headerTitle: '이번 달 자산 현황',
+          stickyTabs: true,
+        },
       },
       {
         path: 'assets',
@@ -76,7 +98,12 @@ const mainRoutes = [
         path: 'assets/accounts',
         name: 'account-assets',
         component: () => import('@/features/dashboard/views/AccountAssetsView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          hideHeader: true,
+          stickyTabs: true,
+        },
       },
       {
         path: 'transactions/detail/:transactionId',
@@ -119,6 +146,7 @@ const mainRoutes = [
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
           headerTitle: 'AI 분석 기록',
+          stickyTabs: true,
         },
       },
       {
@@ -148,10 +176,18 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'ai-coach', hideHeader: true },
       },
       {
-        path: 'rebalancing',
-        name: 'rebalancing',
+        path: 'investment-guide',
+        name: 'investment-guide',
         component: () => import('@/features/rebalancing/views/RebalancingView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'ai-coach', headerTitle: '리밸런싱' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '적립식 투자 가이드',
+        },
+      },
+      {
+        path: 'rebalancing',
+        redirect: { name: 'investment-guide' },
       },
       {
         path: 'badge-history',

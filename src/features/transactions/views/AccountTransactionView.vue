@@ -13,7 +13,10 @@ const route = useRoute()
 const router = useRouter()
 const copied = ref(false)
 const filterOpen = ref(false)
-const loadedTransactions = ref(transactionResponses)
+const usesMockScenario = computed(() => Boolean(route.query.persona || route.query.scenario))
+const loadedTransactions = ref(usesMockScenario.value ? transactionResponses : [])
+const loading = ref(!usesMockScenario.value)
+const loadError = ref(null)
 const transactionFilter = ref('ALL')
 const filterOptions = [
   { value: 'ALL', label: '전체' },
@@ -75,13 +78,15 @@ function openTransaction(transaction) {
 }
 
 onMounted(async () => {
-  const usesMockScenario = Boolean(route.query.persona || route.query.scenario)
-  if (usesMockScenario) return
+  if (usesMockScenario.value) return
 
   try {
     loadedTransactions.value = await getTransactions({ accountId: route.params.accountId })
-  } catch {
-    loadedTransactions.value = transactionResponses
+  } catch (error) {
+    loadError.value = error
+    loadedTransactions.value = []
+  } finally {
+    loading.value = false
   }
 })
 </script>
@@ -142,7 +147,19 @@ onMounted(async () => {
           aria-hidden="true"
         >
       </button>
-      <ul v-if="accountTransactions.length">
+      <p
+        v-if="loading"
+        aria-live="polite"
+      >
+        거래 내역을 불러오고 있어요.
+      </p>
+      <p
+        v-else-if="loadError"
+        role="alert"
+      >
+        거래 내역을 불러오지 못했어요.
+      </p>
+      <ul v-else-if="accountTransactions.length">
         <AccountTransactionItem
           v-for="transaction in accountTransactions"
           :key="transaction.id"

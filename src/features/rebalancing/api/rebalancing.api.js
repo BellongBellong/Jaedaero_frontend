@@ -6,6 +6,11 @@ export async function getRebalancingRecommendation() {
   return data
 }
 
+export async function getRecurringInvestmentPlan() {
+  const { data } = await apiClient.get(ENDPOINTS.recurringInvestmentPlans.me)
+  return data
+}
+
 export async function applyRebalancing(guidanceId, payload = {}) {
   const { data } = await apiClient.post(ENDPOINTS.investmentGuidances.apply(guidanceId), payload)
   return data

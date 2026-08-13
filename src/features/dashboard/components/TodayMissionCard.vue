@@ -46,7 +46,6 @@ defineEmits(['mission-click', 'show-all'])
     </p>
 
     <button
-      v-if="missions.length"
       class="today-mission-card__more"
       type="button"
       @click="$emit('show-all')"

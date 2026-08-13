@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import DailyReportBanner from '@/features/dashboard/components/DailyReportBanner.vue'
 import DashboardAssetSwitcher from '@/features/dashboard/components/DashboardAssetSwitcher.vue'
+import DashboardSkeleton from '@/features/dashboard/components/DashboardSkeleton.vue'
 import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
 import FinancialDdayCard from '@/features/dashboard/components/FinancialDdayCard.vue'
 import MissionListSheet from '@/features/dashboard/components/MissionListSheet.vue'
@@ -38,28 +39,25 @@ const dashboardOptions = computed(() => {
     : route.query.scenario
   return { persona, scenario }
 })
-const { dashboard: dashboardData } = useDashboard(dashboardOptions)
+const {
+  dashboard: dashboardData,
+  error: dashboardError,
+  loading: dashboardLoading,
+  reload: reloadDashboard,
+} = useDashboard(dashboardOptions)
 const personaEvents = computed(() => dashboardData.value.events)
 const { events: upcomingEvents, addEvent } = useUpcomingEvents(personaEvents)
 const activeVacation = computed(() => {
-  const today = new Date()
-  const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-  const vacationEvents = upcomingEvents.value.filter(
-    (event) => event.eventType === 'VACATION' || event.autoVacationMode,
-  )
-
+  const currentDate = new Date()
+  const today = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`
   return (
-    vacationEvents.find((event) => {
-      const startDate = event.startDate || event.date
-      const endDate = event.endDate || startDate
-      return startDate <= todayString && todayString <= endDate
-    }) ??
-    [...vacationEvents].sort((first, second) =>
-      String(second.endDate || second.startDate).localeCompare(
-        String(first.endDate || first.startDate),
-      ),
-    )[0] ??
-    null
+    upcomingEvents.value.find((event) => {
+      if (!(event.eventType === 'VACATION' || event.autoVacationMode)) return false
+      const start = event.startDate || event.date
+      const end = event.endDate || start
+      return start <= today && today <= end
+    }) ||
+    (isVacationMode.value ? { id: 'manual-vacation', startDate: today, endDate: today } : null)
   )
 })
 const { budget: vacationBudget, setBudget: setVacationBudget } = useVacationBudget(activeVacation)
@@ -67,8 +65,20 @@ const allMissions = computed(() =>
   liveMissions.value.length ? liveMissions.value : dashboardData.value.missions,
 )
 const todayMissions = computed(() =>
-  allMissions.value.filter((mission) => mission.missionGroup === 'TODAY'),
+  allMissions.value.filter((mission) => ['TODAY', 'RECOMMENDED'].includes(mission.missionGroup)),
 )
+const marketReportMission = computed(() =>
+  allMissions.value.find(
+    (mission) =>
+      ['VIEW_AI_REPORT', 'VIEW_FINANCE_REPORT'].includes(mission.actionType) ||
+      /AI.*시장.*리포트|시장.*리포트|데일리.*리포트/.test(mission.title || ''),
+  ),
+)
+const reportVisible = computed(() => !marketReportMission.value?.completed)
+const reportRoute = computed(() => ({
+  name: 'ai-financial-report',
+  query: marketReportMission.value?.id ? { missionId: marketReportMission.value.id } : {},
+}))
 
 function normalizeMission(mission) {
   const category = String(mission.missionCategory || mission.missionGroup || '').toUpperCase()
@@ -114,27 +124,22 @@ function isVacationExpense(transaction, vacation) {
 watch(
   activeVacation,
   async (vacation) => {
-    if (!vacation) {
-      vacationSpentAmount.value = 0
-      return
-    }
+    vacationSpentAmount.value = 0
+    if (!vacation || vacation.id === 'manual-vacation') return
 
     vacationSpendingLoading.value = true
     try {
+      const startDate = vacation.startDate || vacation.date
+      const endDate = vacation.endDate || startDate
       const usesMockScenario = Boolean(route.query.persona || route.query.scenario)
       const transactions = usesMockScenario
         ? transactionResponses
-        : await getTransactions({
-            startDate: vacation.startDate || vacation.date,
-            endDate: vacation.endDate || vacation.startDate || vacation.date,
-          })
+        : await getTransactions({ startDate, endDate })
       vacationSpentAmount.value = transactions
         .filter((transaction) => isVacationExpense(transaction, vacation))
         .reduce((total, transaction) => total + Math.abs(Number(transaction.amount || 0)), 0)
     } catch {
-      vacationSpentAmount.value = transactionResponses
-        .filter((transaction) => isVacationExpense(transaction, vacation))
-        .reduce((total, transaction) => total + Math.abs(Number(transaction.amount || 0)), 0)
+      vacationSpentAmount.value = 0
     } finally {
       vacationSpendingLoading.value = false
     }
@@ -188,52 +193,78 @@ function openVacationTransactions() {
     class="dashboard screen content-screen app-page"
     :class="{ 'dashboard--vacation': isVacationMode }"
   >
-    <DailyReportBanner
-      v-bind="dashboardData.dailyReport"
+    <DashboardSkeleton
+      v-if="dashboardLoading"
       :variant="isVacationMode ? 'vacation' : 'military'"
-      :greeting="isVacationMode ? '휴가 5일차' : dashboardData.dailyReport.greeting"
-      title="오늘의 AI 시장 리포트"
     />
 
-    <VacationBudgetCard
-      v-if="isVacationMode && activeVacation"
-      :spent-amount="vacationSpentAmount"
-      :budget="vacationBudget"
-      :loading="vacationSpendingLoading"
-      @edit="showBudgetSheet = true"
-      @view-transactions="openVacationTransactions"
-    />
+    <section
+      v-else-if="dashboardError"
+      class="dashboard-state dashboard-state--error"
+      role="alert"
+    >
+      <strong>대시보드 정보를 불러오지 못했어요.</strong>
+      <p>{{ dashboardError.response?.data?.message || '잠시 후 다시 시도해주세요.' }}</p>
+      <button
+        type="button"
+        @click="reloadDashboard"
+      >
+        다시 시도
+      </button>
+    </section>
 
-    <FinancialDdayCard v-bind="dashboardData.financialDday" />
-
-    <div class="dashboard__quick-cards">
-      <UpcomingEventsCard
-        :events="upcomingEvents"
-        :remaining-count="Math.max(0, upcomingEvents.length - 2)"
-        @add="showEventModal = true"
-        @show-more="router.push({ name: 'upcoming-events' })"
+    <template v-else>
+      <DailyReportBanner
+        v-if="reportVisible"
+        v-bind="dashboardData.dailyReport"
+        :to="reportRoute"
+        :variant="isVacationMode ? 'vacation' : 'military'"
+        :greeting="
+          isVacationMode ? '즐거운 휴가 보내고 계신가요?' : dashboardData.dailyReport.greeting
+        "
       />
-      <TodayMissionCard
-        :missions="todayMissions"
-        @mission-click="openMission"
-        @show-all="showMissionSheet = true"
-      />
-    </div>
 
-    <DashboardAssetSwitcher
-      :monthly="dashboardData.assetSummary.monthly"
-      :total-assets="dashboardData.assetSummary.total"
-      @view-report="
-        router.push({ name: 'transactions', query: { ...route.query, period: 'month' } })
-      "
-      @view-spending="
-        router.push({
-          name: 'transactions',
-          query: { ...route.query, period: 'month', type: 'EXPENSE' },
-        })
-      "
-      @view-assets="router.push({ name: 'asset-overview', query: route.query })"
-    />
+      <VacationBudgetCard
+        v-if="isVacationMode"
+        :spent-amount="vacationSpentAmount"
+        :budget="vacationBudget"
+        :loading="vacationSpendingLoading"
+        @edit="showBudgetSheet = true"
+        @view-transactions="openVacationTransactions"
+      />
+
+      <FinancialDdayCard v-bind="dashboardData.financialDday" />
+
+      <div class="dashboard__quick-cards">
+        <UpcomingEventsCard
+          :events="upcomingEvents"
+          :remaining-count="Math.max(0, upcomingEvents.length - 2)"
+          :can-add="true"
+          @add="showEventModal = true"
+          @show-more="router.push({ name: 'upcoming-events' })"
+        />
+        <TodayMissionCard
+          :missions="todayMissions"
+          @mission-click="openMission"
+          @show-all="showMissionSheet = true"
+        />
+      </div>
+
+      <DashboardAssetSwitcher
+        :monthly="dashboardData.assetSummary.monthly"
+        :total-assets="dashboardData.assetSummary.total"
+        @view-report="
+          router.push({ name: 'transactions', query: { ...route.query, period: 'month' } })
+        "
+        @view-spending="
+          router.push({
+            name: 'transactions',
+            query: { ...route.query, period: 'month', type: 'EXPENSE' },
+          })
+        "
+        @view-assets="router.push({ name: 'asset-overview', query: route.query })"
+      />
+    </template>
 
     <EventAddModal
       v-if="showEventModal"
@@ -278,6 +309,37 @@ function openVacationTransactions() {
 
 .dashboard--vacation {
   background: transparent;
+}
+
+.dashboard-state {
+  display: grid;
+  min-height: 320px;
+  padding: var(--space-24);
+  border-radius: var(--dashboard-card-radius);
+  background: rgb(255 255 255 / 72%);
+  color: var(--gray-600);
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.dashboard-state--error {
+  gap: var(--space-8);
+}
+
+.dashboard-state--error strong {
+  color: var(--gray-900);
+  font-size: var(--body-body-large-bold-font-size);
+}
+
+.dashboard-state--error button {
+  margin-top: var(--space-12);
+  padding: var(--space-10) var(--space-20);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--green-700);
+  color: var(--white);
+  font-weight: 700;
 }
 
 @media (max-width: 350px) {

@@ -21,7 +21,7 @@ const dailyMissions = computed(() =>
   props.missions.filter((mission) => mission.missionGroup === 'DAILY'),
 )
 const todayMissions = computed(() =>
-  props.missions.filter((mission) => mission.missionGroup === 'TODAY'),
+  props.missions.filter((mission) => ['TODAY', 'RECOMMENDED'].includes(mission.missionGroup)),
 )
 const resetCountdown = computed(() => {
   const tomorrow = new Date(now.value)
@@ -35,7 +35,11 @@ const resetCountdown = computed(() => {
 })
 
 function missionTypeLabel(type) {
-  return { COMMON: '공통', SAFE: '안정형', AGGRESSIVE: '공격형' }[type] ?? type
+  return { COMMON: '공통', SAFE: '안정형', AGGRESSIVE: '공격형' }[type || 'COMMON'] ?? '공통'
+}
+
+function missionTypeClass(type) {
+  return String(type || 'COMMON').toLowerCase()
 }
 
 function closeOnEscape(event) {
@@ -122,7 +126,7 @@ onBeforeUnmount(() => {
                 <span class="mission-sheet__content">
                   <span>
                     <strong>{{ mission.title }}</strong>
-                    <em :class="`mission-sheet__type--${mission.missionType.toLowerCase()}`">
+                    <em :class="`mission-sheet__type--${missionTypeClass(mission.missionType)}`">
                       {{ missionTypeLabel(mission.missionType) }}
                     </em>
                   </span>
@@ -166,7 +170,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .mission-sheet-backdrop {
   position: fixed;
-  z-index: 70;
+  z-index: var(--z-modal);
   inset: 0 max(0px, calc((100vw - var(--mobile-width)) / 2));
   display: flex;
   align-items: flex-end;

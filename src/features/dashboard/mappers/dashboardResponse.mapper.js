@@ -9,18 +9,28 @@ function toNumber(value, fallback = 0) {
 function toDateOnly(value) {
   if (!value) return null
 
-  const [year, month, day] = String(value).slice(0, 10).split('-').map(Number)
+  if (Array.isArray(value)) {
+    const [year, month, day] = value.map(Number)
+    return year && month && day ? Date.UTC(year, month - 1, day) : null
+  }
+
+  const match = String(value)
+    .trim()
+    .match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/)
+  if (!match) return null
+
+  const [, year, month, day] = match.map(Number)
   if (!year || !month || !day) return null
 
-  return new Date(year, month - 1, day)
+  return Date.UTC(year, month - 1, day)
 }
 
 function daysFromToday(value, now = new Date()) {
   const target = toDateOnly(value)
   if (!target) return 0
 
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  return Math.max(0, Math.ceil((target.getTime() - today.getTime()) / DAY_IN_MS))
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.max(0, Math.ceil((target - today) / DAY_IN_MS))
 }
 
 function toTenThousandWon(value) {
@@ -41,6 +51,9 @@ export function mapDashboardResponse(response, fallbackModel, now = new Date()) 
   const achievementRate = toNumber(source.achievementRate)
   const monthlyInvestmentGoal = toNumber(source.monthlyInvestmentGoal)
   const monthlySpendingGoal = toNumber(source.monthlySpendingGoal)
+  const expectedAsset = toNumber(source.expectedAsset)
+  const derivedTargetAmount =
+    achievementRate > 0 ? Math.round(expectedAsset / (achievementRate / 100)) : 0
 
   return {
     ...fallbackModel,
@@ -50,14 +63,18 @@ export function mapDashboardResponse(response, fallbackModel, now = new Date()) 
     },
     financialDday: {
       ...fallbackModel.financialDday,
-      financialDday: daysFromToday(source.financialDischargeDate, now),
-      actualDday: daysFromToday(source.actualDischargeDate, now),
-      financialDischargeDate:
-        source.financialDischargeDate ?? fallbackModel.financialDday.financialDischargeDate,
-      actualDischargeDate:
-        source.actualDischargeDate ?? fallbackModel.financialDday.actualDischargeDate,
+      financialDday: source.financialDischargeDate
+        ? daysFromToday(source.financialDischargeDate, now)
+        : null,
+      actualDday: source.actualDischargeDate
+        ? daysFromToday(source.actualDischargeDate, now)
+        : null,
+      financialDischargeDate: source.financialDischargeDate ?? null,
+      actualDischargeDate: source.actualDischargeDate ?? null,
+      differenceDays: toNumber(source.deltaDaysVsActual),
       achievementRate,
       currentAsset: toTenThousandWon(currentAsset),
+      targetAmount: toTenThousandWon(derivedTargetAmount),
     },
     assetSummary: {
       ...fallbackModel.assetSummary,
@@ -86,7 +103,7 @@ export function mapDashboardResponse(response, fallbackModel, now = new Date()) 
       },
       forecast: {
         ...fallbackModel.assetSummary.forecast,
-        totalAmount: toNumber(source.expectedAsset),
+        totalAmount: expectedAsset,
       },
     },
     apiMeta: {

@@ -211,11 +211,15 @@
 `no-investment-account` 시나리오에서 `증권계좌연결`을 누르면 기존 CODEF 연결 화면으로 이동합니다.
 
 - 라우트 이름: `connect-codef-bank`
-- `assetType`: `personal-assets`
-- `source`: `dashboard`
+- `assetType`: `securities` (증권사만 선택 가능한 공통 연결 모드)
+- `mode`: `additional` (온보딩 단계를 진행하지 않는 추가 연동)
+- `source`: 완료 후 돌아갈 화면을 결정
+  - `dashboard`: 대시보드
+  - `investment-assets`: 자산 현황의 투자 탭
+  - `my-page`: 연결된 금융기관 관리
 
-현재 프로젝트에는 대시보드용 증권계좌 연결 모달이 없어서 기존 연결 화면을 재사용합니다.
-추후 증권사 전용 선택 흐름이 추가되면 `assetType`과 라우트만 교체합니다.
+별도 화면을 복제하지 않고 기존 CODEF 연결 컴포넌트를 재사용합니다. `assetType=securities`이면
+은행/증권 유형 선택을 생략하고 증권사만 노출하며, `source`별 완료 목적지로 돌아갑니다.
 
 ## 통합 거래 내역 화면
 

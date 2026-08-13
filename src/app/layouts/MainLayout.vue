@@ -9,23 +9,38 @@ import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeave
 
 const route = useRoute()
 const contentElement = ref(null)
+const isHeaderCollapsed = ref(false)
 const { mode } = useLeaveModeSchedule()
+
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
 
 watch(
   () => route.fullPath,
   async () => {
+    isHeaderCollapsed.value = false
     await nextTick()
-    contentElement.value?.scrollTo({ left: 0, top: 0, behavior: 'auto' })
+    contentElement.value?.scrollTo({
+      left: 0,
+      top: 0,
+      behavior: 'auto',
+    })
   },
 )
+
+function handleContentScroll(event) {
+  isHeaderCollapsed.value = route.meta.keepHeaderOnScroll
+    ? false
+    : event.currentTarget.scrollTop > 24
+}
 </script>
 
 <template>
   <MobileFrame
     :class="{
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
+      'mobile-frame--investment-guide': route.name === 'investment-guide',
       'mobile-frame--vacation': isVacationDashboard,
+      'mobile-frame--fixed-header-tabs': route.meta.keepHeaderOnScroll,
     }"
   >
     <AppHeader
@@ -33,6 +48,7 @@ watch(
       :title="route.meta.headerTitle"
       :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
+      :collapsed="isHeaderCollapsed"
     />
 
     <main
@@ -41,7 +57,9 @@ watch(
       :class="{
         'main-layout__content--without-navigation': route.meta.hideBottomNavigation,
         'main-layout__content--vacation': isVacationDashboard,
+        'main-layout__content--sticky-tabs': route.meta.stickyTabs,
       }"
+      @scroll.passive="handleContentScroll"
     >
       <RouterView />
     </main>
@@ -93,6 +111,22 @@ watch(
     var(--gray-100);
 }
 
+:global(.mobile-frame.mobile-frame--investment-guide) {
+  background: var(--ui-background);
+}
+
+:global(.mobile-frame.mobile-frame--investment-guide .app-header) {
+  background: var(--ui-background);
+}
+
+:global(.mobile-frame.mobile-frame--investment-guide .app-header h1) {
+  font-size: 18px;
+}
+
+:global(.mobile-frame.mobile-frame--fixed-header-tabs .app-header) {
+  background: var(--ui-background);
+}
+
 :global(.mobile-frame.mobile-frame--vacation) {
   background:
     radial-gradient(
@@ -125,6 +159,13 @@ watch(
 
 .main-layout__content--vacation :deep(.app-page) {
   background: transparent;
+}
+
+.main-layout__content--sticky-tabs :deep([role='tablist']) {
+  position: sticky;
+  z-index: calc(var(--z-header) - 1);
+  top: 0;
+  background: var(--ui-background);
 }
 
 .main-layout__bottom--vacation {

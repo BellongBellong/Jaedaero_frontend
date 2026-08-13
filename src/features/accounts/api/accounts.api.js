@@ -25,6 +25,7 @@ export async function getAccounts(config = {}) {
   return accounts.map((account) => ({
     ...account,
     accountId: account.accountId || account.id,
+    id: account.accountId || account.id,
     accountName:
       account.accountName ||
       account.productName ||
@@ -35,6 +36,10 @@ export async function getAccounts(config = {}) {
       account.accountNumber,
     organizationCode: accountOrganizationCode(account),
     institutionName: accountInstitutionName(account),
+    bankName: account.institutionName || accountInstitutionName(account),
+    accountNumberMasked: account.accountMasked || account.accountNumberMasked,
+    balance: Number(account.currentBalance ?? account.balance ?? 0),
+    amount: Number(account.currentBalance ?? account.balance ?? 0),
   }))
 }
 

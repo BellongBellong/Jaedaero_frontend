@@ -7,8 +7,8 @@ import SelectedEventList from '@/features/dashboard/components/SelectedEventList
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
 import { ref } from 'vue'
 
-const showAddModal = ref(false)
 const selectedDate = ref(toDateString(new Date()))
+const showAddModal = ref(false)
 const { events, addEvent } = useUpcomingEvents()
 
 function toDateString(date) {
