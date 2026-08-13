@@ -7,9 +7,16 @@ import BottomNavigation from '@/common/components/BottomNavigation.vue'
 import MobileFrame from '@/common/components/MobileFrame.vue'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
+/* 방향 전환으로 인정할 최소 이동량 — 손가락 떨림으로 네비가 깜빡이지 않게 한다 */
+const DIRECTION_THRESHOLD = 6
+/* 이 지점을 지나야 네비가 줄어들기 시작한다 */
+const MINIMIZE_AFTER = 72
+
 const route = useRoute()
 const contentElement = ref(null)
 const isHeaderCollapsed = ref(false)
+const isNavigationMinimized = ref(false)
+const lastScrollTop = ref(0)
 const { mode } = useLeaveModeSchedule()
 
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
@@ -18,6 +25,8 @@ watch(
   () => route.fullPath,
   async () => {
     isHeaderCollapsed.value = false
+    isNavigationMinimized.value = false
+    lastScrollTop.value = 0
     await nextTick()
     contentElement.value?.scrollTo({
       left: 0,
@@ -28,9 +37,19 @@ watch(
 )
 
 function handleContentScroll(event) {
-  isHeaderCollapsed.value = route.meta.keepHeaderOnScroll
-    ? false
-    : event.currentTarget.scrollTop > 24
+  const scrollTop = event.currentTarget.scrollTop
+  const delta = scrollTop - lastScrollTop.value
+
+  isHeaderCollapsed.value = route.meta.keepHeaderOnScroll ? false : scrollTop > 24
+
+  /* 내리면 네비가 물러나고 올리면 돌아온다. 최상단에서는 항상 펼쳐둔다. */
+  if (scrollTop <= MINIMIZE_AFTER) {
+    isNavigationMinimized.value = false
+  } else if (Math.abs(delta) >= DIRECTION_THRESHOLD) {
+    isNavigationMinimized.value = delta > 0
+  }
+
+  lastScrollTop.value = scrollTop
 }
 </script>
 
@@ -70,7 +89,7 @@ function handleContentScroll(event) {
       class="main-layout__bottom"
       :class="{ 'main-layout__bottom--vacation': isVacationDashboard }"
     >
-      <BottomNavigation />
+      <BottomNavigation :minimized="isNavigationMinimized" />
     </div>
   </MobileFrame>
 </template>
