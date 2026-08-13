@@ -31,6 +31,7 @@ const spendingAmount = ref(0)
 const savingAmount = ref(0)
 const investmentAmount = ref(0)
 const annualReturnRate = ref(5)
+const baselineScenario = ref(null)
 const isSaving = ref(false)
 const isPreviewing = ref(false)
 const serverResult = ref(null)
@@ -147,9 +148,21 @@ const hasSimulationResult = computed(() =>
 const hasSavedSimulation = computed(() =>
   Boolean(!isPreviewing.value && serverResult.value?.isSaved && serverResult.value?.simulationId),
 )
+const hasScenarioChanges = computed(() => {
+  const baseline = baselineScenario.value
+  if (!baseline) return false
+
+  return (
+    spendingAmount.value !== baseline.monthlySpendingAmount ||
+    savingAmount.value !== baseline.monthlySavingAmount ||
+    investmentAmount.value !== baseline.monthlyInvestmentAmount ||
+    annualReturnRate.value !== baseline.expectedReturnRate
+  )
+})
 
 const canSave = computed(() =>
   Boolean(
+    hasScenarioChanges.value &&
     monthlySalary.value &&
     hasSimulationResult.value &&
     !isPreviewing.value &&
@@ -295,6 +308,19 @@ function applySavedSimulation(simulation) {
   }
 }
 
+function currentScenario() {
+  return {
+    monthlySpendingAmount: spendingAmount.value,
+    monthlySavingAmount: savingAmount.value,
+    monthlyInvestmentAmount: investmentAmount.value,
+    expectedReturnRate: annualReturnRate.value,
+  }
+}
+
+function setBaselineScenario() {
+  baselineScenario.value = currentScenario()
+}
+
 function simulationPayload(isSaved) {
   return {
     monthlySpendingAmount: spendingAmount.value,
@@ -379,6 +405,7 @@ async function saveSimulation() {
   try {
     const response = await runSimulation(simulationPayload(true))
     serverResult.value = response
+    setBaselineScenario()
     await completeMissionAfterLoad()
     sessionStorage.setItem(
       SIMULATION_STORAGE_KEY,
@@ -421,6 +448,7 @@ onMounted(async () => {
     if (simulationsResult.status === 'fulfilled') {
       applySavedSimulation(latestSavedSimulation(simulationsResult.value))
     }
+    setBaselineScenario()
     schedulePreview({ immediate: true })
   } else {
     errorMessage.value = '시뮬레이션에 필요한 정보를 불러오지 못했어요.'
@@ -463,7 +491,8 @@ onBeforeUnmount(() => {
           <div
             v-for="row in allocationRows"
             :key="row.id"
-            class="allocation-row allocation-row--active"
+            class="allocation-row"
+            :class="{ 'allocation-row--active': hasScenarioChanges }"
           >
             <img
               :src="row.icon"
@@ -481,7 +510,7 @@ onBeforeUnmount(() => {
               :aria-label="`${row.label} 월 금액`"
               :style="{
                 '--range-progress': rangeProgress(row),
-                '--range-color': row.color,
+                '--range-color': hasScenarioChanges ? row.color : 'var(--gray-300)',
               }"
               @input="updateAllocation(row.id, $event.target.value)"
             >
