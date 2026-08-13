@@ -87,7 +87,7 @@ function urgencyClass(dday) {
             {{ formatSchedule(event) }}
           </time>
         </div>
-        <span class="event-timeline__dday">
+        <span class="event-timeline__dday app-label label--dynamic">
           {{ ddayLabel(event.dday) }}
         </span>
       </li>
@@ -192,13 +192,8 @@ function urgencyClass(dday) {
 }
 
 .event-timeline__dday {
-  padding: 2px 10px;
-  border-radius: var(--radius-full);
-  background: var(--timeline-label-background);
-  color: var(--timeline-color);
-  font-size: 12px;
-  font-weight: var(--weight-bold);
-  line-height: 1.5;
+  --label-background: var(--timeline-label-background);
+  --label-color: var(--timeline-color);
 }
 
 .event-timeline__item--urgent {

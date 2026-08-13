@@ -1,6 +1,7 @@
-@import "./tokens.css";
-@import "./base.css";
-@import "./utilities.css";
+@import './tokens.css';
+@import './base.css';
+@import './label.css';
+@import './utilities.css';
 
 @font-face {
   font-family: 'Pretendard';

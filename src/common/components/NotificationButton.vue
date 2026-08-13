@@ -1,5 +1,5 @@
 <script setup>
-import alarmIcon from '@/assets/icons/alarmIcon.svg'
+import alarmIcon from '@/assets/icons/alarmIcon.png'
 
 defineProps({
   mode: { type: String, default: 'military' },
@@ -53,9 +53,6 @@ defineProps({
 }
 
 .notification-button img {
-  width: 15px;
-  height: 16px;
-  filter: blur(1.35px);
   opacity: 0.86;
 }
 </style>

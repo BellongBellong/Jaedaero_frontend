@@ -286,8 +286,8 @@ onMounted(async () => {
 }
 
 .account-detail__filter img {
-  width: 14px;
-  height: 14px;
+  width: 8px;
+  height: 7px;
   margin-left: 6px;
   object-fit: contain;
 }

@@ -1,0 +1,96 @@
+/* ==========================================================
+   JEDAERO DESIGN SYSTEM
+   Shared labels
+========================================================== */
+
+.app-label,
+.label {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-width: 0;
+  min-height: 22px;
+  margin: 0;
+  padding: 2px 10px;
+  border: 0;
+  border-radius: 20px;
+  font-family: var(--body-label-small-font-family);
+  font-size: var(--body-label-small-font-size);
+  font-weight: var(--body-label-small-font-weight);
+  line-height: var(--body-label-small-line-height);
+  font-style: normal;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* 상태 라벨 */
+.app-label.label--safe,
+.label.label--safe {
+  background: var(--green-100);
+  color: var(--green-700);
+}
+
+.app-label.label--invest,
+.label.label--invest {
+  background: var(--olive-100);
+  color: var(--olive-500);
+}
+
+.app-label.label--notification,
+.label.label--notification {
+  background: var(--orange-50);
+  color: var(--orange-600);
+}
+
+.app-label.label--default,
+.label.label--default {
+  background: var(--gray-200);
+  color: var(--gray-600);
+}
+
+.app-label.label--inverse-notification,
+.label.label--inverse-notification {
+  background: var(--gray-opacity-500);
+  color: var(--orange-400);
+}
+
+/* 혜택 카테고리 라벨 */
+.app-label.label--transport,
+.label.label--transport {
+  background: var(--category-transport-100);
+  color: var(--category-transport-200);
+}
+
+.app-label.label--leisure,
+.label.label--leisure {
+  background: var(--category-leisure-100);
+  color: var(--category-leisure-200);
+}
+
+.app-label.label--lodging,
+.label.label--lodging {
+  background: var(--orange-50);
+  color: var(--orange-600);
+}
+
+.app-label.label--growth,
+.label.label--growth {
+  background: var(--green-200);
+  color: var(--green-700);
+}
+
+.app-label.label--etc,
+.label.label--etc {
+  background: var(--ui-light-gray);
+  color: var(--gray-500);
+}
+
+.app-label.label--dynamic,
+.label.label--dynamic {
+  background: var(--label-background, var(--gray-200));
+  color: var(--label-color, var(--gray-600));
+}
