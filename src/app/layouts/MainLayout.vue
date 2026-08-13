@@ -38,7 +38,7 @@ function handleContentScroll(event) {
   <MobileFrame
     :class="{
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
-      'mobile-frame--investment-guide': route.name === 'investment-guide',
+      'mobile-frame--investment-guide': route.meta.investmentGuide,
       'mobile-frame--vacation': isVacationDashboard,
       'mobile-frame--fixed-header-tabs': route.meta.keepHeaderOnScroll,
     }"
