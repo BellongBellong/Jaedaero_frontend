@@ -74,5 +74,6 @@ export const ENDPOINTS = {
   },
   marketReport: {
     today: '/market-reports/today',
+    todayIndicators: '/market-reports/today/indicators',
   },
 }

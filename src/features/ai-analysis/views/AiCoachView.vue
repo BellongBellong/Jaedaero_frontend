@@ -8,6 +8,7 @@ import glidepathImage from '@/assets/ai-coach/glidepath.svg'
 import historyIcon from '@/assets/ai-coach/history.svg'
 import whatIfIcon from '@/assets/ai-coach/what-if.svg'
 import nextArrowIcon from '@/assets/icons/nextArrowIcon.svg'
+import { useTodayMarketIndicators } from '@/features/market-report/composables/useTodayMarketIndicators'
 import { useTodayMarketReport } from '@/features/market-report/composables/useTodayMarketReport'
 import {
   formatReportDate,
@@ -19,25 +20,30 @@ const onboarding = useOnboardingStore()
 
 const nickname = computed(() => onboarding.form.nickname || '윤호')
 
-const fallbackMarketRows = [
-  { label: '코스피', value: '6,299.66', change: '▲ 40.89 · 0.65%', tone: 'positive' },
-  { label: '코스닥', value: '854.47', change: '▲ 55.66 · 6.97%', tone: 'positive' },
-  { label: '미국채 10년', value: '4.650%', change: '▼ 0.04%p · 0.85%', tone: 'negative' },
-  { label: '원/달러', value: '1,415.3원', change: '등락 정보 없음', tone: 'neutral' },
-]
+const { report, error, load } = useTodayMarketReport()
+const {
+  report: indicatorReport,
+  error: indicatorsError,
+  load: loadIndicators,
+} = useTodayMarketIndicators()
+const marketRows = computed(() => mapMarketIndicators(indicatorReport.value?.indicators))
+const isReportReady = computed(() => Boolean(report.value && indicatorReport.value))
+const reportLoadError = computed(() => error.value || indicatorsError.value)
 
-const fallbackSummary =
-  '코스피와 코스닥이 상승세를 보인 가운데 원자재 가격 강세와 7월 인플레이션 지표에 시장의 관심이 집중되고 있습니다.'
-
-const { report, load } = useTodayMarketReport()
-const marketRows = computed(() => mapMarketIndicators(report.value?.indicators, fallbackMarketRows))
+function retryReport() {
+  load()
+  loadIndicators()
+}
 const reportDate = computed(() => {
-  const formattedDate = formatReportDate(report.value) || '2026. 08. 11 18시 기준'
+  const formattedDate = formatReportDate(report.value)
   return formattedDate.replace(/\s\d{1,2}시(?=\s기준)/, '')
 })
-const reportSummary = computed(() => report.value?.summary || fallbackSummary)
+const reportSummary = computed(() => report.value?.summary || '')
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadIndicators()
+})
 
 const analysisMenus = [
   {
@@ -76,53 +82,87 @@ const analysisMenus = [
           aria-hidden="true"
         >
 
-        <div class="report-card__body">
-          <div class="report-card__heading">
-            <strong>오늘의 AI 시장 리포트</strong>
-            <span>BETA</span>
-          </div>
-          <p class="report-card__date">
-            {{ reportDate }}
-          </p>
-
-          <dl class="report-metrics">
-            <div
-              v-for="row in marketRows"
-              :key="row.label"
-              class="report-metrics__row"
-            >
-              <dt>{{ row.label }}</dt>
-              <dd>
-                <span>{{ row.value }}</span>
-                <em :class="`metric-change--${row.tone}`">{{ row.change }}</em>
-              </dd>
+        <template v-if="isReportReady">
+          <div class="report-card__body">
+            <div class="report-card__heading">
+              <strong>오늘의 AI 시장 리포트</strong>
+              <span>BETA</span>
             </div>
-          </dl>
+            <p class="report-card__date">
+              {{ reportDate }}
+            </p>
 
-          <p class="report-insight">
-            <span class="report-insight__label">
-              <span
-                class="report-insight__icon"
-                aria-hidden="true"
-              >💡</span>
-              AI 요약
-            </span>
-            {{ reportSummary }}
-          </p>
+            <dl class="report-metrics">
+              <div
+                v-for="row in marketRows"
+                :key="row.label"
+                class="report-metrics__row"
+              >
+                <dt>{{ row.label }}</dt>
+                <dd>
+                  <span>{{ row.value }}</span>
+                  <em :class="`metric-change--${row.tone}`">{{ row.change }}</em>
+                </dd>
+              </div>
+            </dl>
+
+            <p class="report-insight">
+              <span class="report-insight__label">
+                <span
+                  class="report-insight__icon"
+                  aria-hidden="true"
+                >💡</span>
+                AI 요약
+              </span>
+              {{ reportSummary }}
+            </p>
+          </div>
+
+          <RouterLink
+            class="report-card__link"
+            :to="{ name: 'ai-financial-report' }"
+          >
+            전체 리포트 보기
+            <img
+              class="report-card__chevron"
+              :src="nextArrowIcon"
+              alt=""
+              aria-hidden="true"
+            >
+          </RouterLink>
+        </template>
+
+        <div
+          v-else-if="reportLoadError"
+          class="report-card__load-error"
+          role="status"
+        >
+          시장 리포트를 불러오지 못했어요.
+          <button
+            type="button"
+            @click="retryReport"
+          >
+            다시 시도
+          </button>
         </div>
 
-        <RouterLink
-          class="report-card__link"
-          :to="{ name: 'ai-financial-report' }"
+        <div
+          v-else
+          class="report-card__skeleton"
+          role="status"
+          aria-label="오늘의 AI 시장 리포트를 불러오는 중"
         >
-          전체 리포트 보기
-          <img
-            class="report-card__chevron"
-            :src="nextArrowIcon"
-            alt=""
-            aria-hidden="true"
-          >
-        </RouterLink>
+          <span class="report-card__skeleton-line report-card__skeleton-line--title" />
+          <span class="report-card__skeleton-line report-card__skeleton-line--date" />
+          <div class="report-card__skeleton-metrics">
+            <span
+              v-for="index in 4"
+              :key="index"
+              class="report-card__skeleton-line report-card__skeleton-line--metric"
+            />
+          </div>
+          <span class="report-card__skeleton-summary" />
+        </div>
       </article>
 
       <section
@@ -390,6 +430,87 @@ const analysisMenus = [
 .report-card__body {
   flex: 1;
   padding: 20px 20px 10px;
+}
+
+.report-card__skeleton {
+  display: flex;
+  min-height: 303px;
+  flex: 1;
+  flex-direction: column;
+  padding: 24px 20px 18px;
+}
+
+.report-card__skeleton-line,
+.report-card__skeleton-summary {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: rgb(230 235 231 / 82%);
+}
+
+.report-card__skeleton-line::after,
+.report-card__skeleton-summary::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 72%), transparent);
+  content: '';
+  transform: translateX(-100%);
+  animation: report-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.report-card__skeleton-line--title {
+  width: 152px;
+  height: 17px;
+}
+
+.report-card__skeleton-line--date {
+  width: 98px;
+  height: 12px;
+  margin-top: 10px;
+}
+
+.report-card__skeleton-metrics {
+  display: grid;
+  gap: 15px;
+  margin-top: 24px;
+}
+
+.report-card__skeleton-line--metric {
+  width: 100%;
+  height: 18px;
+}
+
+.report-card__skeleton-summary {
+  width: 100%;
+  height: 64px;
+  margin-top: auto;
+  border-radius: 14px;
+}
+
+.report-card__load-error {
+  display: grid;
+  min-height: 303px;
+  place-content: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--gray-600);
+  font-size: 13px;
+  text-align: center;
+}
+
+.report-card__load-error button {
+  padding: 8px 12px;
+  border-radius: var(--radius-full);
+  background: var(--green-100);
+  color: var(--green-700);
+  font-weight: var(--weight-bold);
+}
+
+@keyframes report-skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 .report-card__heading {

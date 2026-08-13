@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useTodayMarketReport } from '@/features/market-report/composables/useTodayMarketReport'
+import { useTodayMarketIndicators } from '@/features/market-report/composables/useTodayMarketIndicators'
 import {
   formatReportDate,
   formatValidUntil,
@@ -48,7 +49,10 @@ const fallbackContent =
   '국내 증시에서는 삼성전자가 약 3.6% 상승하면서 코스피가 2일 연속 상승세를 나타냈습니다. 유가와 금 가격은 높은 수준을 유지하고 있으며, 시장은 향후 발표될 7월 인플레이션 데이터와 연준의 9월 통화정책 회의에 주목하고 있습니다.'
 
 const { report, load } = useTodayMarketReport()
-const marketRows = computed(() => mapMarketIndicators(report.value?.indicators, fallbackMarketRows))
+const { report: indicatorReport, load: loadIndicators } = useTodayMarketIndicators()
+const marketRows = computed(() =>
+  mapMarketIndicators(indicatorReport.value?.indicators, fallbackMarketRows),
+)
 const sourceLinks = computed(() => mapMarketSources(report.value?.sources, fallbackSourceLinks))
 const reportDate = computed(() => formatReportDate(report.value) || '2026. 08. 11 18시 기준')
 const marketSummary = computed(() => report.value?.summary || fallbackSummary)
@@ -65,6 +69,7 @@ function openSource(url) {
 onMounted(() => {
   completeMissionAfterLoad()
   load()
+  loadIndicators()
 })
 </script>
 
