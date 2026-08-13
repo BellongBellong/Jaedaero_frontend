@@ -10,7 +10,11 @@ import returnRateIconBackground from '@/assets/simulations/return-rate-icon-bg.s
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { getDashboard } from '@/features/dashboard/api/dashboard.api'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
-import { getSimulationDefaults, runSimulation } from '@/features/simulations/api/simulations.api'
+import {
+  getSimulationDefaults,
+  getSimulations,
+  runSimulation,
+} from '@/features/simulations/api/simulations.api'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 
 const PREVIEW_DELAY_MS = 250
@@ -261,6 +265,36 @@ function applySimulationDefaults(defaults) {
   }
 }
 
+function latestSavedSimulation(response) {
+  if (Array.isArray(response)) return response[0] ?? null
+
+  const simulations =
+    response?.simulations ??
+    response?.content ??
+    response?.items ??
+    response?.results ??
+    response?.data
+
+  if (simulations && simulations !== response) return latestSavedSimulation(simulations)
+  return null
+}
+
+function applySavedSimulation(simulation) {
+  if (!simulation) return
+
+  spendingAmount.value = floorToAllocationStep(
+    simulation.monthlySpendingAmount ?? spendingAmount.value,
+  )
+  savingAmount.value = floorToAllocationStep(simulation.monthlySavingAmount ?? savingAmount.value)
+  investmentAmount.value = floorToAllocationStep(
+    simulation.monthlyInvestmentAmount ?? investmentAmount.value,
+  )
+
+  if (simulation.expectedReturnRate !== undefined && simulation.expectedReturnRate !== null) {
+    annualReturnRate.value = Math.max(0, Math.min(15, Number(simulation.expectedReturnRate)))
+  }
+}
+
 function simulationPayload(isSaved) {
   return {
     monthlySpendingAmount: spendingAmount.value,
@@ -370,11 +404,13 @@ function openRecommendations() {
 }
 
 onMounted(async () => {
-  const [dashboardResult, profileResult, defaultsResult] = await Promise.allSettled([
-    getDashboard(),
-    getMyPageProfile(),
-    getSimulationDefaults(),
-  ])
+  const [dashboardResult, profileResult, defaultsResult, simulationsResult] =
+    await Promise.allSettled([
+      getDashboard(),
+      getMyPageProfile(),
+      getSimulationDefaults(),
+      getSimulations({ page: 0, size: 1 }),
+    ])
 
   dashboard.value =
     dashboardResult.status === 'fulfilled' ? unwrapApiData(dashboardResult.value) : null
@@ -382,6 +418,9 @@ onMounted(async () => {
 
   if (defaultsResult.status === 'fulfilled') {
     applySimulationDefaults(defaultsResult.value)
+    if (simulationsResult.status === 'fulfilled') {
+      applySavedSimulation(latestSavedSimulation(simulationsResult.value))
+    }
     schedulePreview({ immediate: true })
   } else {
     errorMessage.value = '시뮬레이션에 필요한 정보를 불러오지 못했어요.'
