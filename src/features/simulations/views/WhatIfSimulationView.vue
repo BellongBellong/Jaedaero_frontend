@@ -135,18 +135,8 @@ const result = computed(() => ({
   investmentAnnualRate: Number(
     serverResult.value?.expectedEffect?.investmentAnnualReturnRate ?? annualReturnRate.value,
   ),
-  policyVersion: serverResult.value?.expectedEffect?.calculationPolicyVersion ?? '',
   expectedAsset: Number(serverResult.value?.expectedAsset ?? 0),
 }))
-const verification = computed(() => {
-  const recomposedAsset =
-    result.value.baseAsset + result.value.cashflowIncrease + result.value.projectedBenefit
-  return {
-    recomposedAsset,
-    difference: result.value.expectedAsset - recomposedAsset,
-    isConsistent: hasSimulationResult.value && result.value.expectedAsset === recomposedAsset,
-  }
-})
 const hasSimulationResult = computed(() =>
   Boolean(serverResult.value && Number.isFinite(Number(serverResult.value?.expectedAsset))),
 )
@@ -428,7 +418,6 @@ onBeforeUnmount(() => {
         <header>
           <h2>자금 배분</h2>
           <p>앞으로의 월급 배분에 따라 달라지는 전역 자산을 확인해요</p>
-          <small>소비·투자는 월급과 같은 비율로 늘고, 군적금은 매월 같은 금액을 납입해요.</small>
         </header>
 
         <div class="allocation-list">
@@ -476,7 +465,7 @@ onBeforeUnmount(() => {
       </section>
 
       <section class="return-card">
-        <h2>예상 연 수익률</h2>
+        <h2>목표 수익률</h2>
         <div class="return-control">
           <span
             class="return-control__icon"
@@ -491,7 +480,7 @@ onBeforeUnmount(() => {
           <span>수익률</span>
           <button
             type="button"
-            aria-label="예상 연 수익률 1퍼센트 낮추기"
+            aria-label="목표 수익률 1퍼센트 낮추기"
             @click="changeReturnRate(-1)"
           >
             −
@@ -499,7 +488,7 @@ onBeforeUnmount(() => {
           <output>{{ annualReturnRate }} <b>%</b></output>
           <button
             type="button"
-            aria-label="예상 연 수익률 1퍼센트 높이기"
+            aria-label="목표 수익률 1퍼센트 높이기"
             @click="changeReturnRate(1)"
           >
             +
@@ -560,27 +549,10 @@ onBeforeUnmount(() => {
               <dd>{{ hasSimulationResult ? formatMoney(result.unallocatedPrincipal) : '- 원' }}</dd>
             </div>
           </dl>
-          <p class="result-panel__note">
-            군적금·투자 원금은 월급 배분에 이미 포함되어 최종 금액에 다시 더하지 않아요.
-          </p>
           <div class="result-total">
-            <span>
-              <strong>전역 예상 자산</strong>
-              <small>군적금 이자·매칭지원금과 투자 예상 수익을 포함해요</small>
-            </span>
+            <strong>전역 예상 자산</strong>
             <b>{{ hasSimulationResult ? formatMoney(result.expectedAsset) : '-원' }}</b>
           </div>
-          <p
-            v-if="hasSimulationResult"
-            class="result-verification"
-            :class="{ 'result-verification--error': !verification.isConsistent }"
-          >
-            {{
-              verification.isConsistent
-                ? '현재 자산 + 순증가 + 예상 혜택 합계가 일치해요.'
-                : `계산 상세와 최종 금액이 ${formatMoney(Math.abs(verification.difference))} 차이 나요.`
-            }}
-          </p>
         </div>
 
         <p
@@ -770,14 +742,6 @@ onBeforeUnmount(() => {
   line-height: 1.5;
 }
 
-.allocation-card header small {
-  display: block;
-  margin-top: 4px;
-  color: var(--gray-500);
-  font-size: 10px;
-  line-height: 1.45;
-}
-
 .allocation-list {
   display: flex;
   flex-direction: column;
@@ -893,7 +857,7 @@ onBeforeUnmount(() => {
 
 .allocation-note {
   grid-column: 1 / 4;
-  margin-top: -8px;
+  margin-top: 2px;
   color: #888;
   font-size: 11px;
   line-height: 1.4;
@@ -1070,16 +1034,6 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.result-panel__note {
-  padding: 7px 9px;
-  margin: 10px 0 0;
-  border-radius: 10px;
-  background: var(--gray-50);
-  color: var(--gray-500);
-  font-size: 9px;
-  line-height: 1.5;
-}
-
 .result-total {
   padding-top: 10px;
   margin-top: 10px;
@@ -1090,35 +1044,10 @@ onBeforeUnmount(() => {
   font-size: 14px;
 }
 
-.result-total > span {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.result-total small {
-  margin-top: 2px;
-  color: var(--gray-400);
-  font-size: 9px;
-  line-height: 1.4;
-}
-
 .result-total b {
   flex: none;
   color: var(--green-700);
   font-size: 16px;
-}
-
-.result-verification {
-  margin: 7px 0 0;
-  color: var(--green-700);
-  font-size: 9px;
-  line-height: 1.4;
-  text-align: right;
-}
-
-.result-verification--error {
-  color: var(--orange-700);
 }
 
 .apply-button {
