@@ -42,6 +42,7 @@
       "accountName": "장병내일준비적금",
       "accountNumberMasked": "•••• 4821",
       "accountType": "MILITARY_SAVINGS",
+      "accountStatus": "ACTIVE",
       "balance": 4850000,
       "monthlyPayment": 400000,
       "syncStatus": "NORMAL",
@@ -54,6 +55,7 @@
       "accountName": "나라사랑카드 연결계좌",
       "accountNumberMasked": "•••• 1954",
       "accountType": "CHECKING",
+      "accountStatus": "DISCONNECTED",
       "balance": 1420000,
       "monthlyPayment": 0,
       "syncStatus": "NORMAL",
@@ -66,6 +68,7 @@
       "accountName": "종합계좌",
       "accountNumberMasked": "•••• 7734",
       "accountType": "INVESTMENT",
+      "accountStatus": "ACTIVE",
       "balance": 2000000,
       "monthlyPayment": 100000,
       "syncStatus": "SYNC_REQUIRED",
@@ -995,6 +998,15 @@
       "aiServiceUseAgreed": true,
       "marketingInformationReceiptAgreed": true,
       "agreedAt": "2026-08-06T07:20:23.590Z"
+    },
+    {
+      "id": 17,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "agreedAt": "2026-08-13T00:24:15.380Z"
     }
   ],
   "loginResponses": [],

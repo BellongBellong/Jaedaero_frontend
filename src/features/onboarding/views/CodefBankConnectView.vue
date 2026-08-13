@@ -594,7 +594,7 @@ onBeforeUnmount(abortAccountRequest)
           >✓</span>
         </article>
         <p
-          v-if="!isAdditionalConnection"
+          v-if="!isAdditionalConnection && form.businessType === 'BK'"
           class="additional-tip"
         >
           💡 군적금 계좌가 있다면 연동해보세요!
@@ -761,7 +761,10 @@ onBeforeUnmount(abortAccountRequest)
               한 번에 하나씩만 가능해요.
             </p>
           </header>
-          <p class="sheet-tip">
+          <p
+            v-if="form.businessType === 'BK'"
+            class="sheet-tip"
+          >
             💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.
           </p>
           <div class="institution-list">

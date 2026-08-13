@@ -7,6 +7,8 @@ import militarySavingsIcon from '@/assets/onboarding/icons/account-military-savi
 import { disconnectAccount, getAccounts } from '@/features/accounts/api/accounts.api'
 import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import {
+  accountConnectionStatus,
+  accountConnectionStatusLabel,
   accountInstitutionKey,
   accountInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
@@ -217,7 +219,16 @@ onMounted(loadAccounts)
           <span class="account-copy">
             <span>
               <b>{{ displayAccountName(account) }}</b>
-              <em v-if="isMilitarySavings(account)">필수</em>
+              <span class="account-tags">
+                <em
+                  class="account-status"
+                  :class="`account-status--${accountConnectionStatus(account)}`"
+                >{{ accountConnectionStatusLabel(account) }}</em>
+                <em
+                  v-if="isMilitarySavings(account)"
+                  class="military-tag"
+                >필수</em>
+              </span>
             </span>
             <small>{{ displayAccountNumber(account) }}</small>
           </span>
@@ -381,6 +392,11 @@ onMounted(loadAccounts)
   align-items: center;
   gap: 9px;
 }
+.account-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .account-copy b {
   overflow: hidden;
   font-size: 17px;
@@ -390,11 +406,21 @@ onMounted(loadAccounts)
 .account-copy em {
   padding: 4px 9px;
   border-radius: 13px;
-  background: #e4fff0;
-  color: #20ba5c;
   font-size: 11px;
   font-style: normal;
   font-weight: 700;
+}
+.account-status--active {
+  background: #e4fff0;
+  color: #20ba5c;
+}
+.account-status--disconnected {
+  background: #fff0f0;
+  color: #e45757;
+}
+.military-tag {
+  background: #e4fff0;
+  color: #20ba5c;
 }
 .account-copy small {
   color: #999;

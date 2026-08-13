@@ -141,6 +141,22 @@ export function accountInstitutionKey(account) {
   )
 }
 
+export function accountConnectionStatus(account) {
+  const status = String(
+    account?.accountStatus || account?.connectionStatus || account?.status || '',
+  ).toLowerCase()
+
+  if (['disconnected', 'inactive'].includes(status) || account?.isActive === false) {
+    return 'disconnected'
+  }
+
+  return 'active'
+}
+
+export function accountConnectionStatusLabel(account) {
+  return accountConnectionStatus(account) === 'disconnected' ? '연동 해제됨' : '연동됨'
+}
+
 export function matchesAccountInstitution(account, institution) {
   const selectedCode = normalizeOrganizationCode(institution?.organizationCode)
   const matchedCode = accountOrganizationCode(account)
