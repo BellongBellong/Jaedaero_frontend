@@ -129,6 +129,8 @@ function handleContentScroll(event) {
 .main-layout__content {
   flex: 1;
   min-height: 0;
+  /* AI 코치 카드의 바깥 글로우가 iOS에서 가로 스크롤 영역으로 계산되지 않게 한다. */
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scrollbar-width: none;
@@ -145,9 +147,13 @@ function handleContentScroll(event) {
   right: 0;
   bottom: 0;
   left: 0;
-  height: calc(var(--bottom-navigation-area-height) + var(--safe-area-bottom));
+  /*
+    PWA는 이미 홈 인디케이터 영역까지 앱 캔버스가 이어진다. safe area를 다시
+    더하면 바가 그 높이만큼 위로 떠 버리므로, 바는 화면 하단을 기준으로 둔다.
+  */
+  height: var(--bottom-navigation-area-height);
   padding-top: 8px;
-  padding-bottom: var(--safe-area-bottom);
+  padding-bottom: 4px;
   pointer-events: none;
   /* 콘텐츠가 글래스 바와 하단 safe area 뒤로 자연스럽게 이어진다. */
   background: transparent;
