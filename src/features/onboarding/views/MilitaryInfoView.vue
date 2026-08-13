@@ -99,6 +99,7 @@ async function next() {
         <button
           v-for="type in militaryTypes"
           :key="type.value"
+          type="button"
           :class="{ selected: onboarding.form.militaryType === type.value }"
           @click="onboarding.form.militaryType = type.value"
         >
@@ -110,6 +111,7 @@ async function next() {
         <button
           v-for="rank in ranks"
           :key="rank.value"
+          type="button"
           :class="{ selected: onboarding.form.rank === rank.value }"
           @click="onboarding.form.rank = rank.value"
         >
@@ -131,6 +133,7 @@ async function next() {
       </p>
     </section>
     <PrimaryButton
+      variant="green"
       :loading="loading"
       @click="next"
     >
@@ -142,15 +145,15 @@ async function next() {
 <style scoped>
 .military-content {
   flex: 1;
-  padding-top: 16px;
+  padding-top: 20px;
 }
 h2 {
-  margin: 0 0 9px 9px;
-  color: #79947d;
+  margin: 0 0 12px 9px;
+  color: #566752;
   font-size: 15px;
 }
 h2:not(:first-child) {
-  margin-top: 17px;
+  margin-top: 24px;
 }
 .military-grid {
   display: grid;
@@ -158,6 +161,7 @@ h2:not(:first-child) {
   gap: 9px;
 }
 .military-grid button {
+  appearance: none;
   display: grid;
   gap: 5px;
   min-height: 59px;
@@ -165,6 +169,12 @@ h2:not(:first-child) {
   border: 1px solid transparent;
   border-radius: 12px;
   background: #fff;
+  color: #333;
+  font: inherit;
+}
+.military-grid strong {
+  color: #333;
+  font-weight: 700;
 }
 .military-grid button.selected,
 .rank-grid button.selected {
@@ -175,7 +185,7 @@ h2:not(:first-child) {
   padding: 3px 10px;
   border-radius: 14px;
   background: #f3f5f3;
-  color: #aab4aa;
+  color: #757575;
   font-size: 11px;
 }
 .rank-grid {
@@ -192,17 +202,18 @@ h2:not(:first-child) {
   border: 1px solid transparent;
   border-radius: 14px;
   background: #fff;
-  color: #777;
+  color: #555;
 }
 .date-input {
-  width: 100%;
-  min-height: 48px;
+  width: calc(100% - 8px);
+  min-height: 58px;
+  margin-left: 4px;
   padding: 0 16px;
   border: 0;
-  border-radius: 16px;
+  border-radius: 18px;
   background: #fff;
   color: #555;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
 }
 </style>

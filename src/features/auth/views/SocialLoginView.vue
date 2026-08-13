@@ -109,10 +109,10 @@ async function handleLogin(provider) {
 .login {
   position: relative;
   display: flex;
-  height: 852px;
+  height: auto;
   min-height: 100dvh;
   flex-direction: column;
-  padding-bottom: 44px;
+  padding-bottom: calc(24px + var(--safe-area-bottom));
   background: linear-gradient(
     to top,
     #c4c4c4 0%,
@@ -124,7 +124,8 @@ async function handleLogin(provider) {
 }
 .login__content {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .login__logo {
   position: absolute;
@@ -174,7 +175,7 @@ async function handleLogin(provider) {
 .login__actions {
   display: grid;
   gap: 12px;
-  padding: 0 24px 68px;
+  padding: 0 24px;
 }
 .social-button {
   position: relative;

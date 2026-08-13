@@ -858,6 +858,7 @@ onBeforeUnmount(abortAccountRequest)
             </p>
           </div>
           <PrimaryButton
+            variant="green"
             :disabled="!pendingInstitution"
             @click="confirmInstitution"
           >
@@ -1059,6 +1060,7 @@ onBeforeUnmount(abortAccountRequest)
           </div>
 
           <PrimaryButton
+            variant="green"
             :disabled="accountsConfirming || !selectedAccountIds.length"
             @click="confirmAccounts"
           >
@@ -1123,25 +1125,62 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .type-buttons button {
-  width: 152px;
-  height: 42px;
-  border: 1px solid transparent;
-  border-radius: 16px;
+  position: relative;
+  display: flex;
+  flex: 1;
+  width: auto;
+  min-height: 76px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 14px 18px;
+  border: 1px solid #e6e9e7;
+  border-radius: 20px;
   background: #fff;
-  color: #b0b0b0;
+  box-shadow: 0 2px 8px rgb(31 41 55 / 5%);
+  color: #333;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .type-buttons button.selected {
   border-color: #62ff9c;
   background: #effff5;
   color: #20ba5c;
-  font-weight: 700;
+  box-shadow: 0 4px 12px rgb(59 225 120 / 12%);
+}
+
+.type-buttons button:not(.type-buttons__securities-only):first-child {
+  padding-right: 48px;
+}
+
+.type-buttons button:not(.type-buttons__securities-only):first-child::before {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  margin-right: 12px;
+  border-radius: 14px;
+  background: #effff5 url('@/assets/onboarding/icons/bank-building.png') center / 28px no-repeat;
+  content: '';
+}
+
+.type-buttons button:not(.type-buttons__securities-only):first-child::after {
+  position: absolute;
+  right: 20px;
+  color: #a3aca6;
+  content: '›';
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1;
 }
 
 .type-buttons .type-buttons__securities-only {
-  width: 152px;
+  width: auto;
 }
 
 .securities-connection-state {
@@ -1478,23 +1517,20 @@ select:focus {
 
 .institution-list {
   display: grid;
-  grid-template-columns: repeat(3, 74px);
-  grid-auto-rows: 74px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 68px;
   align-content: start;
-  justify-content: space-between;
-  gap: 8px 6px;
+  gap: 4px;
   min-height: 0;
   flex: 1;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #cfcfcf transparent;
+  overflow: hidden;
 }
 
 .institution-row {
   position: relative;
   display: grid;
-  width: 74px;
-  height: 74px;
+  width: 100%;
+  height: 68px;
   place-items: center;
   padding: 0;
   border: 0;
@@ -1514,14 +1550,14 @@ select:focus {
 
 .institution-row img {
   display: block;
-  width: 74px;
-  height: 74px;
+  width: 68px;
+  height: 68px;
 }
 
 .institution-connected-check {
   position: absolute;
-  right: 1px;
-  bottom: 1px;
+  right: 0;
+  bottom: 0;
   display: grid;
   width: 21px;
   height: 21px;

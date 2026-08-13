@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import confirmationEditIcon from '@/assets/onboarding/icons/confirmation-edit.svg'
@@ -21,6 +21,9 @@ const loading = ref(false)
 const completing = ref(false)
 const showConfirmModal = ref(false)
 const errorMessage = ref('')
+const preferenceGrid = ref(null)
+const targetAmountInput = ref(null)
+const targetAmountStep = 100
 const preferences = [
   { value: 'SAFE', icon: '🛡️', label: '안정형', caption: '원금 보존 우선' },
   { value: 'BALANCED', icon: '⚖️', label: '균형형', caption: '안전↔성장 사이' },
@@ -62,6 +65,13 @@ const requiredSavingsAmountInTenThousands = computed(() =>
 const formattedRequiredSavings = computed(
   () => `${new Intl.NumberFormat('ko-KR').format(requiredSavingsAmountInTenThousands.value)}만 원`,
 )
+const canDecreaseTargetAmount = computed(() => Number(onboarding.targetAmountInTenThousands) > 0)
+
+function adjustTargetAmount(direction) {
+  const currentAmount = Number(onboarding.targetAmountInTenThousands) || 0
+  onboarding.targetAmountInTenThousands = Math.max(0, currentAmount + direction * targetAmountStep)
+  targetAmountInput.value?.focus()
+}
 
 async function next() {
   if (!onboarding.form.investmentPreference) {
@@ -97,6 +107,21 @@ function closeModal() {
   if (!completing.value) showConfirmModal.value = false
 }
 
+async function editPreference() {
+  closeModal()
+  await nextTick()
+  const selectedButton = preferenceGrid.value?.querySelector('button.selected')
+  selectedButton?.focus()
+  selectedButton?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+async function editTargetAmount() {
+  closeModal()
+  await nextTick()
+  targetAmountInput.value?.focus()
+  targetAmountInput.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
 async function complete() {
   if (completing.value) return
 
@@ -127,10 +152,14 @@ async function complete() {
       @back="router.back()"
     />
     <section class="preference-content">
-      <div class="preference-grid">
+      <div
+        ref="preferenceGrid"
+        class="preference-grid"
+      >
         <button
           v-for="item in preferences"
           :key="item.value"
+          type="button"
           :class="{ selected: onboarding.form.investmentPreference === item.value }"
           @click="onboarding.form.investmentPreference = item.value"
         >
@@ -140,13 +169,33 @@ async function complete() {
       <h2>목표 전역 자금</h2>
       <div class="goal-card">
         <p>전역시에 모으고 싶은<br>목표 금액을 설정해주세요.</p>
-        <label><input
-          v-model.number="onboarding.targetAmountInTenThousands"
-          :class="goalTone"
-          type="number"
-          min="0"
-          step="100"
-        ><span>만 원</span></label>
+        <div class="goal-amount-control">
+          <button
+            type="button"
+            class="goal-amount-button"
+            :disabled="!canDecreaseTargetAmount"
+            aria-label="목표 전역 자금 100만 원 줄이기"
+            @click="adjustTargetAmount(-1)"
+          >
+            −
+          </button>
+          <label><input
+            ref="targetAmountInput"
+            v-model.number="onboarding.targetAmountInTenThousands"
+            :class="goalTone"
+            type="number"
+            min="0"
+            step="100"
+          ><span>만 원</span></label>
+          <button
+            type="button"
+            class="goal-amount-button"
+            aria-label="목표 전역 자금 100만 원 늘리기"
+            @click="adjustTargetAmount(1)"
+          >
+            +
+          </button>
+        </div>
         <p
           v-if="isAboveEstimatedAmount"
           class="goal-warning"
@@ -168,6 +217,7 @@ async function complete() {
       </p>
     </section>
     <PrimaryButton
+      variant="green"
       :loading="loading"
       @click="next"
     >
@@ -205,6 +255,12 @@ async function complete() {
                 alt=""
               >
             </div>
+            <p
+              v-if="onboarding.form.nickname"
+              class="confirm-nickname"
+            >
+              {{ onboarding.form.nickname }}님
+            </p>
             <h2 id="confirm-title">
               이대로 진행할까요?
             </h2>
@@ -212,7 +268,12 @@ async function complete() {
             <div class="confirm-summary">
               <div class="summary-column">
                 <h3>선택한 투자 유형</h3>
-                <article>
+                <button
+                  type="button"
+                  class="summary-item"
+                  aria-label="투자 유형 수정"
+                  @click="editPreference"
+                >
                   <img
                     class="summary-pencil"
                     :src="confirmationEditIcon"
@@ -221,18 +282,23 @@ async function complete() {
                   <span class="summary-icon">{{ selectedPreference.icon }}</span>
                   <strong>{{ selectedPreference.label }}</strong>
                   <em>{{ selectedPreference.caption }}</em>
-                </article>
+                </button>
               </div>
               <div class="summary-column">
                 <h3>목표 전역 자산</h3>
-                <article>
+                <button
+                  type="button"
+                  class="summary-item"
+                  aria-label="목표 전역 자산 수정"
+                  @click="editTargetAmount"
+                >
                   <img
                     class="summary-pencil"
                     :src="confirmationEditIcon"
                     alt=""
                   >
                   <strong class="summary-amount">{{ formattedAmount }}</strong>
-                </article>
+                </button>
               </div>
             </div>
 
@@ -244,6 +310,7 @@ async function complete() {
             </p>
 
             <PrimaryButton
+              variant="green"
               :loading="completing"
               @click="complete"
             >
@@ -267,32 +334,39 @@ async function complete() {
   gap: 10px;
 }
 .preference-grid button {
+  appearance: none;
   display: grid;
   min-height: 94px;
   place-items: center;
   border: 1px solid transparent;
   border-radius: 12px;
   background: #fff;
+  color: #333;
+  font: inherit;
 }
 .preference-grid button.selected {
   border-color: #2be77b;
   background: #caffdf;
 }
 .preference-grid strong {
+  color: #333;
   font-size: 13px;
 }
 .preference-grid small {
   padding: 4px 8px;
   border-radius: 12px;
   background: #f6f7f6;
-  color: #a7aca8;
+  color: #757575;
   font-size: 10px;
   white-space: nowrap;
 }
 h2 {
   margin: 27px 0 12px 10px;
-  color: #79947d;
+  color: #566752;
   font-size: 15px;
+}
+.step-page > .primary-button {
+  margin-top: 16px;
 }
 .goal-card {
   padding: 23px 10px;
@@ -302,7 +376,7 @@ h2 {
 }
 .goal-card > p {
   margin: 0 0 13px;
-  color: #777;
+  color: #666;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -310,6 +384,30 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 12px;
+}
+.goal-amount-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.goal-amount-button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #effff5;
+  color: #20ba5c;
+  font-size: 24px;
+  line-height: 1;
+}
+.goal-amount-button:disabled {
+  background: #f0f0f0;
+  color: #aaa;
+  cursor: not-allowed;
 }
 .goal-card input {
   width: 85px;
@@ -418,6 +516,15 @@ h2 {
   height: 60px;
   object-fit: contain;
 }
+.confirm-nickname {
+  margin: 0 0 8px;
+  color: #566752;
+  font-family: var(--font-display, '감탄로드감탄체'), sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
 .confirm-modal h2 {
   margin: 0 0 33px;
   color: #6d6d6d;
@@ -447,15 +554,25 @@ h2 {
   text-align: center;
   white-space: nowrap;
 }
-.confirm-summary article {
+.confirm-summary .summary-item {
   position: relative;
   display: grid;
+  width: 100%;
   min-height: 90px;
   justify-items: center;
   align-content: center;
   padding: 13px 7px 10px;
+  border: 0;
   border-radius: 16px;
   background: #fff;
+  color: #333;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.confirm-summary .summary-item:focus-visible {
+  outline: 2px solid #3be178;
+  outline-offset: 2px;
 }
 .summary-icon {
   margin-bottom: 4px;
