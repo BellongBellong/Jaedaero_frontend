@@ -7,12 +7,21 @@ import airforce from '@/assets/onboarding/characters/character-airforce.png'
 import army from '@/assets/onboarding/characters/character-army.png'
 import marine from '@/assets/onboarding/characters/character-marine.png'
 import navy from '@/assets/onboarding/characters/character-navy.png'
+import { useAuthStore } from '@/features/auth/stores/auth.store'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const characters = [army, navy, airforce, marine]
 
 onMounted(() => {
-  window.setTimeout(() => router.replace({ name: 'social-login' }), 1100)
+  window.setTimeout(() => {
+    if (authStore.isAuthenticated) {
+      router.replace({ name: authStore.isOnboardingCompleted ? 'dashboard' : 'terms' })
+      return
+    }
+
+    router.replace({ name: 'social-login' })
+  }, 1100)
 })
 </script>
 

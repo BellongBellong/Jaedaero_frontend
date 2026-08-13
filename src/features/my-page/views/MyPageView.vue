@@ -12,7 +12,7 @@ import profileArmy from '@/assets/onboarding/profiles/profile-army.png'
 import profileMarine from '@/assets/onboarding/profiles/profile-marine.png'
 import profileNavy from '@/assets/onboarding/profiles/profile-navy.png'
 import { getAccounts } from '@/features/accounts/api/accounts.api'
-import { logout } from '@/features/auth/api/auth.api'
+import { useAuthStore } from '@/features/auth/stores/auth.store'
 import { getInvestmentBadges } from '@/features/challenges/api/challenges.api'
 import GoalAmountModal from '@/features/my-page/components/GoalAmountModal.vue'
 import NotificationSettingsModal from '@/features/my-page/components/NotificationSettingsModal.vue'
@@ -34,6 +34,7 @@ import {
 } from '@/features/my-page/api/myPage.api'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const profile = ref(null)
 const connectedAccountCount = ref(0)
 const investmentBadges = ref([])
@@ -221,19 +222,12 @@ async function saveAppearance(image, color) {
   }
 }
 
-function clearSession() {
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('refreshToken')
-  localStorage.removeItem('userId')
-}
-
 async function confirmLogout() {
   if (saving.value) return
   saving.value = true
   try {
-    await logout()
+    await authStore.logout()
   } finally {
-    clearSession()
     await router.replace({ name: 'social-login' })
     saving.value = false
   }
@@ -244,7 +238,7 @@ async function confirmWithdraw() {
   saving.value = true
   try {
     await withdrawUser()
-    clearSession()
+    authStore.clearSession()
     await router.replace({ name: 'social-login' })
   } catch {
     errorMessage.value = '탈퇴 처리 중 오류가 발생했어요.'
