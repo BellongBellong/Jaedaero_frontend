@@ -70,8 +70,9 @@ const todayMissions = computed(() =>
 const marketReportMission = computed(() =>
   allMissions.value.find(
     (mission) =>
-      ['VIEW_AI_REPORT', 'VIEW_FINANCE_REPORT'].includes(mission.actionType) ||
-      /AI.*시장.*리포트|시장.*리포트|데일리.*리포트/.test(mission.title || ''),
+      ['VIEW_AI_REPORT', 'VIEW_FINANCE_REPORT', 'VIEW_MARKET_REPORT'].includes(
+        mission.actionType,
+      ) || /AI.*시장.*리포트|시장.*리포트|데일리.*리포트/.test(mission.title || ''),
   ),
 )
 const reportVisible = computed(() => !marketReportMission.value?.completed)
