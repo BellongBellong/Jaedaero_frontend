@@ -231,7 +231,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: '가이드 상세보기',
+          headerTitle: '가이드 상세 보기',
           investmentGuide: true,
           hideBackOnScroll: true,
         },
