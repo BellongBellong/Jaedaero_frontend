@@ -86,15 +86,6 @@ const currentAsset = computed(() =>
 const dashboardExpectedAsset = computed(() =>
   Number(dashboard.value?.expectedAsset ?? dashboard.value?.projectedAssetAtDischarge ?? 0),
 )
-const targetAmount = computed(() => {
-  const directTarget = Number(cashflow.value?.targetAmount ?? dashboard.value?.targetAmount ?? 0)
-  if (directTarget > 0) return directTarget
-
-  const achievementRate = Number(dashboard.value?.achievementRate || 0)
-  return achievementRate > 0
-    ? Math.round(dashboardExpectedAsset.value / (achievementRate / 100))
-    : 0
-})
 const actualDischargeDate = computed(
   () => dashboard.value?.actualDischargeDate || profile.value?.dischargeDate || '',
 )
@@ -279,6 +270,7 @@ function scenarioSnapshot(simulationId = null) {
     spendingPercent: spendingPercent.value,
     savingPercent: savingPercent.value,
     investmentPercent: investmentPercent.value,
+    monthlyInvestmentAmount: amountFromPercent(investmentPercent.value),
     currentAsset: currentAsset.value,
     generatedAt: new Date().toISOString(),
   }
@@ -339,8 +331,7 @@ onMounted(async () => {
     if (dashboardResult.status === 'rejected') throw dashboardResult.reason
 
     dashboard.value = unwrapApiData(dashboardResult.value)
-    profile.value =
-      profileResult.status === 'fulfilled' ? unwrapApiData(profileResult.value) : null
+    profile.value = profileResult.status === 'fulfilled' ? unwrapApiData(profileResult.value) : null
 
     try {
       cashflow.value = await getCashflow(remainingMonths.value)
@@ -370,9 +361,7 @@ onMounted(async () => {
         <div class="discharge-card__asset">
           <span>전역 예상 자산</span>
           <strong>{{
-            formatMoney(
-              canApply ? result.projectedAssetAtDischarge : dashboardExpectedAsset,
-            )
+            formatMoney(canApply ? result.projectedAssetAtDischarge : dashboardExpectedAsset)
           }}</strong>
         </div>
       </section>
@@ -394,7 +383,7 @@ onMounted(async () => {
               :src="row.icon"
               alt=""
               aria-hidden="true"
-            >
+            />
             <label :for="`allocation-${row.id}`">{{ row.label }}</label>
             <input
               :id="`allocation-${row.id}`"
@@ -408,7 +397,7 @@ onMounted(async () => {
                 '--range-color': hasAdjusted ? row.color : '#bdbdbd',
               }"
               @input="updateAllocation(row.id, $event.target.value)"
-            >
+            />
             <output :for="`allocation-${row.id}`">{{ row.percent }}%</output>
             <span
               v-if="row.id === 'investment'"
@@ -433,7 +422,7 @@ onMounted(async () => {
             <img
               :src="returnRateIconBackground"
               alt=""
-            >
+            />
             <b>🤑</b>
           </span>
           <span>수익률</span>
@@ -524,7 +513,7 @@ onMounted(async () => {
             :src="aiRecommendationBot"
             alt=""
             aria-hidden="true"
-          >
+          />
         </span>
         <span>
           <small>연 {{ annualReturnRate }}% 수익 맞춤 상품을 추천해드릴게요!</small>

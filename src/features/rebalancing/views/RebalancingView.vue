@@ -18,6 +18,7 @@ const isLoading = ref(true)
 const loadError = ref('')
 const hasAllocationGoal = ref(false)
 const hasRecurringPlan = ref(false)
+const recurringPlan = ref(null)
 const activeStep = ref(null)
 
 function unwrapSimulations(response) {
@@ -50,6 +51,7 @@ async function loadGuideStatus() {
   }
 
   if (planResult.status === 'fulfilled') {
+    recurringPlan.value = planResult.value
     hasRecurringPlan.value = Boolean(planResult.value?.planId ?? planResult.value)
   } else if (!isMissingResource(planResult.reason)) {
     loadError.value = '가이드 설정 정보를 불러오지 못했어요.'
@@ -66,6 +68,10 @@ function openWhatIfSimulation() {
   router.push({ name: 'what-if-simulation' })
 }
 
+function openPlanForm() {
+  router.push({ name: hasRecurringPlan.value ? 'investment-plan-edit' : 'investment-plan-create' })
+}
+
 onMounted(async () => {
   await loadGuideStatus()
   completeMissionAfterLoad()
@@ -76,7 +82,7 @@ onMounted(async () => {
   <section class="investment-guide screen app-page">
     <header class="guide-intro">
       <h2>
-        적립식 투자 가이드를<br>
+        적립식 투자 가이드를<br />
         시작해볼까요?
       </h2>
       <p>맞춤 가이드를 만드려면 두 가지 설정이 필요해요</p>
@@ -112,7 +118,7 @@ onMounted(async () => {
                 :src="allocationIcon"
                 alt=""
                 aria-hidden="true"
-              >
+              />
             </span>
             <span class="guide-card__copy">
               <small>내 자산을 어떻게 배분할 지 목표를 설정해요</small>
@@ -137,13 +143,13 @@ onMounted(async () => {
               :src="allocationGuideVisual"
               alt=""
               aria-hidden="true"
-            >
+            />
             <strong>
-              아직 세부자산분배 목표를<br>
+              아직 세부자산분배 목표를<br />
               설정하지 않았어요
             </strong>
             <p>
-              What-if 시뮬레이션으로<br>
+              What-if 시뮬레이션으로<br />
               나에게 맞는 자산 분배 목표를 먼저 설정해보세요
             </p>
             <button
@@ -175,7 +181,7 @@ onMounted(async () => {
                 :src="monthlyInvestmentIcon"
                 alt=""
                 aria-hidden="true"
-              >
+              />
             </span>
             <span class="guide-card__copy">
               <small>월 투자 계획을 설정해요</small>
@@ -196,21 +202,36 @@ onMounted(async () => {
             class="empty-guide"
           >
             <img
+              v-if="!hasRecurringPlan"
               class="plan-visual"
               :src="planGuideVisual"
               alt=""
               aria-hidden="true"
+            />
+            <strong
+              v-if="hasRecurringPlan"
+              class="plan-complete-title"
             >
-            <strong>아직 적립 계획이 없어요</strong>
-            <p>
-              주기와 금액, 투자 대상을 설정하면<br>
+              설정한 적립 계획이 있어요
+            </strong>
+            <strong v-else>아직 적립 계획이 없어요</strong>
+            <p
+              v-if="hasRecurringPlan"
+              class="plan-complete-copy"
+            >
+              {{ recurringPlan?.frequency === 'WEEKLY' ? '주간 적립' : '월간 적립' }} · 회차별
+              {{ Number(recurringPlan?.contributionAmount || 0).toLocaleString('ko-KR') }}원
+            </p>
+            <p v-else>
+              주기와 금액, 투자 대상을 설정하면<br />
               다음 투자 가이드를 받을 수 있어요.
             </p>
             <button
               class="guide-cta"
               type="button"
+              @click="openPlanForm"
             >
-              적립 계획 만들기
+              {{ hasRecurringPlan ? '적립 계획 수정하기' : '적립 계획 만들기' }}
             </button>
           </div>
         </article>
@@ -403,6 +424,15 @@ button.guide-card__header {
 
 #plan-guide-content > p {
   margin: 10px 0 20px;
+}
+
+#plan-guide-content > .plan-complete-title {
+  margin-top: 24px;
+  color: #333;
+}
+
+#plan-guide-content > .plan-complete-copy {
+  color: #757575;
 }
 
 .guide-cta {

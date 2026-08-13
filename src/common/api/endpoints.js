@@ -60,6 +60,7 @@ export const ENDPOINTS = {
   investmentGuidances: {
     latest: '/investment-guidances/latest',
     create: '/investment-guidances',
+    detail: (guidanceId) => `/investment-guidances/${guidanceId}`,
     apply: (guidanceId) => `/investment-guidances/${guidanceId}/apply`,
   },
   deviceTokens: '/device-tokens',
