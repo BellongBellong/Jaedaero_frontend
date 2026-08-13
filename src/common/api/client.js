@@ -12,9 +12,12 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken')
+  const isAuthRequest = config.url?.includes('/auth/login') || config.url?.includes('/auth/refresh')
 
-  if (token) {
+  if (token && !isAuthRequest) {
     config.headers.Authorization = `Bearer ${token}`
+  } else if (isAuthRequest && config.headers?.Authorization) {
+    delete config.headers.Authorization
   }
 
   return config
@@ -48,12 +51,23 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`
 
         return apiClient(originalRequest)
-      } catch {
+      } catch (refreshError) {
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
+        localStorage.removeItem('userId')
+
+        const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`)
+        window.location.replace(`/login?redirect=${redirect}`)
+
+        return Promise.reject(refreshError)
       }
-    } else if (error.response?.status === 401) {
+    } else if (error.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('userId')
+
+      const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`)
+      window.location.replace(`/login?redirect=${redirect}`)
     }
 
     return Promise.reject(error)

@@ -43,7 +43,10 @@ function formatChange(indicator) {
   const change = Number(indicator.change)
   const rate = Number(indicator.changeRate)
   const arrow = change >= 0 ? '▲' : '▼'
-  const changeValue = formatNumber(Math.abs(change), indicator.indicatorType === 'US_TREASURY_10Y' ? 2 : 2)
+  const changeValue = formatNumber(
+    Math.abs(change),
+    indicator.indicatorType === 'US_TREASURY_10Y' ? 2 : 2,
+  )
   const changeUnit = indicator.indicatorType === 'US_TREASURY_10Y' ? '%p' : ''
   const rateValue = formatNumber(Math.abs(rate), 2)
 
@@ -79,4 +82,3 @@ export function mapMarketSources(sources = [], fallback = []) {
 
   return rows.length ? rows : fallback
 }
-

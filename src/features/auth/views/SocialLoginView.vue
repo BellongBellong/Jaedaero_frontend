@@ -1,9 +1,9 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { login } from '@/features/auth/api/auth.api'
-import { startSocialLogin } from '@/features/auth/oauth'
+import { rememberLoginRedirect, startSocialLogin } from '@/features/auth/oauth'
 import brandLogo from '@/assets/onboarding/brand/brand-logo.svg'
 import googleLogo from '@/assets/onboarding/brand/google-logo.svg'
 import kakaoLogo from '@/assets/onboarding/brand/kakao-logo.svg'
@@ -16,6 +16,7 @@ const loadingProvider = ref('')
 const errorMessage = ref('')
 const characters = [army, navy, airforce, marine]
 const router = useRouter()
+const route = useRoute()
 const isMockMode =
   import.meta.env.MODE === 'mock' || import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 
@@ -30,15 +31,16 @@ async function handleLogin(provider) {
       localStorage.setItem('accessToken', response.accessToken)
       localStorage.setItem('refreshToken', response.refreshToken)
       localStorage.setItem('userId', String(response.user?.userId || 1))
-      await router.push({
-        name:
-          (response.user?.onboardingCompleted ?? response.onboardingCompleted)
-            ? 'dashboard'
-            : 'terms',
-      })
+      const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/home'
+      await router.push(
+        (response.user?.onboardingCompleted ?? response.onboardingCompleted)
+          ? redirect
+          : { name: 'terms' },
+      )
       return
     }
 
+    rememberLoginRedirect(route.query.redirect)
     startSocialLogin(provider)
   } catch {
     errorMessage.value = isMockMode

@@ -150,8 +150,8 @@ function formatSignedRate(value) {
           class="monthly-assets__investment-action"
           :to="{
             name: 'connect-codef-bank',
-            params: { assetType: 'personal-assets' },
-            query: { source: 'dashboard' },
+            params: { assetType: 'securities' },
+            query: { source: 'dashboard', mode: 'additional' },
           }"
         >
           증권계좌연결

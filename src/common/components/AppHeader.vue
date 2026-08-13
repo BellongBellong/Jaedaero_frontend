@@ -12,6 +12,7 @@ defineProps({
   title: { type: String, default: '' },
   badge: { type: String, default: '' },
   variant: { type: String, default: 'back' },
+  collapsed: { type: Boolean, default: false },
 })
 
 const router = useRouter()
@@ -32,15 +33,16 @@ onMounted(() => {
   scheduleNextRefresh()
 })
 
-onBeforeUnmount(() => {
-  window.clearTimeout(dailyRefreshTimer)
-})
+onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
 </script>
 
 <template>
   <header
     class="app-header"
-    :class="`app-header--${variant}`"
+    :class="[
+      `app-header--${variant}`,
+      { 'app-header--collapsed': collapsed && variant !== 'home' },
+    ]"
   >
     <template v-if="variant === 'home'">
       <img
@@ -99,6 +101,27 @@ onBeforeUnmount(() => {
     max(var(--layout-page-padding), var(--safe-area-right)) var(--space-10)
     max(var(--layout-page-padding), var(--safe-area-left));
   background: transparent;
+  transition:
+    flex-basis 180ms ease,
+    height 180ms ease,
+    padding 180ms ease;
+}
+.app-header--collapsed {
+  flex-basis: 0;
+  height: 0;
+  padding: 0;
+}
+.app-header--collapsed .app-header__title-row {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.app-header--collapsed .app-header__back {
+  position: absolute;
+  top: calc(var(--safe-area-top) + 10px);
+  left: max(var(--layout-page-padding), var(--safe-area-left));
+  z-index: 1;
+  margin: 0;
 }
 .app-header--home {
   align-items: center;
@@ -129,6 +152,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: var(--space-8);
+  transition: opacity 120ms ease;
 }
 .app-header__badge {
   padding: 2px 10px;

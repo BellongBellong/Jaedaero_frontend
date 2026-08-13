@@ -11,6 +11,7 @@ const PROVIDERS = {
 }
 
 const STATE_STORAGE_KEY = 'social-login-state'
+const REDIRECT_STORAGE_KEY = 'social-login-redirect'
 
 function createState() {
   const bytes = new Uint8Array(24)
@@ -20,6 +21,18 @@ function createState() {
 
 export function getRedirectUri(provider) {
   return `${window.location.origin}/auth/callback/${provider.toLowerCase()}`
+}
+
+export function rememberLoginRedirect(value) {
+  const redirect =
+    typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : '/home'
+  sessionStorage.setItem(REDIRECT_STORAGE_KEY, redirect)
+}
+
+export function consumeLoginRedirect() {
+  const redirect = sessionStorage.getItem(REDIRECT_STORAGE_KEY)
+  sessionStorage.removeItem(REDIRECT_STORAGE_KEY)
+  return redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/home'
 }
 
 export function startSocialLogin(provider) {

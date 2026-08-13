@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import chevronIcon from '@/assets/ai-analysis/chevronIcon.svg'
 import { useTodayMarketReport } from '@/features/market-report/composables/useTodayMarketReport'
 import {
   formatReportDate,
@@ -25,10 +24,22 @@ const fallbackMarketRows = [
 ]
 
 const fallbackSourceLinks = [
-  { title: 'Oil and gold stay near highs - InvestingLive', url: '#' },
-  { title: 'Gold rises for third straight session - Reuters', url: '#' },
-  { title: 'Oil prices rise, Asia stocks drift - Reuters', url: '#' },
-  { title: 'What to watch in the week ahead - CNBC', url: '#' },
+  {
+    title: 'Oil and gold stay near highs - InvestingLive',
+    url: 'https://investinglive.com/news/investinglive-asia-pacific-financial-market-news-oil-and-gold-stay-near-highs/',
+  },
+  {
+    title: 'Gold rises for third straight session - Reuters',
+    url: 'https://news.google.com/rss/articles/CBMipwFBVV95cUxOQ3pfajk5NldmMDliSlhNU3ZYd1J6UGt3cWM4ZHBzTkxnYTVGbnVWU0ZOVFFqLUk2eFYyQnhxdUxiUFp5Y0lXTnpEOGIwMHBveTR5bzBvZmxjWTA4TmR6OUt0U1ZSd2V0dDhkMlg4TkpFdlFCSEtJN3BXYXJQMFZLZDgyZjR6UTRXeU5fRFZ1MHM1WXpCMEtTOF9CNmptQTJmNzBQN1JyMA?oc=5',
+  },
+  {
+    title: 'Oil prices rise, Asia stocks drift - Reuters',
+    url: 'https://news.google.com/rss/articles/CBMigwFBVV95cUxPRnpVTlc5WDU3ZUFOMTJjSFRLNGFCWUItblV4clc0UnVXUi05VVBaRkFleHpsdWtmcl9YZDRtN3BkaDhqUy1PTWx1aDhjalNDc09RNGh5eDFYN2FnTGxraUlhRWtFUnl0UTJrbV82Yi1CaFEyNmNwaHlvQVdobElUNEZVaw?oc=5',
+  },
+  {
+    title: 'What to watch in the week ahead - CNBC',
+    url: 'https://www.cnbc.com/2026/08/09/here-are-the-2-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html',
+  },
 ]
 
 const fallbackSummary =
@@ -45,6 +56,11 @@ const marketContent = computed(() => report.value?.content || fallbackContent)
 const validUntilNotice = computed(
   () => formatValidUntil(report.value) || '8월 12일 17시까지 볼 수 있어요.',
 )
+
+function openSource(url) {
+  const sourceWindow = window.open(url, '_blank')
+  if (sourceWindow) sourceWindow.opener = null
+}
 
 onMounted(() => {
   completeMissionAfterLoad()
@@ -76,7 +92,10 @@ onMounted(() => {
       </dl>
 
       <p class="market-summary">
-        <span class="market-summary__icon" aria-hidden="true">💡</span>
+        <span
+          class="market-summary__icon"
+          aria-hidden="true"
+        >💡</span>
         <span>{{ marketSummary }}</span>
       </p>
 
@@ -88,7 +107,7 @@ onMounted(() => {
       </div>
     </article>
 
-    <section class="sources-section">
+    <section class="sources-section report-panel">
       <button
         class="sources-toggle"
         type="button"
@@ -97,20 +116,15 @@ onMounted(() => {
       >
         <span
           class="sources-toggle__chevron"
+          :class="{ 'sources-toggle__chevron--expanded': sourcesExpanded }"
           aria-hidden="true"
-        >
-          <img
-            :src="chevronIcon"
-            alt=""
-            :class="{ 'sources-toggle__chevron--expanded': sourcesExpanded }"
-          >
-        </span>
+        />
         참고한 기사 및 데이터 출처
       </button>
 
       <div
         v-if="sourcesExpanded"
-        class="sources-card report-panel"
+        class="sources-card"
       >
         <a
           v-for="source in sourceLinks"
@@ -118,17 +132,19 @@ onMounted(() => {
           :href="source.url"
           target="_blank"
           rel="noopener noreferrer"
+          @click.prevent="openSource(source.url)"
         >
           {{ source.title }}
         </a>
       </div>
-      <p
-        v-if="sourcesExpanded"
-        class="sources-notice"
-      >
-        해당 정보들은 AI가 생성한 정보들이에요.<br>{{ validUntilNotice }}
-      </p>
     </section>
+
+    <p
+      v-if="sourcesExpanded"
+      class="sources-notice"
+    >
+      해당 정보들은 AI가 생성한 정보들이에요.<br>{{ validUntilNotice }}
+    </p>
   </section>
 </template>
 
@@ -157,7 +173,7 @@ onMounted(() => {
 .explanation-block h2 {
   color: var(--gray-600);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: var(--weight-bold);
   line-height: 1.5;
 }
@@ -171,7 +187,7 @@ onMounted(() => {
 .report-panel__header p {
   padding-top: 4px;
   color: #888;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -197,14 +213,15 @@ onMounted(() => {
 
 .market-grid dt {
   color: var(--gray-600);
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: var(--weight-bold);
   line-height: 1.4;
 }
 
 .market-grid dd {
   padding-top: 4px;
   color: var(--gray-900);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: var(--weight-bold);
   line-height: 1.35;
 }
@@ -212,7 +229,8 @@ onMounted(() => {
 .market-grid__item > span {
   display: block;
   padding-top: 2px;
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: var(--weight-regular);
   line-height: 1.35;
 }
 
@@ -236,7 +254,7 @@ onMounted(() => {
   border-radius: 14px;
   background: var(--green-100);
   color: var(--gray-600);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.6;
 }
 
@@ -246,73 +264,88 @@ onMounted(() => {
   line-height: 1.6;
 }
 
+.market-summary > span:last-child {
+  font-weight: var(--weight-semibold);
+}
+
 .explanation-block {
   padding-top: 16px;
+}
+
+.explanation-block h2 {
+  font-size: 12px;
 }
 
 .explanation-block p {
   padding-top: 8px;
   color: var(--gray-600);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.65;
 }
 
 .sources-section {
   display: grid;
-  gap: 10px;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .sources-toggle {
   display: flex;
   width: 100%;
-  min-height: 42px;
+  min-height: 50px;
   align-items: center;
   gap: 9px;
   padding: 0 16px;
-  border: 1px solid rgb(255 255 255 / 90%);
-  border-radius: 22px;
-  background: rgb(255 255 255 / 78%);
+  border: 0;
+  border-radius: 24px;
+  background: transparent;
   color: var(--gray-500);
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
   text-align: left;
 }
 
 .sources-toggle__chevron {
-  display: grid;
-  width: 10px;
-  height: 14px;
-  flex: 0 0 8px;
-  place-items: center;
+  width: 0;
+  height: 0;
+  flex: 0 0 auto;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid currentColor;
+  transform-origin: 45% 50%;
+  transition: transform 160ms ease;
 }
 
-.sources-toggle__chevron img {
-  width: 6px;
-  height: 10px;
-  transform: rotate(180deg);
-}
-
-.sources-toggle__chevron img.sources-toggle__chevron--expanded {
-  transform: rotate(-90deg);
+.sources-toggle__chevron--expanded {
+  transform: rotate(90deg);
 }
 
 .sources-card {
   display: grid;
-  gap: 11px;
-  padding: 18px 21px;
+  padding: 2px 21px 26px;
 }
 
 .sources-card a {
+  display: block;
+  padding: 10px 0;
   color: var(--green-600);
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
   line-height: 1.45;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
+.sources-card a + a {
+  border-top: 1px solid var(--gray-200);
+}
+
 .sources-notice {
   padding: 0 16px;
   color: var(--gray-500);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.5;
   text-align: center;
 }

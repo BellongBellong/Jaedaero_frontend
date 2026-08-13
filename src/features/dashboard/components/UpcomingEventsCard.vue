@@ -10,6 +10,10 @@ defineProps({
     type: Number,
     default: 0,
   },
+  canAdd: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 defineEmits(['add', 'show-more'])
@@ -40,6 +44,7 @@ function formatDday(dday) {
     <header class="upcoming-events-card__header">
       <h2>예정된 이벤트</h2>
       <button
+        v-if="canAdd"
         type="button"
         aria-label="이벤트 추가"
         @click="$emit('add')"

@@ -9,6 +9,7 @@ import profileDefault from '@/assets/onboarding/profiles/profile-default.png'
 import profileMarine from '@/assets/onboarding/profiles/profile-marine.png'
 import profileNavy from '@/assets/onboarding/profiles/profile-navy.png'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import { generateCashflow } from '@/features/cashflow/api/cashflow.api'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import { previewInvestmentPreference } from '@/features/onboarding/api/onboarding.api'
@@ -96,12 +97,24 @@ function closeModal() {
   if (!completing.value) showConfirmModal.value = false
 }
 
-function complete() {
+async function complete() {
   if (completing.value) return
 
   completing.value = true
-  onboarding.complete()
-  router.replace({ name: 'dashboard' })
+  errorMessage.value = ''
+
+  try {
+    await generateCashflow()
+    onboarding.complete()
+    await router.replace({ name: 'dashboard' })
+  } catch (error) {
+    const serverMessage = error.response?.data?.message
+    errorMessage.value = serverMessage
+      ? `대시보드 정보를 준비하지 못했어요. ${serverMessage}`
+      : '대시보드 정보를 준비하지 못했어요. 잠시 후 다시 시도해주세요.'
+  } finally {
+    completing.value = false
+  }
 }
 </script>
 
@@ -222,6 +235,13 @@ function complete() {
                 </article>
               </div>
             </div>
+
+            <p
+              v-if="errorMessage"
+              class="form-error confirm-error"
+            >
+              {{ errorMessage }}
+            </p>
 
             <PrimaryButton
               :loading="completing"

@@ -5,6 +5,7 @@ const transactionCache = new Map()
 
 const TRANSACTION_TYPE_MAP = {
   DEPOSIT: 'INCOME',
+  WITHDRAW: 'EXPENSE',
   WITHDRAWAL: 'EXPENSE',
   INCOME: 'INCOME',
   EXPENSE: 'EXPENSE',

@@ -6,18 +6,18 @@ import armyCharacter from '@/assets/icons/character/army.png'
 const props = defineProps({
   financialDday: {
     type: Number,
-    default: 54,
+    default: null,
   },
   actualDday: {
     type: Number,
-    default: 60,
+    default: null,
   },
   actualDischargeDate: {
-    type: String,
+    type: [String, Date, Array],
     default: '2026-09-26',
   },
   financialDischargeDate: {
-    type: String,
+    type: [String, Date, Array],
     default: '2026-09-20',
   },
   achievementRate: {
@@ -32,9 +32,23 @@ const props = defineProps({
     type: Number,
     default: 1700,
   },
+  differenceDays: {
+    type: Number,
+    default: null,
+  },
 })
 
-const normalizedRate = computed(() => Math.min(Math.max(props.achievementRate, 0), 100))
+const calculatedAchievementRate = computed(() => {
+  const currentAsset = Number(props.currentAsset)
+  const targetAmount = Number(props.targetAmount)
+
+  if (!Number.isFinite(currentAsset) || !Number.isFinite(targetAmount) || targetAmount <= 0) {
+    return 0
+  }
+
+  return (currentAsset / targetAmount) * 100
+})
+const normalizedRate = computed(() => Math.min(Math.max(calculatedAchievementRate.value, 0), 100))
 const progressWidth = computed(() => `${normalizedRate.value}%`)
 const markerPosition = computed(() => `clamp(39px, ${normalizedRate.value}%, calc(100% - 39px))`)
 const isLowProgress = computed(() => normalizedRate.value < 45)
@@ -42,11 +56,48 @@ const isLowProgress = computed(() => normalizedRate.value < 45)
 const formattedActualDate = computed(() => {
   if (!props.actualDischargeDate) return '-'
 
-  return props.actualDischargeDate.replaceAll('-', '.')
+  if (Array.isArray(props.actualDischargeDate)) {
+    const [year, month, day] = props.actualDischargeDate.map(Number)
+    if (!year || !month || !day) return '-'
+    return `${year}.${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`
+  }
+
+  if (props.actualDischargeDate instanceof Date) {
+    if (Number.isNaN(props.actualDischargeDate.getTime())) return '-'
+
+    const year = props.actualDischargeDate.getFullYear()
+    const month = String(props.actualDischargeDate.getMonth() + 1).padStart(2, '0')
+    const day = String(props.actualDischargeDate.getDate()).padStart(2, '0')
+    return `${year}.${month}.${day}`
+  }
+
+  const match = String(props.actualDischargeDate)
+    .trim()
+    .match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/)
+
+  if (!match) return '-'
+
+  return `${match[1]}.${match[2].padStart(2, '0')}.${match[3].padStart(2, '0')}`
 })
 
 function toUtcDate(date) {
-  const [year, month, day] = String(date).slice(0, 10).split('-').map(Number)
+  if (Array.isArray(date)) {
+    const [year, month, day] = date.map(Number)
+    return year && month && day ? Date.UTC(year, month - 1, day) : null
+  }
+
+  if (date instanceof Date) {
+    if (Number.isNaN(date.getTime())) return null
+    return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  }
+
+  const match = String(date ?? '')
+    .trim()
+    .match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/)
+
+  if (!match) return null
+
+  const [, year, month, day] = match.map(Number)
 
   if (!year || !month || !day) return null
 
@@ -54,6 +105,10 @@ function toUtcDate(date) {
 }
 
 const dischargeDifferenceDays = computed(() => {
+  if (props.differenceDays !== null && Number.isFinite(props.differenceDays)) {
+    return props.differenceDays
+  }
+
   const financialDate = toUtcDate(props.financialDischargeDate)
   const actualDate = toUtcDate(props.actualDischargeDate)
 
@@ -64,7 +119,15 @@ const dischargeDifferenceDays = computed(() => {
   return Math.round((actualDate - financialDate) / 86400000)
 })
 
+function formatDday(value) {
+  return Number.isFinite(value) ? `D-${value}` : '-'
+}
+
 const dischargeMessage = computed(() => {
+  if (!props.financialDischargeDate) {
+    return '재정적 전역일을 계산할 정보가 부족해요.'
+  }
+
   if (dischargeDifferenceDays.value > 0) {
     return `실제 전역일보다 ${dischargeDifferenceDays.value}일 더 빨라요!`
   }
@@ -79,6 +142,15 @@ const dischargeMessage = computed(() => {
 function formatAmount(value) {
   return Number(value || 0).toLocaleString('ko-KR')
 }
+
+const formattedTargetAmount = computed(() => formatAmount(Math.round(props.targetAmount || 0)))
+const formattedCurrentAsset = computed(() => formatAmount(Math.round(props.currentAsset || 0)))
+const formattedAchievementRate = computed(() => {
+  const rate = calculatedAchievementRate.value
+  if (rate === 0) return '0'
+  if (rate < 0.1) return rate.toFixed(2)
+  return rate.toFixed(1).replace(/\.0$/, '')
+})
 </script>
 
 <template>
@@ -88,7 +160,7 @@ function formatAmount(value) {
         <p class="financial-dday-card__label">
           재정적 전역일
         </p>
-        <strong class="financial-dday-card__main-dday">D-{{ financialDday }}</strong>
+        <strong class="financial-dday-card__main-dday">{{ formatDday(financialDday) }}</strong>
         <p class="financial-dday-card__message">
           {{ dischargeMessage }}
         </p>
@@ -96,7 +168,7 @@ function formatAmount(value) {
 
       <div class="financial-dday-card__actual-date">
         <span>실제 전역일</span>
-        <strong>D-{{ actualDday }}</strong>
+        <strong>{{ formatDday(actualDday) }}</strong>
         <time :datetime="actualDischargeDate">{{ formattedActualDate }}</time>
       </div>
     </div>
@@ -107,7 +179,7 @@ function formatAmount(value) {
     >
       <div class="financial-dday-card__achievement">
         <p>전역 목표 금액 달성률</p>
-        <strong>{{ achievementRate }}%</strong>
+        <strong>{{ formattedAchievementRate }}%</strong>
         <span>순자산 {{ formatAmount(currentAsset) }}만원</span>
       </div>
 
@@ -116,7 +188,7 @@ function formatAmount(value) {
         :style="{ left: markerPosition }"
       >
         <div class="financial-dday-card__amount-bubble">
-          <strong>{{ formatAmount(currentAsset) }}</strong>
+          <strong>{{ formattedCurrentAsset }}</strong>
           <span>만원</span>
         </div>
         <span class="financial-dday-card__bubble-tail" />
@@ -141,7 +213,7 @@ function formatAmount(value) {
         >
           <span :style="{ width: progressWidth }" />
         </div>
-        <p>목표 {{ formatAmount(targetAmount) }}만원</p>
+        <p>목표 {{ formattedTargetAmount }}만원</p>
       </div>
     </div>
   </section>

@@ -36,4 +36,3 @@ export function useTodayMarketReport() {
 
   return { report, isLoading, error, load }
 }
-

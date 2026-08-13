@@ -197,8 +197,8 @@ function deleteBudget() {
 <style scoped>
 .vacation-budget-sheet__backdrop {
   position: fixed;
-  z-index: 100;
-  inset: 0;
+  z-index: var(--z-modal);
+  inset: 0 max(0px, calc((100vw - var(--mobile-width)) / 2));
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -206,7 +206,7 @@ function deleteBudget() {
   animation: vacation-budget-backdrop-enter 240ms ease-out both;
 }
 .vacation-budget-sheet {
-  width: min(100%, 430px);
+  width: 100%;
   overflow: hidden;
   padding: 20px 0 0;
   border-radius: 50px 50px 0 0;

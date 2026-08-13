@@ -29,7 +29,10 @@ const transactionFilter = ref(
   filterOptions.some(({ value }) => value === initialType) ? initialType : 'ALL',
 )
 const filterOpen = ref(false)
-const loadedTransactions = ref(transactionResponses)
+const usesMockScenario = computed(() => Boolean(route.query.persona || route.query.scenario))
+const loadedTransactions = ref(usesMockScenario.value ? transactionResponses : [])
+const loading = ref(!usesMockScenario.value)
+const loadError = ref(null)
 const dashboard = computed(() => {
   const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
   const scenario = Array.isArray(route.query.scenario)
@@ -107,8 +110,7 @@ function monthRange() {
 }
 
 onMounted(async () => {
-  const usesMockScenario = Boolean(route.query.persona || route.query.scenario)
-  if (!usesMockScenario) {
+  if (!usesMockScenario.value) {
     try {
       const requestRange = isVacationPeriod.value
         ? { startDate: route.query.startDate, endDate: route.query.endDate }
@@ -116,8 +118,11 @@ onMounted(async () => {
           ? monthRange()
           : {}
       loadedTransactions.value = await getTransactions(requestRange)
-    } catch {
-      loadedTransactions.value = transactionResponses
+    } catch (error) {
+      loadError.value = error
+      loadedTransactions.value = []
+    } finally {
+      loading.value = false
     }
   }
   completeMissionAfterLoad()
@@ -183,7 +188,19 @@ onMounted(async () => {
         >
       </button>
 
-      <ul v-if="transactions.length">
+      <p
+        v-if="loading"
+        aria-live="polite"
+      >
+        거래 내역을 불러오고 있어요.
+      </p>
+      <p
+        v-else-if="loadError"
+        role="alert"
+      >
+        거래 내역을 불러오지 못했어요.
+      </p>
+      <ul v-else-if="transactions.length">
         <AccountTransactionItem
           v-for="transaction in transactions"
           :key="transaction.id"
