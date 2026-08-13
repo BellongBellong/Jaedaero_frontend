@@ -224,6 +224,7 @@ onMounted(loadAccounts)
                 <small>{{ institution.descriptions.join(', ') }}</small>
               </span>
               <span
+                v-if="institution.status === 'active'"
                 class="connected-check"
                 aria-hidden="true"
               >›</span>

@@ -132,11 +132,12 @@ async function confirmDisconnect() {
   try {
     const disconnectedId = selectedAccount.value.accountId
     await disconnectAccount(disconnectedId)
-    accounts.value = accounts.value.filter((account) => account.accountId !== disconnectedId)
+    accounts.value = accounts.value.map((account) =>
+      account.accountId === disconnectedId
+        ? { ...account, accountStatus: 'DISCONNECTED' }
+        : account,
+    )
     selectedAccount.value = null
-    if (institutionAccounts.value.length === 0) {
-      await router.replace({ name: 'connected-banks' })
-    }
   } catch {
     actionError.value = '연결을 해제하지 못했어요. 잠시 후 다시 시도해주세요.'
   } finally {

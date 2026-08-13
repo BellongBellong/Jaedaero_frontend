@@ -182,14 +182,35 @@ server.get('/api/v1/codef/institutions/securities', (_req, res) =>
   ]),
 )
 
-server.post('/api/v1/accounts/connect', (_req, res) =>
+server.post('/api/v1/accounts/connect', (req, res) => {
+  const organizationCode = String(req.body?.organizationCode || '')
+
+  if (organizationCode) {
+    db.get('connectedAccounts')
+      .filter((account) => String(account.organizationCode || '') === organizationCode)
+      .each((account) => {
+        account.accountStatus = 'ACTIVE'
+      })
+      .write()
+  }
+
   res.status(201).json(
     first('codefConnections', {
       connected: true,
       accounts: list('connectedAccounts'),
     }),
-  ),
-)
+  )
+})
+server.delete('/api/v1/accounts/:accountId', (req, res) => {
+  const accountId = Number(req.params.accountId)
+  const account = db.get('connectedAccounts').find({ id: accountId }).value()
+
+  if (!account) return res.status(404).json({ message: 'Account not found' })
+
+  const updated = { ...account, accountStatus: 'DISCONNECTED' }
+  db.get('connectedAccounts').find({ id: accountId }).assign(updated).write()
+  res.status(204).end()
+})
 server.get('/api/v1/accounts/:userId', (req, res) => {
   const userId = Number(req.params.userId)
   res

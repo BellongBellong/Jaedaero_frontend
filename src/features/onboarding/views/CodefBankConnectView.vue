@@ -14,6 +14,7 @@ import {
   getAccounts,
 } from '@/features/accounts/api/accounts.api'
 import {
+  accountConnectionStatus,
   accountInstitutionName,
   accountOrganizationCode,
   matchesAccountInstitution,
@@ -197,7 +198,8 @@ function isInstitutionConnected(institution) {
   return connectedInstitutions.value.some(
     (connection) =>
       connection.businessType === form.value.businessType &&
-      connection.institution.organizationCode === institution.organizationCode,
+      connection.institution.organizationCode === institution.organizationCode &&
+      connection.accounts.some((account) => accountConnectionStatus(account) === 'active'),
   )
 }
 
@@ -398,12 +400,23 @@ async function confirmAccounts() {
     await Promise.all(
       accountsToRemove.map((account) => disconnectAccount(account.accountId ?? account.id)),
     )
-    connectedInstitutions.value.push({
+    const connection = {
       id: `${form.value.businessType}-${form.value.organizationCode}-${Date.now()}`,
       businessType: form.value.businessType,
       institution: { ...selectedInstitution.value },
       accounts: selectedAccounts,
-    })
+    }
+    const existingConnectionIndex = connectedInstitutions.value.findIndex(
+      (item) =>
+        item.businessType === connection.businessType &&
+        item.institution.organizationCode === connection.institution.organizationCode,
+    )
+
+    if (existingConnectionIndex >= 0) {
+      connectedInstitutions.value.splice(existingConnectionIndex, 1, connection)
+    } else {
+      connectedInstitutions.value.push(connection)
+    }
     markConnected()
     accountsModalOpen.value = false
     showConnectedSummary.value = true
