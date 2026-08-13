@@ -92,8 +92,15 @@ const form = ref({
   password: '',
   birthDate: '',
 })
-const allowsSecurities = computed(() => route.params.assetType === 'personal-assets')
-const isAdditionalConnection = computed(() => route.query.source === 'my-page')
+const isSecuritiesOnly = computed(() => route.params.assetType === 'securities')
+const allowsSecurities = computed(() =>
+  ['personal-assets', 'securities'].includes(String(route.params.assetType)),
+)
+const isAdditionalConnection = computed(
+  () =>
+    route.query.mode === 'additional' ||
+    ['my-page', 'dashboard', 'investment-assets'].includes(String(route.query.source || '')),
+)
 const isMockMode =
   import.meta.env.MODE === 'mock' || import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 
@@ -229,6 +236,7 @@ function restoreConnectedInstitutions(accounts) {
 
   accounts.forEach((account) => {
     const businessType = accountBusinessType(account)
+    if (isSecuritiesOnly.value && businessType !== 'ST') return
     const organizationCode = accountOrganizationCode(account)
     const institutionName = accountInstitutionName(account)
     const key = `${businessType}-${organizationCode || normalizeInstitutionName(institutionName)}`
@@ -420,7 +428,7 @@ async function confirmAccounts() {
 
 function startAdditionalConnection() {
   form.value = {
-    businessType: '',
+    businessType: isSecuritiesOnly.value ? 'ST' : '',
     organizationCode: '',
     loginId: '',
     password: '',
@@ -433,8 +441,18 @@ function startAdditionalConnection() {
 }
 
 function nextFromSummary() {
-  if (route.query.source === 'my-page') {
-    router.replace({ name: 'connected-banks' })
+  const destinations = {
+    'my-page': { name: 'connected-banks' },
+    dashboard: { name: 'dashboard' },
+    'investment-assets': {
+      name: 'account-assets',
+      query: { tab: 'investment' },
+    },
+  }
+  const destination = destinations[String(route.query.source || '')]
+
+  if (destination) {
+    router.replace(destination)
     return
   }
 
@@ -527,6 +545,7 @@ function abortAccountRequest() {
 }
 
 onMounted(async () => {
+  if (isSecuritiesOnly.value) form.value.businessType = 'ST'
   banks.value = fallbackBanks
   securities.value = allowsSecurities.value ? fallbackSecurities : []
   loadingInstitutions.value = false
@@ -541,13 +560,13 @@ onBeforeUnmount(abortAccountRequest)
     <OnboardingStepHeader
       :step="1"
       :show-progress="!isAdditionalConnection"
-      title="금융 연결"
+      :title="isSecuritiesOnly ? '증권계좌 연결' : '금융 연결'"
       :description="
         showConnectedSummary
           ? isAdditionalConnection
-            ? '금융기관 연동이 완료되었어요.'
+            ? `${isSecuritiesOnly ? '증권계좌' : '금융기관'} 연동이 완료되었어요.`
             : '군인 계좌가 있는 은행을 연결해주세요.'
-          : '연결할 금융기관의 인터넷뱅킹 정보를 입력해주세요.'
+          : `연결할 ${isSecuritiesOnly ? '증권사' : '금융기관'}의 인터넷뱅킹 정보를 입력해주세요.`
       "
       @back="router.back()"
     />
@@ -602,6 +621,14 @@ onBeforeUnmount(abortAccountRequest)
       </div>
 
       <template v-else>
+        <div
+          v-if="isSecuritiesOnly"
+          class="securities-connection-state"
+        >
+          <strong>연결된 증권계좌가 없어요</strong>
+          <span>투자 자산을 확인하려면 증권사를 연결해주세요.</span>
+        </div>
+
         <fieldset
           v-if="!selectedInstitution"
           class="institution-type"
@@ -609,6 +636,7 @@ onBeforeUnmount(abortAccountRequest)
           <legend>기관 선택</legend>
           <div class="type-buttons">
             <button
+              v-if="!isSecuritiesOnly"
               type="button"
               :class="{ selected: form.businessType === 'BK' }"
               @click="selectBusinessType('BK')"
@@ -622,7 +650,10 @@ onBeforeUnmount(abortAccountRequest)
             <button
               v-if="allowsSecurities"
               type="button"
-              :class="{ selected: form.businessType === 'ST' }"
+              :class="[
+                { selected: form.businessType === 'ST' && !isSecuritiesOnly },
+                { 'type-buttons__securities-only': isSecuritiesOnly },
+              ]"
               @click="selectBusinessType('ST')"
             >
               {{
@@ -736,7 +767,7 @@ onBeforeUnmount(abortAccountRequest)
     <Transition name="institution-sheet">
       <div
         v-if="institutionModalOpen"
-        class="institution-backdrop"
+        class="institution-backdrop institution-backdrop--selector"
         @click.self="closeInstitutionModal"
       >
         <section
@@ -761,7 +792,11 @@ onBeforeUnmount(abortAccountRequest)
             </p>
           </header>
           <p class="sheet-tip">
-            💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.
+            {{
+              isSecuritiesOnly
+                ? '💡 보유 중인 투자 자산이 있는 증권사를 선택해주세요.'
+                : '💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.'
+            }}
           </p>
           <div class="institution-list">
             <button
@@ -1092,6 +1127,31 @@ onBeforeUnmount(abortAccountRequest)
   font-weight: 700;
 }
 
+.type-buttons .type-buttons__securities-only {
+  width: 152px;
+}
+
+.securities-connection-state {
+  display: grid;
+  gap: 3px;
+  padding: 16px;
+  margin-bottom: 18px;
+  border-radius: 20px;
+  background: rgb(236 236 236 / 35%);
+}
+
+.securities-connection-state strong {
+  color: var(--gray-700);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.securities-connection-state span {
+  color: var(--gray-500);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .connected-summary {
   display: flex;
   flex: 1;
@@ -1356,8 +1416,8 @@ select:focus {
   position: relative;
   display: flex;
   width: 100%;
-  height: 100%;
-  max-height: 100%;
+  height: min(78dvh, 660px);
+  max-height: calc(100dvh - 92px);
   flex-direction: column;
   padding: 38px 16px 12px;
   border-radius: 24px 24px 0 0;

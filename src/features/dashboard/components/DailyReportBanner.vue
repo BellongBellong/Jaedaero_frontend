@@ -11,10 +11,6 @@ const props = defineProps({
     type: String,
     default: '오늘의 시장 흐름을 확인해보세요',
   },
-  title: {
-    type: String,
-    default: '오늘의 AI 시장 리포트',
-  },
   date: {
     type: [String, Array],
     default: '',
@@ -80,7 +76,7 @@ const dateTime = computed(() => {
     <div class="daily-report-banner__content">
       <p>{{ greeting }}</p>
       <div class="daily-report-banner__title">
-        <strong>{{ title }}</strong>
+        <strong>오늘의 AI 시장 리포트</strong>
         <time :datetime="dateTime">{{ formattedDate }}</time>
       </div>
     </div>

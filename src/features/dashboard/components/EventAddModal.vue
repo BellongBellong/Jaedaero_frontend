@@ -334,7 +334,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .event-sheet-backdrop {
   position: fixed;
-  z-index: 60;
+  z-index: var(--z-modal);
   inset: 0 max(0px, calc((100vw - var(--mobile-width)) / 2));
   display: flex;
   align-items: flex-end;
