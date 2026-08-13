@@ -22,6 +22,8 @@ const router = useRouter()
 const onboarding = useOnboardingStore()
 const nickname = ref(onboarding.form.nickname)
 const status = ref('idle')
+const isComposing = ref(false)
+const hasAttemptedValidation = ref(false)
 const showProfileSheet = ref(false)
 const errorMessage = ref('')
 const loading = ref(false)
@@ -48,13 +50,37 @@ const profileSourceCodes = {
   '#333333': 'BLACK',
 }
 const validNickname = computed(() => /^[가-힣a-zA-Z0-9]{2,12}$/.test(nickname.value))
+const showNicknameError = computed(
+  () =>
+    !isComposing.value &&
+    hasAttemptedValidation.value &&
+    Boolean(nickname.value) &&
+    !validNickname.value,
+)
 
-function handleNicknameInput() {
+function handleNicknameInput(event) {
+  if (event.isComposing || isComposing.value) return
   status.value = 'idle'
   errorMessage.value = ''
+  hasAttemptedValidation.value = false
+}
+
+function handleCompositionStart() {
+  isComposing.value = true
+  status.value = 'idle'
+  errorMessage.value = ''
+  hasAttemptedValidation.value = false
+}
+
+function handleCompositionEnd() {
+  isComposing.value = false
+  status.value = 'idle'
+  errorMessage.value = ''
+  hasAttemptedValidation.value = false
 }
 
 async function validateNickname() {
+  hasAttemptedValidation.value = true
   if (!validNickname.value) {
     errorMessage.value = '닉네임은 한글, 영문, 숫자를 조합해 2~12자로 입력해 주세요.'
     status.value = 'idle'
@@ -135,6 +161,7 @@ async function next() {
     />
     <section class="nickname-content">
       <button
+        type="button"
         class="profile-picker"
         :style="{ background: onboarding.form.profileBackgroundColor }"
         @click="showProfileSheet = true"
@@ -142,24 +169,38 @@ async function next() {
         <img
           :src="profiles[onboarding.form.profileImage]"
           alt="선택된 프로필"
-        ><span>⟳</span>
+        >
+        <span
+          class="profile-picker__change-icon"
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 16 16"
+            aria-hidden="true"
+          >
+            <path d="M13 5.5A5 5 0 0 0 4.2 3L2.5 5M2.5 5V2.5M2.5 5H5" />
+            <path d="M3 10.5A5 5 0 0 0 11.8 13l1.7-2M13.5 11v2.5M13.5 11H11" />
+          </svg>
+        </span>
       </button>
       <div class="nickname-row">
         <input
           v-model.trim="nickname"
           maxlength="12"
           placeholder="동의하고 시작하기"
+          @compositionend="handleCompositionEnd"
+          @compositionstart="handleCompositionStart"
           @input="handleNicknameInput"
         >
         <button
-          :disabled="!validNickname || status === 'checking'"
+          :disabled="status === 'checking'"
           @click="validateNickname"
         >
           중복확인
         </button>
       </div>
       <p
-        v-if="nickname && !validNickname"
+        v-if="showNicknameError"
         class="form-error"
       >
         닉네임은 한글, 영문, 숫자를 조합해 2~12자로 입력해 주세요.
@@ -185,6 +226,7 @@ async function next() {
       <small>한글, 영문, 숫자 2~12자</small>
     </section>
     <PrimaryButton
+      variant="green"
       :disabled="status !== 'available'"
       :loading="loading"
       @click="next"
@@ -222,17 +264,26 @@ async function next() {
   height: 64px;
   object-fit: contain;
 }
-.profile-picker span {
+.profile-picker__change-icon {
   position: absolute;
-  right: -2px;
-  bottom: 2px;
+  right: -3px;
+  bottom: 1px;
   display: grid;
-  width: 26px;
-  height: 26px;
+  width: 25px;
+  height: 25px;
   place-items: center;
   border-radius: 50%;
   background: #2de77c;
   color: #fff;
+}
+.profile-picker__change-icon svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
 }
 .nickname-row {
   display: flex;
@@ -254,18 +305,21 @@ async function next() {
   min-height: 54px;
   border: 0;
   border-radius: 15px;
-  background: #333;
-  color: #fff;
+  background: var(--green-500, #62ff9c);
+  color: var(--ui-text, #333);
   font-weight: 700;
 }
 .nickname-row button:disabled {
-  background: #ddd;
-  color: #999;
+  background: #ededed;
+  color: #8f8f8f;
 }
 .nickname-content small {
   display: block;
   margin: 10px 4px;
   color: #aaa;
+}
+.step-page > .primary-button {
+  margin-bottom: 4px;
 }
 .success {
   margin: 10px 4px 0;

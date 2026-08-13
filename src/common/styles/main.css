@@ -72,7 +72,7 @@ button {
   display: flex;
   flex-direction: column;
   padding: 0 16px 30px 24px;
-  background: #f6f6f6;
+  background: #fafafa;
 }
 
 .step-page > .step-header {

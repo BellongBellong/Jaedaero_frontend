@@ -29,6 +29,11 @@ main {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
+  scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+}
+
+:global(.onboarding-mobile-frame::-webkit-scrollbar) {
+  display: none;
 }
 </style>
