@@ -3,7 +3,7 @@ import { ENDPOINTS } from '@/common/api/endpoints'
 
 export async function runSimulation(payload) {
   const { data } = await apiClient.post(ENDPOINTS.simulations.list, payload)
-  return data
+  return data?.data ?? data
 }
 
 export async function getSimulations(params = {}) {

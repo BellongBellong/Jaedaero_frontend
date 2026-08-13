@@ -49,6 +49,7 @@ function handleContentScroll(event) {
       :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
       :collapsed="isHeaderCollapsed"
+      :hide-back-when-collapsed="route.meta.hideBackOnScroll"
     />
 
     <main

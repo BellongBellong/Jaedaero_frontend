@@ -7,6 +7,7 @@ import investIcon from '@/assets/icons/account/investBlock.png'
 import savingsIcon from '@/assets/icons/account/savingsBlock.png'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import returnRateIconBackground from '@/assets/simulations/return-rate-icon-bg.svg'
+import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { getCashflow } from '@/features/cashflow/api/cashflow.api'
 import { getDashboard } from '@/features/dashboard/api/dashboard.api'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
@@ -34,17 +35,26 @@ const errorMessage = ref('')
 const allocationErrorMessage = ref('')
 const appliedMessage = ref('')
 
-const monthlySalary = computed(() =>
-  Math.max(
+const monthlySalary = computed(() => {
+  const firstCashflowMonth = cashflow.value?.months?.[0]
+  const totalExpectedSalary = Number(cashflow.value?.expectedSalary || 0)
+
+  return Math.max(
     0,
     Number(
-      profile.value?.monthlySalary ??
+      firstCashflowMonth?.expectedSalary ??
+        firstCashflowMonth?.income ??
+        (totalExpectedSalary > 0
+          ? Math.round(totalExpectedSalary / remainingMonths.value)
+          : undefined) ??
+        dashboard.value?.thisMonthIncome ??
+        profile.value?.monthlySalary ??
         profile.value?.soldierProfile?.monthlySalary ??
         dashboard.value?.assetSnapshot?.income ??
         0,
     ),
-  ),
-)
+  )
+})
 const savingAmount = computed(
   () => Math.round((MILITARY_SAVINGS_AMOUNT * savingPercent.value) / 100 / 1000) * 1000,
 )
@@ -54,25 +64,43 @@ const totalAllocatedAmount = computed(
     savingAmount.value +
     amountFromPercent(investmentPercent.value),
 )
-const actualDischargeDday = computed(() => Number(dashboard.value?.dischargeDday || 0))
+const actualDischargeDday = computed(() => {
+  if (dashboard.value?.actualDischargeDate) {
+    return daysFromToday(dashboard.value.actualDischargeDate)
+  }
+
+  return Number(dashboard.value?.dischargeDday || 0)
+})
 const remainingMonths = computed(() => Math.max(1, Math.ceil(actualDischargeDday.value / 30)))
 const monthlyIncomeSchedule = computed(() => {
   const apiMonths = Array.isArray(cashflow.value?.months) ? cashflow.value.months : []
 
   return Array.from({ length: remainingMonths.value }, (_, index) => {
-    const apiIncome = Number(apiMonths[index]?.expectedSalary || 0)
+    const apiIncome = Number(apiMonths[index]?.expectedSalary ?? apiMonths[index]?.income ?? 0)
     return apiIncome > 0 ? apiIncome : monthlySalary.value
   })
 })
 const currentAsset = computed(() =>
   Number(dashboard.value?.totalAsset ?? dashboard.value?.currentAsset ?? 0),
 )
-const targetAmount = computed(() => Number(dashboard.value?.targetAmount || 0))
+const dashboardExpectedAsset = computed(() =>
+  Number(dashboard.value?.expectedAsset ?? dashboard.value?.projectedAssetAtDischarge ?? 0),
+)
+const targetAmount = computed(() => {
+  const directTarget = Number(cashflow.value?.targetAmount ?? dashboard.value?.targetAmount ?? 0)
+  if (directTarget > 0) return directTarget
+
+  const achievementRate = Number(dashboard.value?.achievementRate || 0)
+  return achievementRate > 0
+    ? Math.round(dashboardExpectedAsset.value / (achievementRate / 100))
+    : 0
+})
 const actualDischargeDate = computed(
   () => dashboard.value?.actualDischargeDate || profile.value?.dischargeDate || '',
 )
 const financialDischargeDday = computed(() => {
-  const serverDate = serverResult.value?.financialDischargeDate
+  const serverDate =
+    serverResult.value?.financialDischargeDate ?? dashboard.value?.financialDischargeDate
 
   if (serverDate) return daysFromToday(serverDate)
 
@@ -80,7 +108,12 @@ const financialDischargeDday = computed(() => {
     dashboard.value?.financialDischargeDday ??
       Math.max(
         0,
-        actualDischargeDday.value - Number(dashboard.value?.financialDischargeDifferenceDays || 0),
+        actualDischargeDday.value -
+          Number(
+            dashboard.value?.deltaDaysVsActual ??
+              dashboard.value?.financialDischargeDifferenceDays ??
+              0,
+          ),
       ),
   )
 })
@@ -202,15 +235,41 @@ function formatMoney(value) {
 }
 
 function formatDate(value) {
-  if (!value) return '-'
-  return String(value).slice(0, 10).replaceAll('-', '.')
+  const parts = dateParts(value)
+  if (!parts) return '-'
+
+  return parts.map((part, index) => (index === 0 ? part : String(part).padStart(2, '0'))).join('.')
 }
 
 function daysFromToday(value) {
-  const target = new Date(`${String(value).slice(0, 10)}T00:00:00`)
+  const parts = dateParts(value)
+  if (!parts) return 0
+
+  const [year, month, day] = parts
+  const target = Date.UTC(year, month - 1, day)
   const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return Math.max(0, Math.ceil((target - today) / 86_400_000))
+  const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
+  return Math.max(0, Math.ceil((target - todayUtc) / 86_400_000))
+}
+
+function dateParts(value) {
+  if (!value) return null
+
+  if (Array.isArray(value)) {
+    const [year, month, day] = value.map(Number)
+    return year && month && day ? [year, month, day] : null
+  }
+
+  const match = String(value)
+    .trim()
+    .match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/)
+  if (!match) return null
+
+  return match.slice(1).map(Number)
+}
+
+function unwrapApiData(response) {
+  return response?.data ?? response ?? null
 }
 
 function scenarioSnapshot(simulationId = null) {
@@ -240,13 +299,10 @@ async function applySimulation() {
 
   try {
     const response = await runSimulation({
-      name: '자금 배분 시뮬레이션',
       monthlySpendingAmount: amountFromPercent(spendingPercent.value),
       monthlySavingAmount: savingAmount.value,
       monthlyInvestmentAmount: amountFromPercent(investmentPercent.value),
-      annualReturnRate: annualReturnRate.value,
-      vacationBudget: 0,
-      targetAmount: targetAmount.value,
+      expectedReturnRate: annualReturnRate.value,
     })
     serverResult.value = response
     await completeMissionAfterLoad()
@@ -255,8 +311,11 @@ async function applySimulation() {
       JSON.stringify(scenarioSnapshot(response?.id ?? null)),
     )
     appliedMessage.value = '시뮬레이션을 적용했어요.'
-  } catch {
-    errorMessage.value = '시뮬레이션을 적용하지 못했어요. 잠시 후 다시 시도해주세요.'
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '시뮬레이션을 적용하지 못했어요. 잠시 후 다시 시도해주세요.',
+    )
   } finally {
     isApplying.value = false
   }
@@ -272,12 +331,17 @@ function openRecommendations() {
 
 onMounted(async () => {
   try {
-    const [dashboardResponse, profileResponse] = await Promise.all([
+    const [dashboardResult, profileResult] = await Promise.allSettled([
       getDashboard(),
       getMyPageProfile(),
     ])
-    dashboard.value = dashboardResponse
-    profile.value = profileResponse
+
+    if (dashboardResult.status === 'rejected') throw dashboardResult.reason
+
+    dashboard.value = unwrapApiData(dashboardResult.value)
+    profile.value =
+      profileResult.status === 'fulfilled' ? unwrapApiData(profileResult.value) : null
+
     try {
       cashflow.value = await getCashflow(remainingMonths.value)
     } catch {
@@ -307,7 +371,7 @@ onMounted(async () => {
           <span>전역 예상 자산</span>
           <strong>{{
             formatMoney(
-              canApply ? result.projectedAssetAtDischarge : dashboard?.projectedAssetAtDischarge,
+              canApply ? result.projectedAssetAtDischarge : dashboardExpectedAsset,
             )
           }}</strong>
         </div>
@@ -563,8 +627,9 @@ onMounted(async () => {
 .discharge-card__actual strong {
   color: var(--olive-500);
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1.3;
+  white-space: nowrap;
 }
 
 .discharge-card__actual small {
@@ -705,7 +770,8 @@ onMounted(async () => {
   gap: 6px;
   margin-top: -8px;
   color: #888;
-  font-size: 11px;
+  font-size: 10px;
+  white-space: nowrap;
 }
 
 .allocation-note {
