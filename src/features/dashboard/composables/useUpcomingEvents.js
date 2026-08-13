@@ -2,6 +2,8 @@ import { computed, isRef, ref, toRaw, unref, watch } from 'vue'
 
 import { setEventLeaveModeSchedules } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
+const EVENT_STORAGE_KEY = 'jaedaero-upcoming-events'
+
 function calculateDday(date) {
   const today = new Date()
   const target = new Date(`${date}T00:00:00`)
@@ -24,17 +26,45 @@ export function useUpcomingEvents(initialEvents = []) {
     return structuredClone(toRaw(unref(value) ?? []))
   }
 
+  function readStoredEvents() {
+    try {
+      const storedEvents = JSON.parse(localStorage.getItem(EVENT_STORAGE_KEY) || '[]')
+      return Array.isArray(storedEvents) ? storedEvents : []
+    } catch {
+      return []
+    }
+  }
+
+  function mergeEvents(sourceEvents) {
+    const mergedEvents = new Map()
+
+    ;[...cloneEvents(sourceEvents), ...readStoredEvents()].forEach((event) => {
+      const key =
+        event.id ??
+        [event.title, event.startDate || event.date, event.endDate || event.startDate || event.date]
+          .filter(Boolean)
+          .join(':')
+      mergedEvents.set(String(key), event)
+    })
+
+    return [...mergedEvents.values()]
+  }
+
+  function persistEvents() {
+    localStorage.setItem(EVENT_STORAGE_KEY, JSON.stringify(toRaw(events.value)))
+  }
+
   if (isRef(initialEvents)) {
     watch(
       initialEvents,
       (value) => {
-        events.value = cloneEvents(value)
+        events.value = mergeEvents(value)
         setEventLeaveModeSchedules(events.value)
       },
       { immediate: true },
     )
   } else {
-    events.value = cloneEvents(initialEvents)
+    events.value = mergeEvents(initialEvents)
     setEventLeaveModeSchedules(events.value)
   }
 
@@ -66,6 +96,7 @@ export function useUpcomingEvents(initialEvents = []) {
       notificationEnabled: event.notificationEnabled ?? true,
       ...(event.autoVacationMode === undefined ? {} : { autoVacationMode: event.autoVacationMode }),
     })
+    persistEvents()
     setEventLeaveModeSchedules(events.value)
   }
 
