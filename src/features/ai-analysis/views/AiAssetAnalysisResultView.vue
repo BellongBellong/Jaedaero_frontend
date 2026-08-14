@@ -13,7 +13,9 @@ import {
   createAiAnalysis,
   getAiAnalysis,
 } from '@/features/ai-analysis/api/aiAnalysis.api'
+import { mapAiAnalysisRequest } from '@/features/ai-analysis/mappers/aiAnalysisRequest.mapper'
 import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
+import { getSimulationDefaults, getSimulations } from '@/features/simulations/api/simulations.api'
 
 const MINIMUM_ANALYZING_DURATION = 2600
 
@@ -67,6 +69,20 @@ const applyErrorMessage = ref('')
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+async function createCurrentWhatIfAnalysis() {
+  const [defaultsResult, simulationsResult] = await Promise.allSettled([
+    getSimulationDefaults(),
+    getSimulations({ page: 0, size: 1 }),
+  ])
+
+  const payload = mapAiAnalysisRequest({
+    defaults: defaultsResult.status === 'fulfilled' ? defaultsResult.value : null,
+    simulations: simulationsResult.status === 'fulfilled' ? simulationsResult.value : null,
+  })
+
+  return createAiAnalysis(payload)
+}
+
 async function runAnalysis() {
   phase.value = 'analyzing'
   errorMessage.value = ''
@@ -77,7 +93,7 @@ async function runAnalysis() {
     const analysisId = route.params.analysisId
     const response = analysisId
       ? await getAiAnalysis(analysisId)
-      : (await Promise.all([createAiAnalysis(), delay(MINIMUM_ANALYZING_DURATION)]))[0]
+      : (await Promise.all([createCurrentWhatIfAnalysis(), delay(MINIMUM_ANALYZING_DURATION)]))[0]
     analysis.value = response
     phase.value = 'result'
   } catch {
