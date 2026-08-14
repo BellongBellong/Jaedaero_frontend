@@ -5,7 +5,7 @@ export const analysisHistoryRecords = [
   {
     id: 6,
     type: ANALYSIS_RECORD_TYPES.AI_ANALYSIS,
-    title: '오늘의 AI 투자 리포트3',
+    title: '오늘의 AI 소비 분석3',
     date: '2026.08.05',
     summary: '소비는 줄었고 투자 자산은 안정적으로 증가했어요.',
     applied: true,
@@ -57,7 +57,7 @@ export const analysisHistoryRecords = [
   {
     id: 2,
     type: ANALYSIS_RECORD_TYPES.AI_ANALYSIS,
-    title: '오늘의 AI 투자 리포트2',
+    title: '오늘의 AI 소비 분석2',
     date: '2026.07.05',
     summary: '소비는 줄었고 투자 자산은 안정적으로 증가했어요.',
     metrics: [
@@ -69,7 +69,7 @@ export const analysisHistoryRecords = [
   {
     id: 1,
     type: ANALYSIS_RECORD_TYPES.AI_ANALYSIS,
-    title: '오늘의 AI 투자 리포트1',
+    title: '오늘의 AI 소비 분석1',
     date: '2026.05.05',
     summary: '소비는 줄었고 투자 자산은 안정적으로 증가했어요.',
     metrics: [

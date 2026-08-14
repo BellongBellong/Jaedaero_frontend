@@ -158,7 +158,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: 'AI 분석 기록',
+          headerTitle: 'AI 소비 분석 기록',
           stickyTabs: true,
         },
       },

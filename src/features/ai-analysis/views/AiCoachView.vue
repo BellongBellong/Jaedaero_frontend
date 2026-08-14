@@ -15,12 +15,10 @@ import {
   formatReportDate,
   mapMarketIndicators,
 } from '@/features/market-report/mappers/marketReport.mapper'
-import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
+import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
 
-const onboarding = useOnboardingStore()
 const router = useRouter()
-
-const nickname = computed(() => onboarding.form.nickname || '윤호')
+const { honorificNickname, loadNickname } = useCurrentUserNickname()
 
 const { report, error, load } = useTodayMarketReport()
 const {
@@ -47,13 +45,14 @@ const reportDate = computed(() => {
 const reportSummary = computed(() => report.value?.summary || '')
 
 onMounted(() => {
+  loadNickname()
   load()
   loadIndicators()
 })
 
 const analysisMenus = [
   {
-    label: 'AI 분석',
+    label: 'AI 소비 분석',
     icon: analysisIcon,
     to: { name: 'ai-asset-analysis-result' },
   },
@@ -75,7 +74,7 @@ const analysisMenus = [
     <div class="ai-coach-screen__content">
       <header class="coach-intro">
         <h2>
-          지금 {{ nickname }}님에게 필요한<br>
+          지금 {{ honorificNickname }}에게 필요한<br>
           금융 행동은 무엇일까요?
         </h2>
       </header>

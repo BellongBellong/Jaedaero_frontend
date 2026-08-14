@@ -5,7 +5,7 @@ export const ANALYSIS_RECORD_TYPES = {
   WHAT_IF: 'WHAT_IF',
 }
 
-export const AI_ANALYSIS_TITLE = '오늘의 AI 투자 리포트'
+export const AI_ANALYSIS_TITLE = '오늘의 AI 소비 분석'
 export const WHAT_IF_TITLE = 'AI 추천 자산 계획'
 
 const WHAT_IF_SUMMARY = '현재 자산 흐름을 기준으로 가장 적합한 계획이에요.'
@@ -36,6 +36,12 @@ function unwrapList(response) {
   return response?.simulations ?? response?.content ?? response?.data ?? []
 }
 
+function toConsumerFacingAiTitle(title) {
+  if (!title) return AI_ANALYSIS_TITLE
+
+  return title.replace('AI 금융 분석', 'AI 소비 분석').replace('AI 투자 리포트', 'AI 소비 분석')
+}
+
 /** 통합 분석 이력 API의 단일 항목을 카드 모델로 변환한다. */
 export function mapAnalysisHistoryItem(item) {
   const type =
@@ -64,7 +70,9 @@ export function mapAnalysisHistoryItem(item) {
     sourceId: item?.sourceId,
     type,
     title:
-      item?.title || (type === ANALYSIS_RECORD_TYPES.WHAT_IF ? WHAT_IF_TITLE : AI_ANALYSIS_TITLE),
+      type === ANALYSIS_RECORD_TYPES.WHAT_IF
+        ? item?.title || WHAT_IF_TITLE
+        : toConsumerFacingAiTitle(item?.title),
     date: formatDate(item?.createdAt),
     sortKey: item?.createdAt ?? '',
     summary: item?.summary ?? '',
@@ -203,7 +211,7 @@ function withSequenceTitles(records) {
     })
 }
 
-/** AI 분석 목록과 시뮬레이션 목록을 하나의 기록 목록으로 합친다. */
+/** AI 소비 분석 목록과 시뮬레이션 목록을 하나의 기록 목록으로 합친다. */
 export function mapAnalysisHistoryRecords({ analyses, simulations, applications } = {}) {
   const appliedAnalysisIds = new Set(
     unwrapList(applications)

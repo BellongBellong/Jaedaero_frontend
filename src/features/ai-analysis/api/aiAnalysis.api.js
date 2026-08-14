@@ -8,7 +8,7 @@ export async function getAnalysisHistories(params = {}) {
   return data
 }
 
-export async function createAiAnalysis(payload) {
+export async function createAiAnalysis(payload = undefined) {
   const { data } = await apiClient.post(ENDPOINTS.aiAnalyses.create, payload, {
     timeout: AI_ANALYSIS_TIMEOUT_MS,
   })

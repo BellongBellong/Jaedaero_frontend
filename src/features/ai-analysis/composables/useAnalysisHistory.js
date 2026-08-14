@@ -17,8 +17,8 @@ export const ANALYSIS_HISTORY_TABS = [
   {
     value: ANALYSIS_RECORD_TYPES.AI_ANALYSIS,
     apiValue: 'AI',
-    label: 'AI 분석',
-    summaryLabel: 'AI 분석 기록',
+    label: 'AI 소비 분석',
+    summaryLabel: 'AI 소비 분석 기록',
   },
 ]
 

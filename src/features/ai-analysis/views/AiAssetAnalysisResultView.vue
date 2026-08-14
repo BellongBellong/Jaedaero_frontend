@@ -13,7 +13,9 @@ import {
   createAiAnalysis,
   getAiAnalysis,
 } from '@/features/ai-analysis/api/aiAnalysis.api'
-import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
+import { mapAiAnalysisRequest } from '@/features/ai-analysis/mappers/aiAnalysisRequest.mapper'
+import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
+import { getSimulationDefaults, getSimulations } from '@/features/simulations/api/simulations.api'
 
 const MINIMUM_ANALYZING_DURATION = 2600
 
@@ -21,7 +23,7 @@ const DONUT_RADIUS = 42
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
 const DONUT_SEGMENT_GAP = 3
 
-// 피그마 AI 분석 도안 기준 카테고리 이모지·타일 배경·막대 색상.
+// 피그마 AI 소비 분석 도안 기준 카테고리 이모지·타일 배경·막대 색상.
 const SPENDING_CATEGORY_STYLES = {
   FOOD: { emoji: '🍔', tile: 'var(--category-food-light)', color: 'var(--category-food-main)' },
   PX: { emoji: '🪖', tile: 'var(--category-px-light)', color: 'var(--category-px-main)' },
@@ -56,7 +58,7 @@ const CAUSE_TAGS = {
 
 const route = useRoute()
 const router = useRouter()
-const onboarding = useOnboardingStore()
+const { honorificNickname, loadNickname } = useCurrentUserNickname()
 
 const phase = ref('analyzing')
 const analysis = ref(null)
@@ -65,9 +67,21 @@ const errorMessage = ref('')
 const applyState = ref('idle')
 const applyErrorMessage = ref('')
 
-const nickname = computed(() => onboarding.form.nickname || '윤호')
-
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function createCurrentWhatIfAnalysis() {
+  const [defaultsResult, simulationsResult] = await Promise.allSettled([
+    getSimulationDefaults(),
+    getSimulations({ page: 0, size: 1 }),
+  ])
+
+  const payload = mapAiAnalysisRequest({
+    defaults: defaultsResult.status === 'fulfilled' ? defaultsResult.value : null,
+    simulations: simulationsResult.status === 'fulfilled' ? simulationsResult.value : null,
+  })
+
+  return createAiAnalysis(payload)
+}
 
 async function runAnalysis() {
   phase.value = 'analyzing'
@@ -79,21 +93,19 @@ async function runAnalysis() {
     const analysisId = route.params.analysisId
     const response = analysisId
       ? await getAiAnalysis(analysisId)
-      : (
-          await Promise.all([
-            createAiAnalysis({ simulationId: null }),
-            delay(MINIMUM_ANALYZING_DURATION),
-          ])
-        )[0]
+      : (await Promise.all([createCurrentWhatIfAnalysis(), delay(MINIMUM_ANALYZING_DURATION)]))[0]
     analysis.value = response
     phase.value = 'result'
   } catch {
-    errorMessage.value = 'AI 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
+    errorMessage.value = 'AI 소비 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
     phase.value = 'error'
   }
 }
 
-onMounted(runAnalysis)
+onMounted(() => {
+  loadNickname()
+  runAnalysis()
+})
 
 function formatWon(value) {
   return `${Number(value || 0).toLocaleString('ko-KR')}원`
@@ -237,19 +249,28 @@ const expectedEffect = computed(() => {
   const scenario = analysis.value?.recommendedScenario
   if (!effect && !scenario) return null
 
-  const increase = Number(effect?.expectedAssetIncreaseAmount || 0)
-  const currentProjectedAsset = Math.max(
+  // 최신 소비 분석 DTO는 현재 적용 중인 What-if 결과를 최상위 expectedAsset으로 제공한다.
+  // 개선 효과를 역산하면 계산 정책이나 반올림이 바뀔 때 기준 자산이 달라질 수 있으므로
+  // 최상위 값을 우선하고, 과거 저장 이력에만 기존 역산 방식을 사용한다.
+  const legacyIncrease = Number(effect?.expectedAssetIncreaseAmount || 0)
+  const legacyCurrentAsset = Math.max(
     0,
-    Number(effect?.expectedAssetAfterImprovement || 0) - increase,
+    Number(effect?.expectedAssetAfterImprovement || 0) - legacyIncrease,
   )
+  const currentProjectedAsset = Number(analysis.value?.expectedAsset ?? legacyCurrentAsset)
   const strategyProjectedAsset = Number(
     scenario?.expectedAsset ?? effect?.expectedAssetAfterImprovement,
+  )
+  const calculatedIncrease = strategyProjectedAsset - currentProjectedAsset
+  const additionalAmount = Math.max(
+    0,
+    Number.isFinite(calculatedIncrease) ? calculatedIncrease : legacyIncrease,
   )
 
   return {
     currentProjectedAsset,
     strategyProjectedAsset,
-    additionalAmount: Math.max(0, strategyProjectedAsset - currentProjectedAsset),
+    additionalAmount,
     currentFinancialDischargeLabel: formatFinancialDate(analysis.value?.financialDischargeDate),
     financialDateChangeLabel: formatFinancialDateChange(
       scenario?.financialDischargeDate,
@@ -275,7 +296,7 @@ const isFallbackGuide = computed(() => analysis.value?.generationSource === 'FAL
 const applyButtonLabel = computed(() => {
   if (applyState.value === 'applying') return '적용 중...'
   if (applyState.value === 'applied') return '적용 완료'
-  return 'AI 전략 적용하기'
+  return 'AI 소비 전략 적용하기'
 })
 
 async function handleApplyStrategy() {
@@ -325,7 +346,7 @@ async function handleApplyStrategy() {
 
         <div class="analyzing__content">
           <h2 class="analyzing__title">
-            {{ nickname }}님의 자산을<br>
+            {{ honorificNickname }}의 자산을<br>
             분석중이에요
           </h2>
 
@@ -369,7 +390,7 @@ async function handleApplyStrategy() {
               aria-hidden="true"
             >
           </button>
-          <h1>AI 분석</h1>
+          <h1>AI 소비 분석</h1>
         </header>
         <div class="status-panel__body">
           <p>{{ errorMessage }}</p>
@@ -402,7 +423,7 @@ async function handleApplyStrategy() {
               aria-hidden="true"
             >
           </button>
-          <h1>AI 분석</h1>
+          <h1>AI 소비 분석</h1>
         </header>
 
         <div class="result__body">
@@ -566,7 +587,7 @@ async function handleApplyStrategy() {
               >🤖</span>
               <div>
                 <h3>개선 방안 안내</h3>
-                <p>AI의 자산 관리 추천 방안</p>
+                <p>현재 계획을 유지하는 소비 관리 추천</p>
               </div>
             </div>
 
@@ -626,7 +647,7 @@ async function handleApplyStrategy() {
                   >
                 </span>
                 <div class="compare__col compare__col--strategy">
-                  <span class="compare__eyebrow">AI 전략 적용</span>
+                  <span class="compare__eyebrow">소비 전략 적용</span>
                   <div class="compare__value-group">
                     <span class="compare__label">예상 전역 자산</span>
                     <strong class="compare__value">{{
@@ -664,7 +685,7 @@ async function handleApplyStrategy() {
                   >
                 </span>
                 <div class="compare__col compare__col--strategy">
-                  <span class="compare__eyebrow">AI 전략 적용</span>
+                  <span class="compare__eyebrow">소비 전략 적용</span>
                   <div class="compare__value-group">
                     <span class="compare__label">재정적 전역일</span>
                     <strong class="compare__value">{{

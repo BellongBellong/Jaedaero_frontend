@@ -35,6 +35,8 @@ export function mapWhatIfDetail(simulation, { monthlySalary, saved = false, titl
     toNumber(calculation?.baseAsset) +
     toNumber(calculation?.cashflowIncreaseAmount) +
     projectedBenefit
+  const calculationPolicyVersion = effect?.calculationPolicyVersion ?? ''
+  const isUnifiedV4 = calculationPolicyVersion.startsWith('WHAT_IF_UNIFIED_ASSET_TIMELINE_V4')
 
   return {
     id: simulation?.simulationId ?? simulation?.id,
@@ -46,8 +48,12 @@ export function mapWhatIfDetail(simulation, { monthlySalary, saved = false, titl
     financialDischargeDate: formatDate(simulation?.financialDischargeDate),
     baseSalary: salary ? formatTenThousandWon(salary) : '-',
     hasCalculationDetail: Boolean(calculation && effect),
-    calculationConsistent: expectedAsset === recomposedAsset,
-    calculationPolicyVersion: effect?.calculationPolicyVersion ?? '',
+    calculationStatus: isUnifiedV4
+      ? expectedAsset === recomposedAsset
+        ? 'consistent'
+        : 'inconsistent'
+      : 'legacy',
+    calculationPolicyVersion,
     calculationRows: [
       { label: '현재 기준 자산', value: formatWon(calculation?.baseAsset) },
       { label: '급여에서 소비를 뺀 순증가', value: formatWon(calculation?.cashflowIncreaseAmount) },
