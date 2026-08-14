@@ -64,15 +64,6 @@ const characterImages = {
   DEFAULT: rankingCharacterArmy,
 }
 
-const rankingProfileBackgrounds = {
-  GREEN: '#e5fff4',
-  OLIVE: '#aebbaa',
-  YELLOW: '#fff0b8',
-  ORANGE: '#ffb39f',
-  GRAY: '#f7f7f7',
-  BLACK: '#333333',
-}
-
 const rankingPodium = {
   1: { crown: rankingCrownGold, image: rankingFirstPodium },
   2: { crown: rankingCrownSilver, image: rankingSecondPodium },
@@ -311,11 +302,6 @@ function getRankingCharacter(member) {
   return characterImages[normalized] || characterImages.DEFAULT
 }
 
-function getRankingProfileBackground(member) {
-  const source = String(member.profileSource || member.profile?.profileSource || '').toUpperCase()
-  return rankingProfileBackgrounds[source] || '#e5fff4'
-}
-
 function getRankingNo(member, fallback) {
   const value = member.rankingNo ?? member.rank ?? member.ranking
   const numericValue = Number(value)
@@ -406,7 +392,6 @@ const ranking = computed(() => {
         character: getRankingCharacter(member),
         crown: podium.crown,
         podiumImage: podium.image,
-        profileBackground: getRankingProfileBackground(member),
       }
     })
 })
@@ -750,10 +735,7 @@ onBeforeUnmount(() => {
                 :src="member.crown"
                 alt=""
               >
-              <span
-                class="ranking-character-wrap"
-                :style="{ backgroundColor: member.profileBackground }"
-              >
+              <span class="ranking-character-wrap">
                 <img
                   class="ranking-character"
                   :src="member.character"
@@ -1293,7 +1275,7 @@ onBeforeUnmount(() => {
 }
 .podium .rank-1 {
   --stage-height: 196px;
-  --character-bottom: 72px;
+  --character-bottom: 97px;
   --crown-bottom: 163px;
   --podium-image-width: 91px;
   --podium-offset-x: 0px;
@@ -1369,15 +1351,15 @@ onBeforeUnmount(() => {
 .ranking-character-wrap {
   position: absolute;
   z-index: 2;
+  display: block;
   bottom: var(--character-bottom);
   left: 50%;
   width: 70px;
   height: 70px;
-  border-radius: 50%;
   transform: translateX(-50%);
-  overflow: hidden;
 }
 .ranking-character {
+  display: block;
   width: 70px;
   height: 70px;
   object-fit: contain;

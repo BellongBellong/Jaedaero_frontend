@@ -51,8 +51,8 @@ export async function reconnectAccount(account, config = {}) {
   const { data } = await apiClient.patch(ENDPOINTS.accounts.activate(accountId), null, {
     ...config,
     params: {
-      userId,
       ...config.params,
+      userId,
     },
   })
 
