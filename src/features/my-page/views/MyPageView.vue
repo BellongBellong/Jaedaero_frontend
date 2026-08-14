@@ -1114,6 +1114,12 @@ onMounted(async () => {
 .badge-preview small,
 .badge-preview:not(:first-child) small {
   opacity: 0.3;
+  white-space: nowrap;
+}
+.badge-preview:not(.is-selected) small {
+  min-width: 42px;
+  padding-inline: 4px;
+  font-size: 11px;
 }
 .badge-preview b,
 .badge-preview:not(:first-child) b {
