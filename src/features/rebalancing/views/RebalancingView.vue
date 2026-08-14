@@ -6,6 +6,7 @@ import allocationGuideVisual from '@/assets/ai-coach/allocation-guide-visual.png
 import allocationIcon from '@/assets/ai-coach/what-if.svg'
 import monthlyInvestmentIcon from '@/assets/ai-coach/monthly-investment-icon.png'
 import planGuideVisual from '@/assets/ai-coach/plan-guide-visual.png'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import {
   getRebalancingRecommendation,
   getRecurringInvestmentPlan,
@@ -181,7 +182,7 @@ onMounted(async () => {
       class="guide-intro"
     >
       <h2>
-        적립식 투자 가이드를<br />
+        적립식 투자 가이드를<br>
         시작해볼까요?
       </h2>
       <p>맞춤 가이드를 만드려면 두 가지 설정이 필요해요</p>
@@ -199,7 +200,9 @@ onMounted(async () => {
     <template v-else-if="hasActiveGuide">
       <header class="monthly-guide-heading">
         <h2>이번달 투자 가이드</h2>
-        <p v-if="nextContributionLabel">다음 납입일은 {{ nextContributionLabel }} 이에요</p>
+        <p v-if="nextContributionLabel">
+          다음 납입일은 {{ nextContributionLabel }} 이에요
+        </p>
       </header>
 
       <article class="monthly-guide">
@@ -250,20 +253,12 @@ onMounted(async () => {
           </dl>
         </div>
 
-        <button
+        <DetailLinkButton
           class="monthly-guide__detail"
-          type="button"
           @click="openGuideDetail"
         >
           가이드 상세보기
-          <svg
-            class="monthly-guide__chevron"
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-          >
-            <path d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        </DetailLinkButton>
       </article>
 
       <button
@@ -305,7 +300,7 @@ onMounted(async () => {
                 :src="allocationIcon"
                 alt=""
                 aria-hidden="true"
-              />
+              >
             </span>
             <span class="guide-card__copy">
               <small>내 자산을 어떻게 배분할 지 목표를 설정해요</small>
@@ -330,13 +325,13 @@ onMounted(async () => {
               :src="allocationGuideVisual"
               alt=""
               aria-hidden="true"
-            />
+            >
             <strong>
-              아직 세부자산분배 목표를<br />
+              아직 세부자산분배 목표를<br>
               설정하지 않았어요
             </strong>
             <p>
-              What-if 시뮬레이션으로<br />
+              What-if 시뮬레이션으로<br>
               나에게 맞는 자산 분배 목표를 먼저 설정해보세요
             </p>
             <button
@@ -368,7 +363,7 @@ onMounted(async () => {
                 :src="monthlyInvestmentIcon"
                 alt=""
                 aria-hidden="true"
-              />
+              >
             </span>
             <span class="guide-card__copy">
               <small>월 투자 계획을 설정해요</small>
@@ -394,7 +389,7 @@ onMounted(async () => {
               :src="planGuideVisual"
               alt=""
               aria-hidden="true"
-            />
+            >
             <strong
               v-if="hasRecurringPlan"
               class="plan-complete-title"
@@ -410,7 +405,7 @@ onMounted(async () => {
               {{ Number(recurringPlan?.contributionAmount || 0).toLocaleString('ko-KR') }}원
             </p>
             <p v-else>
-              주기와 금액, 투자 대상을 설정하면<br />
+              주기와 금액, 투자 대상을 설정하면<br>
               다음 투자 가이드를 받을 수 있어요.
             </p>
             <button
@@ -618,15 +613,10 @@ onMounted(async () => {
   word-break: keep-all;
 }
 
-.monthly-guide__chevron {
+.monthly-guide__detail img {
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
-  fill: none;
-  stroke: #bdbdbd;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2.5;
 }
 
 .refresh-button {

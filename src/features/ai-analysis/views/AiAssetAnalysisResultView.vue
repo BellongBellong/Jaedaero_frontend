@@ -1,14 +1,14 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 
 import arrowRightIcon from '@/assets/ai-analysis/arrowRightIcon.svg'
 import arrowUpIcon from '@/assets/ai-analysis/arrowUpIcon.svg'
 import causeInfoIcon from '@/assets/ai-analysis/causeInfoIcon.svg'
-import chevronIcon from '@/assets/ai-analysis/chevronIcon.svg'
 import analysisGlow from '@/assets/ai-coach/analysis-glow.svg'
 import coachCharacter from '@/assets/ai-coach/coach-character.svg'
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import { applyAiStrategy, createAiAnalysis } from '@/features/ai-analysis/api/aiAnalysis.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
@@ -637,17 +637,12 @@ async function handleApplyStrategy() {
                   추천 상품
                 </h3>
               </div>
-              <RouterLink
+              <DetailLinkButton
                 class="products__more"
-                :to="{ name: 'ai-product-recommendation' }"
+                @click="router.push({ name: 'ai-product-recommendation' })"
               >
                 자세히 보기
-                <img
-                  :src="chevronIcon"
-                  alt=""
-                  aria-hidden="true"
-                >
-              </RouterLink>
+              </DetailLinkButton>
             </div>
 
             <div class="products__grid">
@@ -1383,7 +1378,6 @@ async function handleApplyStrategy() {
 .products__more img {
   width: 7px;
   height: 11px;
-  transform: scaleX(-1);
 }
 
 .products__grid {

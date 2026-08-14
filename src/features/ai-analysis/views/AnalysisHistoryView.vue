@@ -1,11 +1,12 @@
 <script setup>
-import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
 
-import arrowIcon from '@/assets/icons/arrow.svg'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import { useAnalysisHistory } from '@/features/ai-analysis/composables/useAnalysisHistory'
 import { ANALYSIS_RECORD_TYPES } from '@/features/ai-analysis/mappers/analysisHistory.mapper'
 
 const { filteredRecords, summary, activeTab, tabs, loading } = useAnalysisHistory()
+const router = useRouter()
 
 function recordTypeLabel(record) {
   return record.type === ANALYSIS_RECORD_TYPES.WHAT_IF ? 'What-if' : 'AI 분석'
@@ -15,6 +16,10 @@ function detailRoute(record) {
   return record.type === ANALYSIS_RECORD_TYPES.WHAT_IF
     ? { name: 'what-if-detail', params: { simulationId: record.sourceId ?? record.id } }
     : { name: 'ai-asset-analysis-result' }
+}
+
+function openDetail(record) {
+  router.push(detailRoute(record))
 }
 </script>
 
@@ -159,17 +164,12 @@ function detailRoute(record) {
           </div>
 
           <footer class="record-card__footer">
-            <RouterLink
+            <DetailLinkButton
               class="record-card__link"
-              :to="detailRoute(record)"
+              @click="openDetail(record)"
             >
               상세보기
-              <img
-                :src="arrowIcon"
-                alt=""
-                aria-hidden="true"
-              >
-            </RouterLink>
+            </DetailLinkButton>
           </footer>
         </article>
       </li>
