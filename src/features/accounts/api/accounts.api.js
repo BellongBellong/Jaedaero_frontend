@@ -46,13 +46,12 @@ export async function connectAccount(payload, config = {}) {
 }
 
 export async function reconnectAccount(account, config = {}) {
-  const userId = Number(localStorage.getItem('userId')) || 1
   const accountId = account.accountId || account.id
   const { data } = await apiClient.patch(ENDPOINTS.accounts.activate(accountId), null, {
     ...config,
     params: {
-      userId,
       ...config.params,
+      accountId,
     },
   })
 
