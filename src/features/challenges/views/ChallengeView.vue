@@ -1275,24 +1275,21 @@ onBeforeUnmount(() => {
 }
 .podium .rank-1 {
   --stage-height: 196px;
-  --character-bottom: 97px;
-  --crown-bottom: 163px;
+  --character-bottom: 85px;
   --podium-image-width: 91px;
   --podium-offset-x: 0px;
   order: 2;
 }
 .podium .rank-2 {
   --stage-height: 168px;
-  --character-bottom: 68px;
-  --crown-bottom: 135px;
+  --character-bottom: 59px;
   --podium-image-width: 91px;
   --podium-offset-x: 0px;
   order: 1;
 }
 .podium .rank-3 {
   --stage-height: 124px;
-  --character-bottom: 53px;
-  --crown-bottom: 0px;
+  --character-bottom: 44px;
   --podium-image-width: 91px;
   --podium-offset-x: -4.5px;
   order: 3;
@@ -1373,7 +1370,7 @@ onBeforeUnmount(() => {
 }
 .ranking-crown {
   z-index: 4;
-  bottom: var(--crown-bottom);
+  bottom: calc(var(--character-bottom) + 66px);
   width: 30px;
   height: 29px;
 }
