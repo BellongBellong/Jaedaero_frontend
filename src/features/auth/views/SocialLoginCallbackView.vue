@@ -2,11 +2,12 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { login } from '@/features/auth/api/auth.api'
 import { getRedirectUri, validateSocialLoginCallback } from '@/features/auth/oauth'
+import { useAuthStore } from '@/features/auth/stores/auth.store'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const errorMessage = ref('로그인 처리 중입니다...')
 
 onMounted(async () => {
@@ -14,15 +15,12 @@ onMounted(async () => {
 
   try {
     const authorizationCode = validateSocialLoginCallback(provider, route.query)
-    const response = await login({
+    const response = await authStore.login({
       socialType: provider,
       authorizationCode,
       redirectUri: getRedirectUri(provider),
     })
 
-    localStorage.setItem('accessToken', response.accessToken)
-    localStorage.setItem('refreshToken', response.refreshToken)
-    if (response.user?.userId) localStorage.setItem('userId', String(response.user.userId))
     await router.replace({
       name: response.user?.onboardingCompleted ? 'dashboard' : 'terms',
     })

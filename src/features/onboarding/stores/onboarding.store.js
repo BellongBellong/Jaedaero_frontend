@@ -1,6 +1,8 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
+import { useAuthStore } from '@/features/auth/stores/auth.store'
+
 const initialState = {
   agreements: [],
   accountsConnected: false,
@@ -38,6 +40,7 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     persist()
     isComplete.value = true
     localStorage.setItem('jaedaero-onboarding-complete', 'true')
+    useAuthStore().markOnboardingCompleted()
   }
 
   return { form, isComplete, targetAmountInTenThousands, persist, complete }
