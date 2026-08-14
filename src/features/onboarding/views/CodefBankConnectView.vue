@@ -6,6 +6,7 @@ import generalAccountIcon from '@/assets/onboarding/icons/account-general.svg'
 import accountEmptyMascot from '@/assets/onboarding/icons/account-empty-mascot.svg'
 import militarySavingsAccountIcon from '@/assets/onboarding/icons/account-military-savings.svg'
 import recommendedAccountIcon from '@/assets/onboarding/icons/account-recommended.svg'
+import detailViewIcon from '@/assets/my-page/detail-view.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import {
@@ -18,6 +19,7 @@ import {
   accountInstitutionName,
   accountOrganizationCode,
   matchesAccountInstitution,
+  normalizeOrganizationCode,
   normalizeInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
@@ -136,6 +138,13 @@ const selectedInstitution = computed(() =>
     (institution) => institution.organizationCode === form.value.organizationCode,
   ),
 )
+
+function isPendingInstitution(institution) {
+  return (
+    normalizeOrganizationCode(pendingOrganizationCode.value) ===
+    normalizeOrganizationCode(institution?.organizationCode)
+  )
+}
 
 const bankLogoRules = [
   ['국민', 'kb'],
@@ -260,7 +269,8 @@ function restoreConnectedInstitutions(accounts) {
   })
 
   connectedInstitutions.value = Array.from(grouped.values())
-  showConnectedSummary.value = connectedInstitutions.value.length > 0
+  showConnectedSummary.value =
+    connectedInstitutions.value.length > 0 && !isAdditionalConnection.value
 }
 
 async function restoreConnectionState() {
@@ -302,7 +312,12 @@ function retryAccountConnection() {
 }
 
 function confirmInstitution() {
-  if (!pendingInstitution.value || isInstitutionConnected(pendingInstitution.value)) return
+  if (
+    !pendingInstitution.value ||
+    (isInstitutionConnected(pendingInstitution.value) && !isAdditionalConnection.value)
+  ) {
+    return
+  }
   form.value.organizationCode = pendingOrganizationCode.value
   institutionModalOpen.value = false
   errorMessage.value = ''
@@ -312,7 +327,9 @@ function togglePendingInstitution(organizationCode) {
   const institution = visibleInstitutions.value.find(
     (item) => item.organizationCode === organizationCode,
   )
-  if (!institution || isInstitutionConnected(institution)) return
+  if (!institution || (isInstitutionConnected(institution) && !isAdditionalConnection.value)) {
+    return
+  }
 
   pendingOrganizationCode.value =
     pendingOrganizationCode.value === organizationCode ? '' : organizationCode
@@ -384,7 +401,10 @@ function closeAccountsModal() {
 async function confirmAccounts() {
   if (!selectedAccountIds.value.length || accountsConfirming.value) return
 
-  if (!selectedInstitution.value || isInstitutionConnected(selectedInstitution.value)) {
+  if (
+    !selectedInstitution.value ||
+    (isInstitutionConnected(selectedInstitution.value) && !isAdditionalConnection.value)
+  ) {
     accountsModalOpen.value = false
     showConnectedSummary.value = true
     return
@@ -589,11 +609,15 @@ onBeforeUnmount(abortAccountRequest)
     >
       <span class="connection-skeleton__label" />
       <div class="connection-skeleton__types">
-        <span class="connection-skeleton__card" />
-        <span class="connection-skeleton__card" />
+        <span
+          v-if="!isSecuritiesOnly"
+          class="connection-skeleton__card"
+        />
+        <span
+          v-if="allowsSecurities"
+          class="connection-skeleton__card"
+        />
       </div>
-      <span class="connection-skeleton__field" />
-      <span class="connection-skeleton__field connection-skeleton__field--short" />
       <span class="connection-skeleton__button" />
     </section>
 
@@ -675,6 +699,12 @@ onBeforeUnmount(abortAccountRequest)
                   ? selectedInstitution.displayName
                   : '은행'
               }}
+              <img
+                class="type-button-arrow"
+                :src="detailViewIcon"
+                alt=""
+                aria-hidden="true"
+              >
             </button>
             <button
               v-if="allowsSecurities"
@@ -690,6 +720,12 @@ onBeforeUnmount(abortAccountRequest)
                   ? selectedInstitution.displayName
                   : '증권사'
               }}
+              <img
+                class="type-button-arrow"
+                :src="detailViewIcon"
+                alt=""
+                aria-hidden="true"
+              >
             </button>
           </div>
         </fieldset>
@@ -715,10 +751,12 @@ onBeforeUnmount(abortAccountRequest)
                 <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
                 <b>{{ selectedInstitution.displayName }}</b>
               </span>
-              <span
+              <img
                 class="selected-institution-arrow"
+                :src="detailViewIcon"
+                alt=""
                 aria-hidden="true"
-              >›</span>
+              >
             </button>
           </div>
 
@@ -834,28 +872,26 @@ onBeforeUnmount(abortAccountRequest)
               type="button"
               class="institution-row"
               :class="{
-                selected: pendingOrganizationCode === institution.organizationCode,
-                connected: isInstitutionConnected(institution),
+                selected: isPendingInstitution(institution),
+                connected:
+                  isInstitutionConnected(institution) && !isPendingInstitution(institution),
               }"
               :aria-label="
-                isInstitutionConnected(institution)
-                  ? `${institution.displayName} 연결됨`
-                  : `${institution.displayName} 선택`
+                isPendingInstitution(institution)
+                  ? `${institution.displayName} 선택됨`
+                  : isInstitutionConnected(institution)
+                    ? `${institution.displayName} 연결됨`
+                    : `${institution.displayName} 선택`
               "
-              :disabled="isInstitutionConnected(institution)"
+              :disabled="isInstitutionConnected(institution) && !isAdditionalConnection"
               @click="togglePendingInstitution(institution.organizationCode)"
             >
               <img
-                :src="
-                  institutionLogo(
-                    institution,
-                    pendingOrganizationCode === institution.organizationCode,
-                  )
-                "
+                :src="institutionLogo(institution, isPendingInstitution(institution))"
                 alt=""
               >
               <span
-                v-if="isInstitutionConnected(institution)"
+                v-if="isInstitutionConnected(institution) && !isPendingInstitution(institution)"
                 class="institution-connected-check"
                 aria-hidden="true"
               >✓</span>
@@ -1161,16 +1197,6 @@ onBeforeUnmount(abortAccountRequest)
   background: #fff;
 }
 
-.connection-skeleton__field {
-  width: 100%;
-  height: 58px;
-  border-radius: 14px;
-}
-
-.connection-skeleton__field--short {
-  width: 72%;
-}
-
 .connection-skeleton__button {
   width: 100%;
   height: 56px;
@@ -1235,18 +1261,14 @@ onBeforeUnmount(abortAccountRequest)
   box-shadow: 0 4px 12px rgb(59 225 120 / 12%);
 }
 
-.type-buttons button:not(.type-buttons__securities-only):first-child {
+.type-buttons button {
   padding-right: 48px;
 }
 
-.type-buttons button:not(.type-buttons__securities-only):first-child::after {
-  position: absolute;
-  right: 20px;
-  color: #a3aca6;
-  content: '›';
-  font-size: 26px;
-  font-weight: 400;
-  line-height: 1;
+.type-button-arrow {
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
 }
 
 .type-buttons .type-buttons__securities-only {
@@ -1460,11 +1482,9 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .selected-institution-arrow {
+  width: 24px;
+  height: 24px;
   margin-left: auto;
-  color: #999;
-  font-size: 30px;
-  font-weight: 300;
-  line-height: 30px;
 }
 
 label {

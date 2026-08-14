@@ -12,7 +12,7 @@ const notificationItems = [
   {
     key: 'aiReport',
     title: '오늘의 AI 리포트',
-    description: '매일 18시 금융 시장 분석 알림',
+    description: '매일 17시 금융 시장 분석 알림',
   },
   {
     key: 'mission',
