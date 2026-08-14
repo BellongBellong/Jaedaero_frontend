@@ -124,7 +124,7 @@ function handleContentScroll(event) {
   z-index: var(--z-navigation, 20);
   right: 0;
   /* 홈 인디케이터는 피하되, safe area를 컨테이너 높이에 중복 가산하지 않는다. */
-  bottom: max(8px, calc(var(--safe-area-bottom) - 4px));
+  bottom: max(5px, calc(var(--safe-area-bottom) - 7px));
   left: 0;
   height: var(--bottom-navigation-area-height);
   padding-top: 8px;
