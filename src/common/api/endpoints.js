@@ -30,11 +30,11 @@ export const ENDPOINTS = {
     detail: (simulationId) => `/simulations/${simulationId}`,
   },
   aiAnalyses: {
-    list: '/ai-analyses',
     create: '/ai-analyses',
     detail: (analysisId) => `/ai-analyses/${analysisId}`,
     apply: (analysisId) => `/ai-analyses/${analysisId}/apply`,
   },
+  analysisHistories: '/analysis-histories',
   strategyApplications: '/strategy-applications',
   transactions: {
     list: '/transactions',
