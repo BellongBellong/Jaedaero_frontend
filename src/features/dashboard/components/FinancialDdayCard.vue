@@ -24,13 +24,13 @@ const props = defineProps({
     type: [String, Date, Array],
     default: null,
   },
-  achievementRate: {
+  expectedAsset: {
     type: Number,
-    default: 80.2,
+    default: 800,
   },
   currentAsset: {
     type: Number,
-    default: 800,
+    default: 0,
   },
   targetAmount: {
     type: Number,
@@ -43,14 +43,14 @@ const props = defineProps({
 })
 
 const calculatedAchievementRate = computed(() => {
-  const currentAsset = Number(props.currentAsset)
+  const expectedAsset = Number(props.expectedAsset)
   const targetAmount = Number(props.targetAmount)
 
-  if (!Number.isFinite(currentAsset) || !Number.isFinite(targetAmount) || targetAmount <= 0) {
+  if (!Number.isFinite(expectedAsset) || !Number.isFinite(targetAmount) || targetAmount <= 0) {
     return 0
   }
 
-  return (currentAsset / targetAmount) * 100
+  return (expectedAsset / targetAmount) * 100
 })
 const normalizedRate = computed(() => Math.min(Math.max(calculatedAchievementRate.value, 0), 100))
 const progressWidth = computed(() => `${normalizedRate.value}%`)
@@ -204,7 +204,7 @@ const formattedAchievementRate = computed(() => {
       <div class="financial-dday-card__achievement">
         <p>전역 목표 금액 달성률</p>
         <strong>{{ formattedAchievementRate }}%</strong>
-        <span>순자산 {{ formatAmount(currentAsset) }}만원</span>
+        <span>전역 예상 자산 {{ formatAmount(expectedAsset) }}만원</span>
       </div>
 
       <div

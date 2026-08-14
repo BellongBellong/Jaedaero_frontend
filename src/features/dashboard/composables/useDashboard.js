@@ -62,6 +62,7 @@ function emptyDashboardModel() {
       differenceDays: null,
       achievementRate: 0,
       currentAsset: 0,
+      expectedAsset: 0,
       targetAmount: 0,
     },
     missions: [],
