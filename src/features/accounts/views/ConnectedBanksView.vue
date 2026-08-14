@@ -2,16 +2,12 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import bankBuilding from '@/assets/onboarding/icons/bank-building.png'
-import bankIbk from '@/assets/onboarding/institutions/bank-ibk.svg'
-import bankKb from '@/assets/onboarding/institutions/bank-kb.svg'
-import bankKakao from '@/assets/onboarding/institutions/bank-kakao.svg'
-import bankShinhan from '@/assets/onboarding/institutions/bank-shinhan.svg'
-import bankToss from '@/assets/onboarding/institutions/bank-toss.svg'
 import securityDefault from '@/assets/onboarding/institutions/security-0.svg'
-import securityKoreaInvestment from '@/assets/onboarding/institutions/security-1.svg'
 import { getAccounts } from '@/features/accounts/api/accounts.api'
+import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import {
+  accountConnectionStatus,
+  accountConnectionStatusLabel,
   accountInstitutionKey,
   accountInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
@@ -21,14 +17,29 @@ const accounts = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
 
-const bankIcons = {
-  KB국민은행: bankKb,
-  국민은행: bankKb,
-  'IBK 기업은행': bankIbk,
-  기업은행: bankIbk,
-  신한은행: bankShinhan,
-  토스뱅크: bankToss,
-  카카오뱅크: bankKakao,
+const securityAssets = import.meta.glob('@/assets/onboarding/institutions/security-*.svg', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+})
+const securityLogoIndexByCode = {
+  '0238': 0,
+  '0243': 1,
+  '0218': 2,
+  '0240': 3,
+  '0247': 4,
+  '0261': 5,
+  '0264': 6,
+  '0266': 7,
+  '0209': 8,
+  '0267': 9,
+  '0269': 10,
+  '0270': 11,
+  '0278': 12,
+  '0279': 13,
+  '0280': 14,
+  '0287': 15,
+  '0225': 16,
 }
 
 const accountTypeLabels = {
@@ -59,22 +70,28 @@ const connectedInstitutions = computed(() => {
 
   accounts.value.forEach((account) => {
     const institutionKey = accountInstitutionKey(account)
-    if (!grouped.has(institutionKey)) {
-      grouped.set(institutionKey, {
+    const status = accountConnectionStatus(account)
+    const groupKey = `${institutionKey}:${status}`
+    if (!grouped.has(groupKey)) {
+      grouped.set(groupKey, {
+        institutionKey,
         bankName: accountInstitutionName(account),
         category: institutionCategory(account),
+        status,
         accounts: [],
       })
     }
-    grouped.get(institutionKey).accounts.push(account)
+    grouped.get(groupKey).accounts.push(account)
   })
 
   return Array.from(
-    grouped,
-    ([institutionKey, { bankName, category, accounts: institutionAccounts }]) => ({
+    grouped.values(),
+    ({ institutionKey, bankName, category, status, accounts: institutionAccounts }) => ({
       institutionKey,
       bankName,
       category,
+      status,
+      statusLabel: accountConnectionStatusLabel(institutionAccounts[0]),
       accounts: institutionAccounts,
       descriptions: institutionAccounts.map(
         ({ accountName, accountType }) =>
@@ -99,9 +116,13 @@ const institutionSections = computed(() => [
 
 function institutionIcon(institution) {
   if (institution.category === 'securities') {
-    return institution.bankName === '한국투자증권' ? securityKoreaInvestment : securityDefault
+    const logoIndex = securityLogoIndexByCode[institution.institutionKey]
+    return (
+      securityAssets[`/src/assets/onboarding/institutions/security-${logoIndex ?? 0}.svg`] ||
+      securityDefault
+    )
   }
-  return bankIcons[institution.bankName] || bankBuilding
+  return bankAccountIcon(institution.accounts[0])
 }
 
 async function loadAccounts() {
@@ -168,10 +189,10 @@ onMounted(loadAccounts)
           <ul>
             <li
               v-for="institution in section.institutions"
-              :key="institution.institutionKey"
+              :key="`${institution.institutionKey}-${institution.status}`"
               tabindex="0"
               role="button"
-              :aria-label="`${institution.bankName} 계좌 관리`"
+              :aria-label="`${institution.bankName} ${institution.statusLabel} 계좌 관리`"
               @click="
                 router.push({
                   name: 'connected-bank-management',
@@ -194,11 +215,16 @@ onMounted(loadAccounts)
               <span class="bank-copy">
                 <span class="bank-heading">
                   <b>{{ institution.bankName }}</b>
-                  <em>{{ institution.accounts.length }}개</em>
+                  <em class="account-count">{{ institution.accounts.length }}개</em>
+                  <em
+                    class="account-status"
+                    :class="`account-status--${institution.status}`"
+                  >{{ institution.statusLabel }}</em>
                 </span>
                 <small>{{ institution.descriptions.join(', ') }}</small>
               </span>
               <span
+                v-if="institution.status === 'active'"
                 class="connected-check"
                 aria-hidden="true"
               >›</span>
@@ -332,12 +358,20 @@ li:focus-visible {
 .bank-heading em {
   padding: 3px 11px;
   border-radius: 15px;
-  background: #e4fff0;
-  color: #20ba5c;
   font-size: 12px;
   font-style: normal;
   font-weight: 700;
   white-space: nowrap;
+}
+.account-count,
+.account-status--active {
+  background: #e4fff0;
+  color: #20ba5c;
+}
+
+.account-status--disconnected {
+  background: #fff0f0;
+  color: #e45757;
 }
 
 .bank-copy small {

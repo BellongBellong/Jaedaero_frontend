@@ -10,6 +10,10 @@ defineProps({
     type: Number,
     default: 0,
   },
+  canAdd: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 defineEmits(['add', 'show-more'])
@@ -40,6 +44,7 @@ function formatDday(dday) {
     <header class="upcoming-events-card__header">
       <h2>예정된 이벤트</h2>
       <button
+        v-if="canAdd"
         type="button"
         aria-label="이벤트 추가"
         @click="$emit('add')"
@@ -65,7 +70,10 @@ function formatDday(dday) {
           <strong>{{ event.title }}</strong>
           <time :datetime="event.startDate">{{ formatSchedule(event) }}</time>
         </div>
-        <span :class="{ 'upcoming-events-card__dday--today': Number(event.dday) === 0 }">
+        <span
+          class="app-label"
+          :class="Number(event.dday) === 0 ? 'label--notification' : 'label--safe'"
+        >
           {{ formatDday(event.dday) }}
         </span>
       </li>
@@ -171,17 +179,6 @@ function formatDday(dday) {
 
 .upcoming-events-card__event > span {
   flex: 0 0 auto;
-  padding: 2px 10px;
-  border-radius: 20px;
-  background: var(--dashboard-success-soft);
-  color: var(--dashboard-success);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.upcoming-events-card__event > .upcoming-events-card__dday--today {
-  background: var(--orange-50);
-  color: var(--orange-600);
 }
 
 .upcoming-events-card__more {

@@ -9,7 +9,7 @@ import MobileFrame from '@/common/components/MobileFrame.vue'
 <template>
   <div class="onboarding-layout">
     <!-- <MobileStatusBar /> -->
-    <MobileFrame>
+    <MobileFrame class="onboarding-mobile-frame">
       <main>
         <RouterView />
       </main>
@@ -21,5 +21,19 @@ import MobileFrame from '@/common/components/MobileFrame.vue'
 <style scoped>
 main {
   flex: 1;
+}
+</style>
+
+<style scoped>
+:deep(.onboarding-mobile-frame) {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+:global(.onboarding-mobile-frame::-webkit-scrollbar) {
+  display: none;
 }
 </style>

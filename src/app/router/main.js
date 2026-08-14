@@ -7,7 +7,11 @@ const mainRoutes = [
         path: 'home',
         name: 'dashboard',
         component: () => import('@/features/dashboard/views/DashboardView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', headerVariant: 'home' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          headerVariant: 'home',
+        },
       },
       {
         path: 'ai-coach',
@@ -24,13 +28,25 @@ const mainRoutes = [
         path: 'challenge',
         name: 'challenge',
         component: () => import('@/features/challenges/views/ChallengeView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'challenge', headerTitle: '챌린지' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'challenge',
+          headerTitle: '챌린지',
+          headerVariant: 'title',
+          stickyTabs: true,
+          keepHeaderOnScroll: true,
+        },
       },
       {
         path: 'mypage',
         name: 'mypage',
         component: () => import('@/features/my-page/views/MyPageView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'profile', headerTitle: '마이페이지' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'profile',
+          headerTitle: '마이페이지',
+          headerVariant: 'title',
+        },
       },
       {
         path: 'mypage/connected-banks',
@@ -48,7 +64,12 @@ const mainRoutes = [
         path: 'transactions',
         name: 'transactions',
         component: () => import('@/features/transactions/views/TransactionHistoryView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          hideHeader: true,
+          stickyTabs: true,
+        },
       },
       {
         path: 'upcoming-events',
@@ -57,10 +78,27 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '예정된 이벤트' },
       },
       {
+        path: 'benefits',
+        name: 'benefits',
+        component: () => import('@/features/benefits/views/BenefitsView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          headerTitle: '군인 혜택',
+          stickyTabs: true,
+          keepHeaderOnScroll: true,
+        },
+      },
+      {
         path: 'monthly-asset-report',
         name: 'monthly-asset-report',
         component: () => import('@/features/dashboard/views/MonthlyAssetReportView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '이번 달 자산 현황' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          headerTitle: '이번 달 자산 현황',
+          stickyTabs: true,
+        },
       },
       {
         path: 'assets',
@@ -72,7 +110,12 @@ const mainRoutes = [
         path: 'assets/accounts',
         name: 'account-assets',
         component: () => import('@/features/dashboard/views/AccountAssetsView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          hideHeader: true,
+          stickyTabs: true,
+        },
       },
       {
         path: 'transactions/detail/:transactionId',
@@ -93,7 +136,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: '오늘의 AI 투자 리포트',
+          headerTitle: '오늘의 AI 시장 리포트',
           headerBadge: 'BETA',
         },
       },
@@ -108,6 +151,27 @@ const mainRoutes = [
         },
       },
       {
+        path: 'analysis-history',
+        name: 'analysis-history',
+        component: () => import('@/features/ai-analysis/views/AnalysisHistoryView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: 'AI 분석 기록',
+          stickyTabs: true,
+        },
+      },
+      {
+        path: 'analysis-history/what-if/:simulationId',
+        name: 'what-if-detail',
+        component: () => import('@/features/ai-analysis/views/WhatIfDetailView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '시뮬레이션 상세보기',
+        },
+      },
+      {
         path: 'what-if-simulation',
         name: 'what-if-simulation',
         component: () => import('@/features/simulations/views/WhatIfSimulationView.vue'),
@@ -115,6 +179,7 @@ const mainRoutes = [
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
           headerTitle: 'What-if 시뮬레이션',
+          hideBackOnScroll: true,
         },
       },
       {
@@ -124,10 +189,68 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'ai-coach', hideHeader: true },
       },
       {
-        path: 'rebalancing',
-        name: 'rebalancing',
+        path: 'investment-guide',
+        name: 'investment-guide',
         component: () => import('@/features/rebalancing/views/RebalancingView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'ai-coach', headerTitle: '리밸런싱' },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '적립식 투자 가이드',
+          investmentGuide: true,
+          hideBackOnScroll: true,
+        },
+      },
+      {
+        path: 'investment-guide/plan/new',
+        name: 'investment-plan-create',
+        component: () => import('@/features/rebalancing/views/RecurringInvestmentPlanView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '월 적립 계획 설정',
+          investmentGuide: true,
+          hideBackOnScroll: true,
+        },
+      },
+      {
+        path: 'investment-guide/plan/edit',
+        name: 'investment-plan-edit',
+        component: () => import('@/features/rebalancing/views/RecurringInvestmentPlanView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '월 적립 계획 수정',
+          investmentGuide: true,
+          hideBackOnScroll: true,
+        },
+      },
+      {
+        path: 'investment-guide/result',
+        name: 'investment-guide-result',
+        component: () => import('@/features/rebalancing/views/InvestmentGuideResultView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '적립식 투자 가이드',
+          investmentGuide: true,
+          hideBackOnScroll: true,
+        },
+      },
+      {
+        path: 'investment-guide/detail/:guidanceId',
+        name: 'investment-guide-detail',
+        component: () => import('@/features/rebalancing/views/InvestmentGuideDetailView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '가이드 상세 보기',
+          investmentGuide: true,
+          hideBackOnScroll: true,
+        },
+      },
+      {
+        path: 'rebalancing',
+        redirect: { name: 'investment-guide' },
       },
       {
         path: 'badge-history',

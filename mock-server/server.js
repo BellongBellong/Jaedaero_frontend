@@ -182,14 +182,54 @@ server.get('/api/v1/codef/institutions/securities', (_req, res) =>
   ]),
 )
 
-server.post('/api/v1/accounts/connect', (_req, res) =>
+server.post('/api/v1/accounts/connect', (req, res) => {
+  const accountId = Number(req.body?.accountId)
+  const organizationCode = String(req.body?.organizationCode || '')
+
+  if (Number.isInteger(accountId) && accountId > 0) {
+    const account = db.get('connectedAccounts').find({ id: accountId }).value()
+
+    if (!account) return res.status(404).json({ message: 'Account not found' })
+
+    db.get('connectedAccounts')
+      .find({ id: accountId })
+      .assign({ accountStatus: 'ACTIVE', isActive: true })
+      .write()
+  } else if (organizationCode) {
+    db.get('connectedAccounts')
+      .filter((account) => String(account.organizationCode || '') === organizationCode)
+      .each((account) => {
+        account.accountStatus = 'ACTIVE'
+        account.isActive = true
+      })
+      .write()
+  }
+
   res.status(201).json(
     first('codefConnections', {
       connected: true,
       accounts: list('connectedAccounts'),
     }),
-  ),
-)
+  )
+})
+server.delete('/api/v1/accounts/:accountId', (req, res) => {
+  const accountId = Number(req.params.accountId)
+  const account = db.get('connectedAccounts').find({ id: accountId }).value()
+
+  if (!account) return res.status(404).json({ message: 'Account not found' })
+
+  const updated = { ...account, accountStatus: 'DISCONNECTED' }
+  db.get('connectedAccounts').find({ id: accountId }).assign(updated).write()
+  res.status(204).end()
+})
+server.get('/api/v1/accounts', (req, res) => {
+  const userId = Number(req.query.userId)
+  const accounts = Number.isNaN(userId)
+    ? list('connectedAccounts')
+    : list('connectedAccounts').filter((account) => Number(account.userId) === userId)
+
+  res.status(200).json(accounts)
+})
 server.get('/api/v1/accounts/:userId', (req, res) => {
   const userId = Number(req.params.userId)
   res
@@ -213,21 +253,69 @@ server.get('/api/v1/cashflow', (req, res) => {
   }
   const response = first('cashflowForecasts', fallback)
   const months = Number(req.query.months || response.requestedMonths || 8)
-  res
-    .status(200)
-    .json({
-      ...response,
-      requestedMonths: months,
-      months: (response.months || []).slice(0, months),
-    })
+  res.status(200).json({
+    ...response,
+    requestedMonths: months,
+    months: (response.months || []).slice(0, months),
+  })
 })
+
+const MILITARY_SAVINGS_RATE = 5
+
+// 전역일까지 남은 개월 수. 화면(WhatIfSimulationView)과 동일하게 D-day를 30으로 나눠 올림한다.
+const remainingMonthsUntilDischarge = () => {
+  const dischargeDate = first('soldierProfiles')?.dischargeDate
+  if (!dischargeDate) return 1
+
+  const days = Math.ceil((new Date(dischargeDate) - new Date()) / 86_400_000)
+  return Math.max(1, Math.ceil(days / 30))
+}
+
+/**
+ * 전역 시점 예상 자산을 계산한다.
+ * 실제 백엔드가 담당할 계산이며, 목 서버에서는 화면의 미리보기 계산과 같은 방식으로 근사한다.
+ * 군적금은 단리, 투자금은 월 복리로 쌓는다.
+ */
+const calculateProjectedAsset = ({
+  monthlySavingAmount,
+  monthlyInvestmentAmount,
+  annualReturnRate,
+}) => {
+  const months = remainingMonthsUntilDischarge()
+  const monthlyReturnRate = Number(annualReturnRate || 0) / 100 / 12
+  const monthlySaving = Number(monthlySavingAmount || 0)
+  const monthlyInvestment = Number(monthlyInvestmentAmount || 0)
+
+  let savingInterest = 0
+  let futureInvestmentValue = 0
+
+  for (let index = 0; index < months; index += 1) {
+    savingInterest += monthlySaving * (months - index) * (MILITARY_SAVINGS_RATE / 100 / 12)
+    futureInvestmentValue = (futureInvestmentValue + monthlyInvestment) * (1 + monthlyReturnRate)
+  }
+
+  const currentAsset = Number(
+    first('dashboardResponses', first('dashboardSummaries', {}))?.totalAsset || 0,
+  )
+
+  return Math.round(currentAsset + monthlySaving * months + savingInterest + futureInvestmentValue)
+}
 
 server.post('/api/v1/simulations', (req, res) => {
   const base = first('simulations')
+  const payload = { ...base, ...req.body }
+  // 시드 값을 그대로 복사하지 않고 입력값으로 다시 계산한다.
+  const projectedAssetAtDischarge = calculateProjectedAsset(payload)
   const created = {
-    ...base,
+    ...payload,
     id: nextId('simulations'),
-    ...req.body,
+    projectedAssetAtDischarge,
+    differenceFromCurrent:
+      projectedAssetAtDischarge -
+      Number(
+        first('dashboardResponses', first('dashboardSummaries', {}))?.projectedAssetAtDischarge ||
+          0,
+      ),
     createdAt: new Date().toISOString(),
   }
   db.get('simulations').push(created).write()
@@ -254,6 +342,9 @@ server.post('/api/v1/ai-analyses', (req, res) => {
   }
   db.get('aiAnalyses').push(created).write()
   res.status(201).json(created)
+})
+server.get('/api/v1/ai-analyses', (req, res) => {
+  res.status(200).json(paginate(list('aiAnalyses'), req.query.page, req.query.size))
 })
 server.get('/api/v1/ai-analyses/:analysisId', (req, res) => {
   const item = db
@@ -368,6 +459,15 @@ server.post('/api/v1/investment-guidances', (_req, res) => {
   }
   db.get('investmentGuidances').push(created).write()
   res.status(201).json(created)
+})
+server.get('/api/v1/investment-guidances/:guidanceId', (req, res) => {
+  const found =
+    list('investmentGuidances').find(
+      (guidance) => String(guidance.id) === String(req.params.guidanceId),
+    ) || first('investmentGuidances')
+
+  if (!found) return res.status(404).json({ message: 'Investment guidance not found' })
+  return res.status(200).json(found)
 })
 server.post('/api/v1/investment-guidances/:guidanceId/apply', (req, res) => {
   const base = first('strategyApplications')

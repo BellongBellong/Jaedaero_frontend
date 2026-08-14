@@ -102,6 +102,7 @@ function connect() {
     </section>
 
     <PrimaryButton
+      variant="green"
       :disabled="!canConnect"
       @click="connect"
     >
@@ -115,7 +116,7 @@ function connect() {
   display: flex;
   min-height: 100dvh;
   flex-direction: column;
-  padding: 0 16px 40px 20px;
+  padding: 0 16px 30px 24px;
   background: #fafafa;
 }
 
@@ -128,7 +129,7 @@ function connect() {
 }
 
 .account-connect :deep(.step-header__progress) {
-  margin-bottom: 0;
+  margin-bottom: 8px;
 }
 
 .connect-options {
@@ -165,7 +166,7 @@ function connect() {
 }
 
 .card-heading strong {
-  color: #7c8e77;
+  color: #566752;
   font-size: 16px;
   line-height: 24px;
 }
@@ -187,7 +188,7 @@ function connect() {
 
 .card-description {
   margin-top: 6px;
-  color: #757575;
+  color: #666;
   font-size: 12px;
   line-height: 16px;
 }
@@ -205,7 +206,7 @@ function connect() {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  color: #bdbdbd;
+  color: #757575;
   font-size: 12px;
   line-height: 16px;
 }
@@ -225,7 +226,7 @@ function connect() {
 }
 
 .primary-button {
-  min-height: 56px;
+  min-height: 58px;
   margin-top: auto;
 }
 

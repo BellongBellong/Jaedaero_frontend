@@ -21,7 +21,10 @@
    --safe-area-left: env(safe-area-inset-left, 0px);
    --app-header-height: 76px;
    --bottom-navigation-height: 66px;
-   --bottom-navigation-area-height: 94px;
+   /* 물러날 때 상하좌우 동일 비율로 줄어드는 배율 */
+   --bottom-navigation-minimized-scale: 0.76;
+   /* 바의 하단 여백을 20px에서 4px로 줄여 safe area 바로 위에 둔다. */
+   --bottom-navigation-area-height: 78px;
    --page-bottom-navigation-space: 114px;
 
 
@@ -31,6 +34,28 @@
   
     --font-display: "감탄로드감탄체", sans-serif;
     --font-body: "Pretendard-Regular", "Pretendard", sans-serif;
+
+    /* Figma body typography */
+    --body-body-small-bold-font-family: "Pretendard-Bold", "Pretendard", sans-serif;
+    --body-body-small-bold-font-size: 14px;
+    --body-body-small-bold-line-height: 150%;
+    --body-body-small-bold-font-weight: 700;
+    --body-body-small-regular-font-family: "Pretendard-Regular", "Pretendard", sans-serif;
+    --body-body-small-regular-font-size: 14px;
+    --body-body-small-regular-line-height: 150%;
+    --body-body-small-regular-font-weight: 400;
+    --body-body-xsmall-bold-font-family: "Pretendard-Bold", "Pretendard", sans-serif;
+    --body-body-xsmall-bold-font-size: 12px;
+    --body-body-xsmall-bold-line-height: 150%;
+    --body-body-xsmall-bold-font-weight: 700;
+    --body-body-xsmall-regular-font-family: "Pretendard-Regular", "Pretendard", sans-serif;
+    --body-body-xsmall-regular-font-size: 12px;
+    --body-body-xsmall-regular-line-height: 130%;
+    --body-body-xsmall-regular-font-weight: 400;
+    --body-label-small-font-family: "Pretendard-Bold", "Pretendard", sans-serif;
+    --body-label-small-font-size: 12px;
+    --body-label-small-line-height: 150%;
+    --body-label-small-font-weight: 700;
   
     /* ======================================================
        PRIMITIVE / GREEN
@@ -186,6 +211,21 @@
   --brand-light-blue: var(--blue-200);
   --brand-blue: var(--blue-400);
   --brand-deep-blue: var(--blue-800);
+
+  /* Figma semantic export compatibility aliases.
+     CSS custom properties are case-sensitive, so keep these mapped to the
+     project's canonical kebab-case tokens. */
+  --Brand-Primary: var(--brand-primary);
+  --Brand-GREEN: var(--brand-green);
+  --Brand-DeepGreen: var(--brand-deep-green);
+  --Brand-ORANGE: var(--brand-orange);
+  --Brand-OLIVE: var(--brand-olive);
+  --Brand-YELLOW: var(--brand-yellow);
+  --Brand-white: var(--brand-white);
+  --UI-light-gray: var(--ui-light-gray);
+  --UI-text: var(--gray-900);
+  --UI-sub-title: var(--gray-600);
+  --UI-sub-title-light: var(--gray-400);
 
 
   /* ======================================================
@@ -347,6 +387,53 @@
   --shadow-md: 0 6px 20px rgb(0 0 0 / 0.08);
 
   --shadow-lg: 0 12px 30px rgb(0 0 0 / 0.12);
+
+
+
+  /* ======================================================
+     LIQUID GLASS
+     ------------------------------------------------------
+     Apple의 Liquid Glass는 네비게이션 레이어 전용 재료다.
+     콘텐츠 레이어(카드, 버튼, 시트)에는 쓰지 않는다.
+     https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass
+  ====================================================== */
+
+  /*
+    재료 파라미터.
+    유리는 불투명한 판이 아니다 — 뒤가 비쳐야 유리다.
+    fill을 낮추고 blur를 줄여 투과를 살리고, 재료의 존재감은
+    가장자리(stroke/specular)와 채도 상승으로 만든다.
+  */
+  /*
+    블러 없음. 뒤가 흐려지지 않고 그대로 보인다.
+    saturate만 남겨 유리 너머의 색이 살짝 도드라지게 한다.
+  */
+  --glass-blur: 0px;
+  --glass-saturate: 200%;
+
+  /* light appearance — regular(기본) / clear(미디어 위) */
+  --glass-fill: rgb(255 255 255 / 12%);
+  --glass-fill-clear: rgb(255 255 255 / 6%);
+  --glass-stroke: rgb(255 255 255 / 75%);
+  --glass-specular: rgb(255 255 255 / 95%);
+  --glass-shade: rgb(0 0 0 / 10%);
+  --glass-shadow: 0 6px 20px rgb(0 0 0 / 12%);
+
+  /*
+    dark appearance — 흰색 글리프를 받쳐주는 어두운 재료.
+    블러가 없으므로 글리프 대비는 전적으로 이 fill이 만든다.
+    낮추면 뒤가 더 비치지만 아이콘이 묻힌다.
+  */
+  --glass-fill-dark: rgb(28 28 28 / 50%);
+  --glass-fill-dark-clear: rgb(28 28 28 / 30%);
+  --glass-stroke-dark: rgb(255 255 255 / 45%);
+  --glass-specular-dark: rgb(255 255 255 / 32%);
+  --glass-shade-dark: rgb(0 0 0 / 22%);
+  --glass-shadow-dark: 0 6px 20px rgb(0 0 0 / 22%);
+
+  /* 불투명 폴백 — reduced transparency / backdrop-filter 미지원 */
+  --glass-fallback: #f4f4f4;
+  --glass-fallback-dark: #2b2b2b;
 
 
 

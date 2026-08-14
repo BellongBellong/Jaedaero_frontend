@@ -14,7 +14,6 @@ export async function saveAgreements(agreements) {
     personalInformationCollectionAgreed: agreements.includes('privacy'),
     financialInformationInquiryAgreed: agreements.includes('finance'),
     aiServiceUseAgreed: agreements.includes('ai'),
-    marketingInformationReceiptAgreed: agreements.includes('marketing'),
   })
   return data
 }

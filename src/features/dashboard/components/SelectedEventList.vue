@@ -73,7 +73,7 @@ function urgencyClass(dday) {
           <strong>{{ event.title }}</strong>
           <time :datetime="event.startDate">{{ formatSchedule(event) }}</time>
         </div>
-        <span class="selected-event-list__dday">
+        <span class="selected-event-list__dday app-label label--dynamic">
           {{ ddayLabel(event.dday) }}
         </span>
       </li>
@@ -175,13 +175,8 @@ function urgencyClass(dday) {
 }
 
 .selected-event-list__dday {
-  padding: 2px 10px;
-  border-radius: var(--radius-full);
-  background: var(--event-label-background);
-  color: var(--event-color);
-  font-size: 12px;
-  font-weight: var(--weight-bold);
-  line-height: 1.5;
+  --label-background: var(--event-label-background);
+  --label-color: var(--event-color);
 }
 
 .selected-event-list__item--urgent {

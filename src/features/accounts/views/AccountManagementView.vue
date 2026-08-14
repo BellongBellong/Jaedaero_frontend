@@ -4,14 +4,16 @@ import { useRoute, useRouter } from 'vue-router'
 
 import accountIcon from '@/assets/onboarding/icons/account-general.svg'
 import militarySavingsIcon from '@/assets/onboarding/icons/account-military-savings.svg'
-import bankBuilding from '@/assets/onboarding/icons/bank-building.png'
-import bankIbk from '@/assets/onboarding/institutions/bank-ibk.svg'
-import bankKb from '@/assets/onboarding/institutions/bank-kb.svg'
-import bankKakao from '@/assets/onboarding/institutions/bank-kakao.svg'
-import bankShinhan from '@/assets/onboarding/institutions/bank-shinhan.svg'
-import bankToss from '@/assets/onboarding/institutions/bank-toss.svg'
-import { disconnectAccount, getAccounts } from '@/features/accounts/api/accounts.api'
 import {
+  disconnectAccount,
+  getAccounts,
+  reconnectAccount as reconnectAccountRequest,
+  rememberDisconnectedAccount,
+} from '@/features/accounts/api/accounts.api'
+import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
+import {
+  accountConnectionStatus,
+  accountConnectionStatusLabel,
   accountInstitutionKey,
   accountInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
@@ -24,6 +26,9 @@ const loadError = ref('')
 const actionError = ref('')
 const selectedAccount = ref(null)
 const disconnecting = ref(false)
+const reconnectingAccountId = ref(null)
+const reconnectError = ref('')
+const reconnectErrorAccountId = ref(null)
 const institutionAssets = import.meta.glob('@/assets/onboarding/institutions/*.svg', {
   eager: true,
   import: 'default',
@@ -38,34 +43,25 @@ const accountTypeLabels = {
   SALARY: '급여 통장',
 }
 
-const bankIcons = {
-  KB국민은행: bankKb,
-  국민은행: bankKb,
-  'IBK 기업은행': bankIbk,
-  기업은행: bankIbk,
-  신한은행: bankShinhan,
-  토스뱅크: bankToss,
-  카카오뱅크: bankKakao,
+const securityLogoIndexByCode = {
+  '0238': 0,
+  '0243': 1,
+  '0218': 2,
+  '0240': 3,
+  '0247': 4,
+  '0261': 5,
+  '0264': 6,
+  '0266': 7,
+  '0209': 8,
+  '0267': 9,
+  '0269': 10,
+  '0270': 11,
+  '0278': 12,
+  '0279': 13,
+  '0280': 14,
+  '0287': 15,
+  '0225': 16,
 }
-const securityLogoNames = [
-  '미래에셋',
-  '한국투자',
-  'KB',
-  '삼성',
-  'NH',
-  '교보',
-  '키움',
-  'SK',
-  '유안타',
-  '대신',
-  '한화',
-  '하나',
-  '신한',
-  'DB',
-  '유진',
-  '메리츠',
-  'IBK',
-]
 
 const institutionAccounts = computed(() =>
   accounts.value.filter(
@@ -91,10 +87,9 @@ const isSecurities = computed(() => {
 })
 const institutionTypeLabel = computed(() => (isSecurities.value ? '증권사' : '은행'))
 const institutionImage = computed(() => {
-  if (!isSecurities.value) return bankIcons[bankName.value] || bankBuilding
+  if (!isSecurities.value) return bankAccountIcon(institutionAccounts.value[0])
 
-  const logoIndex = securityLogoNames.findIndex((name) => bankName.value.includes(name))
-  const safeIndex = logoIndex >= 0 ? logoIndex : 0
+  const safeIndex = securityLogoIndexByCode[String(route.params.institutionKey)] ?? 0
   return institutionAssets[`/src/assets/onboarding/institutions/security-${safeIndex}.svg`]
 })
 
@@ -114,6 +109,33 @@ function displayAccountNumber(account) {
     account.accountNumber ||
     '계좌번호 정보 없음'
   )
+}
+
+function isDisconnected(account) {
+  return accountConnectionStatus(account) === 'disconnected'
+}
+
+async function reconnectAccount(account) {
+  const accountId = account.accountId || account.id
+  if (!accountId || reconnectingAccountId.value !== null) return
+
+  reconnectingAccountId.value = accountId
+  reconnectError.value = ''
+  reconnectErrorAccountId.value = null
+
+  try {
+    await reconnectAccountRequest(account)
+    accounts.value = accounts.value.map((item) =>
+      String(item.accountId || item.id) === String(accountId)
+        ? { ...item, accountStatus: 'ACTIVE', isActive: true }
+        : item,
+    )
+  } catch {
+    reconnectErrorAccountId.value = accountId
+    reconnectError.value = '다시 연동하지 못했어요. 잠시 후 다시 시도해 주세요.'
+  } finally {
+    reconnectingAccountId.value = null
+  }
 }
 
 async function loadAccounts() {
@@ -145,11 +167,13 @@ async function confirmDisconnect() {
   try {
     const disconnectedId = selectedAccount.value.accountId
     await disconnectAccount(disconnectedId)
-    accounts.value = accounts.value.filter((account) => account.accountId !== disconnectedId)
+    rememberDisconnectedAccount(selectedAccount.value)
+    accounts.value = accounts.value.map((account) =>
+      account.accountId === disconnectedId
+        ? { ...account, accountStatus: 'DISCONNECTED' }
+        : account,
+    )
     selectedAccount.value = null
-    if (institutionAccounts.value.length === 0) {
-      await router.replace({ name: 'connected-banks' })
-    }
   } catch {
     actionError.value = '연결을 해제하지 못했어요. 잠시 후 다시 시도해주세요.'
   } finally {
@@ -232,7 +256,16 @@ onMounted(loadAccounts)
           <span class="account-copy">
             <span>
               <b>{{ displayAccountName(account) }}</b>
-              <em v-if="isMilitarySavings(account)">필수</em>
+              <span class="account-tags">
+                <em
+                  class="account-status"
+                  :class="`account-status--${accountConnectionStatus(account)}`"
+                >{{ accountConnectionStatusLabel(account) }}</em>
+                <em
+                  v-if="isMilitarySavings(account)"
+                  class="military-tag"
+                >필수</em>
+              </span>
             </span>
             <small>{{ displayAccountNumber(account) }}</small>
           </span>
@@ -240,10 +273,23 @@ onMounted(loadAccounts)
         <button
           type="button"
           class="disconnect-button"
-          @click="openDisconnectModal(account)"
+          :disabled="reconnectingAccountId !== null"
+          @click="
+            isDisconnected(account) ? reconnectAccount(account) : openDisconnectModal(account)
+          "
         >
-          연결 해제하기
+          {{
+            reconnectingAccountId === account.accountId
+              ? '연동 중...'
+              : isDisconnected(account)
+                ? '다시 연동하기'
+                : '연결 해제하기'
+          }}
         </button>
+        <small
+          v-if="reconnectErrorAccountId === account.accountId"
+          class="reconnect-error"
+        >{{ reconnectError }}</small>
       </li>
     </ul>
 
@@ -396,6 +442,11 @@ onMounted(loadAccounts)
   align-items: center;
   gap: 9px;
 }
+.account-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .account-copy b {
   overflow: hidden;
   font-size: 17px;
@@ -405,11 +456,21 @@ onMounted(loadAccounts)
 .account-copy em {
   padding: 4px 9px;
   border-radius: 13px;
-  background: #e4fff0;
-  color: #20ba5c;
   font-size: 11px;
   font-style: normal;
   font-weight: 700;
+}
+.account-status--active {
+  background: #e4fff0;
+  color: #20ba5c;
+}
+.account-status--disconnected {
+  background: #fff0f0;
+  color: #e45757;
+}
+.military-tag {
+  background: #e4fff0;
+  color: #20ba5c;
 }
 .account-copy small {
   color: #999;
@@ -421,13 +482,35 @@ onMounted(loadAccounts)
   margin-top: 19px;
   border: 0;
   border-radius: 28px;
-  background: #efefef;
-  color: #aaa;
+  background: #58f49a;
+  color: #333;
+  cursor: pointer;
   font-size: 16px;
   font-weight: 700;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 .disconnect-button:hover {
-  color: #777;
+  background: #3fe989;
+}
+.disconnect-button:active {
+  transform: scale(0.98);
+}
+.disconnect-button:focus-visible {
+  outline: 2px solid #333;
+  outline-offset: 2px;
+}
+.disconnect-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.reconnect-error {
+  display: block;
+  margin-top: 9px;
+  color: #e45757;
+  font-size: 12px;
+  text-align: center;
 }
 .state-message {
   padding: 54px 20px;

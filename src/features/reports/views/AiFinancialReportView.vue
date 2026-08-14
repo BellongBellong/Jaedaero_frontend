@@ -1,131 +1,155 @@
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import { useTodayMarketReport } from '@/features/market-report/composables/useTodayMarketReport'
+import { useTodayMarketIndicators } from '@/features/market-report/composables/useTodayMarketIndicators'
+import {
+  formatReportDate,
+  formatValidUntil,
+  mapMarketIndicators,
+  mapMarketSources,
+} from '@/features/market-report/mappers/marketReport.mapper'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 
 const route = useRoute()
 const router = useRouter()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+const sourcesExpanded = ref(false)
 
-const marketRows = [
-  { label: '코스피', value: '2,740.12', change: '+1.34%', tone: 'positive' },
-  { label: '코스피', value: '2,740.12', change: '+1.34%', tone: 'positive' },
-  { label: '미국채 10년', value: '4.31%', change: '-0.05%', tone: 'negative' },
-  { label: '원/달러', value: '1,318원', change: '-0.05%', tone: 'negative' },
+const fallbackMarketRows = [
+  { label: '코스피', value: '6,299.66', change: '▲ 40.89 · 0.65%', tone: 'positive' },
+  { label: '코스닥', value: '854.47', change: '▲ 55.66 · 6.97%', tone: 'positive' },
+  { label: '미국채 10년', value: '4.650%', change: '▼ 0.04% · 0.85%', tone: 'negative' },
+  { label: '원/달러', value: '1,415.3원', change: '등락 정보 없음', tone: 'neutral' },
 ]
 
-const productRows = [
-  { label: '장병내일준비적금', value: '5.0%', change: '+1.34%', tone: 'positive' },
-  { label: '군인공제회 목돈급여', value: '5.2%', change: '+0.1%p', tone: 'positive' },
-  { label: '미국채 10년', value: '4.31%', change: '변동없음', tone: 'neutral' },
+const fallbackSourceLinks = [
+  {
+    title: 'Oil and gold stay near highs - InvestingLive',
+    url: 'https://investinglive.com/news/investinglive-asia-pacific-financial-market-news-oil-and-gold-stay-near-highs/',
+  },
+  {
+    title: 'Gold rises for third straight session - Reuters',
+    url: 'https://news.google.com/rss/articles/CBMipwFBVV95cUxOQ3pfajk5NldmMDliSlhNU3ZYd1J6UGt3cWM4ZHBzTkxnYTVGbnVWU0ZOVFFqLUk2eFYyQnhxdUxiUFp5Y0lXTnpEOGIwMHBveTR5bzBvZmxjWTA4TmR6OUt0U1ZSd2V0dDhkMlg4TkpFdlFCSEtJN3BXYXJQMFZLZDgyZjR6UTRXeU5fRFZ1MHM1WXpCMEtTOF9CNmptQTJmNzBQN1JyMA?oc=5',
+  },
+  {
+    title: 'Oil prices rise, Asia stocks drift - Reuters',
+    url: 'https://news.google.com/rss/articles/CBMigwFBVV95cUxPRnpVTlc5WDU3ZUFOMTJjSFRLNGFCWUItblV4clc0UnVXUi05VVBaRkFleHpsdWtmcl9YZDRtN3BkaDhqUy1PTWx1aDhjalNDc09RNGh5eDFYN2FnTGxraUlhRWtFUnl0UTJrbV82Yi1CaFEyNmNwaHlvQVdobElUNEZVaw?oc=5',
+  },
+  {
+    title: 'What to watch in the week ahead - CNBC',
+    url: 'https://www.cnbc.com/2026/08/09/here-are-the-2-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html',
+  },
 ]
 
-const recommendedActions = [
-  {
-    title: '그냥 서브타이틀',
-    badge: '추천',
-    tone: 'positive',
-    description:
-      '현재 시중 최고 금리 5.2% 제공. 여유 자금을 추가 납입하면 전역 자산 +약 32만원이 기대됩니다',
-  },
-  {
-    title: '그냥 서브타이틀',
-    badge: '참고',
-    tone: 'neutral',
-    description:
-      '현재 시중 최고 금리 5.2% 제공. 여유 자금을 추가 납입하면 전역 자산 +약 32만원 기대.',
-  },
-  {
-    title: '통신비 플랜 최적화',
-    badge: '참고',
-    tone: 'neutral',
-    description: '군인 할인 통신 플랜으로 월 최대 8,000원 절약 가능.',
-  },
-]
+const fallbackSummary =
+  '코스피와 코스닥이 상승세를 보인 가운데 원자재 가격 강세와 7월 인플레이션 지표에 시장의 관심이 집중되고 있습니다.'
+const fallbackContent =
+  '국내 증시에서는 삼성전자가 약 3.6% 상승하면서 코스피가 2일 연속 상승세를 나타냈습니다. 유가와 금 가격은 높은 수준을 유지하고 있으며, 시장은 향후 발표될 7월 인플레이션 데이터와 연준의 9월 통화정책 회의에 주목하고 있습니다.'
+
+const { report, load } = useTodayMarketReport()
+const { report: indicatorReport, load: loadIndicators } = useTodayMarketIndicators()
+const marketRows = computed(() =>
+  mapMarketIndicators(indicatorReport.value?.indicators, fallbackMarketRows),
+)
+const sourceLinks = computed(() => mapMarketSources(report.value?.sources, fallbackSourceLinks))
+const reportDate = computed(() => formatReportDate(report.value) || '2026. 08. 11 18시 기준')
+const marketSummary = computed(() => report.value?.summary || fallbackSummary)
+const marketContent = computed(() => report.value?.content || fallbackContent)
+const validUntilNotice = computed(
+  () => formatValidUntil(report.value) || '8월 12일 17시까지 볼 수 있어요.',
+)
+
+function openSource(url) {
+  const sourceWindow = window.open(url, '_blank')
+  if (sourceWindow) sourceWindow.opener = null
+}
 
 onMounted(() => {
   completeMissionAfterLoad()
+  load()
+  loadIndicators()
 })
 </script>
 
 <template>
   <section class="financial-report-screen">
-    <article class="report-panel market-panel">
+    <article class="market-panel report-panel">
       <header class="report-panel__header">
-        <div>
-          <div class="report-title-row">
-            <h2>오늘의 AI 투자 리포트</h2>
-            <span class="beta-badge">BETA</span>
-          </div>
-          <p>2026. 07. 28 기준</p>
+        <div class="report-title-row">
+          <h2>주요 시장 지표</h2>
+          <span class="beta-badge">BETA</span>
         </div>
+        <p>{{ reportDate }}</p>
       </header>
 
-      <dl class="data-list">
+      <dl class="market-grid">
         <div
-          v-for="(row, index) in marketRows"
-          :key="index"
-          class="data-list__row"
-        >
-          <dt>{{ row.label }}</dt>
-          <dd>
-            <span>{{ row.value }}</span>
-            <em :class="`status-pill--${row.tone}`">{{ row.change }}</em>
-          </dd>
-        </div>
-      </dl>
-    </article>
-
-    <article class="report-panel product-panel">
-      <h2 class="product-panel__title">
-        <span aria-hidden="true">🏅</span>
-        군 금융 상품 동향
-      </h2>
-
-      <dl class="data-list">
-        <div
-          v-for="row in productRows"
+          v-for="row in marketRows"
           :key="row.label"
-          class="data-list__row"
+          class="market-grid__item"
         >
           <dt>{{ row.label }}</dt>
-          <dd>
-            <span>{{ row.value }}</span>
-            <em :class="`status-pill--${row.tone}`">{{ row.change }}</em>
-          </dd>
+          <dd>{{ row.value }}</dd>
+          <span :class="`market-grid__change--${row.tone}`">{{ row.change }}</span>
         </div>
       </dl>
+
+      <p class="market-summary">
+        <span
+          class="market-summary__icon"
+          aria-hidden="true"
+        >💡</span>
+        <span>{{ marketSummary }}</span>
+      </p>
+
+      <div class="explanation-block">
+        <h2>AI 시장 해설</h2>
+        <p>
+          {{ marketContent }}
+        </p>
+      </div>
     </article>
 
-    <section
-      class="action-section"
-      aria-labelledby="action-title"
-    >
-      <h2 id="action-title">
-        AI 추천 액션
-      </h2>
+    <section class="sources-section report-panel">
+      <button
+        class="sources-toggle"
+        type="button"
+        :aria-expanded="sourcesExpanded"
+        @click="sourcesExpanded = !sourcesExpanded"
+      >
+        <span
+          class="sources-toggle__chevron"
+          :class="{ 'sources-toggle__chevron--expanded': sourcesExpanded }"
+          aria-hidden="true"
+        />
+        참고한 기사 및 데이터 출처
+      </button>
 
-      <div class="action-list">
-        <article
-          v-for="(action, index) in recommendedActions"
-          :key="index"
-          class="action-card"
+      <div
+        v-if="sourcesExpanded"
+        class="sources-card"
+      >
+        <a
+          v-for="source in sourceLinks"
+          :key="source.url"
+          :href="source.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          @click.prevent="openSource(source.url)"
         >
-          <span
-            class="action-card__icon"
-            aria-hidden="true"
-          >🏅</span>
-          <div>
-            <div class="action-card__title-row">
-              <h3>{{ action.title }}</h3>
-              <span :class="`status-pill--${action.tone}`">{{ action.badge }}</span>
-            </div>
-            <p>{{ action.description }}</p>
-          </div>
-        </article>
+          {{ source.title }}
+        </a>
       </div>
     </section>
+
+    <p
+      v-if="sourcesExpanded"
+      class="sources-notice"
+    >
+      해당 정보들은 AI가 생성한 정보들이에요.<br>{{ validUntilNotice }}
+    </p>
   </section>
 </template>
 
@@ -135,22 +159,28 @@ onMounted(() => {
   min-height: 100%;
   flex-direction: column;
   gap: 10px;
-  padding: 10px 20px 40px;
+  padding: 10px 20px calc(var(--page-bottom-navigation-space) + var(--safe-area-bottom) + 40px);
   color: var(--gray-900);
 }
 
 .report-panel {
-  padding: 21px;
   border: 1px solid rgb(255 255 255 / 90%);
   border-radius: 24px;
-  background: rgb(255 255 255 / 50%);
+  background: rgb(255 255 255 / 78%);
+}
+
+.market-panel {
+  padding: 21px;
+  box-shadow: 0 8px 18px rgb(100 151 120 / 7%);
 }
 
 .report-panel__header h2,
-.product-panel__title,
-.action-section > h2,
-.action-card h3 {
+.explanation-block h2 {
+  color: var(--gray-600);
   font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: var(--weight-bold);
+  line-height: 1.5;
 }
 
 .report-title-row {
@@ -159,161 +189,179 @@ onMounted(() => {
   gap: 8px;
 }
 
-.report-title-row h2 {
-  color: var(--gray-600);
-  font-size: 14px;
-  font-weight: var(--weight-bold);
-  line-height: 1.5;
-}
-
 .report-panel__header p {
   padding-top: 4px;
   color: #888;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.beta-badge,
-.status-pill--positive,
-.status-pill--negative,
-.status-pill--neutral {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 10px;
-  border-radius: var(--radius-full);
   font-size: 12px;
-  font-style: normal;
-  font-weight: var(--weight-bold);
   line-height: 1.5;
-  white-space: nowrap;
 }
 
 .beta-badge {
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
   background: var(--olive-100);
   color: var(--olive-500);
-}
-
-.status-pill--positive {
-  background: var(--green-100);
-  color: #22c55e;
-}
-
-.status-pill--negative {
-  background: var(--orange-50);
-  color: var(--orange-600);
-}
-
-.status-pill--neutral {
-  background: var(--gray-200);
-  color: var(--gray-600);
-}
-
-.data-list {
-  margin-top: 4px;
-}
-
-.data-list__row {
-  display: flex;
-  min-height: 42px;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--ui-light-gray);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.data-list__row:last-child {
-  border-bottom: 0;
-}
-
-.data-list dt {
+  font-size: 10px;
   font-weight: var(--weight-bold);
 }
 
-.data-list dd {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px 16px;
+  padding: 16px 4px 12px;
+}
+
+.market-grid__item {
+  min-width: 0;
+}
+
+.market-grid dt {
   color: var(--gray-600);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+}
+
+.market-grid dd {
+  padding-top: 4px;
+  color: var(--gray-900);
+  font-size: 14px;
+  font-weight: var(--weight-bold);
+  line-height: 1.35;
+}
+
+.market-grid__item > span {
+  display: block;
+  padding-top: 2px;
+  font-size: 11px;
+  font-weight: var(--weight-regular);
+  line-height: 1.35;
+}
+
+.market-grid__change--positive {
+  color: var(--green-600);
+}
+
+.market-grid__change--negative {
+  color: var(--orange-500);
+}
+
+.market-grid__change--neutral {
+  color: var(--gray-500);
+}
+
+.market-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  background: var(--green-100);
+  color: var(--gray-600);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.market-summary__icon {
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.market-summary > span:last-child {
   font-weight: var(--weight-semibold);
 }
 
-.product-panel__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: var(--weight-bold);
-  line-height: 1.5;
+.explanation-block {
+  padding-top: 16px;
 }
 
-.product-panel__title span {
-  width: 20px;
-  font-size: 18px;
+.explanation-block h2 {
+  font-size: 12px;
 }
 
-.product-panel .data-list {
-  margin-top: 12px;
-}
-
-.action-section {
-  margin-top: 2px;
-}
-
-.action-section > h2 {
-  font-size: 15px;
-  font-weight: var(--weight-bold);
-  line-height: 1.5;
-}
-
-.action-list {
-  display: grid;
-  gap: 10px;
-  padding-top: 12px;
-}
-
-.action-card {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 17px;
-  border: 1px solid rgb(255 255 255 / 80%);
-  border-radius: 22px;
-  background: var(--white);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
-}
-
-.action-card__icon {
-  width: 20px;
-  padding-top: 2px;
-  font-size: 20px;
-  line-height: 28px;
-}
-
-.action-card > div {
-  min-width: 0;
-  flex: 1;
-}
-
-.action-card__title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.action-card h3 {
-  color: var(--gray-600);
-  font-size: 14px;
-  font-weight: var(--weight-bold);
-  line-height: 1.5;
-}
-
-.action-card p {
-  padding-top: 4px;
+.explanation-block p {
+  padding-top: 8px;
   color: var(--gray-600);
   font-size: 12px;
+  line-height: 1.65;
+}
+
+.sources-section {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.sources-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 50px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 24px;
+  background: transparent;
+  color: var(--gray-500);
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  text-align: left;
+}
+
+.sources-toggle__chevron {
+  width: 0;
+  height: 0;
+  flex: 0 0 auto;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid currentColor;
+  transform-origin: 45% 50%;
+  transition: transform 160ms ease;
+}
+
+.sources-toggle__chevron--expanded {
+  transform: rotate(90deg);
+}
+
+.sources-card {
+  display: grid;
+  padding: 2px 21px 26px;
+}
+
+.sources-card a {
+  display: block;
+  padding: 10px 0;
+  color: var(--green-600);
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  line-height: 1.45;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sources-card a + a {
+  border-top: 1px solid var(--gray-200);
+}
+
+.sources-notice {
+  padding: 0 16px;
+  color: var(--gray-500);
+  font-size: 11px;
   line-height: 1.5;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sources-toggle {
+    transition: transform var(--duration-fast) var(--ease-default);
+  }
+
+  .sources-toggle:active {
+    transform: scale(0.985);
+  }
 }
 </style>

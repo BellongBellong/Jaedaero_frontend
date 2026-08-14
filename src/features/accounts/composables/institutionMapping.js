@@ -19,6 +19,23 @@ const institutionAliases = {
   '0090': ['카카오뱅크'],
   '0092': ['토스뱅크'],
   '0111': ['지역농협'],
+  '0209': ['유안타증권'],
+  '0218': ['KB증권'],
+  '0225': ['IBK투자증권'],
+  '0238': ['미래에셋증권'],
+  '0240': ['삼성증권'],
+  '0243': ['한국투자증권'],
+  '0247': ['NH투자증권'],
+  '0261': ['교보증권'],
+  '0264': ['키움증권'],
+  '0266': ['SK증권'],
+  '0267': ['대신증권'],
+  '0269': ['한화투자증권'],
+  '0270': ['하나금융투자'],
+  '0278': ['신한금융투자'],
+  '0279': ['DB금융투자'],
+  '0280': ['유진투자증권'],
+  '0287': ['메리츠증권'],
 }
 
 const institutionNamesByCode = {
@@ -42,6 +59,23 @@ const institutionNamesByCode = {
   '0090': '\uCE74\uCE74\uC624\uB465\uD06C',
   '0092': '\uD1A0\uC2A4\uB465\uD06C',
   '0111': '\uC9C0\uC5ED\uB18D\uCD95\uD611',
+  '0209': '\uC720\uC548\uD0C0\uC99D\uAD8C',
+  '0218': 'KB\uC99D\uAD8C',
+  '0225': 'IBK\uD22C\uC790\uC99D\uAD8C',
+  '0238': '\uBBF8\uB798\uC5D0\uC14B\uC99D\uAD8C',
+  '0240': '\uC0BC\uC131\uC99D\uAD8C',
+  '0243': '\uD55C\uAD6D\uD22C\uC790\uC99D\uAD8C',
+  '0247': 'NH\uD22C\uC790\uC99D\uAD8C',
+  '0261': '\uAD50\uBCF4\uC99D\uAD8C',
+  '0264': '\uD0A4\uC6C0\uC99D\uAD8C',
+  '0266': 'SK\uC99D\uAD8C',
+  '0267': '\uB300\uC2E0\uC99D\uAD8C',
+  '0269': '\uD55C\uD654\uD22C\uC790\uC99D\uAD8C',
+  '0270': '\uD558\uB098\uAE08\uC735\uD22C\uC790',
+  '0278': '\uC2E0\uD55C\uAE08\uC735\uD22C\uC790',
+  '0279': 'DB\uAE08\uC735\uD22C\uC790',
+  '0280': '\uC720\uC9C4\uD22C\uC790\uC99D\uAD8C',
+  '0287': '\uBA54\uB9AC\uCE20\uC99D\uAD8C',
 }
 
 export function normalizeOrganizationCode(code) {
@@ -56,11 +90,18 @@ export function normalizeInstitutionName(name) {
 }
 
 export function accountOrganizationCode(account) {
+  const nestedCode =
+    account?.organization?.code || account?.institution?.code || account?.financialInstitution?.code
+
   return normalizeOrganizationCode(
     account?.organizationCode ||
       account?.institutionCode ||
       account?.financialInstitutionCode ||
-      account?.bankCode,
+      account?.bankCode ||
+      account?.codefOrganizationCode ||
+      account?.orgCode ||
+      account?.orgCd ||
+      nestedCode,
   )
 }
 
@@ -69,7 +110,12 @@ export function accountInstitutionName(account) {
     account?.institutionName ||
     account?.organizationName ||
     account?.bankName ||
-    account?.financialInstitutionName
+    account?.financialInstitutionName ||
+    account?.brokerName ||
+    account?.securitiesName ||
+    account?.institution?.name ||
+    account?.organization?.name ||
+    account?.financialInstitution?.name
   const organizationCode =
     accountOrganizationCode(account) || normalizeOrganizationCode(institutionName)
 
@@ -80,6 +126,11 @@ export function accountInstitutionName(account) {
     account?.organizationName ||
     account?.bankName ||
     account?.financialInstitutionName ||
+    account?.brokerName ||
+    account?.securitiesName ||
+    account?.institution?.name ||
+    account?.organization?.name ||
+    account?.financialInstitution?.name ||
     '연결 은행'
   )
 }
@@ -88,6 +139,22 @@ export function accountInstitutionKey(account) {
   return (
     accountOrganizationCode(account) || normalizeInstitutionName(accountInstitutionName(account))
   )
+}
+
+export function accountConnectionStatus(account) {
+  const status = String(
+    account?.accountStatus || account?.connectionStatus || account?.status || '',
+  ).toLowerCase()
+
+  if (['disconnected', 'inactive'].includes(status) || account?.isActive === false) {
+    return 'disconnected'
+  }
+
+  return 'active'
+}
+
+export function accountConnectionStatusLabel(account) {
+  return accountConnectionStatus(account) === 'disconnected' ? '연동 해제됨' : '연동됨'
 }
 
 export function matchesAccountInstitution(account, institution) {

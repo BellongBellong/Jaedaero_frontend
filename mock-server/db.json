@@ -7,7 +7,9 @@
       "onboardingCompleted": false,
       "initialInvestmentPreference": "BALANCED",
       "profileImage": "NAVY",
-      "profileSource": "BLACK"
+      "profileSource": "BLACK",
+      "rank": "PRIVATE_FIRST_CLASS",
+      "militaryType": "ARMY"
     }
   ],
   "soldierProfiles": [
@@ -15,7 +17,7 @@
       "id": 1,
       "userId": 1,
       "militaryType": "ARMY",
-      "rank": "PRIVATE",
+      "rank": "PRIVATE_FIRST_CLASS",
       "enlistmentDate": "2026-06-30",
       "promotionDate": "2026-09-01",
       "dischargeDate": "2027-03-01",
@@ -39,9 +41,11 @@
       "id": 1,
       "userId": 1,
       "bankName": "KB국민은행",
+      "organizationCode": "0004",
       "accountName": "장병내일준비적금",
       "accountNumberMasked": "•••• 4821",
       "accountType": "MILITARY_SAVINGS",
+      "accountStatus": "ACTIVE",
       "balance": 4850000,
       "monthlyPayment": 400000,
       "syncStatus": "NORMAL",
@@ -51,9 +55,11 @@
       "id": 2,
       "userId": 1,
       "bankName": "신한은행",
+      "organizationCode": "0088",
       "accountName": "나라사랑카드 연결계좌",
       "accountNumberMasked": "•••• 1954",
       "accountType": "CHECKING",
+      "accountStatus": "DISCONNECTED",
       "balance": 1420000,
       "monthlyPayment": 0,
       "syncStatus": "NORMAL",
@@ -63,9 +69,11 @@
       "id": 3,
       "userId": 1,
       "bankName": "한국투자증권",
+      "organizationCode": "0243",
       "accountName": "종합계좌",
       "accountNumberMasked": "•••• 7734",
       "accountType": "INVESTMENT",
+      "accountStatus": "ACTIVE",
       "balance": 2000000,
       "monthlyPayment": 100000,
       "syncStatus": "SYNC_REQUIRED",
@@ -573,9 +581,9 @@
       "id": 1,
       "userId": 1,
       "name": "월 소비 13만 원 절약",
-      "monthlySpendingAmount": 320000,
-      "monthlySavingAmount": 600000,
-      "monthlyInvestmentAmount": 100000,
+      "monthlySpendingAmount": 200000,
+      "monthlySavingAmount": 300000,
+      "monthlyInvestmentAmount": 150000,
       "annualReturnRate": 5,
       "vacationBudget": 250000,
       "targetAmount": 30000000,
@@ -637,7 +645,7 @@
     {
       "id": 1,
       "missionGroup": "DAILY",
-      "title": "데일리 금융리포트 보기",
+      "title": "오늘의 AI 시장리포트",
       "description": "오늘의 금융 리포트를 확인해보세요",
       "missionType": "COMMON",
       "rewardExperience": 5,
@@ -648,7 +656,7 @@
     {
       "id": 2,
       "missionGroup": "DAILY",
-      "title": "데일리 시장리포트 보기",
+      "title": "오늘의 AI 시장리포트",
       "description": "오늘의 AI 시장현황 리포트를 확인해보세요",
       "missionType": "COMMON",
       "rewardExperience": 5,
@@ -995,6 +1003,15 @@
       "aiServiceUseAgreed": true,
       "marketingInformationReceiptAgreed": true,
       "agreedAt": "2026-08-06T07:20:23.590Z"
+    },
+    {
+      "id": 17,
+      "userId": 1,
+      "serviceUseAgreed": true,
+      "personalInformationCollectionAgreed": true,
+      "financialInformationInquiryAgreed": true,
+      "aiServiceUseAgreed": true,
+      "agreedAt": "2026-08-13T00:24:15.380Z"
     }
   ],
   "loginResponses": [],
@@ -1012,6 +1029,7 @@
       "spendingPattern": {
         "baseMonthLabel": "이번달",
         "totalExpenseAmount": 195800,
+        "changeRate": -8,
         "categories": [
           {
             "code": "FOOD",
@@ -1043,6 +1061,10 @@
           "message": "식비 비중이 동기 대비 23% 높아요. 주로 야간 PX 소비가 집중됩니다.",
           "highlight": "23% 높아요."
         }
+      },
+      "investmentPattern": {
+        "totalInvestmentAmount": 420000,
+        "changeRate": 15
       },
       "causes": [
         {
@@ -1105,7 +1127,15 @@
       "generatedAt": "2026-08-01T09:00:00"
     }
   ],
-  "strategyApplications": [],
+  "strategyApplications": [
+    {
+      "id": 1,
+      "analysisId": null,
+      "sourceType": "INVESTMENT_GUIDANCE",
+      "sourceId": 1,
+      "appliedAt": "2026-08-13T08:14:45.909Z"
+    }
+  ],
   "soldierSavings": [],
   "challengeGroups": [],
   "dischargeReports": [],
@@ -1167,20 +1197,90 @@
     {
       "id": 1,
       "userId": 1,
-      "monthlyAmount": 150000,
-      "investmentDay": 10,
-      "enabled": true,
-      "updatedAt": "2026-08-06T09:00:00+09:00"
+      "frequency": "MONTHLY",
+      "contributionDay": 10,
+      "contributionAmount": 150000,
+      "maximumMonthlyAmount": 300000,
+      "brokerageAccountId": 3,
+      "investmentProductCode": "069500",
+      "investmentProductName": "KODEX 200",
+      "updatedAt": "2026-08-13T07:25:19.583Z"
     }
   ],
   "investmentGuidances": [
     {
+      "guidanceId": 1,
       "id": 1,
       "userId": 1,
-      "recommendedMonthlyAmount": 150000,
-      "investmentPreference": "SAFE",
-      "summary": "현재 자산 흐름에 맞춰 안정형 적립식 투자를 유지해보세요.",
+      "recommendation": {
+        "guidanceId": 1,
+        "actionType": "CONTINUE",
+        "reason": "현재 적립이 목표 달성에 계속 필요하므로 회차당 15만원을 유지해 주세요.",
+        "recommendedContributionAmount": 150000,
+        "currentContributionAmount": 150000,
+        "recommendedExpectedAsset": 18540000,
+        "nextContributionAt": "2026-09-10",
+        "nextReviewAt": "2026-09-10"
+      },
+      "currentPlan": {
+        "frequency": "MONTHLY",
+        "contributionDay": 10,
+        "contributionAmount": 150000,
+        "maximumMonthlyAmount": 300000,
+        "investmentProductCode": "069500",
+        "investmentProductName": "KODEX 200"
+      },
+      "assetStatus": {
+        "investmentPrincipal": 4299,
+        "marketValue": 4299,
+        "evaluationProfit": 0,
+        "returnRate": 0,
+        "baseAt": "2026-08-05T09:00:00+09:00"
+      },
+      "goalProgress": {
+        "goalAmount": 20000000,
+        "expectedAsset": 18540000,
+        "achievementRate": 90.8,
+        "remainingInstallments": 12,
+        "goalMarginAmount": 1460000
+      },
       "createdAt": "2026-08-06T09:00:00+09:00"
+    },
+    {
+      "guidanceId": 1,
+      "id": 2,
+      "userId": 1,
+      "recommendation": {
+        "guidanceId": 1,
+        "actionType": "START",
+        "reason": "현재 자산 흐름에 맞춰 안정형 적립식 투자를 유지해보세요.",
+        "recommendedContributionAmount": 150000,
+        "currentContributionAmount": 150000,
+        "recommendedExpectedAsset": 18540000,
+        "nextContributionAt": "2026-09-10",
+        "nextReviewAt": "2026-09-10"
+      },
+      "currentPlan": {
+        "frequency": "MONTHLY",
+        "contributionDay": 10,
+        "contributionAmount": 150000,
+        "maximumMonthlyAmount": 300000,
+        "investmentProductCode": "069500",
+        "investmentProductName": "KODEX 200"
+      },
+      "assetStatus": {
+        "investmentPrincipal": 1800000,
+        "marketValue": 1854000,
+        "returnRate": 3
+      },
+      "goalProgress": {
+        "goalAmount": 20000000,
+        "expectedAsset": 18540000,
+        "achievementRate": 90.8,
+        "remainingInstallments": 12,
+        "goalMarginAmount": 1460000
+      },
+      "createdAt": "2026-08-13T07:25:19.601Z"
     }
   ],
   "deviceTokens": [],

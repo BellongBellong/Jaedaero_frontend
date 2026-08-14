@@ -6,9 +6,15 @@ import generalAccountIcon from '@/assets/onboarding/icons/account-general.svg'
 import accountEmptyMascot from '@/assets/onboarding/icons/account-empty-mascot.svg'
 import militarySavingsAccountIcon from '@/assets/onboarding/icons/account-military-savings.svg'
 import recommendedAccountIcon from '@/assets/onboarding/icons/account-recommended.svg'
+import { getApiErrorMessage } from '@/common/api/errorMessage'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
-import { connectAccount, getAccounts } from '@/features/accounts/api/accounts.api'
 import {
+  connectAccount,
+  disconnectAccount,
+  getAccounts,
+} from '@/features/accounts/api/accounts.api'
+import {
+  accountConnectionStatus,
   accountInstitutionName,
   accountOrganizationCode,
   matchesAccountInstitution,
@@ -32,6 +38,7 @@ const accountsModalOpen = ref(false)
 const accountsEmptyModalOpen = ref(false)
 const discoveredAccounts = ref([])
 const selectedAccountIds = ref([])
+const accountsConfirming = ref(false)
 const requiredAccountNoticeId = ref(null)
 const showConnectedSummary = ref(false)
 const connectedInstitutions = ref([])
@@ -45,8 +52,6 @@ const fallbackBanks = [
   { organizationCode: '0003', displayName: '기업은행', logoKey: 'ibk' },
   { organizationCode: '0088', displayName: '신한은행', logoKey: 'shinhan' },
   { organizationCode: '0081', displayName: '하나은행', logoKey: 'hana' },
-  { organizationCode: '0092', displayName: '토스뱅크', logoKey: 'toss' },
-  { organizationCode: '0090', displayName: '카카오뱅크', logoKey: 'kakao' },
   { organizationCode: '0071', displayName: '우체국', logoKey: 'woochekook' },
   { organizationCode: '0011', displayName: '농협은행', logoKey: 'nh' },
   { organizationCode: '0007', displayName: '수협은행', logoKey: 'sh' },
@@ -88,8 +93,15 @@ const form = ref({
   password: '',
   birthDate: '',
 })
-const allowsSecurities = computed(() => route.params.assetType === 'personal-assets')
-const isAdditionalConnection = computed(() => route.query.source === 'my-page')
+const isSecuritiesOnly = computed(() => route.params.assetType === 'securities')
+const allowsSecurities = computed(() =>
+  ['personal-assets', 'securities'].includes(String(route.params.assetType)),
+)
+const isAdditionalConnection = computed(
+  () =>
+    route.query.mode === 'additional' ||
+    ['my-page', 'dashboard', 'investment-assets'].includes(String(route.query.source || '')),
+)
 const isMockMode =
   import.meta.env.MODE === 'mock' || import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 
@@ -133,8 +145,6 @@ const bankLogoRules = [
   ['기업', 'ibk'],
   ['신한', 'shinhan'],
   ['하나', 'hana'],
-  ['토스', 'toss'],
-  ['카카오', 'kakao'],
   ['우체국', 'woochekook'],
   ['지역농협', 'nhlocal'],
   ['농협', 'nh'],
@@ -195,7 +205,8 @@ function isInstitutionConnected(institution) {
   return connectedInstitutions.value.some(
     (connection) =>
       connection.businessType === form.value.businessType &&
-      connection.institution.organizationCode === institution.organizationCode,
+      connection.institution.organizationCode === institution.organizationCode &&
+      connection.accounts.some((account) => accountConnectionStatus(account) === 'active'),
   )
 }
 
@@ -227,6 +238,7 @@ function restoreConnectedInstitutions(accounts) {
 
   accounts.forEach((account) => {
     const businessType = accountBusinessType(account)
+    if (isSecuritiesOnly.value && businessType !== 'ST') return
     const organizationCode = accountOrganizationCode(account)
     const institutionName = accountInstitutionName(account)
     const key = `${businessType}-${organizationCode || normalizeInstitutionName(institutionName)}`
@@ -259,8 +271,11 @@ async function restoreConnectionState() {
     const accounts = await getAccounts()
     restoreConnectedInstitutions(accounts)
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message || '기존 연동 계좌를 불러오지 못했습니다. 다시 시도해 주세요.'
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '기존 연동 계좌를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
+      'account',
+    )
   }
 }
 
@@ -369,8 +384,8 @@ function closeAccountsModal() {
   requiredAccountNoticeId.value = null
 }
 
-function confirmAccounts() {
-  if (!selectedAccountIds.value.length) return
+async function confirmAccounts() {
+  if (!selectedAccountIds.value.length || accountsConfirming.value) return
 
   if (!selectedInstitution.value || isInstitutionConnected(selectedInstitution.value)) {
     accountsModalOpen.value = false
@@ -381,20 +396,52 @@ function confirmAccounts() {
   const selectedAccounts = discoveredAccounts.value.filter((account, index) =>
     selectedAccountIds.value.includes(accountId(account, index)),
   )
-  connectedInstitutions.value.push({
-    id: `${form.value.businessType}-${form.value.organizationCode}-${Date.now()}`,
-    businessType: form.value.businessType,
-    institution: { ...selectedInstitution.value },
-    accounts: selectedAccounts,
+  const selectedIds = new Set(selectedAccountIds.value)
+  const accountsToRemove = discoveredAccounts.value.filter((account, index) => {
+    const persistedId = account.accountId ?? account.id
+    return persistedId && !selectedIds.has(accountId(account, index))
   })
-  markConnected()
-  accountsModalOpen.value = false
-  showConnectedSummary.value = true
+
+  accountsConfirming.value = true
+  errorMessage.value = ''
+  try {
+    await Promise.all(
+      accountsToRemove.map((account) => disconnectAccount(account.accountId ?? account.id)),
+    )
+    const connection = {
+      id: `${form.value.businessType}-${form.value.organizationCode}-${Date.now()}`,
+      businessType: form.value.businessType,
+      institution: { ...selectedInstitution.value },
+      accounts: selectedAccounts,
+    }
+    const existingConnectionIndex = connectedInstitutions.value.findIndex(
+      (item) =>
+        item.businessType === connection.businessType &&
+        item.institution.organizationCode === connection.institution.organizationCode,
+    )
+
+    if (existingConnectionIndex >= 0) {
+      connectedInstitutions.value.splice(existingConnectionIndex, 1, connection)
+    } else {
+      connectedInstitutions.value.push(connection)
+    }
+    markConnected()
+    accountsModalOpen.value = false
+    showConnectedSummary.value = true
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '선택한 계좌만 연결하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      'account',
+    )
+  } finally {
+    accountsConfirming.value = false
+  }
 }
 
 function startAdditionalConnection() {
   form.value = {
-    businessType: '',
+    businessType: isSecuritiesOnly.value ? 'ST' : '',
     organizationCode: '',
     loginId: '',
     password: '',
@@ -407,8 +454,18 @@ function startAdditionalConnection() {
 }
 
 function nextFromSummary() {
-  if (route.query.source === 'my-page') {
-    router.replace({ name: 'connected-banks' })
+  const destinations = {
+    'my-page': { name: 'connected-banks' },
+    dashboard: { name: 'dashboard' },
+    'investment-assets': {
+      name: 'account-assets',
+      query: { tab: 'investment' },
+    },
+  }
+  const destination = destinations[String(route.query.source || '')]
+
+  if (destination) {
+    router.replace(destination)
     return
   }
 
@@ -416,7 +473,26 @@ function nextFromSummary() {
 }
 
 async function submit() {
-  if (!canSubmit.value) return
+  if (!form.value.businessType) {
+    errorMessage.value = '연결할 금융기관 종류를 먼저 선택해 주세요.'
+    return
+  }
+  if (!form.value.organizationCode) {
+    errorMessage.value = '연결할 금융기관을 선택해 주세요.'
+    return
+  }
+  if (!form.value.loginId.trim()) {
+    errorMessage.value = '금융기관 인터넷뱅킹 아이디를 입력해 주세요.'
+    return
+  }
+  if (!form.value.password) {
+    errorMessage.value = '금융기관 인터넷뱅킹 비밀번호를 입력해 주세요.'
+    return
+  }
+  if (form.value.birthDate && !/^\d{6}$/.test(form.value.birthDate)) {
+    errorMessage.value = '생년월일은 주민등록번호 앞 6자리로 입력해 주세요.'
+    return
+  }
 
   const userId = Number(localStorage.getItem('userId')) || (isMockMode ? 1 : 0)
   if (!userId) {
@@ -462,15 +538,11 @@ async function submit() {
     accountsModalOpen.value = true
   } catch (error) {
     if (error.code === 'ERR_CANCELED') return
-
-    const responseData = error.response?.data
-    errorMessage.value =
-      responseData?.message ||
-      responseData?.error ||
-      (typeof responseData === 'string' && !responseData.includes('<!doctype')
-        ? responseData
-        : '') ||
-      '계좌 연결에 실패했습니다. 은행 정보 또는 서버 설정을 확인해 주세요.'
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '계좌 연결에 실패했어요. 금융기관 정보를 확인하고 다시 시도해 주세요.',
+      'account',
+    )
   } finally {
     if (accountRequestController.value === requestController) {
       accountRequestController.value = null
@@ -486,6 +558,7 @@ function abortAccountRequest() {
 }
 
 onMounted(async () => {
+  if (isSecuritiesOnly.value) form.value.businessType = 'ST'
   banks.value = fallbackBanks
   securities.value = allowsSecurities.value ? fallbackSecurities : []
   loadingInstitutions.value = false
@@ -500,13 +573,13 @@ onBeforeUnmount(abortAccountRequest)
     <OnboardingStepHeader
       :step="1"
       :show-progress="!isAdditionalConnection"
-      title="금융 연결"
+      :title="isSecuritiesOnly ? '증권계좌 연결' : '금융 연결'"
       :description="
         showConnectedSummary
           ? isAdditionalConnection
-            ? '금융기관 연동이 완료되었어요.'
+            ? `${isSecuritiesOnly ? '증권계좌' : '금융기관'} 연동이 완료되었어요.`
             : '군인 계좌가 있는 은행을 연결해주세요.'
-          : '연결할 금융기관의 인터넷뱅킹 정보를 입력해주세요.'
+          : `연결할 ${isSecuritiesOnly ? '증권사' : '금융기관'}의 인터넷뱅킹 정보를 입력해주세요.`
       "
       @back="router.back()"
     />
@@ -553,7 +626,7 @@ onBeforeUnmount(abortAccountRequest)
           >✓</span>
         </article>
         <p
-          v-if="!isAdditionalConnection"
+          v-if="!isAdditionalConnection && form.businessType === 'BK'"
           class="additional-tip"
         >
           💡 군적금 계좌가 있다면 연동해보세요!
@@ -561,6 +634,14 @@ onBeforeUnmount(abortAccountRequest)
       </div>
 
       <template v-else>
+        <div
+          v-if="isSecuritiesOnly"
+          class="securities-connection-state"
+        >
+          <strong>연결된 증권계좌가 없어요</strong>
+          <span>투자 자산을 확인하려면 증권사를 연결해주세요.</span>
+        </div>
+
         <fieldset
           v-if="!selectedInstitution"
           class="institution-type"
@@ -568,6 +649,7 @@ onBeforeUnmount(abortAccountRequest)
           <legend>기관 선택</legend>
           <div class="type-buttons">
             <button
+              v-if="!isSecuritiesOnly"
               type="button"
               :class="{ selected: form.businessType === 'BK' }"
               @click="selectBusinessType('BK')"
@@ -581,7 +663,10 @@ onBeforeUnmount(abortAccountRequest)
             <button
               v-if="allowsSecurities"
               type="button"
-              :class="{ selected: form.businessType === 'ST' }"
+              :class="[
+                { selected: form.businessType === 'ST' && !isSecuritiesOnly },
+                { 'type-buttons__securities-only': isSecuritiesOnly },
+              ]"
               @click="selectBusinessType('ST')"
             >
               {{
@@ -680,7 +765,8 @@ onBeforeUnmount(abortAccountRequest)
 
     <PrimaryButton
       v-else
-      :disabled="!canSubmit"
+      variant="green"
+      :disabled="loading"
       @click="submit"
     >
       {{
@@ -695,7 +781,7 @@ onBeforeUnmount(abortAccountRequest)
     <Transition name="institution-sheet">
       <div
         v-if="institutionModalOpen"
-        class="institution-backdrop"
+        class="institution-backdrop institution-backdrop--selector"
         @click.self="closeInstitutionModal"
       >
         <section
@@ -719,7 +805,10 @@ onBeforeUnmount(abortAccountRequest)
               한 번에 하나씩만 가능해요.
             </p>
           </header>
-          <p class="sheet-tip">
+          <p
+            v-if="form.businessType === 'BK'"
+            class="sheet-tip"
+          >
             💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.
           </p>
           <div class="institution-list">
@@ -769,6 +858,7 @@ onBeforeUnmount(abortAccountRequest)
             </p>
           </div>
           <PrimaryButton
+            variant="green"
             :disabled="!pendingInstitution"
             @click="confirmInstitution"
           >
@@ -970,10 +1060,11 @@ onBeforeUnmount(abortAccountRequest)
           </div>
 
           <PrimaryButton
-            :disabled="!selectedAccountIds.length"
+            variant="green"
+            :disabled="accountsConfirming || !selectedAccountIds.length"
             @click="confirmAccounts"
           >
-            선택한 계좌 불러오기
+            {{ accountsConfirming ? '계좌 저장 중...' : '선택한 계좌 불러오기' }}
           </PrimaryButton>
         </section>
       </div>
@@ -1034,21 +1125,83 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .type-buttons button {
-  width: 152px;
-  height: 42px;
-  border: 1px solid transparent;
-  border-radius: 16px;
+  position: relative;
+  display: flex;
+  flex: 1;
+  width: auto;
+  min-height: 76px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 14px 18px;
+  border: 1px solid #e6e9e7;
+  border-radius: 20px;
   background: #fff;
-  color: #b0b0b0;
+  box-shadow: 0 2px 8px rgb(31 41 55 / 5%);
+  color: #333;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .type-buttons button.selected {
   border-color: #62ff9c;
   background: #effff5;
   color: #20ba5c;
-  font-weight: 700;
+  box-shadow: 0 4px 12px rgb(59 225 120 / 12%);
+}
+
+.type-buttons button:not(.type-buttons__securities-only):first-child {
+  padding-right: 48px;
+}
+
+.type-buttons button:not(.type-buttons__securities-only):first-child::before {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  margin-right: 12px;
+  border-radius: 14px;
+  background: #effff5 url('@/assets/onboarding/icons/bank-building.png') center / 28px no-repeat;
+  content: '';
+}
+
+.type-buttons button:not(.type-buttons__securities-only):first-child::after {
+  position: absolute;
+  right: 20px;
+  color: #a3aca6;
+  content: '›';
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.type-buttons .type-buttons__securities-only {
+  width: auto;
+}
+
+.securities-connection-state {
+  display: grid;
+  gap: 3px;
+  padding: 16px;
+  margin-bottom: 18px;
+  border-radius: 20px;
+  background: rgb(236 236 236 / 35%);
+}
+
+.securities-connection-state strong {
+  color: var(--gray-700);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.securities-connection-state span {
+  color: var(--gray-500);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .connected-summary {
@@ -1164,7 +1317,7 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .summary-actions button:last-child {
-  background: #56f497;
+  background: #62ff9c;
   color: #173522;
 }
 
@@ -1315,8 +1468,8 @@ select:focus {
   position: relative;
   display: flex;
   width: 100%;
-  height: 100%;
-  max-height: 100%;
+  height: min(78dvh, 660px);
+  max-height: calc(100dvh - 92px);
   flex-direction: column;
   padding: 38px 16px 12px;
   border-radius: 24px 24px 0 0;
@@ -1364,23 +1517,20 @@ select:focus {
 
 .institution-list {
   display: grid;
-  grid-template-columns: repeat(3, 74px);
-  grid-auto-rows: 74px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 68px;
   align-content: start;
-  justify-content: space-between;
-  gap: 8px 6px;
+  gap: 4px;
   min-height: 0;
   flex: 1;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #cfcfcf transparent;
+  overflow: hidden;
 }
 
 .institution-row {
   position: relative;
   display: grid;
-  width: 74px;
-  height: 74px;
+  width: 100%;
+  height: 68px;
   place-items: center;
   padding: 0;
   border: 0;
@@ -1400,14 +1550,14 @@ select:focus {
 
 .institution-row img {
   display: block;
-  width: 74px;
-  height: 74px;
+  width: 68px;
+  height: 68px;
 }
 
 .institution-connected-check {
   position: absolute;
-  right: 1px;
-  bottom: 1px;
+  right: 0;
+  bottom: 0;
   display: grid;
   width: 21px;
   height: 21px;
@@ -1433,7 +1583,7 @@ select:focus {
   width: 100%;
   flex: 0 0 56px;
   margin: 10px 0 0;
-  background: #56f497;
+  background: #62ff9c;
   color: #173522;
   font-size: 13px;
 }
@@ -1726,7 +1876,7 @@ select:focus {
   width: 100%;
   flex: 0 0 56px;
   margin: 10px 0 0;
-  background: #56f497;
+  background: #62ff9c;
   color: #173522;
   font-size: 14px;
 }

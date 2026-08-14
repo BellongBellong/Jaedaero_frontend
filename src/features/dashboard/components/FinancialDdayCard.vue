@@ -1,24 +1,28 @@
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 import armyCharacter from '@/assets/icons/character/army.png'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+
+const router = useRouter()
 
 const props = defineProps({
   financialDday: {
     type: Number,
-    default: 54,
+    default: null,
   },
   actualDday: {
     type: Number,
-    default: 60,
+    default: null,
   },
   actualDischargeDate: {
-    type: String,
+    type: [String, Date, Array],
     default: '2026-09-26',
   },
   financialDischargeDate: {
-    type: String,
-    default: '2026-09-20',
+    type: [String, Date, Array],
+    default: null,
   },
   achievementRate: {
     type: Number,
@@ -32,21 +36,73 @@ const props = defineProps({
     type: Number,
     default: 1700,
   },
+  differenceDays: {
+    type: Number,
+    default: null,
+  },
 })
 
-const normalizedRate = computed(() => Math.min(Math.max(props.achievementRate, 0), 100))
+const calculatedAchievementRate = computed(() => {
+  const currentAsset = Number(props.currentAsset)
+  const targetAmount = Number(props.targetAmount)
+
+  if (!Number.isFinite(currentAsset) || !Number.isFinite(targetAmount) || targetAmount <= 0) {
+    return 0
+  }
+
+  return (currentAsset / targetAmount) * 100
+})
+const normalizedRate = computed(() => Math.min(Math.max(calculatedAchievementRate.value, 0), 100))
 const progressWidth = computed(() => `${normalizedRate.value}%`)
 const markerPosition = computed(() => `clamp(39px, ${normalizedRate.value}%, calc(100% - 39px))`)
 const isLowProgress = computed(() => normalizedRate.value < 45)
+const hasFinancialDischargeDate = computed(() => Boolean(props.financialDischargeDate))
 
 const formattedActualDate = computed(() => {
   if (!props.actualDischargeDate) return '-'
 
-  return props.actualDischargeDate.replaceAll('-', '.')
+  if (Array.isArray(props.actualDischargeDate)) {
+    const [year, month, day] = props.actualDischargeDate.map(Number)
+    if (!year || !month || !day) return '-'
+    return `${year}.${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`
+  }
+
+  if (props.actualDischargeDate instanceof Date) {
+    if (Number.isNaN(props.actualDischargeDate.getTime())) return '-'
+
+    const year = props.actualDischargeDate.getFullYear()
+    const month = String(props.actualDischargeDate.getMonth() + 1).padStart(2, '0')
+    const day = String(props.actualDischargeDate.getDate()).padStart(2, '0')
+    return `${year}.${month}.${day}`
+  }
+
+  const match = String(props.actualDischargeDate)
+    .trim()
+    .match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/)
+
+  if (!match) return '-'
+
+  return `${match[1]}.${match[2].padStart(2, '0')}.${match[3].padStart(2, '0')}`
 })
 
 function toUtcDate(date) {
-  const [year, month, day] = String(date).slice(0, 10).split('-').map(Number)
+  if (Array.isArray(date)) {
+    const [year, month, day] = date.map(Number)
+    return year && month && day ? Date.UTC(year, month - 1, day) : null
+  }
+
+  if (date instanceof Date) {
+    if (Number.isNaN(date.getTime())) return null
+    return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  }
+
+  const match = String(date ?? '')
+    .trim()
+    .match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/)
+
+  if (!match) return null
+
+  const [, year, month, day] = match.map(Number)
 
   if (!year || !month || !day) return null
 
@@ -54,6 +110,10 @@ function toUtcDate(date) {
 }
 
 const dischargeDifferenceDays = computed(() => {
+  if (props.differenceDays !== null && Number.isFinite(props.differenceDays)) {
+    return props.differenceDays
+  }
+
   const financialDate = toUtcDate(props.financialDischargeDate)
   const actualDate = toUtcDate(props.actualDischargeDate)
 
@@ -63,6 +123,10 @@ const dischargeDifferenceDays = computed(() => {
 
   return Math.round((actualDate - financialDate) / 86400000)
 })
+
+function formatDday(value) {
+  return Number.isFinite(value) ? `D-${value}` : '-'
+}
 
 const dischargeMessage = computed(() => {
   if (dischargeDifferenceDays.value > 0) {
@@ -76,9 +140,22 @@ const dischargeMessage = computed(() => {
   return '전역일에 맞춰 목표 자산을 달성할 것으로 예상돼요!'
 })
 
+function goToWhatIfSimulation() {
+  router.push({ name: 'what-if-simulation' })
+}
+
 function formatAmount(value) {
   return Number(value || 0).toLocaleString('ko-KR')
 }
+
+const formattedTargetAmount = computed(() => formatAmount(Math.round(props.targetAmount || 0)))
+const formattedCurrentAsset = computed(() => formatAmount(Math.round(props.currentAsset || 0)))
+const formattedAchievementRate = computed(() => {
+  const rate = calculatedAchievementRate.value
+  if (rate === 0) return '0'
+  if (rate < 0.1) return rate.toFixed(2)
+  return rate.toFixed(1).replace(/\.0$/, '')
+})
 </script>
 
 <template>
@@ -88,15 +165,34 @@ function formatAmount(value) {
         <p class="financial-dday-card__label">
           재정적 전역일
         </p>
-        <strong class="financial-dday-card__main-dday">D-{{ financialDday }}</strong>
-        <p class="financial-dday-card__message">
-          {{ dischargeMessage }}
-        </p>
+        <template v-if="hasFinancialDischargeDate">
+          <strong class="financial-dday-card__main-dday">{{ formatDday(financialDday) }}</strong>
+          <p class="financial-dday-card__message">
+            {{ dischargeMessage }}
+          </p>
+        </template>
+        <div
+          v-else
+          class="financial-dday-card__what-if-guide"
+        >
+          <p>
+            What-if 시뮬레이션으로<br>
+            자산 분배 목표를 설정하고<br>
+            나의 재정적 전역일을 계산해보세요
+          </p>
+          <DetailLinkButton
+            class="financial-dday-card__what-if-link app-label label--safe"
+            aria-label="What-if 시뮬레이션 하러가기"
+            @click="goToWhatIfSimulation"
+          >
+            What-if 시뮬레이션 하러가기
+          </DetailLinkButton>
+        </div>
       </div>
 
       <div class="financial-dday-card__actual-date">
         <span>실제 전역일</span>
-        <strong>D-{{ actualDday }}</strong>
+        <strong>{{ formatDday(actualDday) }}</strong>
         <time :datetime="actualDischargeDate">{{ formattedActualDate }}</time>
       </div>
     </div>
@@ -107,7 +203,7 @@ function formatAmount(value) {
     >
       <div class="financial-dday-card__achievement">
         <p>전역 목표 금액 달성률</p>
-        <strong>{{ achievementRate }}%</strong>
+        <strong>{{ formattedAchievementRate }}%</strong>
         <span>순자산 {{ formatAmount(currentAsset) }}만원</span>
       </div>
 
@@ -116,7 +212,7 @@ function formatAmount(value) {
         :style="{ left: markerPosition }"
       >
         <div class="financial-dday-card__amount-bubble">
-          <strong>{{ formatAmount(currentAsset) }}</strong>
+          <strong>{{ formattedCurrentAsset }}</strong>
           <span>만원</span>
         </div>
         <span class="financial-dday-card__bubble-tail" />
@@ -141,7 +237,7 @@ function formatAmount(value) {
         >
           <span :style="{ width: progressWidth }" />
         </div>
-        <p>목표 {{ formatAmount(targetAmount) }}만원</p>
+        <p>목표 {{ formattedTargetAmount }}만원</p>
       </div>
     </div>
   </section>
@@ -194,6 +290,27 @@ function formatAmount(value) {
 
 .financial-dday-card__financial-date {
   min-width: 0;
+}
+
+.financial-dday-card__what-if-guide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.financial-dday-card__what-if-guide > p {
+  color: var(--gray-600);
+  font-family: var(--body-body-small-regular-font-family);
+  font-size: var(--body-body-small-regular-font-size);
+  font-weight: var(--body-body-small-regular-font-weight);
+  line-height: var(--body-body-small-regular-line-height);
+}
+
+.financial-dday-card__what-if-link {
+  max-width: 100%;
+  color: var(--green-700);
 }
 
 .financial-dday-card__label {
@@ -307,15 +424,32 @@ function formatAmount(value) {
 }
 
 .financial-dday-card__amount-bubble {
+  position: relative;
+  z-index: 2;
   display: flex;
   width: max-content;
+  min-width: 76px;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   padding: 10px;
   border-radius: 20px;
-  background: linear-gradient(180deg, var(--green-500) 0%, var(--green-50) 100%);
+  background: linear-gradient(135deg, var(--green-300) 0%, var(--green-200) 100%);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.financial-dday-card__amount-bubble::after {
+  position: absolute;
+  z-index: 1;
+  bottom: -12px;
+  left: 50%;
+  width: 24px;
+  height: 15px;
+  background: var(--green-200);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  content: '';
+  transform: translateX(-50%);
 }
 
 .financial-dday-card__amount-bubble strong {
@@ -328,12 +462,7 @@ function formatAmount(value) {
 
 .financial-dday-card__bubble-tail {
   display: block;
-  width: 0;
-  height: 0;
-  margin: -2px auto 0;
-  border-top: 14px solid var(--green-50);
-  border-right: 11px solid transparent;
-  border-left: 11px solid transparent;
+  height: 13px;
 }
 
 .financial-dday-card__character-wrap {

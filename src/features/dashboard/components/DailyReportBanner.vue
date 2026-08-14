@@ -4,26 +4,82 @@ import { RouterLink } from 'vue-router'
 
 import reportMascot from '@/assets/ai-coach/coach-character.svg'
 import smallMoney from '@/assets/icons/Smallmoney.png'
+import starGradient from '@/assets/icons/starGradient.png'
 
 const props = defineProps({
-  greeting: {
-    type: String,
-    default: '저녁은 맛있게 드셨나요?',
-  },
-  title: {
-    type: String,
-    default: '오늘의 금융 AI 리포트',
-  },
   date: {
-    type: String,
+    type: [String, Array],
     default: '',
+  },
+  to: {
+    type: [String, Object],
+    default: () => ({ name: 'ai-financial-report' }),
+  },
+  variant: {
+    type: String,
+    default: 'military',
+    validator: (value) => ['military', 'vacation'].includes(value),
   },
 })
 
-const formattedDate = computed(() => {
-  const sourceDate = props.date ? new Date(props.date) : new Date()
+const ENCOURAGEMENT_MESSAGES = {
+  military: {
+    morning: [
+      '좋은 아침이에요! 오늘도 힘차게 시작해봐요.',
+      '오늘 하루도 무사히, 힘차게 보내봐요!',
+      '든든하게 아침 챙기고 오늘도 파이팅이에요!',
+    ],
+    afternoon: [
+      '오전 일과 수고했어요! 오후도 힘내봐요.',
+      '점심은 맛있게 드셨나요? 남은 일과도 파이팅!',
+      '잠깐 숨 고르고, 오후 일과도 힘내봐요!',
+    ],
+    evening: [
+      '오늘 하루도 정말 수고 많았어요.',
+      '저녁은 맛있게 드셨나요? 편안한 밤 보내요.',
+      '오늘도 잘 버텨냈어요! 푹 쉬어가요.',
+    ],
+  },
+  vacation: {
+    morning: [
+      '즐거운 휴가의 아침이에요! 오늘을 만끽해봐요.',
+      '휴가의 소중한 하루, 기분 좋게 시작해봐요!',
+    ],
+    afternoon: ['즐거운 휴가 보내고 계신가요?', '휴가 중에도 든든하게 점심 챙겨 드세요!'],
+    evening: ['오늘의 휴가도 즐거우셨나요? 푹 쉬어요.', '소중한 사람들과 편안한 저녁 보내세요.'],
+  },
+}
 
-  if (Number.isNaN(sourceDate.getTime())) return props.date
+const messagePeriod = computed(() => {
+  const hour = new Date().getHours()
+
+  if (hour < 11) return 'morning'
+  if (hour < 17) return 'afternoon'
+  return 'evening'
+})
+
+const encouragementMessage = computed(() => {
+  const messages = ENCOURAGEMENT_MESSAGES[props.variant][messagePeriod.value]
+  const today = new Date()
+  const dateSeed = today.getFullYear() * 372 + (today.getMonth() + 1) * 31 + today.getDate()
+
+  return messages[dateSeed % messages.length]
+})
+
+const normalizedDate = computed(() => {
+  if (Array.isArray(props.date)) {
+    const [year, month, day] = props.date.map(Number)
+    if (!year || !month || !day) return ''
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  }
+
+  return String(props.date || '')
+})
+
+const formattedDate = computed(() => {
+  const sourceDate = normalizedDate.value ? new Date(normalizedDate.value) : new Date()
+
+  if (Number.isNaN(sourceDate.getTime())) return normalizedDate.value
 
   return new Intl.DateTimeFormat('ko-KR', {
     month: 'long',
@@ -32,7 +88,7 @@ const formattedDate = computed(() => {
 })
 
 const dateTime = computed(() => {
-  if (props.date) return props.date.slice(0, 10)
+  if (normalizedDate.value) return normalizedDate.value.slice(0, 10)
 
   const today = new Date()
   const year = today.getFullYear()
@@ -46,8 +102,9 @@ const dateTime = computed(() => {
 <template>
   <RouterLink
     class="daily-report-banner"
-    :to="{ name: 'ai-financial-report' }"
-    aria-label="오늘의 금융 AI 리포트 보기"
+    :class="`daily-report-banner--${variant}`"
+    :to="to"
+    aria-label="오늘의 AI 시장 리포트 보기"
   >
     <img
       class="daily-report-banner__mascot"
@@ -57,20 +114,38 @@ const dateTime = computed(() => {
     >
 
     <div class="daily-report-banner__content">
-      <p>{{ greeting }}</p>
+      <p>{{ encouragementMessage }}</p>
       <div class="daily-report-banner__title">
-        <strong>{{ title }}</strong>
+        <strong>오늘의 AI 시장 리포트</strong>
         <time :datetime="dateTime">{{ formattedDate }}</time>
       </div>
     </div>
 
-    <span class="daily-report-banner__glow daily-report-banner__glow--small" />
-    <span
-      class="daily-report-banner__star"
-      aria-hidden="true"
-    >✦</span>
+    <template v-if="variant === 'vacation'">
+      <img
+        class="daily-report-banner__vacation-star daily-report-banner__vacation-star--small"
+        :src="starGradient"
+        alt=""
+        aria-hidden="true"
+      >
+      <img
+        class="daily-report-banner__vacation-star daily-report-banner__vacation-star--large"
+        :src="starGradient"
+        alt=""
+        aria-hidden="true"
+      >
+    </template>
+
+    <template v-else>
+      <span class="daily-report-banner__glow daily-report-banner__glow--small" />
+      <span
+        class="daily-report-banner__star"
+        aria-hidden="true"
+      >✦</span>
+    </template>
 
     <span
+      v-if="variant !== 'vacation'"
       class="daily-report-banner__report-icon"
       aria-hidden="true"
     >
@@ -106,8 +181,46 @@ const dateTime = computed(() => {
     filter 180ms ease;
 }
 
+.daily-report-banner--vacation {
+  min-height: 88px;
+  gap: var(--space-8);
+  padding-right: 18px;
+  padding-left: 18px;
+  border-color: rgb(255 255 255 / 26%);
+  background: linear-gradient(180deg, #009dff 0%, #65c6d4 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 28%),
+    0 8px 22px rgb(0 157 255 / 16%);
+}
+
+.daily-report-banner--vacation .daily-report-banner__content {
+  padding-right: 34px;
+}
+
+.daily-report-banner--vacation .daily-report-banner__title {
+  gap: 6px;
+}
+
+.daily-report-banner--vacation .daily-report-banner__title strong {
+  overflow: visible;
+  font-size: clamp(16px, 4.5vw, 18px);
+  text-overflow: clip;
+}
+
+.daily-report-banner--vacation:focus-visible {
+  outline-color: #7dccf7;
+}
+
 .daily-report-banner:active {
   transform: scale(0.985);
+}
+
+.daily-report-banner--vacation {
+  border-color: rgb(255 255 255 / 28%);
+  background: linear-gradient(180deg, #009dff 0%, #65c6d4 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 30%),
+    0 8px 22px rgb(0 157 255 / 16%);
 }
 
 .daily-report-banner:focus-visible {
@@ -129,7 +242,7 @@ const dateTime = computed(() => {
   z-index: 1;
   display: flex;
   min-width: 0;
-  padding-right: 58px;
+  padding-right: 52px;
   flex-direction: column;
   justify-content: center;
   gap: 3px;
@@ -147,15 +260,16 @@ const dateTime = computed(() => {
   display: flex;
   min-width: 0;
   align-items: center;
+  flex-wrap: wrap;
   gap: 7px;
-  white-space: nowrap;
 }
 
 .daily-report-banner__title strong {
-  overflow: hidden;
+  min-width: 0;
   font-size: 18px;
   line-height: 1.5;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: keep-all;
 }
 
 .daily-report-banner__title time {
@@ -219,6 +333,29 @@ const dateTime = computed(() => {
   transform: rotate(12deg);
 }
 
+.daily-report-banner__vacation-star {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  object-fit: contain;
+}
+
+.daily-report-banner__vacation-star--small {
+  top: 5px;
+  right: 58px;
+  width: 30px;
+  height: 30px;
+  filter: blur(1px);
+  opacity: 0.82;
+}
+
+.daily-report-banner__vacation-star--large {
+  right: 4px;
+  bottom: -3px;
+  width: 62px;
+  height: 62px;
+}
+
 @media (max-width: 360px) {
   .daily-report-banner {
     padding-right: 18px;
@@ -227,12 +364,17 @@ const dateTime = computed(() => {
 
   .daily-report-banner__report-icon,
   .daily-report-banner__glow,
-  .daily-report-banner__star {
+  .daily-report-banner__star,
+  .daily-report-banner__vacation-star {
     display: none;
   }
 
   .daily-report-banner__content {
     padding-right: 0;
+  }
+
+  .daily-report-banner__title strong {
+    font-size: 17px;
   }
 }
 

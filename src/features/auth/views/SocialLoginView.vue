@@ -1,9 +1,9 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
-import { login } from '@/features/auth/api/auth.api'
-import { startSocialLogin } from '@/features/auth/oauth'
+import { rememberLoginRedirect, startSocialLogin } from '@/features/auth/oauth'
+import { useAuthStore } from '@/features/auth/stores/auth.store'
 import brandLogo from '@/assets/onboarding/brand/brand-logo.svg'
 import googleLogo from '@/assets/onboarding/brand/google-logo.svg'
 import kakaoLogo from '@/assets/onboarding/brand/kakao-logo.svg'
@@ -16,6 +16,8 @@ const loadingProvider = ref('')
 const errorMessage = ref('')
 const characters = [army, navy, airforce, marine]
 const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 const isMockMode =
   import.meta.env.MODE === 'mock' || import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 
@@ -25,20 +27,21 @@ async function handleLogin(provider) {
 
   try {
     if (isMockMode) {
-      const response = await login({ socialType: provider, authorizationCode: 'mock-login' })
-
-      localStorage.setItem('accessToken', response.accessToken)
-      localStorage.setItem('refreshToken', response.refreshToken)
-      localStorage.setItem('userId', String(response.user?.userId || 1))
-      await router.push({
-        name:
-          (response.user?.onboardingCompleted ?? response.onboardingCompleted)
-            ? 'dashboard'
-            : 'terms',
+      const response = await authStore.login({
+        socialType: provider,
+        authorizationCode: 'mock-login',
       })
+
+      const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/home'
+      await router.push(
+        (response.user?.onboardingCompleted ?? response.onboardingCompleted)
+          ? redirect
+          : { name: 'terms' },
+      )
       return
     }
 
+    rememberLoginRedirect(route.query.redirect)
     startSocialLogin(provider)
   } catch {
     errorMessage.value = isMockMode
@@ -107,10 +110,10 @@ async function handleLogin(provider) {
 .login {
   position: relative;
   display: flex;
-  height: 852px;
+  height: auto;
   min-height: 100dvh;
   flex-direction: column;
-  padding-bottom: 44px;
+  padding-bottom: calc(24px + var(--safe-area-bottom));
   background: linear-gradient(
     to top,
     #c4c4c4 0%,
@@ -122,7 +125,8 @@ async function handleLogin(provider) {
 }
 .login__content {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .login__logo {
   position: absolute;
@@ -172,7 +176,7 @@ async function handleLogin(provider) {
 .login__actions {
   display: grid;
   gap: 12px;
-  padding: 0 24px 68px;
+  padding: 0 24px;
 }
 .social-button {
   position: relative;

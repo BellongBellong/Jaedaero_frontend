@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
@@ -7,14 +7,23 @@ import editIcon from '@/assets/icons/pencilIcon.svg'
 import { transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import CategoryChangeSheet from '@/features/transactions/components/CategoryChangeSheet.vue'
 import {
+  getCachedTransaction,
+  getTransactions,
+  updateTransactionCategory,
+} from '@/features/transactions/api/transactions.api'
+import {
   transactionCategoryIcon,
   transactionCategoryLabel,
 } from '@/features/transactions/composables/transactionCategoryIconMapping'
 
 const route = useRoute()
 const router = useRouter()
-const transaction = computed(() =>
-  transactionResponses.find((item) => String(item.id) === String(route.params.transactionId)),
+const usesMockScenario = Boolean(route.query.persona || route.query.scenario)
+const transaction = ref(
+  getCachedTransaction(route.params.transactionId) ??
+    (usesMockScenario
+      ? transactionResponses.find((item) => String(item.id) === String(route.params.transactionId))
+      : null),
 )
 const categorySheetOpen = ref(false)
 const selectedCategory = ref(
@@ -81,7 +90,26 @@ function changeCategory(category) {
   selectedCategory.value = category
   if (transaction.value) transaction.value.category = category
   categorySheetOpen.value = false
+  updateTransactionCategory(route.params.transactionId, category).catch(() => {})
 }
+
+onMounted(async () => {
+  if (transaction.value || usesMockScenario) return
+
+  try {
+    const transactions = await getTransactions()
+    transaction.value = transactions.find(
+      (item) => String(item.id) === String(route.params.transactionId),
+    )
+    selectedCategory.value = ['', 'UNCLASSIFIED'].includes(
+      String(transaction.value?.category || '').toUpperCase(),
+    )
+      ? 'ETC'
+      : String(transaction.value?.category || 'ETC').toUpperCase()
+  } catch {
+    transaction.value = null
+  }
+})
 </script>
 
 <template>

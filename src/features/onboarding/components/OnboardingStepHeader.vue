@@ -2,10 +2,11 @@
 import backIcon from '@/assets/onboarding/icons/step1-icon0.svg'
 
 const props = defineProps({
-  step: { type: Number, required: true },
+  step: { type: Number, default: 0 },
   title: { type: String, required: true },
   description: { type: String, default: '' },
   showProgress: { type: Boolean, default: true },
+  showBack: { type: Boolean, default: true },
 })
 
 defineEmits(['back'])
@@ -17,6 +18,7 @@ defineEmits(['back'])
     :class="{ 'step-header--without-progress': !props.showProgress }"
   >
     <button
+      v-if="props.showBack"
       class="back-button"
       aria-label="뒤로 가기"
       @click="$emit('back')"
@@ -82,7 +84,7 @@ defineEmits(['back'])
   letter-spacing: -0.09em;
 }
 .step-header__progress span {
-  color: #d1d1d1;
+  color: #888;
   font-size: 13px;
   font-weight: 700;
 }
@@ -101,13 +103,14 @@ defineEmits(['back'])
 }
 h1 {
   margin: 0;
+  color: #333;
   font-size: 24px;
   line-height: 1.5;
   letter-spacing: -0.04em;
 }
 p {
   margin: 0;
-  color: #999;
+  color: #666;
   font-size: 16px;
   line-height: 1.5;
 }

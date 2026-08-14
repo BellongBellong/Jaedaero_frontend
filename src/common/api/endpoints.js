@@ -20,14 +20,17 @@ export const ENDPOINTS = {
   accounts: {
     connect: '/accounts/connect',
     list: '/accounts',
+    detail: (accountId) => `/accounts/${accountId}`,
   },
   dashboard: '/dashboard',
   cashflow: '/cashflow',
   simulations: {
+    defaults: '/simulations/defaults',
     list: '/simulations',
     detail: (simulationId) => `/simulations/${simulationId}`,
   },
   aiAnalyses: {
+    list: '/ai-analyses',
     create: '/ai-analyses',
     detail: (analysisId) => `/ai-analyses/${analysisId}`,
     apply: (analysisId) => `/ai-analyses/${analysisId}/apply`,
@@ -58,6 +61,7 @@ export const ENDPOINTS = {
   investmentGuidances: {
     latest: '/investment-guidances/latest',
     create: '/investment-guidances',
+    detail: (guidanceId) => `/investment-guidances/${guidanceId}`,
     apply: (guidanceId) => `/investment-guidances/${guidanceId}/apply`,
   },
   deviceTokens: '/device-tokens',
@@ -71,5 +75,6 @@ export const ENDPOINTS = {
   },
   marketReport: {
     today: '/market-reports/today',
+    todayIndicators: '/market-reports/today/indicators',
   },
 }

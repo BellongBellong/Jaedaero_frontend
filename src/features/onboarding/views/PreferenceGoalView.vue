@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import confirmationEditIcon from '@/assets/onboarding/icons/confirmation-edit.svg'
@@ -9,6 +9,8 @@ import profileDefault from '@/assets/onboarding/profiles/profile-default.png'
 import profileMarine from '@/assets/onboarding/profiles/profile-marine.png'
 import profileNavy from '@/assets/onboarding/profiles/profile-navy.png'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import { generateCashflow } from '@/features/cashflow/api/cashflow.api'
+import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import { previewInvestmentPreference } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
@@ -19,6 +21,9 @@ const loading = ref(false)
 const completing = ref(false)
 const showConfirmModal = ref(false)
 const errorMessage = ref('')
+const preferenceGrid = ref(null)
+const targetAmountInput = ref(null)
+const targetAmountStep = 100
 const preferences = [
   { value: 'SAFE', icon: '🛡️', label: '안정형', caption: '원금 보존 우선' },
   { value: 'BALANCED', icon: '⚖️', label: '균형형', caption: '안전↔성장 사이' },
@@ -47,14 +52,37 @@ const estimatedDischargeAmount = computed(() => onboarding.form.challengeGroupTa
 const isAboveEstimatedAmount = computed(
   () => onboarding.form.targetAmount > estimatedDischargeAmount.value,
 )
+const goalTone = computed(() => {
+  const targetAmount = Number(onboarding.targetAmountInTenThousands)
+
+  if (targetAmount <= 2300) return 'green'
+  if (targetAmount <= 2600) return 'gray'
+  return 'red'
+})
 const requiredSavingsAmountInTenThousands = computed(() =>
   Math.max(0, onboarding.targetAmountInTenThousands - 2000),
 )
 const formattedRequiredSavings = computed(
   () => `${new Intl.NumberFormat('ko-KR').format(requiredSavingsAmountInTenThousands.value)}만 원`,
 )
+const canDecreaseTargetAmount = computed(() => Number(onboarding.targetAmountInTenThousands) > 0)
+
+function adjustTargetAmount(direction) {
+  const currentAmount = Number(onboarding.targetAmountInTenThousands) || 0
+  onboarding.targetAmountInTenThousands = Math.max(0, currentAmount + direction * targetAmountStep)
+  targetAmountInput.value?.focus()
+}
 
 async function next() {
+  if (!onboarding.form.investmentPreference) {
+    errorMessage.value = '투자 성향을 선택해 주세요.'
+    return
+  }
+  if (!Number.isFinite(onboarding.form.targetAmount) || onboarding.form.targetAmount <= 0) {
+    errorMessage.value = '목표 금액을 1만원 이상 입력해 주세요.'
+    return
+  }
+
   loading.value = true
   errorMessage.value = ''
   try {
@@ -64,8 +92,12 @@ async function next() {
     })
     onboarding.persist()
     showConfirmModal.value = true
-  } catch {
-    errorMessage.value = '설정 내용을 저장하지 못했어요.'
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(
+      error,
+      '투자 성향과 목표 금액을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      'preference',
+    )
   } finally {
     loading.value = false
   }
@@ -75,12 +107,39 @@ function closeModal() {
   if (!completing.value) showConfirmModal.value = false
 }
 
-function complete() {
+async function editPreference() {
+  closeModal()
+  await nextTick()
+  const selectedButton = preferenceGrid.value?.querySelector('button.selected')
+  selectedButton?.focus()
+  selectedButton?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+async function editTargetAmount() {
+  closeModal()
+  await nextTick()
+  targetAmountInput.value?.focus()
+  targetAmountInput.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+async function complete() {
   if (completing.value) return
 
   completing.value = true
-  onboarding.complete()
-  router.replace({ name: 'dashboard' })
+  errorMessage.value = ''
+
+  try {
+    await generateCashflow()
+    onboarding.complete()
+    await router.replace({ name: 'dashboard' })
+  } catch (error) {
+    const serverMessage = error.response?.data?.message
+    errorMessage.value = serverMessage
+      ? `대시보드 정보를 준비하지 못했어요. ${serverMessage}`
+      : '대시보드 정보를 준비하지 못했어요. 잠시 후 다시 시도해주세요.'
+  } finally {
+    completing.value = false
+  }
 }
 </script>
 
@@ -93,10 +152,14 @@ function complete() {
       @back="router.back()"
     />
     <section class="preference-content">
-      <div class="preference-grid">
+      <div
+        ref="preferenceGrid"
+        class="preference-grid"
+      >
         <button
           v-for="item in preferences"
           :key="item.value"
+          type="button"
           :class="{ selected: onboarding.form.investmentPreference === item.value }"
           @click="onboarding.form.investmentPreference = item.value"
         >
@@ -106,13 +169,33 @@ function complete() {
       <h2>목표 전역 자금</h2>
       <div class="goal-card">
         <p>전역시에 모으고 싶은<br>목표 금액을 설정해주세요.</p>
-        <label><input
-          v-model.number="onboarding.targetAmountInTenThousands"
-          :class="{ warning: isAboveEstimatedAmount }"
-          type="number"
-          min="0"
-          step="100"
-        ><span>만 원</span></label>
+        <div class="goal-amount-control">
+          <button
+            type="button"
+            class="goal-amount-button"
+            :disabled="!canDecreaseTargetAmount"
+            aria-label="목표 전역 자금 100만 원 줄이기"
+            @click="adjustTargetAmount(-1)"
+          >
+            −
+          </button>
+          <label><input
+            ref="targetAmountInput"
+            v-model.number="onboarding.targetAmountInTenThousands"
+            :class="goalTone"
+            type="number"
+            min="0"
+            step="100"
+          ><span>만 원</span></label>
+          <button
+            type="button"
+            class="goal-amount-button"
+            aria-label="목표 전역 자금 100만 원 늘리기"
+            @click="adjustTargetAmount(1)"
+          >
+            +
+          </button>
+        </div>
         <p
           v-if="isAboveEstimatedAmount"
           class="goal-warning"
@@ -121,7 +204,7 @@ function complete() {
         </p>
         <div
           class="goal-breakdown"
-          :class="{ warning: isAboveEstimatedAmount }"
+          :class="goalTone"
         >
           <span>군적금 수령 예상금액 2,000만 원</span><b>＋</b><span>저축 {{ formattedRequiredSavings }}</span>
         </div>
@@ -134,6 +217,7 @@ function complete() {
       </p>
     </section>
     <PrimaryButton
+      variant="green"
       :loading="loading"
       @click="next"
     >
@@ -171,6 +255,12 @@ function complete() {
                 alt=""
               >
             </div>
+            <p
+              v-if="onboarding.form.nickname"
+              class="confirm-nickname"
+            >
+              {{ onboarding.form.nickname }}님
+            </p>
             <h2 id="confirm-title">
               이대로 진행할까요?
             </h2>
@@ -178,7 +268,12 @@ function complete() {
             <div class="confirm-summary">
               <div class="summary-column">
                 <h3>선택한 투자 유형</h3>
-                <article>
+                <button
+                  type="button"
+                  class="summary-item"
+                  aria-label="투자 유형 수정"
+                  @click="editPreference"
+                >
                   <img
                     class="summary-pencil"
                     :src="confirmationEditIcon"
@@ -187,22 +282,35 @@ function complete() {
                   <span class="summary-icon">{{ selectedPreference.icon }}</span>
                   <strong>{{ selectedPreference.label }}</strong>
                   <em>{{ selectedPreference.caption }}</em>
-                </article>
+                </button>
               </div>
               <div class="summary-column">
                 <h3>목표 전역 자산</h3>
-                <article>
+                <button
+                  type="button"
+                  class="summary-item"
+                  aria-label="목표 전역 자산 수정"
+                  @click="editTargetAmount"
+                >
                   <img
                     class="summary-pencil"
                     :src="confirmationEditIcon"
                     alt=""
                   >
                   <strong class="summary-amount">{{ formattedAmount }}</strong>
-                </article>
+                </button>
               </div>
             </div>
 
+            <p
+              v-if="errorMessage"
+              class="form-error confirm-error"
+            >
+              {{ errorMessage }}
+            </p>
+
             <PrimaryButton
+              variant="green"
               :loading="completing"
               @click="complete"
             >
@@ -226,32 +334,39 @@ function complete() {
   gap: 10px;
 }
 .preference-grid button {
+  appearance: none;
   display: grid;
   min-height: 94px;
   place-items: center;
   border: 1px solid transparent;
   border-radius: 12px;
   background: #fff;
+  color: #333;
+  font: inherit;
 }
 .preference-grid button.selected {
   border-color: #2be77b;
   background: #caffdf;
 }
 .preference-grid strong {
+  color: #333;
   font-size: 13px;
 }
 .preference-grid small {
   padding: 4px 8px;
   border-radius: 12px;
   background: #f6f7f6;
-  color: #a7aca8;
+  color: #757575;
   font-size: 10px;
   white-space: nowrap;
 }
 h2 {
   margin: 27px 0 12px 10px;
-  color: #79947d;
+  color: #566752;
   font-size: 15px;
+}
+.step-page > .primary-button {
+  margin-top: 16px;
 }
 .goal-card {
   padding: 23px 10px;
@@ -261,7 +376,7 @@ h2 {
 }
 .goal-card > p {
   margin: 0 0 13px;
-  color: #777;
+  color: #666;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -269,6 +384,30 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 12px;
+}
+.goal-amount-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.goal-amount-button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #effff5;
+  color: #20ba5c;
+  font-size: 24px;
+  line-height: 1;
+}
+.goal-amount-button:disabled {
+  background: #f0f0f0;
+  color: #aaa;
+  cursor: not-allowed;
 }
 .goal-card input {
   width: 85px;
@@ -280,7 +419,13 @@ h2 {
   font-weight: 700;
   text-align: center;
 }
-.goal-card input.warning {
+.goal-card input.green {
+  border-bottom-color: #3aed87;
+}
+.goal-card input.gray {
+  border-bottom-color: #aebbaa;
+}
+.goal-card input.red {
   border-bottom-color: #ff8a72;
 }
 .goal-warning {
@@ -317,7 +462,11 @@ h2 {
   color: #1dc767;
   font-size: 10px;
 }
-.goal-breakdown.warning span {
+.goal-breakdown.gray span {
+  background: #eef1ed;
+  color: #7d8e7c;
+}
+.goal-breakdown.red span {
   background: #fff4f1;
   color: #ff765c;
 }
@@ -367,6 +516,15 @@ h2 {
   height: 60px;
   object-fit: contain;
 }
+.confirm-nickname {
+  margin: 0 0 8px;
+  color: #566752;
+  font-family: var(--font-display, '감탄로드감탄체'), sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
 .confirm-modal h2 {
   margin: 0 0 33px;
   color: #6d6d6d;
@@ -396,15 +554,25 @@ h2 {
   text-align: center;
   white-space: nowrap;
 }
-.confirm-summary article {
+.confirm-summary .summary-item {
   position: relative;
   display: grid;
+  width: 100%;
   min-height: 90px;
   justify-items: center;
   align-content: center;
   padding: 13px 7px 10px;
+  border: 0;
   border-radius: 16px;
   background: #fff;
+  color: #333;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.confirm-summary .summary-item:focus-visible {
+  outline: 2px solid #3be178;
+  outline-offset: 2px;
 }
 .summary-icon {
   margin-bottom: 4px;

@@ -8,6 +8,7 @@ import { getDashboardMock, transactionResponses } from '@/features/dashboard/moc
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import AccountTransactionItem from '@/features/transactions/components/AccountTransactionItem.vue'
 import TransactionFilterSheet from '@/features/transactions/components/TransactionFilterSheet.vue'
+import { getTransactions } from '@/features/transactions/api/transactions.api'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,6 +29,10 @@ const transactionFilter = ref(
   filterOptions.some(({ value }) => value === initialType) ? initialType : 'ALL',
 )
 const filterOpen = ref(false)
+const usesMockScenario = computed(() => Boolean(route.query.persona || route.query.scenario))
+const loadedTransactions = ref(usesMockScenario.value ? transactionResponses : [])
+const loading = ref(!usesMockScenario.value)
+const loadError = ref(null)
 const dashboard = computed(() => {
   const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
   const scenario = Array.isArray(route.query.scenario)
@@ -50,9 +55,17 @@ const investmentAccountIds = computed(
 const activeFilterLabel = computed(
   () => filterOptions.find(({ value }) => value === transactionFilter.value)?.label ?? '전체',
 )
+const isVacationPeriod = computed(() => route.query.period === 'vacation')
+const vacationPeriodLabel = computed(() => {
+  if (!isVacationPeriod.value) return ''
+  const title = String(route.query.vacationTitle || '휴가')
+  const startDate = String(route.query.startDate || '').replaceAll('-', '.')
+  const endDate = String(route.query.endDate || route.query.startDate || '').replaceAll('-', '.')
+  return `${title} · ${startDate} ~ ${endDate}`
+})
 const transactions = computed(() => {
   const now = new Date()
-  return transactionResponses
+  return loadedTransactions.value
     .filter((transaction) => {
       const investment = investmentAccountIds.value.has(String(transaction.accountId))
       if (activeTab.value === 'INVESTMENT') return investment
@@ -65,6 +78,12 @@ const transactions = computed(() => {
         String(transaction.transactionType).toUpperCase() === transactionFilter.value,
     )
     .filter((transaction) => {
+      if (isVacationPeriod.value) {
+        const date = String(transaction.transactionDate || '').slice(0, 10)
+        return (
+          String(route.query.startDate || '') <= date && date <= String(route.query.endDate || '')
+        )
+      }
       if (route.query.period !== 'month') return true
       const date = new Date(transaction.transactionDate)
       return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth()
@@ -80,7 +99,32 @@ function openTransaction(transaction) {
   })
 }
 
-onMounted(() => {
+function monthRange() {
+  const now = new Date()
+  const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return {
+    startDate,
+    endDate: `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`,
+  }
+}
+
+onMounted(async () => {
+  if (!usesMockScenario.value) {
+    try {
+      const requestRange = isVacationPeriod.value
+        ? { startDate: route.query.startDate, endDate: route.query.endDate }
+        : route.query.period === 'month'
+          ? monthRange()
+          : {}
+      loadedTransactions.value = await getTransactions(requestRange)
+    } catch (error) {
+      loadError.value = error
+      loadedTransactions.value = []
+    } finally {
+      loading.value = false
+    }
+  }
   completeMissionAfterLoad()
 })
 </script>
@@ -99,7 +143,15 @@ onMounted(() => {
           aria-hidden="true"
         >
       </button>
-      <h1>거래 내역</h1>
+      <div>
+        <h1>{{ isVacationPeriod ? '휴가 거래 내역' : '거래 내역' }}</h1>
+        <p
+          v-if="isVacationPeriod"
+          class="transaction-history__period"
+        >
+          {{ vacationPeriodLabel }}
+        </p>
+      </div>
     </header>
 
     <div
@@ -136,7 +188,19 @@ onMounted(() => {
         >
       </button>
 
-      <ul v-if="transactions.length">
+      <p
+        v-if="loading"
+        aria-live="polite"
+      >
+        거래 내역을 불러오고 있어요.
+      </p>
+      <p
+        v-else-if="loadError"
+        role="alert"
+      >
+        거래 내역을 불러오지 못했어요.
+      </p>
+      <ul v-else-if="transactions.length">
         <AccountTransactionItem
           v-for="transaction in transactions"
           :key="transaction.id"
@@ -195,6 +259,13 @@ onMounted(() => {
   line-height: var(--body-heading-h5-bold-line-height, 150%);
 }
 
+.transaction-history__period {
+  margin: 1px 0 0;
+  color: var(--gray-500);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .transaction-history__tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -242,8 +313,9 @@ onMounted(() => {
 }
 
 .transaction-history__filter img {
-  width: 14px;
-  height: 14px;
+  width: 8px;
+  height: 7px;
+  object-fit: contain;
 }
 
 .transaction-history__card ul {
