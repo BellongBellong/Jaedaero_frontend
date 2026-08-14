@@ -733,23 +733,17 @@ async function handleApplyStrategy() {
 }
 
 /* ===== 분석 중 ===== */
+/*
+  배경 그라데이션은 이 요소가 아니라 MainLayout 이 프레임(.mobile-frame)에 칠한다.
+  이 단계는 화면을 꽉 채워야 하는데, 안쪽 요소 높이를 dvh 로 맞추면 기기마다
+  safe area 계산이 달라져 바닥에 흰 여백이 남았다. 프레임이 직접 칠하면
+  레이아웃 계산과 무관하게 항상 화면 전체가 덮인다.
+*/
 .analyzing {
   display: flex;
-  /*
-    분석 화면은 배경 그라데이션이 화면 전체를 채워야 한다.
-    .analysis-screen 은 하단 네비게이션 자리를 비워두므로 그대로 두면
-    바닥에 흰 여백이 남는다. 이 단계만 뷰포트 전체 높이를 차지하게 한다.
-  */
-  min-height: 100dvh;
+  min-height: 100%;
   flex-direction: column;
-  background:
-    radial-gradient(
-      ellipse 500px 640px at -5% 91%,
-      var(--yellow-400) 0%,
-      rgb(255 236 189 / 0%) 100%
-    ),
-    radial-gradient(circle 576px at 100% 14.5%, var(--green-500) 0%, rgb(98 255 156 / 0%) 100%),
-    #f6f6f6;
+  background: transparent;
 }
 
 .analyzing__header {
@@ -762,6 +756,8 @@ async function handleApplyStrategy() {
 
 .analyzing__header h1 {
   color: var(--gray-900);
+  /* 전역 h1 은 디스플레이 폰트라 공통 AppHeader 와 글꼴이 달라진다. */
+  font-family: var(--font-body);
   font-size: var(--text-h5);
   font-weight: var(--weight-bold);
   line-height: var(--leading-normal);
@@ -902,6 +898,8 @@ async function handleApplyStrategy() {
 
 .result__header h1 {
   color: var(--gray-900);
+  /* 전역 h1 은 디스플레이 폰트라 공통 AppHeader 와 글꼴이 달라진다. */
+  font-family: var(--font-body);
   font-size: var(--text-h5);
   font-weight: var(--weight-bold);
   line-height: var(--leading-normal);
