@@ -15,7 +15,7 @@ import { getSimulations } from '@/features/simulations/api/simulations.api'
 
 const route = useRoute()
 const router = useRouter()
-const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_REBALANCING')
 
 const isLoading = ref(true)
 const loadError = ref('')
@@ -181,7 +181,7 @@ onMounted(async () => {
       class="guide-intro"
     >
       <h2>
-        적립식 투자 가이드를<br />
+        적립식 투자 가이드를<br>
         시작해볼까요?
       </h2>
       <p>맞춤 가이드를 만드려면 두 가지 설정이 필요해요</p>
@@ -199,7 +199,9 @@ onMounted(async () => {
     <template v-else-if="hasActiveGuide">
       <header class="monthly-guide-heading">
         <h2>이번달 투자 가이드</h2>
-        <p v-if="nextContributionLabel">다음 납입일은 {{ nextContributionLabel }} 이에요</p>
+        <p v-if="nextContributionLabel">
+          다음 납입일은 {{ nextContributionLabel }} 이에요
+        </p>
       </header>
 
       <article class="monthly-guide">
@@ -305,7 +307,7 @@ onMounted(async () => {
                 :src="allocationIcon"
                 alt=""
                 aria-hidden="true"
-              />
+              >
             </span>
             <span class="guide-card__copy">
               <small>내 자산을 어떻게 배분할 지 목표를 설정해요</small>
@@ -330,13 +332,13 @@ onMounted(async () => {
               :src="allocationGuideVisual"
               alt=""
               aria-hidden="true"
-            />
+            >
             <strong>
-              아직 세부자산분배 목표를<br />
+              아직 세부자산분배 목표를<br>
               설정하지 않았어요
             </strong>
             <p>
-              What-if 시뮬레이션으로<br />
+              What-if 시뮬레이션으로<br>
               나에게 맞는 자산 분배 목표를 먼저 설정해보세요
             </p>
             <button
@@ -368,7 +370,7 @@ onMounted(async () => {
                 :src="monthlyInvestmentIcon"
                 alt=""
                 aria-hidden="true"
-              />
+              >
             </span>
             <span class="guide-card__copy">
               <small>월 투자 계획을 설정해요</small>
@@ -394,7 +396,7 @@ onMounted(async () => {
               :src="planGuideVisual"
               alt=""
               aria-hidden="true"
-            />
+            >
             <strong
               v-if="hasRecurringPlan"
               class="plan-complete-title"
@@ -410,7 +412,7 @@ onMounted(async () => {
               {{ Number(recurringPlan?.contributionAmount || 0).toLocaleString('ko-KR') }}원
             </p>
             <p v-else>
-              주기와 금액, 투자 대상을 설정하면<br />
+              주기와 금액, 투자 대상을 설정하면<br>
               다음 투자 가이드를 받을 수 있어요.
             </p>
             <button
