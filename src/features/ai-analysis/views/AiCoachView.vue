@@ -169,11 +169,11 @@ const analysisMenus = [
         aria-labelledby="analysis-menu-title"
       >
         <h3 id="analysis-menu-title">
-          AI 소비 분석 메뉴
+          AI 분석 메뉴
         </h3>
         <nav
           class="analysis-menu"
-          aria-label="AI 소비 분석 메뉴"
+          aria-label="AI 분석 메뉴"
         >
           <RouterLink
             v-for="menu in analysisMenus"
