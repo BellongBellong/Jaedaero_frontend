@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 
+import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
 import { getInvestmentBadges } from '@/features/challenges/api/challenges.api'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
@@ -185,12 +186,19 @@ onMounted(async () => {
       >
         {{ loading ? '뱃지 내역을 불러오는 중이에요.' : '뱃지 내역을 불러오지 못했어요.' }}
       </p>
-      <p
+      <div
         v-else-if="badgeHistoryList.length === 0"
-        class="status-message"
+        class="empty-badge-state"
       >
-        아직 획득한 뱃지가 없어요.
-      </p>
+        <img
+          :src="emptyBadgeState"
+          alt=""
+          aria-hidden="true"
+        >
+        <p class="status-message">
+          아직 획득한 뱃지가 없어요.
+        </p>
+      </div>
       <div
         v-else
         class="earned-grid"
@@ -353,6 +361,16 @@ progress::-webkit-progress-value {
   color: #999;
   font-size: 14px;
   text-align: center;
+}
+.empty-badge-state {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+.empty-badge-state img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
 }
 .earned-grid {
   display: grid;
