@@ -7,20 +7,14 @@ import BottomNavigation from '@/common/components/BottomNavigation.vue'
 import MobileFrame from '@/common/components/MobileFrame.vue'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
-/* 방향 전환으로 인정할 최소 이동량 — 손가락 떨림으로 네비가 깜빡이지 않게 한다 */
-const DIRECTION_THRESHOLD = 6
-/* 이 지점을 지나야 네비가 줄어들기 시작한다 */
-const MINIMIZE_AFTER = 72
-/* 반대 방향으로 이 거리만큼 의도적으로 스크롤해야 다시 펼친다. */
-const DIRECTION_CONFIRMATION_DISTANCE = 28
+/* iOS의 소수점 스크롤 노이즈만 제외하고 첫 이동부터 방향을 반영한다. */
+const SCROLL_DIRECTION_EPSILON = 0.5
 
 const route = useRoute()
 const contentElement = ref(null)
 const isHeaderCollapsed = ref(false)
 const isNavigationMinimized = ref(false)
 const lastScrollTop = ref(0)
-const scrollDirection = ref(null)
-const scrollDistanceInDirection = ref(0)
 const { mode } = useLeaveModeSchedule()
 
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
@@ -31,8 +25,6 @@ watch(
     isHeaderCollapsed.value = false
     isNavigationMinimized.value = false
     lastScrollTop.value = 0
-    scrollDirection.value = null
-    scrollDistanceInDirection.value = 0
     await nextTick()
     contentElement.value?.scrollTo({
       left: 0,
@@ -56,28 +48,13 @@ function handleContentScroll(event) {
     isHeaderCollapsed.value = !isHeaderCollapsed.value
   }
 
-  /*
-    네비게이션도 첫 반대 방향 이벤트에 즉시 튀지 않게 한다. iOS는 감속 중
-    delta의 부호가 짧게 바뀌는 경우가 있어서, 28px의 실제 방향 전환을 확인한 뒤
-    움직인다.
-  */
-  if (scrollTop <= MINIMIZE_AFTER) {
+  /* 첫 하향 스크롤에서 바로 물러나고, 상향 스크롤에서 바로 복원한다. */
+  if (scrollTop <= SCROLL_DIRECTION_EPSILON) {
     isNavigationMinimized.value = false
-    scrollDirection.value = null
-    scrollDistanceInDirection.value = 0
-  } else if (Math.abs(delta) >= DIRECTION_THRESHOLD) {
-    const nextDirection = delta > 0 ? 'down' : 'up'
-
-    if (nextDirection === scrollDirection.value) {
-      scrollDistanceInDirection.value += Math.abs(delta)
-    } else {
-      scrollDirection.value = nextDirection
-      scrollDistanceInDirection.value = Math.abs(delta)
-    }
-
-    if (scrollDistanceInDirection.value >= DIRECTION_CONFIRMATION_DISTANCE) {
-      isNavigationMinimized.value = nextDirection === 'down'
-    }
+  } else if (delta > SCROLL_DIRECTION_EPSILON) {
+    isNavigationMinimized.value = true
+  } else if (delta < -SCROLL_DIRECTION_EPSILON) {
+    isNavigationMinimized.value = false
   }
 
   lastScrollTop.value = scrollTop
