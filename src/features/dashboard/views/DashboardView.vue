@@ -15,11 +15,11 @@ import VacationBudgetCard from '@/features/dashboard/components/VacationBudgetCa
 import VacationBudgetSheet from '@/features/dashboard/components/VacationBudgetSheet.vue'
 import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
-import { getTodayMissions } from '@/features/missions/api/missions.api'
 import { getBenefits } from '@/features/reports/api/reports.api'
 import { normalizeBenefits, selectDailyBenefits } from '@/features/benefits/utils/benefitMapper'
 import { benefitExamples } from '@/features/benefits/mocks/benefits.mock'
 import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
+import { useMissionStore } from '@/features/missions/stores/mission.store'
 import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
 import { transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import { useVacationBudget } from '@/features/leave-mode/composables/useVacationBudget'
@@ -28,9 +28,10 @@ import { getTransactions } from '@/features/transactions/api/transactions.api'
 
 const route = useRoute()
 const router = useRouter()
+const missionStore = useMissionStore()
 const showEventModal = ref(false)
 const showMissionSheet = ref(false)
-const liveMissions = ref([])
+const liveMissions = computed(() => missionStore.missions.map(normalizeMission))
 const showBudgetSheet = ref(false)
 const vacationSpentAmount = ref(0)
 const vacationSpendingLoading = ref(false)
@@ -107,13 +108,9 @@ function normalizeMission(mission) {
 
 onMounted(async () => {
   try {
-    const response = await getTodayMissions()
-    const missions = response?.data ?? response
-    liveMissions.value = (Array.isArray(missions) ? missions : missions?.missions || []).map(
-      normalizeMission,
-    )
+    await missionStore.loadTodayMissions()
   } catch {
-    liveMissions.value = []
+    missionStore.reset()
   }
 })
 

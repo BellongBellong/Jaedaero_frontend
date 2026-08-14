@@ -16,7 +16,7 @@ import { getSimulations } from '@/features/simulations/api/simulations.api'
 
 const route = useRoute()
 const router = useRouter()
-const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_REBALANCING')
 
 const isLoading = ref(true)
 const loadError = ref('')
