@@ -32,6 +32,15 @@ const activeEarnedBadges = computed(() =>
 const selectedBadge = computed(() =>
   getSelectedBadge(activeEarnedBadges.value, selectedBadgeId.value),
 )
+const historyBadgeType = computed(
+  () => selectedBadge.value?.type || activeBadgeType.value || 'AGGRESSIVE',
+)
+const historyBadgeTypeInfo = computed(() => ({
+  label: historyBadgeType.value === 'SAFE' ? '안정형' : '공격형',
+}))
+const historyBadges = computed(() =>
+  earnedBadges.value.filter((badge) => badge.type === historyBadgeType.value),
+)
 function findAcquiredAt(type, grade) {
   return badges.value.find(
     (badge) =>
@@ -41,28 +50,24 @@ function findAcquiredAt(type, grade) {
 }
 
 const badgeHistoryList = computed(() =>
-  selectedBadge.value
-    ? BADGE_LEVELS.map((levelInfo) => {
-        const earnedBadge = activeEarnedBadges.value.find(
-          (badge) => badge.levelInfo.key === levelInfo.key,
-        )
+  BADGE_LEVELS.map((levelInfo) => {
+    const earnedBadge = historyBadges.value.find((badge) => badge.levelInfo.key === levelInfo.key)
 
-        return (
-          (earnedBadge && {
-            ...earnedBadge,
-            acquiredAt:
-              earnedBadge.acquiredAt || findAcquiredAt(earnedBadge.type, earnedBadge.levelInfo.key),
-          }) || {
-            id: `${selectedBadge.value.type}-${levelInfo.key}`,
-            type: selectedBadge.value.type,
-            typeInfo: selectedBadge.value.typeInfo,
-            levelInfo,
-            image: getBadgeImage(selectedBadge.value.type, levelInfo.key),
-            locked: true,
-          }
-        )
-      })
-    : [],
+    return (
+      (earnedBadge && {
+        ...earnedBadge,
+        acquiredAt:
+          earnedBadge.acquiredAt || findAcquiredAt(earnedBadge.type, earnedBadge.levelInfo.key),
+      }) || {
+        id: `${historyBadgeType.value}-${levelInfo.key}`,
+        type: historyBadgeType.value,
+        typeInfo: historyBadgeTypeInfo.value,
+        levelInfo,
+        image: getBadgeImage(historyBadgeType.value, levelInfo.key),
+        locked: true,
+      }
+    )
+  }),
 )
 const safeBadge = computed(() =>
   getSelectedBadge(
@@ -186,39 +191,35 @@ onMounted(async () => {
       >
         {{ loading ? '뱃지 내역을 불러오는 중이에요.' : '뱃지 내역을 불러오지 못했어요.' }}
       </p>
-      <div
-        v-else-if="badgeHistoryList.length === 0"
-        class="empty-badge-state"
-      >
-        <img
-          :src="emptyBadgeState"
-          alt=""
-          aria-hidden="true"
-        >
-        <p class="status-message">
-          아직 획득한 뱃지가 없어요.
-        </p>
-      </div>
-      <div
-        v-else
-        class="earned-grid"
-      >
-        <article
-          v-for="badge in badgeHistoryList"
-          :key="badge.id"
-          :class="{ locked: badge.locked }"
+      <div v-else>
+        <div
+          v-if="!selectedBadge"
+          class="empty-badge-state"
         >
           <img
-            :src="badge.image"
-            alt=""
+            :src="emptyBadgeState"
+            alt="뱃지가 아직 없어요"
           >
-          <span>
-            <b>{{ badge.levelInfo.koreanLabel }}</b>
-            <small>미션 {{ badge.levelInfo.missionCount }}회 달성</small>
-            <i v-if="!badge.locked">{{ formatDate(badge.acquiredAt) }}</i>
-            <i v-else>아직 획득하지 않았어요</i>
-          </span>
-        </article>
+        </div>
+        <h2>뱃지 획득 정보</h2>
+        <div class="earned-grid">
+          <article
+            v-for="badge in badgeHistoryList"
+            :key="badge.id"
+            :class="{ locked: badge.locked }"
+          >
+            <img
+              :src="badge.image"
+              alt=""
+            >
+            <span>
+              <b>{{ badge.levelInfo.koreanLabel }}</b>
+              <small>미션 {{ badge.levelInfo.missionCount }}회 달성</small>
+              <i v-if="!badge.locked">{{ formatDate(badge.acquiredAt) }}</i>
+              <i v-else>아직 획득하지 않았어요</i>
+            </span>
+          </article>
+        </div>
       </div>
     </section>
   </main>
@@ -365,11 +366,11 @@ progress::-webkit-progress-value {
 .empty-badge-state {
   display: grid;
   justify-items: center;
-  gap: 4px;
+  margin-bottom: 12px;
 }
 .empty-badge-state img {
-  width: 64px;
-  height: 64px;
+  width: min(100%, 313px);
+  height: 173px;
   object-fit: contain;
 }
 .earned-grid {

@@ -18,11 +18,14 @@ import rankingThirdBase from '@/assets/ranking/podium/third-base.svg'
 import rankingThirdTop from '@/assets/ranking/podium/third-top.svg'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
+  BADGE_SELECTION_STORAGE_KEY,
   getBadgeImage,
   getBadgeLevelImage,
   getBadgeProgress,
   getBadgeTarget,
   getBadgeTier,
+  getEarnedBadges,
+  getSelectedBadge,
 } from '@/features/my-page/composables/investmentBadges'
 import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
 import { useMissionStore } from '@/features/missions/stores/mission.store'
@@ -41,7 +44,8 @@ const loading = ref(true)
 const challenge = ref(null)
 const badges = ref([])
 const profile = ref(null)
-const apiMissions = computed(() => missionStore.missions)
+const apiMissions = ref([])
+const selectedBadgeId = ref(localStorage.getItem(BADGE_SELECTION_STORAGE_KEY) || '')
 const rankingPeriod = ref('CUMULATIVE')
 const rankingYearMonth = ref(getCurrentYearMonth())
 const modeMenuOpen = ref(false)
@@ -131,6 +135,26 @@ const safeCount = computed(() =>
 const badgeProgress = computed(() =>
   getBadgeProgress(badges.value, profile.value?.investmentBadgeStatus),
 )
+const orderedBadgeProgress = computed(() =>
+  [...badgeProgress.value].sort((first, second) => {
+    const order = { AGGRESSIVE: 0, SAFE: 1, BALANCED: 1 }
+    return (order[first.type] ?? 2) - (order[second.type] ?? 2)
+  }),
+)
+const earnedInvestmentBadges = computed(() => getEarnedBadges(badgeProgress.value))
+const selectedInvestmentBadge = computed(() =>
+  getSelectedBadge(earnedInvestmentBadges.value, selectedBadgeId.value),
+)
+const badgePreviews = computed(() =>
+  orderedBadgeProgress.value
+    .map((progress) =>
+      getSelectedBadge(
+        earnedInvestmentBadges.value.filter((badge) => badge.type === progress.type),
+        selectedBadgeId.value,
+      ),
+    )
+    .filter(Boolean),
+)
 const aggressiveBadge = computed(() =>
   badgeProgress.value.find((badge) => badge.type === 'AGGRESSIVE'),
 )
@@ -143,6 +167,9 @@ const aggressiveTier = computed(() => getBadgeTier(aggressiveCount.value))
 const safeTier = computed(() => getBadgeTier(safeCount.value))
 const aggressiveTarget = computed(() => getBadgeTarget(aggressiveCount.value))
 const safeTarget = computed(() => getBadgeTarget(safeCount.value))
+const totalCompletedMissions = computed(() =>
+  badgeProgress.value.reduce((total, badge) => total + badge.missionCount, 0),
+)
 const showAggressiveBadge = computed(
   () => aggressiveCount.value > 0 && Boolean(aggressiveBadge.value),
 )
@@ -532,25 +559,26 @@ onBeforeUnmount(() => {
           v-else
           class="badge-summary"
         >
-          <article v-if="showAggressiveBadge">
+          <article
+            v-for="badge in badgePreviews"
+            :key="badge.id"
+            :class="{ 'is-selected': badge.id === selectedInvestmentBadge?.id }"
+          >
             <img
-              :src="getBadgeImage('AGGRESSIVE', aggressiveTier.key)"
-              :alt="`공격형 ${aggressiveTier.label} 뱃지`"
+              :src="badge.image"
+              :alt="`${badge.typeInfo.label} ${badge.levelInfo.label} 뱃지`"
             >
-            <span>공격형</span><b>{{ aggressiveTier.label }}</b><small>미션 달성 {{ aggressiveCount }}개</small>
-          </article>
-          <article v-if="showSafeBadge">
-            <img
-              :src="getBadgeImage(safeBadge?.type || 'SAFE', safeTier.key)"
-              :alt="`안정형 ${safeTier.label} 뱃지`"
-            >
-            <span>안정형</span><b>{{ safeTier.label }}</b><small>미션 달성 {{ safeCount }}개</small>
+            <span>{{ badge.typeInfo.label }}</span>
+            <b>{{ badge.levelInfo.label }}</b>
+            <small>미션 달성 {{ badge.missionCount }}개</small>
           </article>
           <aside>
             <span>달성한 총 미션</span>
-            <strong>{{ aggressiveCount + safeCount }}개</strong>
-            <small>공격형 {{ aggressiveCount }}개</small>
-            <small>안정형 {{ safeCount }}개</small>
+            <strong>{{ totalCompletedMissions }}개</strong>
+            <small
+              v-for="badge in orderedBadgeProgress"
+              :key="badge.type"
+            >{{ badge.typeInfo.label }} {{ badge.missionCount }}개</small>
           </aside>
         </div>
 
@@ -842,7 +870,8 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 .achievement-section {
-  padding: 0 0 14px;
+  padding: 16px 20px 20px;
+  margin: 0 -20px;
 }
 .achievement-section h2 {
   margin: 12px 0 20px;
@@ -855,49 +884,71 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 22px;
-  min-height: 178px;
+  gap: 12px;
+  min-height: 190px;
 }
 .badge-summary article {
   display: flex;
+  width: 48px;
+  min-width: 48px;
   flex-direction: column;
   align-items: center;
   font-size: 12px;
+  gap: 0;
+  text-align: center;
+}
+.badge-summary article.is-selected {
+  width: 104px;
+  min-width: 104px;
+  gap: 4px;
 }
 .badge-summary article > span {
-  min-width: 96px;
-  padding: 6px 10px;
-  border-radius: 18px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 14px;
   color: #555;
   background: #edf0ed;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.1;
+  white-space: nowrap;
   text-align: center;
 }
 .badge-summary article img {
-  width: 72px;
-  height: 72px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
 }
+.badge-summary article.is-selected img {
+  width: 104px;
+  height: 104px;
+}
 .badge-summary article b {
-  margin-top: 5px;
   color: #969696;
-  font-size: 22px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 .badge-summary article small {
-  margin-top: 8px;
   color: #888;
+  font-size: 11px;
   font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.badge-summary article:not(.is-selected) span,
+.badge-summary article:not(.is-selected) b,
+.badge-summary article:not(.is-selected) small {
+  opacity: 0.55;
 }
 .badge-summary aside {
-  width: 134px;
-  min-width: 134px;
-  min-height: 142px;
-  padding: 18px 14px;
+  width: 136px;
+  min-width: 136px;
+  min-height: 146px;
+  padding: 18px 12px;
   border: 1px solid #fff;
-  border-radius: 14px;
-  background: #fff;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 58%);
   box-shadow: 0 2px 12px #00000008;
   color: #777;
   font-size: 12px;

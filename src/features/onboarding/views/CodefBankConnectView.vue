@@ -558,8 +558,8 @@ onMounted(async () => {
   if (isSecuritiesOnly.value) form.value.businessType = 'ST'
   banks.value = fallbackBanks
   securities.value = allowsSecurities.value ? fallbackSecurities : []
-  loadingInstitutions.value = false
   await restoreConnectionState()
+  loadingInstitutions.value = false
 })
 
 onBeforeUnmount(abortAccountRequest)
@@ -581,7 +581,26 @@ onBeforeUnmount(abortAccountRequest)
       @back="router.back()"
     />
 
-    <section class="step-content">
+    <section
+      v-if="loadingInstitutions"
+      class="step-content connection-skeleton"
+      aria-busy="true"
+      aria-label="연동 정보 불러오는 중"
+    >
+      <span class="connection-skeleton__label" />
+      <div class="connection-skeleton__types">
+        <span class="connection-skeleton__card" />
+        <span class="connection-skeleton__card" />
+      </div>
+      <span class="connection-skeleton__field" />
+      <span class="connection-skeleton__field connection-skeleton__field--short" />
+      <span class="connection-skeleton__button" />
+    </section>
+
+    <section
+      v-else
+      class="step-content"
+    >
       <div
         v-if="showConnectedSummary"
         class="connected-summary"
@@ -743,7 +762,7 @@ onBeforeUnmount(abortAccountRequest)
     </section>
 
     <div
-      v-if="showConnectedSummary"
+      v-if="!loadingInstitutions && showConnectedSummary"
       class="summary-actions"
     >
       <button
@@ -761,7 +780,7 @@ onBeforeUnmount(abortAccountRequest)
     </div>
 
     <PrimaryButton
-      v-else
+      v-if="!loadingInstitutions && !showConnectedSummary"
       variant="green"
       :disabled="loading"
       @click="submit"
@@ -1102,6 +1121,69 @@ onBeforeUnmount(abortAccountRequest)
   padding: 22px 6px 20px;
 }
 
+.connection-skeleton {
+  gap: 18px;
+}
+
+.connection-skeleton > span,
+.connection-skeleton__card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #ececec;
+}
+
+.connection-skeleton > span::after,
+.connection-skeleton__card::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 55%), transparent);
+  content: '';
+  transform: translateX(-100%);
+  animation: connection-skeleton-shimmer 1.25s ease-in-out infinite;
+}
+
+.connection-skeleton__label {
+  width: 92px;
+  height: 22px;
+}
+
+.connection-skeleton__types {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.connection-skeleton__card {
+  width: 100%;
+  height: 76px;
+  border: 1px solid #e6e9e7;
+  background: #fff;
+}
+
+.connection-skeleton__field {
+  width: 100%;
+  height: 58px;
+  border-radius: 14px;
+}
+
+.connection-skeleton__field--short {
+  width: 72%;
+}
+
+.connection-skeleton__button {
+  width: 100%;
+  height: 56px;
+  margin-top: auto;
+  border-radius: 28px;
+}
+
+@keyframes connection-skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
 .institution-type {
   padding: 0;
   border: 0;
@@ -1118,14 +1200,15 @@ onBeforeUnmount(abortAccountRequest)
 
 .type-buttons {
   display: flex;
+  flex-direction: column;
   gap: 14px;
 }
 
 .type-buttons button {
   position: relative;
   display: flex;
-  flex: 1;
-  width: auto;
+  width: 100%;
+  flex: 0 0 auto;
   min-height: 76px;
   align-items: center;
   justify-content: flex-start;
@@ -1156,16 +1239,6 @@ onBeforeUnmount(abortAccountRequest)
   padding-right: 48px;
 }
 
-.type-buttons button:not(.type-buttons__securities-only):first-child::before {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
-  margin-right: 12px;
-  border-radius: 14px;
-  background: #effff5 url('@/assets/onboarding/icons/bank-building.png') center / 28px no-repeat;
-  content: '';
-}
-
 .type-buttons button:not(.type-buttons__securities-only):first-child::after {
   position: absolute;
   right: 20px;
@@ -1177,7 +1250,7 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .type-buttons .type-buttons__securities-only {
-  width: auto;
+  width: 100%;
 }
 
 .securities-connection-state {
