@@ -10,12 +10,9 @@ import rankingCharacterAirforce from '@/assets/ranking/characters/airforce.svg'
 import rankingCharacterArmy from '@/assets/ranking/characters/army.svg'
 import rankingCharacterMarine from '@/assets/ranking/characters/marine.svg'
 import rankingCharacterNavy from '@/assets/ranking/characters/navy.svg'
-import rankingFirstBase from '@/assets/ranking/podium/first-base.svg'
-import rankingFirstTop from '@/assets/ranking/podium/first-top.svg'
-import rankingSecondBase from '@/assets/ranking/podium/second-base.svg'
-import rankingSecondTop from '@/assets/ranking/podium/second-top.svg'
-import rankingThirdBase from '@/assets/ranking/podium/third-base.svg'
-import rankingThirdTop from '@/assets/ranking/podium/third-top.svg'
+import rankingFirstPodium from '@/assets/ranking/podium/ranking-first.png'
+import rankingSecondPodium from '@/assets/ranking/podium/ranking-second.png'
+import rankingThirdPodium from '@/assets/ranking/podium/ranking-third.png'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
   BADGE_SELECTION_STORAGE_KEY,
@@ -77,9 +74,9 @@ const rankingProfileBackgrounds = {
 }
 
 const rankingPodium = {
-  1: { base: rankingFirstBase, crown: rankingCrownGold, top: rankingFirstTop },
-  2: { base: rankingSecondBase, crown: rankingCrownSilver, top: rankingSecondTop },
-  3: { base: rankingThirdBase, crown: null, top: rankingThirdTop },
+  1: { crown: rankingCrownGold, image: rankingFirstPodium },
+  2: { crown: rankingCrownSilver, image: rankingSecondPodium },
+  3: { crown: null, image: rankingThirdPodium },
 }
 
 const groupedMissions = computed(() => {
@@ -408,8 +405,7 @@ const ranking = computed(() => {
                 : null),
         character: getRankingCharacter(member),
         crown: podium.crown,
-        podiumBase: podium.base,
-        podiumTop: podium.top,
+        podiumImage: podium.image,
         profileBackground: getRankingProfileBackground(member),
       }
     })
@@ -765,16 +761,10 @@ onBeforeUnmount(() => {
                 >
               </span>
               <img
-                class="ranking-podium-top"
-                :src="member.podiumTop"
+                class="ranking-podium"
+                :src="member.podiumImage"
                 alt=""
               >
-              <img
-                class="ranking-podium-base"
-                :src="member.podiumBase"
-                alt=""
-              >
-              <strong class="ranking-place">{{ member.rank }}</strong>
             </div>
           </article>
         </div>
@@ -1302,29 +1292,26 @@ onBeforeUnmount(() => {
   height: 100%;
 }
 .podium .rank-1 {
-  --base-height: 79px;
-  --base-width: 91px;
   --stage-height: 196px;
-  --top-height: 18px;
-  --top-width: 91px;
+  --character-bottom: 72px;
+  --crown-bottom: 163px;
+  --podium-image-width: 91px;
   --podium-offset-x: 0px;
   order: 2;
 }
 .podium .rank-2 {
-  --base-height: 56px;
-  --base-width: 89px;
   --stage-height: 168px;
-  --top-height: 13px;
-  --top-width: 89px;
+  --character-bottom: 62px;
+  --crown-bottom: 135px;
+  --podium-image-width: 91px;
   --podium-offset-x: 0px;
   order: 1;
 }
 .podium .rank-3 {
-  --base-height: 42px;
-  --base-width: 88px;
   --stage-height: 124px;
-  --top-height: 12px;
-  --top-width: 88px;
+  --character-bottom: 48px;
+  --crown-bottom: 0px;
+  --podium-image-width: 91px;
   --podium-offset-x: -4.5px;
   order: 3;
 }
@@ -1382,7 +1369,7 @@ onBeforeUnmount(() => {
 .ranking-character-wrap {
   position: absolute;
   z-index: 2;
-  bottom: calc(var(--base-height) + var(--top-height) - 4px);
+  bottom: var(--character-bottom);
   left: 50%;
   width: 70px;
   height: 70px;
@@ -1396,8 +1383,7 @@ onBeforeUnmount(() => {
   object-fit: contain;
 }
 .ranking-crown,
-.ranking-podium-base,
-.ranking-podium-top {
+.ranking-podium {
   position: absolute;
   left: 50%;
   object-fit: contain;
@@ -1405,32 +1391,15 @@ onBeforeUnmount(() => {
 }
 .ranking-crown {
   z-index: 4;
-  bottom: calc(var(--base-height) + var(--top-height) + 66px);
+  bottom: var(--crown-bottom);
   width: 30px;
   height: 29px;
 }
-.ranking-podium-top {
-  z-index: 3;
-  bottom: var(--base-height);
-  width: var(--top-width);
-  height: var(--top-height);
-}
-.ranking-podium-base {
+.ranking-podium {
   z-index: 1;
   bottom: 0;
-  width: var(--base-width);
-  height: var(--base-height);
-}
-.ranking-place {
-  position: absolute;
-  z-index: 4;
-  bottom: 8px;
-  left: 0;
-  width: 100%;
-  transform: translateX(var(--podium-offset-x));
-  color: #a0a0a0;
-  font-size: 34px;
-  line-height: 1;
+  width: var(--podium-image-width);
+  height: auto;
 }
 .ranking-empty {
   padding: 90px 0 70px;
