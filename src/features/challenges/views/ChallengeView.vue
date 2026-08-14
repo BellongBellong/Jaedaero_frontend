@@ -44,7 +44,7 @@ const loading = ref(true)
 const challenge = ref(null)
 const badges = ref([])
 const profile = ref(null)
-const apiMissions = ref([])
+const apiMissions = computed(() => missionStore.missions)
 const selectedBadgeId = ref(localStorage.getItem(BADGE_SELECTION_STORAGE_KEY) || '')
 const rankingPeriod = ref('CUMULATIVE')
 const rankingYearMonth = ref(getCurrentYearMonth())
@@ -884,7 +884,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 20px;
   min-height: 190px;
 }
 .badge-summary article {

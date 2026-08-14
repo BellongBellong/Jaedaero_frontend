@@ -3,8 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
-import badgeArrow from '@/assets/my-page/icon2.svg'
 import connectedBankIcon from '@/assets/my-page/connected-bank.svg'
+import detailViewIcon from '@/assets/my-page/detail-view.svg'
 import investmentProfileIcon from '@/assets/my-page/investment-profile.svg'
 import notificationSettingsIcon from '@/assets/my-page/notification-settings.svg'
 import logoutIcon from '@/assets/my-page/logout.svg'
@@ -317,7 +317,7 @@ onMounted(async () => {
         >
           뱃지 달성 현황
           <img
-            :src="badgeArrow"
+            :src="detailViewIcon"
             alt=""
           >
         </button>
@@ -807,8 +807,8 @@ onMounted(async () => {
   font-size: 10px;
 }
 .badge-card__header img {
-  width: 6px;
-  height: 10px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
 }
 .badge-summary,

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import detailViewIcon from '@/assets/my-page/detail-view.svg'
 import securityDefault from '@/assets/onboarding/institutions/security-0.svg'
 import { getAccounts } from '@/features/accounts/api/accounts.api'
 import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
@@ -223,11 +224,13 @@ onMounted(loadAccounts)
                 </span>
                 <small>{{ institution.descriptions.join(', ') }}</small>
               </span>
-              <span
+              <img
                 v-if="institution.status === 'active'"
                 class="connected-check"
+                :src="detailViewIcon"
+                alt=""
                 aria-hidden="true"
-              >›</span>
+              >
             </li>
           </ul>
         </section>
@@ -383,10 +386,9 @@ li:focus-visible {
 }
 
 .connected-check {
+  width: 24px;
+  height: 24px;
   margin-left: auto;
-  color: #58f49a;
-  font-size: 22px;
-  font-weight: 700;
 }
 
 .state-message {
