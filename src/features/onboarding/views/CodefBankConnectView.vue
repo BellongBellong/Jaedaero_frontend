@@ -74,17 +74,14 @@ const fallbackSecurities = [
   { organizationCode: '0240', displayName: '삼성증권', logoIndex: 3 },
   { organizationCode: '0247', displayName: 'NH투자증권', logoIndex: 4 },
   { organizationCode: '0261', displayName: '교보증권', logoIndex: 5 },
-  { organizationCode: '0264', displayName: '키움증권', logoIndex: 6 },
   { organizationCode: '0266', displayName: 'SK증권', logoIndex: 7 },
   { organizationCode: '0209', displayName: '유안타증권', logoIndex: 8 },
   { organizationCode: '0267', displayName: '대신증권', logoIndex: 9 },
   { organizationCode: '0269', displayName: '한화투자증권', logoIndex: 10 },
-  { organizationCode: '0270', displayName: '하나금융투자', logoIndex: 11 },
   { organizationCode: '0278', displayName: '신한금융투자', logoIndex: 12 },
   { organizationCode: '0279', displayName: 'DB금융투자', logoIndex: 13 },
   { organizationCode: '0280', displayName: '유진투자증권', logoIndex: 14 },
   { organizationCode: '0287', displayName: '메리츠증권', logoIndex: 15 },
-  { organizationCode: '0225', displayName: 'IBK투자증권', logoIndex: 16 },
 ]
 const form = ref({
   businessType: '',
