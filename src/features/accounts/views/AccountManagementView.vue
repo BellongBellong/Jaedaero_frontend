@@ -370,6 +370,8 @@ onMounted(loadAccounts)
 }
 .page-header h1 {
   margin: 0;
+  /* 전역 h1 은 디스플레이 폰트라 공통 AppHeader 와 글꼴이 달라진다. */
+  font-family: var(--font-body);
   font-size: 22px;
 }
 .bank-summary {

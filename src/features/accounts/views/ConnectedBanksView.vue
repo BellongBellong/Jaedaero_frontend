@@ -291,6 +291,8 @@ onMounted(loadAccounts)
 h1 {
   margin: 0 0 13px;
   color: #7c8e77;
+  /* 전역 h1 은 디스플레이 폰트라 공통 AppHeader 와 글꼴이 달라진다. */
+  font-family: var(--font-body);
   font-size: 15px;
 }
 

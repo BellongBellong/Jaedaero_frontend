@@ -164,6 +164,22 @@ function handleContentScroll(event) {
   background: transparent;
 }
 
+/*
+  AI 분석 로딩 단계는 배경이 화면 전체를 덮어야 한다.
+  안쪽 요소 높이를 dvh 로 맞추면 기기별 safe area 계산 차이로 바닥에 흰 여백이
+  남으므로, 프레임이 직접 칠해 레이아웃 계산과 무관하게 항상 꽉 차게 한다.
+*/
+:global(.mobile-frame:has(.analyzing)) {
+  background:
+    radial-gradient(
+      ellipse 500px 640px at -5% 91%,
+      var(--yellow-400) 0%,
+      rgb(255 236 189 / 0%) 100%
+    ),
+    radial-gradient(circle 576px at 100% 14.5%, var(--green-500) 0%, rgb(98 255 156 / 0%) 100%),
+    #f6f6f6;
+}
+
 /* 투명 iOS 상태바 뒤에서도 대시보드의 브랜드 배경이 끊기지 않게 이어 준다. */
 :global(.mobile-frame.mobile-frame--dashboard) {
   background:
