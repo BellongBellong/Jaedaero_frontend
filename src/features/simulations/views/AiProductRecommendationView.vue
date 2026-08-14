@@ -51,6 +51,13 @@ const recommendedProducts = computed(() =>
   })),
 )
 
+// 시뮬레이션에서 계산된 비율은 소수점이 길게 떨어져 소수 첫째 자리까지만 보여준다.
+const investmentPercentLabel = computed(() => {
+  const percent = Number(scenario.value.investmentPercent)
+  if (!Number.isFinite(percent)) return '-'
+  return `${Math.round(percent * 10) / 10}`
+})
+
 const analysisDate = computed(() => {
   const date = new Date(scenario.value.generatedAt)
 
@@ -122,7 +129,7 @@ onMounted(async () => {
         </li>
         <li>
           <span aria-hidden="true">✓</span>
-          투자 비율 <b>{{ scenario.investmentPercent }}%</b>
+          투자 비율 <b>{{ investmentPercentLabel }}%</b>
         </li>
         <li>
           <span aria-hidden="true">✓</span>

@@ -1161,17 +1161,18 @@ onBeforeUnmount(() => {
   color: var(--green-800);
 }
 
-.recommendation-button {
+/* DetailLinkButton 의 기본 스타일보다 우선하도록 클래스를 겹쳐 올린다. */
+.recommendation-button.detail-link-button {
   display: flex;
   width: calc(100% - 16px);
-  min-height: 58px;
+  min-height: 52px;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
-  padding: 5px 14px 5px 6px;
+  gap: 8px;
+  padding: 5px 14px 5px 5px;
   margin: 0 auto;
-  border: 3px solid transparent;
-  border-radius: 28px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-full, 999px);
   background:
     linear-gradient(#fff, #fff) padding-box,
     linear-gradient(105deg, var(--orange-600), var(--yellow-400), var(--green-500), var(--blue-800))
@@ -1181,18 +1182,22 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.recommendation-button > span:first-child {
+/*
+  DetailLinkButton 이 슬롯을 감싸는 span 은 이 컴포넌트의 스코프 속성을 갖지 않는다.
+  :deep() 로 넘겨야 래퍼에 레이아웃이 적용된다.
+*/
+.recommendation-button > :deep(span) {
   display: flex;
   min-width: 0;
   flex: 1;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .recommendation-button__icon {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   flex: none;
   place-items: center;
   overflow: hidden;
@@ -1201,8 +1206,8 @@ onBeforeUnmount(() => {
 }
 
 .recommendation-button__icon img {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   object-fit: cover;
   transform: scaleX(-1);
 }
@@ -1213,20 +1218,23 @@ onBeforeUnmount(() => {
   flex-direction: column;
 }
 
-.recommendation-button > img {
+/* 화살표도 DetailLinkButton 이 렌더링하므로 :deep() 이 필요하다. */
+.recommendation-button > :deep(img) {
   width: 7px;
   height: 11px;
+  flex: 0 0 auto;
 }
 
 .recommendation-button small {
   color: var(--gray-600);
-  font-size: 10px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .recommendation-button strong {
   font-size: 15px;
-  line-height: 1.5;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 @media (max-width: 360px) {

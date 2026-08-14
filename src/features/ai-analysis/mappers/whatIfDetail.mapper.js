@@ -1,6 +1,13 @@
 import { WHAT_IF_TITLE } from './analysisHistory.mapper.js'
 import { formatTenThousandWon, formatWon, toNumber, toPercent } from './format.js'
 
+/** 날짜가 비어 있으면 빈 칸 대신 '-'를 보여준다. */
+function formatDate(value) {
+  const date = String(value ?? '').trim()
+
+  return date ? date.replace(/-/g, '.') : '-'
+}
+
 /**
  * SimulationResponse를 시뮬레이션 상세 화면 모델로 변환한다.
  *
@@ -36,7 +43,7 @@ export function mapWhatIfDetail(simulation, { monthlySalary, saved = false, titl
     projectedAsset: formatTenThousandWon(expectedAsset),
     targetAmount: formatTenThousandWon(simulation?.targetAmount),
     targetReturnRate: `${returnRate}%`,
-    financialDischargeDate: String(simulation?.financialDischargeDate ?? '').replace(/-/g, '.'),
+    financialDischargeDate: formatDate(simulation?.financialDischargeDate),
     baseSalary: salary ? formatTenThousandWon(salary) : '-',
     hasCalculationDetail: Boolean(calculation && effect),
     calculationConsistent: expectedAsset === recomposedAsset,
