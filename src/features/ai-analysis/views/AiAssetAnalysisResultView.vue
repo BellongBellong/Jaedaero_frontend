@@ -13,7 +13,7 @@ import {
   createAiAnalysis,
   getAiAnalysis,
 } from '@/features/ai-analysis/api/aiAnalysis.api'
-import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
+import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
 
 const MINIMUM_ANALYZING_DURATION = 2600
 
@@ -56,7 +56,7 @@ const CAUSE_TAGS = {
 
 const route = useRoute()
 const router = useRouter()
-const onboarding = useOnboardingStore()
+const { honorificNickname, loadNickname } = useCurrentUserNickname()
 
 const phase = ref('analyzing')
 const analysis = ref(null)
@@ -64,8 +64,6 @@ const errorMessage = ref('')
 
 const applyState = ref('idle')
 const applyErrorMessage = ref('')
-
-const nickname = computed(() => onboarding.form.nickname || '윤호')
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -93,7 +91,10 @@ async function runAnalysis() {
   }
 }
 
-onMounted(runAnalysis)
+onMounted(() => {
+  loadNickname()
+  runAnalysis()
+})
 
 function formatWon(value) {
   return `${Number(value || 0).toLocaleString('ko-KR')}원`
@@ -325,7 +326,7 @@ async function handleApplyStrategy() {
 
         <div class="analyzing__content">
           <h2 class="analyzing__title">
-            {{ nickname }}님의 자산을<br>
+            {{ honorificNickname }}의 자산을<br>
             분석중이에요
           </h2>
 
