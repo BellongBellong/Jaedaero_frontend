@@ -1210,7 +1210,8 @@ onMounted(async () => {
 }
 .dialog {
   position: relative;
-  width: min(100%, 383px);
+  width: 100%;
+  max-width: 383px;
   box-sizing: border-box;
   padding: 31px 15px 30px;
   border-radius: 30px;
@@ -1218,7 +1219,7 @@ onMounted(async () => {
   text-align: center;
 }
 .confirm-dialog {
-  width: min(100%, 280px);
+  max-width: 280px;
   padding: 22px 16px 16px;
   border-radius: 20px;
 }
@@ -1250,6 +1251,8 @@ onMounted(async () => {
 }
 .nickname-row {
   display: flex;
+  width: 100%;
+  min-width: 0;
   gap: 10px;
 }
 .nickname-row input {
@@ -1266,6 +1269,7 @@ onMounted(async () => {
 }
 .nickname-row button {
   width: 111px;
+  flex: 0 0 111px;
   border: 0;
   border-radius: 15px;
   background: #58f49a;
