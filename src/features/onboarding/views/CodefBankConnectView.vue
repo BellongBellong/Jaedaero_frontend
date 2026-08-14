@@ -312,12 +312,7 @@ function retryAccountConnection() {
 }
 
 function confirmInstitution() {
-  if (
-    !pendingInstitution.value ||
-    (isInstitutionConnected(pendingInstitution.value) && !isAdditionalConnection.value)
-  ) {
-    return
-  }
+  if (!pendingInstitution.value || isInstitutionConnected(pendingInstitution.value)) return
   form.value.organizationCode = pendingOrganizationCode.value
   institutionModalOpen.value = false
   errorMessage.value = ''
@@ -327,7 +322,7 @@ function togglePendingInstitution(organizationCode) {
   const institution = visibleInstitutions.value.find(
     (item) => item.organizationCode === organizationCode,
   )
-  if (!institution || (isInstitutionConnected(institution) && !isAdditionalConnection.value)) {
+  if (!institution || isInstitutionConnected(institution)) {
     return
   }
 
@@ -401,10 +396,7 @@ function closeAccountsModal() {
 async function confirmAccounts() {
   if (!selectedAccountIds.value.length || accountsConfirming.value) return
 
-  if (
-    !selectedInstitution.value ||
-    (isInstitutionConnected(selectedInstitution.value) && !isAdditionalConnection.value)
-  ) {
+  if (!selectedInstitution.value || isInstitutionConnected(selectedInstitution.value)) {
     accountsModalOpen.value = false
     showConnectedSummary.value = true
     return
@@ -872,9 +864,8 @@ onBeforeUnmount(abortAccountRequest)
               type="button"
               class="institution-row"
               :class="{
-                selected: isPendingInstitution(institution),
-                connected:
-                  isInstitutionConnected(institution) && !isPendingInstitution(institution),
+                selected: isPendingInstitution(institution) || isInstitutionConnected(institution),
+                connected: isInstitutionConnected(institution),
               }"
               :aria-label="
                 isPendingInstitution(institution)
@@ -883,18 +874,18 @@ onBeforeUnmount(abortAccountRequest)
                     ? `${institution.displayName} 연결됨`
                     : `${institution.displayName} 선택`
               "
-              :disabled="isInstitutionConnected(institution) && !isAdditionalConnection"
+              :disabled="isInstitutionConnected(institution)"
               @click="togglePendingInstitution(institution.organizationCode)"
             >
               <img
-                :src="institutionLogo(institution, isPendingInstitution(institution))"
+                :src="
+                  institutionLogo(
+                    institution,
+                    isPendingInstitution(institution) || isInstitutionConnected(institution),
+                  )
+                "
                 alt=""
               >
-              <span
-                v-if="isInstitutionConnected(institution) && !isPendingInstitution(institution)"
-                class="institution-connected-check"
-                aria-hidden="true"
-              >✓</span>
             </button>
             <p
               v-if="loadingInstitutions"
@@ -1262,7 +1253,7 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .type-buttons button {
-  padding-right: 48px;
+  padding-right: 18px;
 }
 
 .type-button-arrow {
@@ -1644,7 +1635,6 @@ select:focus {
 
 .institution-row.connected {
   cursor: default;
-  opacity: 0.62;
 }
 
 .institution-row img {

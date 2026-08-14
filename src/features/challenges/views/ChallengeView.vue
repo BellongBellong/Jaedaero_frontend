@@ -86,7 +86,7 @@ const groupedMissions = computed(() => {
   if (apiMissions.value.length) {
     const groups = [
       { name: '오늘의 미션', categories: ['RECOMMENDED', 'TODAY'] },
-      { name: '데일리 미션', categories: ['DAILY'] },
+      { name: '공통 미션', categories: ['DAILY'] },
       { name: '한 번 미션', categories: ['ONE_TIME'] },
       { name: '이벤트 미션', categories: ['EVENT', 'CONDITIONAL'] },
     ]
@@ -137,7 +137,7 @@ const badgeProgress = computed(() =>
 )
 const orderedBadgeProgress = computed(() =>
   [...badgeProgress.value].sort((first, second) => {
-    const order = { AGGRESSIVE: 0, SAFE: 1, BALANCED: 1 }
+    const order = { SAFE: 0, BALANCED: 0, AGGRESSIVE: 1 }
     return (order[first.type] ?? 2) - (order[second.type] ?? 2)
   }),
 )
@@ -584,25 +584,6 @@ onBeforeUnmount(() => {
 
         <template v-if="hasBadge">
           <div
-            v-if="showAggressiveBadge"
-            :class="['progress-row', tierClass(aggressiveTier)]"
-          >
-            <div class="progress-badge">
-              <img
-                :src="getBadgeImage('AGGRESSIVE', aggressiveTier.key)"
-                alt=""
-              >
-              <span>공격형</span>
-            </div>
-            <div>
-              <b :class="['tier-label', tierClass(aggressiveTier)]">{{ aggressiveTier.label }}</b><progress
-                :class="tierClass(aggressiveTier)"
-                :value="aggressiveCount"
-                :max="aggressiveTarget"
-              /><small>현재 {{ aggressiveCount }}개 <em>{{ aggressiveTarget }}개</em></small>
-            </div>
-          </div>
-          <div
             v-if="showSafeBadge"
             :class="['progress-row', tierClass(safeTier)]"
           >
@@ -619,6 +600,25 @@ onBeforeUnmount(() => {
                 :value="safeCount"
                 :max="safeTarget"
               /><small>현재 {{ safeCount }}개 <em>{{ safeTarget }}개</em></small>
+            </div>
+          </div>
+          <div
+            v-if="showAggressiveBadge"
+            :class="['progress-row', tierClass(aggressiveTier)]"
+          >
+            <div class="progress-badge">
+              <img
+                :src="getBadgeImage('AGGRESSIVE', aggressiveTier.key)"
+                alt=""
+              >
+              <span>공격형</span>
+            </div>
+            <div>
+              <b :class="['tier-label', tierClass(aggressiveTier)]">{{ aggressiveTier.label }}</b><progress
+                :class="tierClass(aggressiveTier)"
+                :value="aggressiveCount"
+                :max="aggressiveTarget"
+              /><small>현재 {{ aggressiveCount }}개 <em>{{ aggressiveTarget }}개</em></small>
             </div>
           </div>
         </template>
@@ -990,7 +990,6 @@ onBeforeUnmount(() => {
 }
 .progress-row + .progress-row {
   padding-top: 14px;
-  border-top: 1px solid #edf0ed;
 }
 .progress-badge {
   display: flex;

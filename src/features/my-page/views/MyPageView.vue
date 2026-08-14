@@ -61,7 +61,7 @@ const badgeProgresses = computed(() =>
 )
 const orderedBadgeProgresses = computed(() =>
   [...badgeProgresses.value].sort((first, second) => {
-    const order = { AGGRESSIVE: 0, SAFE: 1, BALANCED: 1 }
+    const order = { SAFE: 0, BALANCED: 0, AGGRESSIVE: 1 }
     return (order[first.type] ?? 2) - (order[second.type] ?? 2)
   }),
 )
@@ -70,7 +70,7 @@ const selectedInvestmentBadge = computed(() =>
   getSelectedBadge(earnedInvestmentBadges.value, selectedBadgeId.value),
 )
 const badgePreviews = computed(() =>
-  badgeProgresses.value
+  orderedBadgeProgresses.value
     .map((progress) =>
       getSelectedBadge(
         earnedInvestmentBadges.value.filter((badge) => badge.type === progress.type),
@@ -1211,6 +1211,7 @@ onMounted(async () => {
 .dialog {
   position: relative;
   width: min(100%, 383px);
+  box-sizing: border-box;
   padding: 31px 15px 30px;
   border-radius: 30px;
   background: #fff;
