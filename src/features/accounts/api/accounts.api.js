@@ -47,15 +47,14 @@ export async function connectAccount(payload, config = {}) {
 
 export async function reconnectAccount(account, config = {}) {
   const userId = Number(localStorage.getItem('userId')) || 1
-  const { data } = await apiClient.post(
-    ENDPOINTS.accounts.connect,
-    {
+  const accountId = account.accountId || account.id
+  const { data } = await apiClient.patch(ENDPOINTS.accounts.activate(accountId), null, {
+    ...config,
+    params: {
       userId,
-      accountId: account.accountId || account.id,
-      organizationCode: accountOrganizationCode(account),
+      ...config.params,
     },
-    config,
-  )
+  })
 
   clearDisconnectedAccount(account)
   return data

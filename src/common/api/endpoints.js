@@ -21,6 +21,7 @@ export const ENDPOINTS = {
     connect: '/accounts/connect',
     list: '/accounts',
     detail: (accountId) => `/accounts/${accountId}`,
+    activate: (accountId) => `/accounts/${accountId}/activate`,
   },
   dashboard: '/dashboard',
   cashflow: '/cashflow',
