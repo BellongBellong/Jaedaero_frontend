@@ -166,7 +166,11 @@ function selectTab(item) {
   border-radius: var(--radius-full);
   touch-action: none;
   transform-origin: bottom center;
-  transition: transform var(--duration-normal) var(--ease-default);
+  /* Instagram식 liquid glass처럼 상태는 즉시 받되 크기는 느긋하게 따라온다. */
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /*

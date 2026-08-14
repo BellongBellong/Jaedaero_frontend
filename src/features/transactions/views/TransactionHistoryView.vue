@@ -12,7 +12,7 @@ import { getTransactions } from '@/features/transactions/api/transactions.api'
 
 const route = useRoute()
 const router = useRouter()
-const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_TRANSACTION_HISTORY')
 const tabs = [
   { value: 'ALL', label: '전체' },
   { value: 'ACCOUNT', label: '계좌' },

@@ -24,7 +24,7 @@ const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 
 const route = useRoute()
 const router = useRouter()
-const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'RUN_WHAT_IF_SIMULATION')
 const dashboard = ref(null)
 const profile = ref(null)
 const simulationDefaults = ref(null)

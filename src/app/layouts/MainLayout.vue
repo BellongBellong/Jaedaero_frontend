@@ -7,20 +7,14 @@ import BottomNavigation from '@/common/components/BottomNavigation.vue'
 import MobileFrame from '@/common/components/MobileFrame.vue'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
-/* 방향 전환으로 인정할 최소 이동량 — 손가락 떨림으로 네비가 깜빡이지 않게 한다 */
-const DIRECTION_THRESHOLD = 6
-/* 이 지점을 지나야 네비가 줄어들기 시작한다 */
-const MINIMIZE_AFTER = 72
-/* 반대 방향으로 이 거리만큼 의도적으로 스크롤해야 다시 펼친다. */
-const DIRECTION_CONFIRMATION_DISTANCE = 28
+/* iOS의 소수점 스크롤 노이즈만 제외하고 첫 이동부터 방향을 반영한다. */
+const SCROLL_DIRECTION_EPSILON = 0.5
 
 const route = useRoute()
 const contentElement = ref(null)
 const isHeaderCollapsed = ref(false)
 const isNavigationMinimized = ref(false)
 const lastScrollTop = ref(0)
-const scrollDirection = ref(null)
-const scrollDistanceInDirection = ref(0)
 const { mode } = useLeaveModeSchedule()
 
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
@@ -31,8 +25,6 @@ watch(
     isHeaderCollapsed.value = false
     isNavigationMinimized.value = false
     lastScrollTop.value = 0
-    scrollDirection.value = null
-    scrollDistanceInDirection.value = 0
     await nextTick()
     contentElement.value?.scrollTo({
       left: 0,
@@ -56,28 +48,13 @@ function handleContentScroll(event) {
     isHeaderCollapsed.value = !isHeaderCollapsed.value
   }
 
-  /*
-    네비게이션도 첫 반대 방향 이벤트에 즉시 튀지 않게 한다. iOS는 감속 중
-    delta의 부호가 짧게 바뀌는 경우가 있어서, 28px의 실제 방향 전환을 확인한 뒤
-    움직인다.
-  */
-  if (scrollTop <= MINIMIZE_AFTER) {
+  /* 첫 하향 스크롤에서 바로 물러나고, 상향 스크롤에서 바로 복원한다. */
+  if (scrollTop <= SCROLL_DIRECTION_EPSILON) {
     isNavigationMinimized.value = false
-    scrollDirection.value = null
-    scrollDistanceInDirection.value = 0
-  } else if (Math.abs(delta) >= DIRECTION_THRESHOLD) {
-    const nextDirection = delta > 0 ? 'down' : 'up'
-
-    if (nextDirection === scrollDirection.value) {
-      scrollDistanceInDirection.value += Math.abs(delta)
-    } else {
-      scrollDirection.value = nextDirection
-      scrollDistanceInDirection.value = Math.abs(delta)
-    }
-
-    if (scrollDistanceInDirection.value >= DIRECTION_CONFIRMATION_DISTANCE) {
-      isNavigationMinimized.value = nextDirection === 'down'
-    }
+  } else if (delta > SCROLL_DIRECTION_EPSILON) {
+    isNavigationMinimized.value = true
+  } else if (delta < -SCROLL_DIRECTION_EPSILON) {
+    isNavigationMinimized.value = false
   }
 
   lastScrollTop.value = scrollTop
@@ -87,6 +64,7 @@ function handleContentScroll(event) {
 <template>
   <MobileFrame
     :class="{
+      'mobile-frame--dashboard': route.name === 'dashboard',
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
       'mobile-frame--investment-guide': route.meta.investmentGuide,
       'mobile-frame--vacation': isVacationDashboard,
@@ -145,18 +123,22 @@ function handleContentScroll(event) {
   position: absolute;
   z-index: var(--z-navigation, 20);
   right: 0;
-  bottom: 0;
+  /* 홈 인디케이터는 피하되, safe area를 컨테이너 높이에 중복 가산하지 않는다. */
+  bottom: max(5px, calc(var(--safe-area-bottom) - 7px));
   left: 0;
-  /*
-    PWA는 이미 홈 인디케이터 영역까지 앱 캔버스가 이어진다. safe area를 다시
-    더하면 바가 그 높이만큼 위로 떠 버리므로, 바는 화면 하단을 기준으로 둔다.
-  */
   height: var(--bottom-navigation-area-height);
   padding-top: 8px;
   padding-bottom: 4px;
   pointer-events: none;
   /* 콘텐츠가 글래스 바와 하단 safe area 뒤로 자연스럽게 이어진다. */
   background: transparent;
+}
+
+/* 투명 iOS 상태바 뒤에서도 대시보드의 브랜드 배경이 끊기지 않게 이어 준다. */
+:global(.mobile-frame.mobile-frame--dashboard) {
+  background:
+    radial-gradient(circle at 88% 0%, rgb(98 255 156 / 24%), transparent 34%),
+    radial-gradient(circle at 8% 0%, rgb(255 229 114 / 14%), transparent 30%), var(--ui-background);
 }
 
 .main-layout__bottom > :deep(.bottom-navigation) {

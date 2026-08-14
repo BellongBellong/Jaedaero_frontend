@@ -28,9 +28,10 @@ import {
   getSelectedBadge,
 } from '@/features/my-page/composables/investmentBadges'
 import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
+import { useMissionStore } from '@/features/missions/stores/mission.store'
 import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
 
-import { getChallengeGroup, getInvestmentBadges, getTodayMissions } from '../api/challenges.api'
+import { getChallengeGroup, getInvestmentBadges } from '../api/challenges.api'
 
 const activeTab = ref('missions')
 const challengeTabs = [
@@ -38,6 +39,7 @@ const challengeTabs = [
   { label: '랭킹', value: 'ranking' },
 ]
 const router = useRouter()
+const missionStore = useMissionStore()
 const loading = ref(true)
 const challenge = ref(null)
 const badges = ref([])
@@ -437,16 +439,12 @@ async function loadChallenge() {
   errorMessage.value = ''
   const [challengeResult, missionResult, badgeResult, profileResult] = await Promise.allSettled([
     getChallengeGroup(rankingRequestParams.value),
-    getTodayMissions(),
+    missionStore.loadTodayMissions(),
     getInvestmentBadges(),
     getMyPageProfile(),
   ])
 
   if (challengeResult.status === 'fulfilled') challenge.value = unwrap(challengeResult.value)
-  if (missionResult.status === 'fulfilled') {
-    const value = unwrap(missionResult.value)
-    apiMissions.value = Array.isArray(value) ? value : value?.missions || []
-  }
   if (badgeResult.status === 'fulfilled') {
     const value = unwrap(badgeResult.value)
     badges.value = Array.isArray(value) ? value : value?.badges || []
