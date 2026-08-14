@@ -8,6 +8,7 @@ import savingsIcon from '@/assets/icons/account/savingsBlock.png'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import returnRateIconBackground from '@/assets/simulations/return-rate-icon-bg.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import { getDashboard } from '@/features/dashboard/api/dashboard.api'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
@@ -668,10 +669,9 @@ onBeforeUnmount(() => {
         </p>
       </section>
 
-      <button
+      <DetailLinkButton
         v-if="hasSavedSimulation"
         class="recommendation-button"
-        type="button"
         @click="openRecommendations"
       >
         <span class="recommendation-button__icon">
@@ -683,9 +683,9 @@ onBeforeUnmount(() => {
         </span>
         <span>
           <small>연 {{ annualReturnRate }}% 수익 맞춤 상품을 추천해드릴게요!</small>
-          <strong>AI 추천 상품 보기 <b aria-hidden="true">›</b></strong>
+          <strong>AI 추천 상품 보기</strong>
         </span>
-      </button>
+      </DetailLinkButton>
     </div>
   </section>
 </template>
@@ -1161,6 +1161,7 @@ onBeforeUnmount(() => {
   width: calc(100% - 16px);
   min-height: 58px;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
   padding: 5px 14px 5px 6px;
   margin: 0 auto;
@@ -1173,6 +1174,14 @@ onBeforeUnmount(() => {
   color: var(--gray-900);
   text-align: left;
   cursor: pointer;
+}
+
+.recommendation-button > span:first-child {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
 }
 
 .recommendation-button__icon {
@@ -1193,10 +1202,15 @@ onBeforeUnmount(() => {
   transform: scaleX(-1);
 }
 
-.recommendation-button > span:last-child {
+.recommendation-button > span:first-child > span:last-child {
   display: flex;
   min-width: 0;
   flex-direction: column;
+}
+
+.recommendation-button > img {
+  width: 7px;
+  height: 11px;
 }
 
 .recommendation-button small {
@@ -1208,12 +1222,6 @@ onBeforeUnmount(() => {
 .recommendation-button strong {
   font-size: 15px;
   line-height: 1.5;
-}
-
-.recommendation-button strong b {
-  margin-left: 6px;
-  font-size: 21px;
-  font-weight: 400;
 }
 
 @media (max-width: 360px) {

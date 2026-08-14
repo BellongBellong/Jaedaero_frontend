@@ -977,7 +977,7 @@ onBeforeUnmount(abortAccountRequest)
     <Transition name="institution-sheet">
       <div
         v-if="accountsModalOpen"
-        class="institution-backdrop"
+        class="institution-backdrop accounts-backdrop"
         @click.self="closeAccountsModal"
       >
         <section
@@ -1095,7 +1095,7 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .codef-connect :deep(.step-header__progress) {
-  margin-bottom: 0;
+  margin-bottom: 8px;
 }
 
 .step-content {
@@ -1523,7 +1523,16 @@ select:focus {
   gap: 4px;
   min-height: 0;
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.institution-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .institution-row {
@@ -1597,9 +1606,11 @@ select:focus {
   position: relative;
   display: flex;
   width: 100%;
+  align-self: stretch;
   height: min(78dvh, 660px);
   flex-direction: column;
   padding: 30px 16px 12px;
+  box-sizing: border-box;
   border-radius: 24px 24px 0 0;
   background: #fff;
 }
@@ -1611,7 +1622,11 @@ select:focus {
 }
 
 .accounts-sheet > header {
-  padding-right: 36px;
+  padding-right: 0;
+}
+
+.accounts-backdrop {
+  box-sizing: border-box;
 }
 
 .account-status-backdrop {
@@ -1788,7 +1803,7 @@ select:focus {
   min-height: 82px;
   align-items: center;
   gap: 12px;
-  padding: 14px 4px;
+  padding: 14px 20px;
   border: 0;
   background: transparent;
   color: #333;

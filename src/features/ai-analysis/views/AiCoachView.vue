@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 
 import analysisIcon from '@/assets/ai-coach/analysis.svg'
 import coachCharacter from '@/assets/ai-coach/coach-character.svg'
@@ -8,6 +8,7 @@ import glidepathImage from '@/assets/ai-coach/glidepath.svg'
 import historyIcon from '@/assets/ai-coach/history.svg'
 import whatIfIcon from '@/assets/ai-coach/what-if.svg'
 import nextArrowIcon from '@/assets/icons/nextArrowIcon.svg'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import { useTodayMarketIndicators } from '@/features/market-report/composables/useTodayMarketIndicators'
 import { useTodayMarketReport } from '@/features/market-report/composables/useTodayMarketReport'
 import {
@@ -17,6 +18,7 @@ import {
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const onboarding = useOnboardingStore()
+const router = useRouter()
 
 const nickname = computed(() => onboarding.form.nickname || '윤호')
 
@@ -33,6 +35,10 @@ const reportLoadError = computed(() => error.value || indicatorsError.value)
 function retryReport() {
   load()
   loadIndicators()
+}
+
+function openFinancialReport() {
+  router.push({ name: 'ai-financial-report' })
 }
 const reportDate = computed(() => {
   const formattedDate = formatReportDate(report.value)
@@ -118,18 +124,12 @@ const analysisMenus = [
             </p>
           </div>
 
-          <RouterLink
+          <DetailLinkButton
             class="report-card__link"
-            :to="{ name: 'ai-financial-report' }"
+            @click="openFinancialReport"
           >
             전체 리포트 보기
-            <img
-              class="report-card__chevron"
-              :src="nextArrowIcon"
-              alt=""
-              aria-hidden="true"
-            >
-          </RouterLink>
+          </DetailLinkButton>
         </template>
 
         <div

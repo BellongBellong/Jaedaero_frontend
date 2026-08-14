@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 
-import arrowIcon from '@/assets/icons/arrow.svg'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import AccountTitleHeader from '@/features/dashboard/components/AccountTitleHeader.vue'
 import AssetAccountListItem from '@/features/dashboard/components/AssetAccountListItem.vue'
 
@@ -54,18 +54,12 @@ function formatWon(value) {
       연결된 계좌가 없어요.
     </p>
 
-    <button
+    <DetailLinkButton
       class="asset-account-card__more"
-      type="button"
       @click="$emit('view-all')"
     >
       {{ viewAllLabel }}
-      <img
-        :src="arrowIcon"
-        alt=""
-        aria-hidden="true"
-      >
-    </button>
+    </DetailLinkButton>
   </section>
 </template>
 

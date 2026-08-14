@@ -1,5 +1,6 @@
 <script setup>
 import plusIcon from '@/assets/icons/Category/plusIcon.svg'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 
 defineProps({
   events: {
@@ -86,13 +87,12 @@ function formatDday(dday) {
       예정된 이벤트가 없어요.
     </p>
 
-    <button
+    <DetailLinkButton
       class="upcoming-events-card__more"
-      type="button"
       @click="$emit('show-more')"
     >
       {{ remainingCount > 0 ? `${remainingCount}개 더 보기` : '이벤트 전체 보기' }}
-    </button>
+    </DetailLinkButton>
   </section>
 </template>
 

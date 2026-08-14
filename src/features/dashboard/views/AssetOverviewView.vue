@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import arrowIcon from '@/assets/icons/arrow.svg'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import AccountTitleHeader from '@/features/dashboard/components/AccountTitleHeader.vue'
 import AssetAccountCard from '@/features/dashboard/components/AssetAccountCard.vue'
 import MonthlyAssetOverview from '@/features/dashboard/components/MonthlyAssetOverview.vue'
@@ -58,18 +58,12 @@ onMounted(() => {
           :data="dashboard.assetSummary.monthly"
           :show-report-link="false"
         />
-        <button
+        <DetailLinkButton
           class="asset-overview__transactions"
-          type="button"
           @click="router.push({ name: 'transactions', query: route.query })"
         >
           전체 내역 보기
-          <img
-            :src="arrowIcon"
-            alt=""
-            aria-hidden="true"
-          >
-        </button>
+        </DetailLinkButton>
       </section>
     </template>
   </main>
