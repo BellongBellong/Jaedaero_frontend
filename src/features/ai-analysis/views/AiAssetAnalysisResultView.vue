@@ -735,6 +735,12 @@ async function handleApplyStrategy() {
 /* ===== 분석 중 ===== */
 .analyzing {
   display: flex;
+  /*
+    분석 화면은 배경 그라데이션이 화면 전체를 채워야 한다.
+    .analysis-screen 은 하단 네비게이션 자리를 비워두므로 그대로 두면
+    바닥에 흰 여백이 남는다. 이 단계만 뷰포트 전체 높이를 차지하게 한다.
+  */
+  min-height: 100dvh;
   flex-direction: column;
   background:
     radial-gradient(
