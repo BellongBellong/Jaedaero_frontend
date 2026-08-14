@@ -24,7 +24,7 @@ const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 
 const route = useRoute()
 const router = useRouter()
-const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'RUN_WHAT_IF_SIMULATION')
 const dashboard = ref(null)
 const profile = ref(null)
 const simulationDefaults = ref(null)
@@ -448,6 +448,11 @@ onMounted(async () => {
     applySimulationDefaults(defaultsResult.value)
     if (simulationsResult.status === 'fulfilled') {
       applySavedSimulation(latestSavedSimulation(simulationsResult.value))
+    }
+    // 대시보드가 최신 What-if를 기준으로 내려주는 소비·투자 목표를 우선 적용한다.
+    if (dashboard.value?.goalSource) {
+      spendingAmount.value = floorToAllocationStep(dashboard.value.monthlySpendingGoal)
+      investmentAmount.value = floorToAllocationStep(dashboard.value.monthlyInvestmentGoal)
     }
     setBaselineScenario()
     schedulePreview({ immediate: true })

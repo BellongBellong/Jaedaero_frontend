@@ -36,6 +36,62 @@ function unwrapList(response) {
   return response?.simulations ?? response?.content ?? response?.data ?? []
 }
 
+/** 통합 분석 이력 API의 단일 항목을 카드 모델로 변환한다. */
+export function mapAnalysisHistoryItem(item) {
+  const type =
+    item?.historyType === 'WHAT_IF'
+      ? ANALYSIS_RECORD_TYPES.WHAT_IF
+      : ANALYSIS_RECORD_TYPES.AI_ANALYSIS
+  const metrics = []
+
+  if (type === ANALYSIS_RECORD_TYPES.AI_ANALYSIS && item?.spendingAmount != null) {
+    metrics.push({
+      label: '이번 달 소비',
+      value: formatWon(item.spendingAmount),
+      change: toRateChange(item.spendingChangeRate),
+    })
+  }
+
+  if (type === ANALYSIS_RECORD_TYPES.AI_ANALYSIS && item?.expectedAssetIncreaseAmount != null) {
+    metrics.push({
+      label: '예상 자산 증가',
+      value: formatWon(item.expectedAssetIncreaseAmount),
+    })
+  }
+
+  return {
+    id: `${type === ANALYSIS_RECORD_TYPES.WHAT_IF ? 'sim' : 'ai'}-${item?.sourceId}`,
+    sourceId: item?.sourceId,
+    type,
+    title:
+      item?.title || (type === ANALYSIS_RECORD_TYPES.WHAT_IF ? WHAT_IF_TITLE : AI_ANALYSIS_TITLE),
+    date: formatDate(item?.createdAt),
+    sortKey: item?.createdAt ?? '',
+    summary: item?.summary ?? '',
+    applied: Boolean(item?.isApplied),
+    metrics,
+    allocationRatios: type === ANALYSIS_RECORD_TYPES.WHAT_IF ? toAllocationRatios(item) : undefined,
+    projectedAsset: item?.expectedAsset == null ? '' : formatTenThousandWon(item.expectedAsset),
+    generationSource: item?.generationSource,
+  }
+}
+
+/** AnalysisHistoryPageResponse를 목록과 서버 집계 요약으로 변환한다. */
+export function mapAnalysisHistoryPage(response) {
+  const histories = Array.isArray(response?.histories) ? response.histories : []
+
+  return {
+    records: histories.map(mapAnalysisHistoryItem),
+    totalCount: toNumber(response?.totalCount),
+    hasNext: Boolean(response?.hasNext),
+    latestDate: formatDate(response?.latestAnalyzedAt),
+    latestProjectedAsset:
+      response?.latestExpectedAsset == null
+        ? ''
+        : formatTenThousandWon(response.latestExpectedAsset),
+  }
+}
+
 /** AiAnalysisResponse를 분석 기록 카드 모델로 변환한다. */
 export function mapAiAnalysisRecord(analysis, appliedAnalysisIds = new Set()) {
   const projectedAsset = toNumber(analysis?.expectedEffect?.strategyProjectedAsset)

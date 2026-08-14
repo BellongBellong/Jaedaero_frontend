@@ -14,7 +14,7 @@ import { useMissionCompletion } from '@/features/missions/composables/useMission
 
 const route = useRoute()
 const router = useRouter()
-const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_MARKET_REPORT')
 const sourcesExpanded = ref(false)
 
 const fallbackMarketRows = [

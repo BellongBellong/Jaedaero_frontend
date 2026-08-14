@@ -31,7 +31,7 @@ const RISK_GRADE_LABELS = {
 
 const route = useRoute()
 const router = useRouter()
-const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_DEPOSIT_PRODUCT')
 const products = ref([])
 const errorMessage = ref('')
 const scenario = ref({

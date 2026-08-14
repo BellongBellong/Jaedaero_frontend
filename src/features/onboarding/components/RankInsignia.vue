@@ -1,9 +1,19 @@
 <script setup>
-import rankIcons from '@/assets/onboarding/icons/rank-icons-reference.png'
+import rankCorporal from '@/assets/onboarding/icons/rank-corporal.svg'
+import rankPrivate from '@/assets/onboarding/icons/rank-private.svg'
+import rankPrivateFirstClass from '@/assets/onboarding/icons/rank-private-first-class.svg'
+import rankSergeant from '@/assets/onboarding/icons/rank-sergeant.svg'
 
-defineProps({
+const props = defineProps({
   level: { type: Number, required: true },
 })
+
+const rankIconsByLevel = {
+  1: rankPrivate,
+  2: rankPrivateFirstClass,
+  3: rankCorporal,
+  4: rankSergeant,
+}
 </script>
 
 <template>
@@ -12,8 +22,7 @@ defineProps({
     aria-hidden="true"
   >
     <img
-      :class="`level-${level}`"
-      :src="rankIcons"
+      :src="rankIconsByLevel[props.level]"
       alt=""
     >
   </span>
@@ -29,25 +38,7 @@ defineProps({
   overflow: hidden;
 }
 .rank-insignia img {
-  position: absolute;
-  width: 104px;
-  max-width: none;
-  height: 54px;
-}
-.rank-insignia img.level-1 {
-  top: -20px;
-  left: -10px;
-}
-.rank-insignia img.level-2 {
-  top: -20px;
-  left: -32px;
-}
-.rank-insignia img.level-3 {
-  top: -20px;
-  left: -55px;
-}
-.rank-insignia img.level-4 {
-  top: -20px;
-  left: -78px;
+  width: 14px;
+  height: 14px;
 }
 </style>

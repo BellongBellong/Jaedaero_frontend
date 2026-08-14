@@ -2,11 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import badgeArrow from '@/assets/my-page/icon2.svg'
-import bankIcon from '@/assets/my-page/icon3.svg'
-import goalIcon from '@/assets/my-page/icon5.svg'
-import notificationIcon from '@/assets/my-page/icon7.svg'
-import logoutIcon from '@/assets/my-page/icon9.svg'
+import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
+import connectedBankIcon from '@/assets/my-page/connected-bank.svg'
+import detailViewIcon from '@/assets/my-page/detail-view.svg'
+import investmentProfileIcon from '@/assets/my-page/investment-profile.svg'
+import notificationSettingsIcon from '@/assets/my-page/notification-settings.svg'
+import logoutIcon from '@/assets/my-page/logout.svg'
+import withdrawIcon from '@/assets/my-page/withdraw.svg'
 import profileAirforce from '@/assets/onboarding/profiles/profile-airforce.png'
 import profileArmy from '@/assets/onboarding/profiles/profile-army.png'
 import profileMarine from '@/assets/onboarding/profiles/profile-marine.png'
@@ -315,7 +317,7 @@ onMounted(async () => {
         >
           뱃지 달성 현황
           <img
-            :src="badgeArrow"
+            :src="detailViewIcon"
             alt=""
           >
         </button>
@@ -362,28 +364,12 @@ onMounted(async () => {
           v-else
           class="badge-empty-state"
         >
-          <svg
+          <img
             class="badge-empty-state__icon"
-            viewBox="0 0 48 54"
+            :src="emptyBadgeState"
+            alt=""
             aria-hidden="true"
           >
-            <path d="M24 3 41 10v14c0 12-7.2 21-17 26C14.2 45 7 36 7 24V10L24 3Z" />
-            <circle
-              cx="24"
-              cy="24"
-              r="9"
-            />
-            <circle
-              cx="21"
-              cy="23"
-              r="1.3"
-            />
-            <circle
-              cx="27"
-              cy="23"
-              r="1.3"
-            />
-          </svg>
           <strong>뱃지가 없어요</strong>
           <small>금융 미션을 달성하고<br>뱃지를 획득해보세요</small>
         </span>
@@ -409,7 +395,7 @@ onMounted(async () => {
         @click="router.push({ name: 'connected-banks' })"
       >
         <span class="menu-icon bank"><img
-          :src="bankIcon"
+          :src="connectedBankIcon"
           alt=""
         ></span><b>연결 금융기관</b> <small>{{ connectedAccountCount }}개 연결됨</small><span class="chevron">›</span>
       </button>
@@ -419,7 +405,7 @@ onMounted(async () => {
         @click="activeDialog = 'goal'"
       >
         <span class="menu-icon goal"><img
-          :src="goalIcon"
+          :src="investmentProfileIcon"
           alt=""
         ></span><b>목표 금액 변경</b>
         <span class="chevron">›</span>
@@ -434,7 +420,7 @@ onMounted(async () => {
         @click="activeDialog = 'notifications'"
       >
         <span class="menu-icon"><img
-          :src="notificationIcon"
+          :src="notificationSettingsIcon"
           alt=""
         ></span><b>알림 설정</b>
         <span class="chevron">›</span>
@@ -451,10 +437,13 @@ onMounted(async () => {
       </button>
       <button
         type="button"
-        class="withdraw"
+        class="menu-row withdraw"
         @click="activeDialog = 'withdraw'"
       >
-        회원 탈퇴
+        <span class="menu-icon"><img
+          :src="withdrawIcon"
+          alt=""
+        ></span><b>회원 탈퇴</b>
       </button>
     </section>
 
@@ -818,8 +807,8 @@ onMounted(async () => {
   font-size: 10px;
 }
 .badge-card__header img {
-  width: 6px;
-  height: 10px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
 }
 .badge-summary,
@@ -954,16 +943,7 @@ onMounted(async () => {
   width: 42px;
   height: 47px;
   margin-bottom: 2px;
-  fill: none;
-  stroke: #e5e5e5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 3;
-}
-.badge-empty-state__icon circle:last-child,
-.badge-empty-state__icon circle:nth-child(3) {
-  fill: #e5e5e5;
-  stroke: none;
+  object-fit: contain;
 }
 .badge-empty-state strong {
   color: #aaa;
@@ -1134,6 +1114,12 @@ onMounted(async () => {
 .badge-preview small,
 .badge-preview:not(:first-child) small {
   opacity: 0.3;
+  white-space: nowrap;
+}
+.badge-preview:not(.is-selected) small {
+  min-width: 42px;
+  padding-inline: 4px;
+  font-size: 11px;
 }
 .badge-preview b,
 .badge-preview:not(:first-child) b {
@@ -1188,8 +1174,8 @@ onMounted(async () => {
   background: #f5f5f5;
 }
 .menu-icon img {
-  width: 22px;
-  height: 22px;
+  width: 36px;
+  height: 36px;
 }
 .menu-icon.bank {
   background: #e9f5ff;
@@ -1206,10 +1192,12 @@ onMounted(async () => {
   color: #ff4c4c;
 }
 .withdraw {
+  width: 100%;
   padding: 17px 0 0;
   border: 0;
   background: transparent;
   color: #bbb;
+  text-align: left;
 }
 .dialog-backdrop {
   position: fixed;
