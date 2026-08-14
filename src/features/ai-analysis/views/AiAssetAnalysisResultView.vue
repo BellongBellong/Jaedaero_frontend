@@ -77,12 +77,7 @@ async function runAnalysis() {
     const analysisId = route.params.analysisId
     const response = analysisId
       ? await getAiAnalysis(analysisId)
-      : (
-          await Promise.all([
-            createAiAnalysis({ simulationId: null }),
-            delay(MINIMUM_ANALYZING_DURATION),
-          ])
-        )[0]
+      : (await Promise.all([createAiAnalysis(), delay(MINIMUM_ANALYZING_DURATION)]))[0]
     analysis.value = response
     phase.value = 'result'
   } catch {
@@ -238,19 +233,28 @@ const expectedEffect = computed(() => {
   const scenario = analysis.value?.recommendedScenario
   if (!effect && !scenario) return null
 
-  const increase = Number(effect?.expectedAssetIncreaseAmount || 0)
-  const currentProjectedAsset = Math.max(
+  // 최신 소비 분석 DTO는 현재 적용 중인 What-if 결과를 최상위 expectedAsset으로 제공한다.
+  // 개선 효과를 역산하면 계산 정책이나 반올림이 바뀔 때 기준 자산이 달라질 수 있으므로
+  // 최상위 값을 우선하고, 과거 저장 이력에만 기존 역산 방식을 사용한다.
+  const legacyIncrease = Number(effect?.expectedAssetIncreaseAmount || 0)
+  const legacyCurrentAsset = Math.max(
     0,
-    Number(effect?.expectedAssetAfterImprovement || 0) - increase,
+    Number(effect?.expectedAssetAfterImprovement || 0) - legacyIncrease,
   )
+  const currentProjectedAsset = Number(analysis.value?.expectedAsset ?? legacyCurrentAsset)
   const strategyProjectedAsset = Number(
     scenario?.expectedAsset ?? effect?.expectedAssetAfterImprovement,
+  )
+  const calculatedIncrease = strategyProjectedAsset - currentProjectedAsset
+  const additionalAmount = Math.max(
+    0,
+    Number.isFinite(calculatedIncrease) ? calculatedIncrease : legacyIncrease,
   )
 
   return {
     currentProjectedAsset,
     strategyProjectedAsset,
-    additionalAmount: Math.max(0, strategyProjectedAsset - currentProjectedAsset),
+    additionalAmount,
     currentFinancialDischargeLabel: formatFinancialDate(analysis.value?.financialDischargeDate),
     financialDateChangeLabel: formatFinancialDateChange(
       scenario?.financialDischargeDate,
@@ -276,7 +280,7 @@ const isFallbackGuide = computed(() => analysis.value?.generationSource === 'FAL
 const applyButtonLabel = computed(() => {
   if (applyState.value === 'applying') return '적용 중...'
   if (applyState.value === 'applied') return '적용 완료'
-  return 'AI 전략 적용하기'
+  return 'AI 소비 전략 적용하기'
 })
 
 async function handleApplyStrategy() {
@@ -567,7 +571,7 @@ async function handleApplyStrategy() {
               >🤖</span>
               <div>
                 <h3>개선 방안 안내</h3>
-                <p>AI의 자산 관리 추천 방안</p>
+                <p>현재 계획을 유지하는 소비 관리 추천</p>
               </div>
             </div>
 
@@ -627,7 +631,7 @@ async function handleApplyStrategy() {
                   >
                 </span>
                 <div class="compare__col compare__col--strategy">
-                  <span class="compare__eyebrow">AI 전략 적용</span>
+                  <span class="compare__eyebrow">소비 전략 적용</span>
                   <div class="compare__value-group">
                     <span class="compare__label">예상 전역 자산</span>
                     <strong class="compare__value">{{
@@ -665,7 +669,7 @@ async function handleApplyStrategy() {
                   >
                 </span>
                 <div class="compare__col compare__col--strategy">
-                  <span class="compare__eyebrow">AI 전략 적용</span>
+                  <span class="compare__eyebrow">소비 전략 적용</span>
                   <div class="compare__value-group">
                     <span class="compare__label">재정적 전역일</span>
                     <strong class="compare__value">{{
