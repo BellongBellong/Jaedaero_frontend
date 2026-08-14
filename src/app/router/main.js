@@ -78,6 +78,18 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '예정된 이벤트' },
       },
       {
+        path: 'benefits',
+        name: 'benefits',
+        component: () => import('@/features/benefits/views/BenefitsView.vue'),
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'home',
+          headerTitle: '군인 혜택',
+          stickyTabs: true,
+          keepHeaderOnScroll: true,
+        },
+      },
+      {
         path: 'monthly-asset-report',
         name: 'monthly-asset-report',
         component: () => import('@/features/dashboard/views/MonthlyAssetReportView.vue'),
@@ -231,7 +243,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: '가이드 상세보기',
+          headerTitle: '가이드 상세 보기',
           investmentGuide: true,
           hideBackOnScroll: true,
         },

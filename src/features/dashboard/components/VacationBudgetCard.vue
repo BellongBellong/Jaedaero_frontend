@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 
 import assetBlockIcon from '@/assets/icons/account/assetBlock.png'
-import arrowIcon from '@/assets/icons/arrow.svg'
 import pencilIcon from '@/assets/icons/pencilIcon.svg'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 
 const props = defineProps({
   spentAmount: { type: Number, default: 0 },
@@ -44,8 +44,8 @@ function formatWon(amount) {
       </h2>
       <span
         v-if="status"
-        class="vacation-budget__status"
-        :class="`vacation-budget__status--${status === '여유' ? 'safe' : 'over'}`"
+        class="vacation-budget__status app-label"
+        :class="status === '여유' ? 'label--safe' : 'label--notification'"
       >{{ status }}</span>
     </div>
 
@@ -74,18 +74,12 @@ function formatWon(amount) {
       </div>
     </div>
 
-    <button
+    <DetailLinkButton
       class="vacation-budget__transactions"
-      type="button"
       @click="$emit('view-transactions')"
     >
       휴가 기간 거래 내역 보기
-      <img
-        :src="arrowIcon"
-        alt=""
-        aria-hidden="true"
-      >
-    </button>
+    </DetailLinkButton>
   </section>
 </template>
 
@@ -128,19 +122,7 @@ function formatWon(amount) {
 }
 
 .vacation-budget__status {
-  padding: 2px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  line-height: 1.5;
-  font-weight: var(--weight-bold);
-}
-.vacation-budget__status--safe {
-  background: #effbf4;
-  color: #20b968;
-}
-.vacation-budget__status--over {
-  background: var(--orange-50, #fff7f3);
-  color: var(--orange-600, #e37255);
+  margin-left: 2px;
 }
 
 .vacation-budget__metrics {
@@ -203,19 +185,6 @@ function formatWon(amount) {
 }
 
 .vacation-budget__transactions {
-  width: 100%;
-  justify-content: flex-end;
-  gap: 2px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #7a7a7a;
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-}
-.vacation-budget__transactions img {
-  width: 7px;
-  height: 11px;
+  align-self: flex-end;
 }
 </style>

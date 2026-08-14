@@ -460,6 +460,15 @@ server.post('/api/v1/investment-guidances', (_req, res) => {
   db.get('investmentGuidances').push(created).write()
   res.status(201).json(created)
 })
+server.get('/api/v1/investment-guidances/:guidanceId', (req, res) => {
+  const found =
+    list('investmentGuidances').find(
+      (guidance) => String(guidance.id) === String(req.params.guidanceId),
+    ) || first('investmentGuidances')
+
+  if (!found) return res.status(404).json({ message: 'Investment guidance not found' })
+  return res.status(200).json(found)
+})
 server.post('/api/v1/investment-guidances/:guidanceId/apply', (req, res) => {
   const base = first('strategyApplications')
   const created = {

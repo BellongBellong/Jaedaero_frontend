@@ -6,7 +6,16 @@ const INDICATOR_META = {
 }
 
 function toParts(value) {
-  return Array.isArray(value) ? value : []
+  if (Array.isArray(value)) return value
+
+  if (typeof value !== 'string') return []
+
+  const matched = value.match(
+    /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2})(?::\d{2}(?::\d{2})?)?)?/,
+  )
+  if (!matched) return []
+
+  return matched.slice(1).map((part) => (part === undefined ? undefined : Number(part)))
 }
 
 function formatNumber(value, maximumFractionDigits = 2) {

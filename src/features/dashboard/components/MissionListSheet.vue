@@ -39,7 +39,9 @@ function missionTypeLabel(type) {
 }
 
 function missionTypeClass(type) {
-  return String(type || 'COMMON').toLowerCase()
+  return (
+    { SAFE: 'safe', AGGRESSIVE: 'notification', COMMON: 'default' }[type || 'COMMON'] ?? 'default'
+  )
 }
 
 function closeOnEscape(event) {
@@ -126,7 +128,10 @@ onBeforeUnmount(() => {
                 <span class="mission-sheet__content">
                   <span>
                     <strong>{{ mission.title }}</strong>
-                    <em :class="`mission-sheet__type--${missionTypeClass(mission.missionType)}`">
+                    <em
+                      class="app-label"
+                      :class="`label--${missionTypeClass(mission.missionType)}`"
+                    >
                       {{ missionTypeLabel(mission.missionType) }}
                     </em>
                   </span>
@@ -338,22 +343,7 @@ onBeforeUnmount(() => {
 
 .mission-sheet__content em {
   flex: 0 0 auto;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--gray-200);
-  color: var(--gray-600);
-  font-size: 11px;
   font-style: normal;
-}
-
-.mission-sheet__content .mission-sheet__type--safe {
-  background: var(--green-100);
-  color: var(--green-700);
-}
-
-.mission-sheet__content .mission-sheet__type--aggressive {
-  background: var(--orange-100);
-  color: var(--orange-600);
 }
 
 .mission-sheet__content small {

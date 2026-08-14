@@ -7,7 +7,9 @@
       "onboardingCompleted": false,
       "initialInvestmentPreference": "BALANCED",
       "profileImage": "NAVY",
-      "profileSource": "BLACK"
+      "profileSource": "BLACK",
+      "rank": "PRIVATE_FIRST_CLASS",
+      "militaryType": "ARMY"
     }
   ],
   "soldierProfiles": [
@@ -15,7 +17,7 @@
       "id": 1,
       "userId": 1,
       "militaryType": "ARMY",
-      "rank": "PRIVATE",
+      "rank": "PRIVATE_FIRST_CLASS",
       "enlistmentDate": "2026-06-30",
       "promotionDate": "2026-09-01",
       "dischargeDate": "2027-03-01",
@@ -1125,7 +1127,15 @@
       "generatedAt": "2026-08-01T09:00:00"
     }
   ],
-  "strategyApplications": [],
+  "strategyApplications": [
+    {
+      "id": 1,
+      "analysisId": null,
+      "sourceType": "INVESTMENT_GUIDANCE",
+      "sourceId": 1,
+      "appliedAt": "2026-08-13T08:14:45.909Z"
+    }
+  ],
   "soldierSavings": [],
   "challengeGroups": [],
   "dischargeReports": [],
@@ -1187,20 +1197,90 @@
     {
       "id": 1,
       "userId": 1,
-      "monthlyAmount": 150000,
-      "investmentDay": 10,
-      "enabled": true,
-      "updatedAt": "2026-08-06T09:00:00+09:00"
+      "frequency": "MONTHLY",
+      "contributionDay": 10,
+      "contributionAmount": 150000,
+      "maximumMonthlyAmount": 300000,
+      "brokerageAccountId": 3,
+      "investmentProductCode": "069500",
+      "investmentProductName": "KODEX 200",
+      "updatedAt": "2026-08-13T07:25:19.583Z"
     }
   ],
   "investmentGuidances": [
     {
+      "guidanceId": 1,
       "id": 1,
       "userId": 1,
-      "recommendedMonthlyAmount": 150000,
-      "investmentPreference": "SAFE",
-      "summary": "현재 자산 흐름에 맞춰 안정형 적립식 투자를 유지해보세요.",
+      "recommendation": {
+        "guidanceId": 1,
+        "actionType": "CONTINUE",
+        "reason": "현재 적립이 목표 달성에 계속 필요하므로 회차당 15만원을 유지해 주세요.",
+        "recommendedContributionAmount": 150000,
+        "currentContributionAmount": 150000,
+        "recommendedExpectedAsset": 18540000,
+        "nextContributionAt": "2026-09-10",
+        "nextReviewAt": "2026-09-10"
+      },
+      "currentPlan": {
+        "frequency": "MONTHLY",
+        "contributionDay": 10,
+        "contributionAmount": 150000,
+        "maximumMonthlyAmount": 300000,
+        "investmentProductCode": "069500",
+        "investmentProductName": "KODEX 200"
+      },
+      "assetStatus": {
+        "investmentPrincipal": 4299,
+        "marketValue": 4299,
+        "evaluationProfit": 0,
+        "returnRate": 0,
+        "baseAt": "2026-08-05T09:00:00+09:00"
+      },
+      "goalProgress": {
+        "goalAmount": 20000000,
+        "expectedAsset": 18540000,
+        "achievementRate": 90.8,
+        "remainingInstallments": 12,
+        "goalMarginAmount": 1460000
+      },
       "createdAt": "2026-08-06T09:00:00+09:00"
+    },
+    {
+      "guidanceId": 1,
+      "id": 2,
+      "userId": 1,
+      "recommendation": {
+        "guidanceId": 1,
+        "actionType": "START",
+        "reason": "현재 자산 흐름에 맞춰 안정형 적립식 투자를 유지해보세요.",
+        "recommendedContributionAmount": 150000,
+        "currentContributionAmount": 150000,
+        "recommendedExpectedAsset": 18540000,
+        "nextContributionAt": "2026-09-10",
+        "nextReviewAt": "2026-09-10"
+      },
+      "currentPlan": {
+        "frequency": "MONTHLY",
+        "contributionDay": 10,
+        "contributionAmount": 150000,
+        "maximumMonthlyAmount": 300000,
+        "investmentProductCode": "069500",
+        "investmentProductName": "KODEX 200"
+      },
+      "assetStatus": {
+        "investmentPrincipal": 1800000,
+        "marketValue": 1854000,
+        "returnRate": 3
+      },
+      "goalProgress": {
+        "goalAmount": 20000000,
+        "expectedAsset": 18540000,
+        "achievementRate": 90.8,
+        "remainingInstallments": 12,
+        "goalMarginAmount": 1460000
+      },
+      "createdAt": "2026-08-13T07:25:19.601Z"
     }
   ],
   "deviceTokens": [],

@@ -51,7 +51,6 @@ function emptyDashboardModel() {
   return {
     response: {},
     dailyReport: {
-      greeting: '오늘의 시장 흐름을 확인해보세요',
       title: '오늘의 AI 시장 리포트',
       date: '',
     },
@@ -139,7 +138,6 @@ export function useDashboard(options) {
       model.missions =
         missionsResult.status === 'fulfilled' ? normalizeMissions(missionsResult.value) : []
       model.dailyReport = {
-        greeting: report?.summary || '오늘의 시장 흐름을 확인해보세요',
         title: report?.title || '오늘의 AI 시장 리포트',
         date: report?.reportDate || '',
       }

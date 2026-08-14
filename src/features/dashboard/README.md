@@ -64,6 +64,7 @@
 | `MiniEventCalendar.vue`         | 월간 날짜, 오늘·선택일, 이벤트 기간 표시           | `eventResponses`의 `startDate`, `endDate`                  | 예정 이벤트 조회 API                                                        | 목 연결, 별도 캘린더 API 불필요        |
 | `SelectedEventList.vue`         | 선택 날짜에 포함되는 일정과 오늘 기준 D-day        | `eventResponses`                                           | 예정 이벤트 조회 API                                                        | 목 연결                                |
 | `EventTimeline.vue`             | 가까운 일정순 제목·기간·D-day와 긴급도             | `eventResponses`                                           | 예정 이벤트 조회 API                                                        | 목 연결                                |
+| `TodayMilitaryBenefits.vue`     | 휴가 모드의 오늘의 군인 할인 혜택 3건 요약         | 없음                                                       | `GET /api/v1/benefits?category=&rank=`                                      | API 호출 연결, 백엔드 Swagger 미노출   |
 | `TodayMissionCard.vue`          | 오늘만 제공되는 `TODAY` 미션                       | `missionResponses`                                         | `GET /api/v1/missions/today`                                                | 목 연결                                |
 | `MissionListSheet.vue`          | 데일리 미션과 오늘의 미션 전체                     | `missionResponses`                                         | `GET /api/v1/missions/today`                                                | 목 연결                                |
 | `DashboardAssetSwitcher.vue`    | 이번 달 자산 현황과 나의 총 자산 전환              | API 응답 + 목 fallback                                     | `GET /api/v1/dashboard`, 계좌 조회 API                                      | 대시보드 요약 API 연결                 |
@@ -205,6 +206,22 @@
 백엔드 이벤트 생성 API가 추가되면 `EventAddModal.vue`의 저장 payload를 그대로 전달하고,
 서버가 내려주는 이벤트 목록의 `autoVacationMode`와 기간을 기준으로 전환하도록
 로컬 저장 부분만 API 응답으로 교체합니다.
+
+## 휴가 모드 군인 혜택
+
+휴가 모드에서는 `TodayMilitaryBenefits.vue`가 군인 혜택 API 응답 중 하루 4건을 가로 스크롤 카드로 표시합니다.
+
+- 조회 예정 API: `GET /api/v1/benefits?category=&rank=`
+- 화면 필드: `id`, `title`, `category`, `discountSummary`
+- 응답이 배열이거나 `data`, `benefits`, `content`, `items`로 감싸진 경우를 모두 정규화합니다.
+- 선택 결과는 매일 오전 6시를 기준으로 변경되며, 같은 날짜 구간에는 새로고침해도 같은 조합을 유지합니다.
+- 카테고리는 교통, 여가, 숙박, 자기계발, 기타 색상으로 매핑합니다.
+- 전체 보기 클릭 시 `/benefits`에서 카테고리별 전체 목록을 표시합니다.
+- 전체 목록 카드는 클릭 시 기간, 대상, 내용, 이용 방법, 유의사항을 드롭다운으로 펼칩니다.
+- API 미제공 중에는 롯데월드 혜택 예시 1건만 표시하며, API 응답이 생기면 서버 데이터가 우선됩니다.
+- 로딩 중에는 휴가 모드 색상의 스켈레톤을, 조회 실패 또는 빈 응답에는 빈 상태 문구를 표시합니다.
+
+현재 배포 Swagger에는 `/benefits`가 아직 노출되지 않았으므로 백엔드 API가 추가되기 전에는 빈 상태가 표시됩니다.
 
 ## 증권계좌 연결 동선
 
