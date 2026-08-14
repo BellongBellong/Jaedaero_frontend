@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import arrowRightIcon from '@/assets/ai-analysis/arrowRightIcon.svg'
 import arrowUpIcon from '@/assets/ai-analysis/arrowUpIcon.svg'
@@ -8,8 +8,11 @@ import causeInfoIcon from '@/assets/ai-analysis/causeInfoIcon.svg'
 import analysisGlow from '@/assets/ai-coach/analysis-glow.svg'
 import coachCharacter from '@/assets/ai-coach/coach-character.svg'
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
-import { applyAiStrategy, createAiAnalysis } from '@/features/ai-analysis/api/aiAnalysis.api'
+import {
+  applyAiStrategy,
+  createAiAnalysis,
+  getAiAnalysis,
+} from '@/features/ai-analysis/api/aiAnalysis.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const MINIMUM_ANALYZING_DURATION = 2600
@@ -38,22 +41,20 @@ const SPENDING_CATEGORY_STYLES = {
 const FALLBACK_CATEGORY_STYLE = { emoji: '📦', tile: 'var(--gray-100)', color: 'var(--gray-400)' }
 
 const CAUSE_STYLES = {
-  FOOD_INCREASE: { emoji: '🍔', background: 'var(--category-food-light)' },
-  SUBSCRIPTION: { emoji: '🎬', background: 'var(--category-leisure-light)' },
+  SPENDING_INCREASE: { emoji: '📈', background: 'var(--category-food-light)' },
+  RECURRING_PAYMENT_CHECK: { emoji: '🔁', background: 'var(--category-leisure-light)' },
   SAVING_HABIT: { emoji: '💵', background: 'var(--category-salary-light)' },
+  SPENDING_STABLE: { emoji: '✅', background: 'var(--green-100)' },
 }
 
-const CAUSE_TAG_CLASSES = {
-  CAUTION: 'tag--caution',
-  CHECK_REQUIRED: 'tag--check',
-  GOOD: 'tag--good',
+const CAUSE_TAGS = {
+  SPENDING_INCREASE: { label: '주의', className: 'tag--caution' },
+  RECURRING_PAYMENT_CHECK: { label: '확인 필요', className: 'tag--check' },
+  SAVING_HABIT: { label: '좋아요', className: 'tag--good' },
+  SPENDING_STABLE: { label: '안정', className: 'tag--good' },
 }
 
-const PRODUCT_STYLES = {
-  군인공제회: { emoji: '🏦', theme: 'green' },
-  CMA: { emoji: '💵', theme: 'yellow' },
-}
-
+const route = useRoute()
 const router = useRouter()
 const onboarding = useOnboardingStore()
 
@@ -75,10 +76,15 @@ async function runAnalysis() {
   applyErrorMessage.value = ''
 
   try {
-    const [response] = await Promise.all([
-      createAiAnalysis({ analysisType: 'SPENDING', simulationId: null }),
-      delay(MINIMUM_ANALYZING_DURATION),
-    ])
+    const analysisId = route.params.analysisId
+    const response = analysisId
+      ? await getAiAnalysis(analysisId)
+      : (
+          await Promise.all([
+            createAiAnalysis({ simulationId: null }),
+            delay(MINIMUM_ANALYZING_DURATION),
+          ])
+        )[0]
     analysis.value = response
     phase.value = 'result'
   } catch {
@@ -95,6 +101,35 @@ function formatWon(value) {
 
 function formatManwon(value) {
   return `${Math.round(Number(value || 0) / 10_000).toLocaleString('ko-KR')}만원`
+}
+
+function formatPeriodDate(value) {
+  const date = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return `${date.getMonth() + 1}월 ${date.getDate()}일`
+}
+
+function formatFinancialDate(value) {
+  if (!value) return '-'
+  return String(value).replace(/-/g, '.')
+}
+
+function daysBetween(from, to) {
+  if (!from || !to) return null
+  const fromDate = new Date(`${from}T00:00:00`)
+  const toDate = new Date(`${to}T00:00:00`)
+  if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) return null
+
+  return Math.round((toDate - fromDate) / 86_400_000)
+}
+
+function formatFinancialDateChange(strategyDate, currentDate) {
+  const difference = daysBetween(strategyDate, currentDate)
+  if (difference == null) return '-'
+  if (difference > 0) return `${difference}일 앞당김`
+  if (difference < 0) return `${Math.abs(difference)}일 늦어짐`
+  return '동일한 날짜'
 }
 
 function markHighlight(text, highlight) {
@@ -114,7 +149,11 @@ const totalExpenseLabel = computed(() => {
   const pattern = spendingPattern.value
   if (!pattern) return ''
 
-  return `${pattern.baseMonthLabel || '이번달'} 총 지출 ${formatWon(pattern.totalExpenseAmount)}`
+  const period = [formatPeriodDate(pattern.periodStart), formatPeriodDate(pattern.periodEnd)]
+    .filter(Boolean)
+    .join('~')
+
+  return `${period || '이번 달'} 총 지출 ${formatWon(pattern.totalSpendingAmount)}`
 })
 
 const spendingCategories = computed(() => {
@@ -125,11 +164,14 @@ const spendingCategories = computed(() => {
   const total = amounts.reduce((sum, amount) => sum + amount, 0)
 
   return categories.map((category) => {
-    const style = SPENDING_CATEGORY_STYLES[category.code] ?? FALLBACK_CATEGORY_STYLE
+    const code = category.category
+    const style = SPENDING_CATEGORY_STYLES[code] ?? FALLBACK_CATEGORY_STYLE
     const amount = Number(category.amount)
 
     return {
       ...category,
+      code,
+      label: category.displayName || code,
       ...style,
       amount,
       share: total ? amount / total : 0,
@@ -155,41 +197,70 @@ const donutSegments = computed(() => {
 
 // 인사이트 문장은 피그마 도안처럼 한 문장씩 줄바꿈해 보여준다.
 const insightLines = computed(() => {
-  const insight = spendingPattern.value?.insight
-  if (!insight?.message) return []
+  const message = analysis.value?.comment
+  if (!message) return []
 
-  return insight.message
+  return message
     .split(/(?<=\.)\s+/)
     .filter(Boolean)
-    .map((sentence) => markHighlight(sentence, insight.highlight || ''))
+    .map((sentence) => markHighlight(sentence, ''))
 })
 
 const causes = computed(() =>
-  (analysis.value?.causes ?? []).map((cause) => {
-    const style = CAUSE_STYLES[cause.code] ?? { emoji: '📌', background: 'var(--gray-100)' }
+  (analysis.value?.spendingInsights ?? []).map((cause) => {
+    const style = CAUSE_STYLES[cause.type] ?? { emoji: '📌', background: 'var(--gray-100)' }
+    const tag = CAUSE_TAGS[cause.type] ?? { label: '분석', className: 'tag--neutral' }
 
     return {
       ...cause,
+      code: cause.type,
       emoji: style.emoji,
       background: style.background,
-      tagClass: CAUSE_TAG_CLASSES[cause.status] ?? 'tag--neutral',
+      statusLabel: tag.label,
+      tagClass: tag.className,
     }
   }),
 )
 
 const summaryParts = computed(() => {
-  const summary = analysis.value?.summary
+  const summary =
+    analysis.value?.recommendedScenario?.recommendReason ||
+    analysis.value?.spendingImprovement?.action ||
+    analysis.value?.comment
   if (!summary) return null
 
-  return markHighlight(summary, analysis.value?.summaryHighlight || '')
+  return markHighlight(summary, '')
 })
 
-const expectedEffect = computed(() => analysis.value?.expectedEffect ?? null)
+const expectedEffect = computed(() => {
+  const effect = analysis.value?.spendingExpectedEffect
+  const scenario = analysis.value?.recommendedScenario
+  if (!effect && !scenario) return null
+
+  const increase = Number(effect?.expectedAssetIncreaseAmount || 0)
+  const currentProjectedAsset = Math.max(
+    0,
+    Number(effect?.expectedAssetAfterImprovement || 0) - increase,
+  )
+  const strategyProjectedAsset = Number(
+    scenario?.expectedAsset ?? effect?.expectedAssetAfterImprovement,
+  )
+
+  return {
+    currentProjectedAsset,
+    strategyProjectedAsset,
+    additionalAmount: Math.max(0, strategyProjectedAsset - currentProjectedAsset),
+    currentFinancialDischargeLabel: formatFinancialDate(analysis.value?.financialDischargeDate),
+    financialDateChangeLabel: formatFinancialDateChange(
+      scenario?.financialDischargeDate,
+      analysis.value?.financialDischargeDate,
+    ),
+  }
+})
 
 const prescriptionAmount = computed(() => {
   const amount =
-    expectedEffect.value?.additionalAmount ??
-    analysis.value?.recommendedScenarios?.[0]?.expectedEffectAmount
+    expectedEffect.value?.additionalAmount ?? analysis.value?.recommendedScenario?.expectedAsset
 
   return amount ? `+${formatWon(amount)}` : ''
 })
@@ -199,13 +270,7 @@ const effectBadgeAmount = computed(() => {
   return amount ? `+${formatManwon(amount)}` : ''
 })
 
-const recommendedProducts = computed(() =>
-  (analysis.value?.recommendedProducts ?? []).map((product) => {
-    const style = PRODUCT_STYLES[product.name] ?? { emoji: '🏦', theme: 'green' }
-
-    return { ...product, emoji: style.emoji, theme: style.theme }
-  }),
-)
+const isFallbackGuide = computed(() => analysis.value?.generationSource === 'FALLBACK')
 
 const applyButtonLabel = computed(() => {
   if (applyState.value === 'applying') return '적용 중...'
@@ -214,13 +279,13 @@ const applyButtonLabel = computed(() => {
 })
 
 async function handleApplyStrategy() {
-  if (!analysis.value?.id || applyState.value !== 'idle') return
+  if (!analysis.value?.analysisId || applyState.value !== 'idle') return
 
   applyState.value = 'applying'
   applyErrorMessage.value = ''
 
   try {
-    await applyAiStrategy(analysis.value.id)
+    await applyAiStrategy(analysis.value.analysisId)
     applyState.value = 'applied'
   } catch {
     applyState.value = 'idle'
@@ -341,6 +406,13 @@ async function handleApplyStrategy() {
         </header>
 
         <div class="result__body">
+          <p
+            v-if="isFallbackGuide"
+            class="fallback-guide"
+          >
+            AI 설명 생성이 지연되어 계산된 수치를 기반으로 한 기본 가이드를 보여드려요.
+          </p>
+
           <!-- 소비 패턴 분석 -->
           <article class="card card--expense">
             <div class="card-head">
@@ -595,7 +667,9 @@ async function handleApplyStrategy() {
                   <span class="compare__eyebrow">AI 전략 적용</span>
                   <div class="compare__value-group">
                     <span class="compare__label">재정적 전역일</span>
-                    <strong class="compare__value">{{ expectedEffect.advancedDays }}일 앞당김</strong>
+                    <strong class="compare__value">{{
+                      expectedEffect.financialDateChangeLabel
+                    }}</strong>
                   </div>
                 </div>
               </div>
@@ -617,55 +691,6 @@ async function handleApplyStrategy() {
               {{ applyErrorMessage }}
             </p>
           </article>
-
-          <!-- 추천 상품 -->
-          <section
-            v-if="recommendedProducts.length"
-            class="products"
-            aria-labelledby="recommended-products-title"
-          >
-            <div class="products__head">
-              <div class="section-head">
-                <span
-                  class="head-tile head-tile--star"
-                  aria-hidden="true"
-                >⭐</span>
-                <h3
-                  id="recommended-products-title"
-                  class="section-head__title"
-                >
-                  추천 상품
-                </h3>
-              </div>
-              <DetailLinkButton
-                class="products__more"
-                @click="router.push({ name: 'ai-product-recommendation' })"
-              >
-                자세히 보기
-              </DetailLinkButton>
-            </div>
-
-            <div class="products__grid">
-              <article
-                v-for="product in recommendedProducts"
-                :key="product.productId"
-                class="product-card"
-                :class="`product-card--${product.theme}`"
-              >
-                <span
-                  class="product-card__icon"
-                  aria-hidden="true"
-                >{{ product.emoji }}</span>
-                <strong>{{ product.name }}</strong>
-                <span class="product-card__tags">
-                  <span
-                    v-for="tag in product.tags"
-                    :key="tag"
-                  >{{ tag }}</span>
-                </span>
-              </article>
-            </div>
-          </section>
         </div>
       </section>
     </Transition>
@@ -881,6 +906,16 @@ async function handleApplyStrategy() {
   flex-direction: column;
   gap: var(--space-10);
   padding: var(--space-4) var(--layout-page-padding) var(--space-40);
+}
+
+.fallback-guide {
+  padding: 10px 14px;
+  border: 1px solid var(--olive-100);
+  border-radius: 14px;
+  background: rgb(232 236 230 / 55%);
+  color: var(--olive-600);
+  font-size: var(--text-xs);
+  line-height: 1.5;
 }
 
 .card {

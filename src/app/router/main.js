@@ -141,7 +141,7 @@ const mainRoutes = [
         },
       },
       {
-        path: 'ai-asset-analysis-result',
+        path: 'ai-asset-analysis-result/:analysisId?',
         name: 'ai-asset-analysis-result',
         component: () => import('@/features/ai-analysis/views/AiAssetAnalysisResultView.vue'),
         meta: {
