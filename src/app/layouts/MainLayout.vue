@@ -87,6 +87,7 @@ function handleContentScroll(event) {
 <template>
   <MobileFrame
     :class="{
+      'mobile-frame--dashboard': route.name === 'dashboard',
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
       'mobile-frame--investment-guide': route.meta.investmentGuide,
       'mobile-frame--vacation': isVacationDashboard,
@@ -145,18 +146,22 @@ function handleContentScroll(event) {
   position: absolute;
   z-index: var(--z-navigation, 20);
   right: 0;
-  bottom: 0;
+  /* 홈 인디케이터는 피하되, safe area를 컨테이너 높이에 중복 가산하지 않는다. */
+  bottom: max(8px, calc(var(--safe-area-bottom) - 4px));
   left: 0;
-  /*
-    PWA는 이미 홈 인디케이터 영역까지 앱 캔버스가 이어진다. safe area를 다시
-    더하면 바가 그 높이만큼 위로 떠 버리므로, 바는 화면 하단을 기준으로 둔다.
-  */
   height: var(--bottom-navigation-area-height);
   padding-top: 8px;
   padding-bottom: 4px;
   pointer-events: none;
   /* 콘텐츠가 글래스 바와 하단 safe area 뒤로 자연스럽게 이어진다. */
   background: transparent;
+}
+
+/* 투명 iOS 상태바 뒤에서도 대시보드의 브랜드 배경이 끊기지 않게 이어 준다. */
+:global(.mobile-frame.mobile-frame--dashboard) {
+  background:
+    radial-gradient(circle at 88% 0%, rgb(98 255 156 / 24%), transparent 34%),
+    radial-gradient(circle at 8% 0%, rgb(255 229 114 / 14%), transparent 30%), var(--ui-background);
 }
 
 .main-layout__bottom > :deep(.bottom-navigation) {
