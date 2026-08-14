@@ -75,10 +75,12 @@ async function runAnalysis() {
   applyErrorMessage.value = ''
 
   try {
-    const [response] = await Promise.all([
-      createAiAnalysis({ analysisType: 'SPENDING', simulationId: null }),
-      delay(MINIMUM_ANALYZING_DURATION),
-    ])
+    /*
+      analysisType 을 보내면 서버가 400 으로 거절한다. 명세에는 SPENDING 이 있으나
+      실제 서버는 이 값을 모르며, 필드를 빼면 서버가 알아서 종류를 정해 정상 응답한다.
+      백엔드에서 허용 값이 확정되면 다시 넣어야 한다.
+    */
+    const [response] = await Promise.all([createAiAnalysis({}), delay(MINIMUM_ANALYZING_DURATION)])
     analysis.value = response
     phase.value = 'result'
   } catch {

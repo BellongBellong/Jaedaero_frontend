@@ -247,7 +247,7 @@ function resimulate() {
 
 .summary-card__title strong {
   color: var(--gray-600);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: var(--weight-bold);
   line-height: 1.5;
 }
