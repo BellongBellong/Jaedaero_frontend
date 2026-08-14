@@ -1192,12 +1192,7 @@ onMounted(async () => {
   color: #ff4c4c;
 }
 .withdraw {
-  width: 100%;
-  padding: 17px 0 0;
-  border: 0;
-  background: transparent;
   color: #bbb;
-  text-align: left;
 }
 .dialog-backdrop {
   position: fixed;
