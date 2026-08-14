@@ -21,7 +21,7 @@ const DONUT_RADIUS = 42
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
 const DONUT_SEGMENT_GAP = 3
 
-// 피그마 AI 분석 도안 기준 카테고리 이모지·타일 배경·막대 색상.
+// 피그마 AI 소비 분석 도안 기준 카테고리 이모지·타일 배경·막대 색상.
 const SPENDING_CATEGORY_STYLES = {
   FOOD: { emoji: '🍔', tile: 'var(--category-food-light)', color: 'var(--category-food-main)' },
   PX: { emoji: '🪖', tile: 'var(--category-px-light)', color: 'var(--category-px-main)' },
@@ -86,7 +86,7 @@ async function runAnalysis() {
     analysis.value = response
     phase.value = 'result'
   } catch {
-    errorMessage.value = 'AI 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
+    errorMessage.value = 'AI 소비 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
     phase.value = 'error'
   }
 }
@@ -370,7 +370,7 @@ async function handleApplyStrategy() {
               aria-hidden="true"
             >
           </button>
-          <h1>AI 분석</h1>
+          <h1>AI 소비 분석</h1>
         </header>
         <div class="status-panel__body">
           <p>{{ errorMessage }}</p>
@@ -403,7 +403,7 @@ async function handleApplyStrategy() {
               aria-hidden="true"
             >
           </button>
-          <h1>AI 분석</h1>
+          <h1>AI 소비 분석</h1>
         </header>
 
         <div class="result__body">

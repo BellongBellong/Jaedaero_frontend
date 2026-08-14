@@ -9,7 +9,7 @@ const { filteredRecords, summary, activeTab, tabs, loading, error, reload } = us
 const router = useRouter()
 
 function recordTypeLabel(record) {
-  return record.type === ANALYSIS_RECORD_TYPES.WHAT_IF ? 'What-if' : 'AI 분석'
+  return record.type === ANALYSIS_RECORD_TYPES.WHAT_IF ? 'What-if' : 'AI 소비 분석'
 }
 
 function detailRoute(record) {
