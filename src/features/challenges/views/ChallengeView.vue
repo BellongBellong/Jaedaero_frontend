@@ -1283,7 +1283,7 @@ onBeforeUnmount(() => {
 }
 .podium .rank-2 {
   --stage-height: 168px;
-  --character-bottom: 62px;
+  --character-bottom: 68px;
   --crown-bottom: 135px;
   --podium-image-width: 91px;
   --podium-offset-x: 0px;
@@ -1291,7 +1291,7 @@ onBeforeUnmount(() => {
 }
 .podium .rank-3 {
   --stage-height: 124px;
-  --character-bottom: 48px;
+  --character-bottom: 53px;
   --crown-bottom: 0px;
   --podium-image-width: 91px;
   --podium-offset-x: -4.5px;
