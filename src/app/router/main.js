@@ -138,6 +138,7 @@ const mainRoutes = [
           bottomNavigation: 'ai-coach',
           headerTitle: '오늘의 AI 시장 리포트',
           headerBadge: 'BETA',
+          hideBackOnScroll: true,
         },
       },
       {

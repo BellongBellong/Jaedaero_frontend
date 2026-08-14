@@ -12,7 +12,10 @@ const SCROLL_DIRECTION_EPSILON = 0.5
 
 const route = useRoute()
 const contentElement = ref(null)
+const headerElement = ref(null)
 const isHeaderCollapsed = ref(false)
+/* 접힌 뒤에는 헤더 높이가 0이라 측정할 수 없으므로 펼쳐져 있을 때 값을 기억해 둔다. */
+let expandedHeaderHeight = 0
 const isNavigationMinimized = ref(false)
 const lastScrollTop = ref(0)
 const { mode } = useLeaveModeSchedule()
@@ -34,6 +37,32 @@ watch(
   },
 )
 
+function readExpandedHeaderHeight() {
+  const element = headerElement.value?.$el
+
+  if (element && !isHeaderCollapsed.value) {
+    const height = element.offsetHeight
+    if (height > 0) expandedHeaderHeight = height
+  }
+
+  return expandedHeaderHeight
+}
+
+/*
+  헤더를 접으면 본문 영역이 헤더 높이만큼 커져 최대 스크롤량이 그만큼 줄어든다.
+  스크롤 여유가 헤더 높이에 가까운 화면에서는 접히는 순간 scrollTop이 열림
+  임계값 아래로 잘려 다시 펼쳐지고, 이 과정이 반복되며 헤더가 떨린다.
+  접은 뒤에도 열림 임계값을 넘는 여유가 남는 경우에만 접도록 막는다.
+*/
+function canCollapseHeader(element) {
+  const currentMaxScroll = element.scrollHeight - element.clientHeight
+  const maxScrollAfterCollapse = isHeaderCollapsed.value
+    ? currentMaxScroll
+    : currentMaxScroll - readExpandedHeaderHeight()
+
+  return maxScrollAfterCollapse > 12
+}
+
 function handleContentScroll(event) {
   const scrollTop = event.currentTarget.scrollTop
   const delta = scrollTop - lastScrollTop.value
@@ -42,7 +71,7 @@ function handleContentScroll(event) {
     헤더는 내릴 때 32px, 올릴 때 12px의 여유를 둔다. iOS 관성 스크롤의 작은
     반동으로 닫힘/열림이 반복되지 않으면서도 Chrome과 같은 방향성은 유지한다.
   */
-  if (route.meta.keepHeaderOnScroll) {
+  if (route.meta.keepHeaderOnScroll || !canCollapseHeader(event.currentTarget)) {
     isHeaderCollapsed.value = false
   } else if (isHeaderCollapsed.value ? scrollTop < 12 : scrollTop > 32) {
     isHeaderCollapsed.value = !isHeaderCollapsed.value
@@ -73,6 +102,7 @@ function handleContentScroll(event) {
   >
     <AppHeader
       v-if="!route.meta.hideHeader"
+      ref="headerElement"
       :title="route.meta.headerTitle"
       :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
