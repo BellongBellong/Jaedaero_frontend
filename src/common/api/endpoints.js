@@ -21,6 +21,7 @@ export const ENDPOINTS = {
     connect: '/accounts/connect',
     list: '/accounts',
     detail: (accountId) => `/accounts/${accountId}`,
+    activate: (accountId) => `/accounts/${accountId}/activate`,
   },
   dashboard: '/dashboard',
   cashflow: '/cashflow',
@@ -30,11 +31,11 @@ export const ENDPOINTS = {
     detail: (simulationId) => `/simulations/${simulationId}`,
   },
   aiAnalyses: {
-    list: '/ai-analyses',
     create: '/ai-analyses',
     detail: (analysisId) => `/ai-analyses/${analysisId}`,
     apply: (analysisId) => `/ai-analyses/${analysisId}/apply`,
   },
+  analysisHistories: '/analysis-histories',
   strategyApplications: '/strategy-applications',
   transactions: {
     list: '/transactions',

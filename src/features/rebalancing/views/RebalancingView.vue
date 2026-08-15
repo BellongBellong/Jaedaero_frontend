@@ -6,6 +6,7 @@ import allocationGuideVisual from '@/assets/ai-coach/allocation-guide-visual.png
 import allocationIcon from '@/assets/ai-coach/what-if.svg'
 import monthlyInvestmentIcon from '@/assets/ai-coach/monthly-investment-icon.png'
 import planGuideVisual from '@/assets/ai-coach/plan-guide-visual.png'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import {
   getRebalancingRecommendation,
   getRecurringInvestmentPlan,
@@ -15,7 +16,7 @@ import { getSimulations } from '@/features/simulations/api/simulations.api'
 
 const route = useRoute()
 const router = useRouter()
-const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_REBALANCING')
 
 const isLoading = ref(true)
 const loadError = ref('')
@@ -252,20 +253,12 @@ onMounted(async () => {
           </dl>
         </div>
 
-        <button
+        <DetailLinkButton
           class="monthly-guide__detail"
-          type="button"
           @click="openGuideDetail"
         >
           가이드 상세보기
-          <svg
-            class="monthly-guide__chevron"
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-          >
-            <path d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        </DetailLinkButton>
       </article>
 
       <button
@@ -620,15 +613,10 @@ onMounted(async () => {
   word-break: keep-all;
 }
 
-.monthly-guide__chevron {
+.monthly-guide__detail img {
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
-  fill: none;
-  stroke: #bdbdbd;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2.5;
 }
 
 .refresh-button {

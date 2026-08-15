@@ -1,15 +1,20 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 import arrowRightIcon from '@/assets/ai-analysis/arrowRightIcon.svg'
 import arrowUpIcon from '@/assets/ai-analysis/arrowUpIcon.svg'
 import causeInfoIcon from '@/assets/ai-analysis/causeInfoIcon.svg'
-import chevronIcon from '@/assets/ai-analysis/chevronIcon.svg'
 import analysisGlow from '@/assets/ai-coach/analysis-glow.svg'
 import coachCharacter from '@/assets/ai-coach/coach-character.svg'
-import { applyAiStrategy, createAiAnalysis } from '@/features/ai-analysis/api/aiAnalysis.api'
-import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
+import {
+  applyAiStrategy,
+  createAiAnalysis,
+  getAiAnalysis,
+} from '@/features/ai-analysis/api/aiAnalysis.api'
+import { mapAiAnalysisRequest } from '@/features/ai-analysis/mappers/aiAnalysisRequest.mapper'
+import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
+import { getSimulationDefaults, getSimulations } from '@/features/simulations/api/simulations.api'
 
 const MINIMUM_ANALYZING_DURATION = 2600
 
@@ -17,7 +22,7 @@ const DONUT_RADIUS = 42
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
 const DONUT_SEGMENT_GAP = 3
 
-// 피그마 AI 분석 도안 기준 카테고리 이모지·타일 배경·막대 색상.
+// 피그마 AI 소비 분석 도안 기준 카테고리 이모지·타일 배경·막대 색상.
 const SPENDING_CATEGORY_STYLES = {
   FOOD: { emoji: '🍔', tile: 'var(--category-food-light)', color: 'var(--category-food-main)' },
   PX: { emoji: '🪖', tile: 'var(--category-px-light)', color: 'var(--category-px-main)' },
@@ -37,23 +42,21 @@ const SPENDING_CATEGORY_STYLES = {
 const FALLBACK_CATEGORY_STYLE = { emoji: '📦', tile: 'var(--gray-100)', color: 'var(--gray-400)' }
 
 const CAUSE_STYLES = {
-  FOOD_INCREASE: { emoji: '🍔', background: 'var(--category-food-light)' },
-  SUBSCRIPTION: { emoji: '🎬', background: 'var(--category-leisure-light)' },
+  SPENDING_INCREASE: { emoji: '📈', background: 'var(--category-food-light)' },
+  RECURRING_PAYMENT_CHECK: { emoji: '🔁', background: 'var(--category-leisure-light)' },
   SAVING_HABIT: { emoji: '💵', background: 'var(--category-salary-light)' },
+  SPENDING_STABLE: { emoji: '✅', background: 'var(--green-100)' },
 }
 
-const CAUSE_TAG_CLASSES = {
-  CAUTION: 'tag--caution',
-  CHECK_REQUIRED: 'tag--check',
-  GOOD: 'tag--good',
+const CAUSE_TAGS = {
+  SPENDING_INCREASE: { label: '주의', className: 'tag--caution' },
+  RECURRING_PAYMENT_CHECK: { label: '확인 필요', className: 'tag--check' },
+  SAVING_HABIT: { label: '좋아요', className: 'tag--good' },
+  SPENDING_STABLE: { label: '안정', className: 'tag--good' },
 }
 
-const PRODUCT_STYLES = {
-  군인공제회: { emoji: '🏦', theme: 'green' },
-  CMA: { emoji: '💵', theme: 'yellow' },
-}
-
-const onboarding = useOnboardingStore()
+const route = useRoute()
+const { honorificNickname, loadNickname } = useCurrentUserNickname()
 
 const phase = ref('analyzing')
 const analysis = ref(null)
@@ -62,9 +65,21 @@ const errorMessage = ref('')
 const applyState = ref('idle')
 const applyErrorMessage = ref('')
 
-const nickname = computed(() => onboarding.form.nickname || '윤호')
-
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function createCurrentWhatIfAnalysis() {
+  const [defaultsResult, simulationsResult] = await Promise.allSettled([
+    getSimulationDefaults(),
+    getSimulations({ page: 0, size: 1 }),
+  ])
+
+  const payload = mapAiAnalysisRequest({
+    defaults: defaultsResult.status === 'fulfilled' ? defaultsResult.value : null,
+    simulations: simulationsResult.status === 'fulfilled' ? simulationsResult.value : null,
+  })
+
+  return createAiAnalysis(payload)
+}
 
 async function runAnalysis() {
   phase.value = 'analyzing'
@@ -73,19 +88,22 @@ async function runAnalysis() {
   applyErrorMessage.value = ''
 
   try {
-    const [response] = await Promise.all([
-      createAiAnalysis({ analysisType: 'SPENDING', simulationId: null }),
-      delay(MINIMUM_ANALYZING_DURATION),
-    ])
+    const analysisId = route.params.analysisId
+    const response = analysisId
+      ? await getAiAnalysis(analysisId)
+      : (await Promise.all([createCurrentWhatIfAnalysis(), delay(MINIMUM_ANALYZING_DURATION)]))[0]
     analysis.value = response
     phase.value = 'result'
   } catch {
-    errorMessage.value = 'AI 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
+    errorMessage.value = 'AI 소비 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
     phase.value = 'error'
   }
 }
 
-onMounted(runAnalysis)
+onMounted(() => {
+  loadNickname()
+  runAnalysis()
+})
 
 function formatWon(value) {
   return `${Number(value || 0).toLocaleString('ko-KR')}원`
@@ -93,6 +111,35 @@ function formatWon(value) {
 
 function formatManwon(value) {
   return `${Math.round(Number(value || 0) / 10_000).toLocaleString('ko-KR')}만원`
+}
+
+function formatPeriodDate(value) {
+  const date = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return `${date.getMonth() + 1}월 ${date.getDate()}일`
+}
+
+function formatFinancialDate(value) {
+  if (!value) return '-'
+  return String(value).replace(/-/g, '.')
+}
+
+function daysBetween(from, to) {
+  if (!from || !to) return null
+  const fromDate = new Date(`${from}T00:00:00`)
+  const toDate = new Date(`${to}T00:00:00`)
+  if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) return null
+
+  return Math.round((toDate - fromDate) / 86_400_000)
+}
+
+function formatFinancialDateChange(strategyDate, currentDate) {
+  const difference = daysBetween(strategyDate, currentDate)
+  if (difference == null) return '-'
+  if (difference > 0) return `${difference}일 앞당김`
+  if (difference < 0) return `${Math.abs(difference)}일 늦어짐`
+  return '동일한 날짜'
 }
 
 function markHighlight(text, highlight) {
@@ -112,7 +159,11 @@ const totalExpenseLabel = computed(() => {
   const pattern = spendingPattern.value
   if (!pattern) return ''
 
-  return `${pattern.baseMonthLabel || '이번달'} 총 지출 ${formatWon(pattern.totalExpenseAmount)}`
+  const period = [formatPeriodDate(pattern.periodStart), formatPeriodDate(pattern.periodEnd)]
+    .filter(Boolean)
+    .join('~')
+
+  return `${period || '이번 달'} 총 지출 ${formatWon(pattern.totalSpendingAmount)}`
 })
 
 const spendingCategories = computed(() => {
@@ -123,11 +174,14 @@ const spendingCategories = computed(() => {
   const total = amounts.reduce((sum, amount) => sum + amount, 0)
 
   return categories.map((category) => {
-    const style = SPENDING_CATEGORY_STYLES[category.code] ?? FALLBACK_CATEGORY_STYLE
+    const code = category.category
+    const style = SPENDING_CATEGORY_STYLES[code] ?? FALLBACK_CATEGORY_STYLE
     const amount = Number(category.amount)
 
     return {
       ...category,
+      code,
+      label: category.displayName || code,
       ...style,
       amount,
       share: total ? amount / total : 0,
@@ -153,41 +207,79 @@ const donutSegments = computed(() => {
 
 // 인사이트 문장은 피그마 도안처럼 한 문장씩 줄바꿈해 보여준다.
 const insightLines = computed(() => {
-  const insight = spendingPattern.value?.insight
-  if (!insight?.message) return []
+  const message = analysis.value?.comment
+  if (!message) return []
 
-  return insight.message
+  return message
     .split(/(?<=\.)\s+/)
     .filter(Boolean)
-    .map((sentence) => markHighlight(sentence, insight.highlight || ''))
+    .map((sentence) => markHighlight(sentence, ''))
 })
 
 const causes = computed(() =>
-  (analysis.value?.causes ?? []).map((cause) => {
-    const style = CAUSE_STYLES[cause.code] ?? { emoji: '📌', background: 'var(--gray-100)' }
+  (analysis.value?.spendingInsights ?? []).map((cause) => {
+    const style = CAUSE_STYLES[cause.type] ?? { emoji: '📌', background: 'var(--gray-100)' }
+    const tag = CAUSE_TAGS[cause.type] ?? { label: '분석', className: 'tag--neutral' }
 
     return {
       ...cause,
+      code: cause.type,
       emoji: style.emoji,
       background: style.background,
-      tagClass: CAUSE_TAG_CLASSES[cause.status] ?? 'tag--neutral',
+      statusLabel: tag.label,
+      tagClass: tag.className,
     }
   }),
 )
 
 const summaryParts = computed(() => {
-  const summary = analysis.value?.summary
+  const summary =
+    analysis.value?.recommendedScenario?.recommendReason ||
+    analysis.value?.spendingImprovement?.action ||
+    analysis.value?.comment
   if (!summary) return null
 
-  return markHighlight(summary, analysis.value?.summaryHighlight || '')
+  return markHighlight(summary, '')
 })
 
-const expectedEffect = computed(() => analysis.value?.expectedEffect ?? null)
+const expectedEffect = computed(() => {
+  const effect = analysis.value?.spendingExpectedEffect
+  const scenario = analysis.value?.recommendedScenario
+  if (!effect && !scenario) return null
+
+  // 최신 소비 분석 DTO는 현재 적용 중인 What-if 결과를 최상위 expectedAsset으로 제공한다.
+  // 개선 효과를 역산하면 계산 정책이나 반올림이 바뀔 때 기준 자산이 달라질 수 있으므로
+  // 최상위 값을 우선하고, 과거 저장 이력에만 기존 역산 방식을 사용한다.
+  const legacyIncrease = Number(effect?.expectedAssetIncreaseAmount || 0)
+  const legacyCurrentAsset = Math.max(
+    0,
+    Number(effect?.expectedAssetAfterImprovement || 0) - legacyIncrease,
+  )
+  const currentProjectedAsset = Number(analysis.value?.expectedAsset ?? legacyCurrentAsset)
+  const strategyProjectedAsset = Number(
+    scenario?.expectedAsset ?? effect?.expectedAssetAfterImprovement,
+  )
+  const calculatedIncrease = strategyProjectedAsset - currentProjectedAsset
+  const additionalAmount = Math.max(
+    0,
+    Number.isFinite(calculatedIncrease) ? calculatedIncrease : legacyIncrease,
+  )
+
+  return {
+    currentProjectedAsset,
+    strategyProjectedAsset,
+    additionalAmount,
+    currentFinancialDischargeLabel: formatFinancialDate(analysis.value?.financialDischargeDate),
+    financialDateChangeLabel: formatFinancialDateChange(
+      scenario?.financialDischargeDate,
+      analysis.value?.financialDischargeDate,
+    ),
+  }
+})
 
 const prescriptionAmount = computed(() => {
   const amount =
-    expectedEffect.value?.additionalAmount ??
-    analysis.value?.recommendedScenarios?.[0]?.expectedEffectAmount
+    expectedEffect.value?.additionalAmount ?? analysis.value?.recommendedScenario?.expectedAsset
 
   return amount ? `+${formatWon(amount)}` : ''
 })
@@ -197,28 +289,22 @@ const effectBadgeAmount = computed(() => {
   return amount ? `+${formatManwon(amount)}` : ''
 })
 
-const recommendedProducts = computed(() =>
-  (analysis.value?.recommendedProducts ?? []).map((product) => {
-    const style = PRODUCT_STYLES[product.name] ?? { emoji: '🏦', theme: 'green' }
-
-    return { ...product, emoji: style.emoji, theme: style.theme }
-  }),
-)
+const isFallbackGuide = computed(() => analysis.value?.generationSource === 'FALLBACK')
 
 const applyButtonLabel = computed(() => {
   if (applyState.value === 'applying') return '적용 중...'
   if (applyState.value === 'applied') return '적용 완료'
-  return 'AI 전략 적용하기'
+  return 'AI 소비 전략 적용하기'
 })
 
 async function handleApplyStrategy() {
-  if (!analysis.value?.id || applyState.value !== 'idle') return
+  if (!analysis.value?.analysisId || applyState.value !== 'idle') return
 
   applyState.value = 'applying'
   applyErrorMessage.value = ''
 
   try {
-    await applyAiStrategy(analysis.value.id)
+    await applyAiStrategy(analysis.value.analysisId)
     applyState.value = 'applied'
   } catch {
     applyState.value = 'idle'
@@ -242,7 +328,7 @@ async function handleApplyStrategy() {
       >
         <div class="analyzing__content">
           <h2 class="analyzing__title">
-            {{ nickname }}님의 자산을<br>
+            {{ honorificNickname }}의 자산을<br>
             분석중이에요
           </h2>
 
@@ -292,6 +378,13 @@ async function handleApplyStrategy() {
         class="result"
       >
         <div class="result__body">
+          <p
+            v-if="isFallbackGuide"
+            class="fallback-guide"
+          >
+            AI 설명 생성이 지연되어 계산된 수치를 기반으로 한 기본 가이드를 보여드려요.
+          </p>
+
           <!-- 소비 패턴 분석 -->
           <article class="card card--expense">
             <div class="card-head">
@@ -445,7 +538,7 @@ async function handleApplyStrategy() {
               >🤖</span>
               <div>
                 <h3>개선 방안 안내</h3>
-                <p>AI의 자산 관리 추천 방안</p>
+                <p>현재 계획을 유지하는 소비 관리 추천</p>
               </div>
             </div>
 
@@ -505,7 +598,7 @@ async function handleApplyStrategy() {
                   >
                 </span>
                 <div class="compare__col compare__col--strategy">
-                  <span class="compare__eyebrow">AI 전략 적용</span>
+                  <span class="compare__eyebrow">소비 전략 적용</span>
                   <div class="compare__value-group">
                     <span class="compare__label">예상 전역 자산</span>
                     <strong class="compare__value">{{
@@ -543,10 +636,12 @@ async function handleApplyStrategy() {
                   >
                 </span>
                 <div class="compare__col compare__col--strategy">
-                  <span class="compare__eyebrow">AI 전략 적용</span>
+                  <span class="compare__eyebrow">소비 전략 적용</span>
                   <div class="compare__value-group">
                     <span class="compare__label">재정적 전역일</span>
-                    <strong class="compare__value">{{ expectedEffect.advancedDays }}일 앞당김</strong>
+                    <strong class="compare__value">{{
+                      expectedEffect.financialDateChangeLabel
+                    }}</strong>
                   </div>
                 </div>
               </div>
@@ -568,60 +663,6 @@ async function handleApplyStrategy() {
               {{ applyErrorMessage }}
             </p>
           </article>
-
-          <!-- 추천 상품 -->
-          <section
-            v-if="recommendedProducts.length"
-            class="products"
-            aria-labelledby="recommended-products-title"
-          >
-            <div class="products__head">
-              <div class="section-head">
-                <span
-                  class="head-tile head-tile--star"
-                  aria-hidden="true"
-                >⭐</span>
-                <h3
-                  id="recommended-products-title"
-                  class="section-head__title"
-                >
-                  추천 상품
-                </h3>
-              </div>
-              <RouterLink
-                class="products__more"
-                :to="{ name: 'ai-product-recommendation' }"
-              >
-                자세히 보기
-                <img
-                  :src="chevronIcon"
-                  alt=""
-                  aria-hidden="true"
-                >
-              </RouterLink>
-            </div>
-
-            <div class="products__grid">
-              <article
-                v-for="product in recommendedProducts"
-                :key="product.productId"
-                class="product-card"
-                :class="`product-card--${product.theme}`"
-              >
-                <span
-                  class="product-card__icon"
-                  aria-hidden="true"
-                >{{ product.emoji }}</span>
-                <strong>{{ product.name }}</strong>
-                <span class="product-card__tags">
-                  <span
-                    v-for="tag in product.tags"
-                    :key="tag"
-                  >{{ tag }}</span>
-                </span>
-              </article>
-            </div>
-          </section>
         </div>
       </section>
     </Transition>
@@ -664,17 +705,17 @@ async function handleApplyStrategy() {
 }
 
 /* ===== 분석 중 ===== */
+/*
+  배경 그라데이션은 이 요소가 아니라 MainLayout 이 프레임(.mobile-frame)에 칠한다.
+  이 단계는 화면을 꽉 채워야 하는데, 안쪽 요소 높이를 dvh 로 맞추면 기기마다
+  safe area 계산이 달라져 바닥에 흰 여백이 남았다. 프레임이 직접 칠하면
+  레이아웃 계산과 무관하게 항상 화면 전체가 덮인다.
+*/
 .analyzing {
   display: flex;
+  min-height: 100%;
   flex-direction: column;
-  background:
-    radial-gradient(
-      ellipse 500px 640px at -5% 91%,
-      var(--yellow-400) 0%,
-      rgb(255 236 189 / 0%) 100%
-    ),
-    radial-gradient(circle 576px at 100% 14.5%, var(--green-500) 0%, rgb(98 255 156 / 0%) 100%),
-    #f6f6f6;
+  background: transparent;
 }
 
 .analyzing__header {
@@ -687,6 +728,8 @@ async function handleApplyStrategy() {
 
 .analyzing__header h1 {
   color: var(--gray-900);
+  /* 전역 h1 은 디스플레이 폰트라 공통 AppHeader 와 글꼴이 달라진다. */
+  font-family: var(--font-body);
   font-size: var(--text-h5);
   font-weight: var(--weight-bold);
   line-height: var(--leading-normal);
@@ -827,6 +870,8 @@ async function handleApplyStrategy() {
 
 .result__header h1 {
   color: var(--gray-900);
+  /* 전역 h1 은 디스플레이 폰트라 공통 AppHeader 와 글꼴이 달라진다. */
+  font-family: var(--font-body);
   font-size: var(--text-h5);
   font-weight: var(--weight-bold);
   line-height: var(--leading-normal);
@@ -837,6 +882,16 @@ async function handleApplyStrategy() {
   flex-direction: column;
   gap: var(--space-10);
   padding: var(--space-4) var(--layout-page-padding) var(--space-40);
+}
+
+.fallback-guide {
+  padding: 10px 14px;
+  border: 1px solid var(--olive-100);
+  border-radius: 14px;
+  background: rgb(232 236 230 / 55%);
+  color: var(--olive-600);
+  font-size: var(--text-xs);
+  line-height: 1.5;
 }
 
 .card {
@@ -1334,7 +1389,6 @@ async function handleApplyStrategy() {
 .products__more img {
   width: 7px;
   height: 11px;
-  transform: scaleX(-1);
 }
 
 .products__grid {

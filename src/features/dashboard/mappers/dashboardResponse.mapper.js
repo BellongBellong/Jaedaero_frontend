@@ -52,6 +52,7 @@ export function mapDashboardResponse(response, fallbackModel, now = new Date()) 
   const monthlyInvestmentGoal = toNumber(source.monthlyInvestmentGoal)
   const monthlySpendingGoal = toNumber(source.monthlySpendingGoal)
   const expectedAsset = toNumber(source.expectedAsset)
+  const currentExpectedAsset = toNumber(source.currentExpectedAsset, currentAsset)
   const derivedTargetAmount =
     achievementRate > 0 ? Math.round(expectedAsset / (achievementRate / 100)) : 0
 
@@ -74,6 +75,7 @@ export function mapDashboardResponse(response, fallbackModel, now = new Date()) 
       differenceDays: toNumber(source.deltaDaysVsActual),
       achievementRate,
       currentAsset: toTenThousandWon(currentAsset),
+      expectedAsset: toTenThousandWon(currentExpectedAsset),
       targetAmount: toTenThousandWon(derivedTargetAmount),
     },
     assetSummary: {

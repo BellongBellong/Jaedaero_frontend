@@ -55,13 +55,20 @@ apiClient.interceptors.response.use(
     const refreshToken = readAuthSession().refreshToken
     const authRequest = isAuthRequest(originalRequest?.url)
 
-    if (
-      error.response?.status === 401 &&
-      refreshToken &&
-      originalRequest &&
-      !originalRequest._retry &&
-      !authRequest
-    ) {
+    if (error.response?.status !== 401 || authRequest) {
+      return Promise.reject(error)
+    }
+
+    /*
+      재발급 후 재시도한 요청이 다시 401이면 세션 만료가 아니라 해당 리소스의 접근 권한 문제다.
+      이때 세션을 지우면 화면 하나의 권한 오류로 사용자가 통째로 로그아웃된다.
+      세션은 유지하고 호출한 화면이 오류를 처리하도록 그대로 넘긴다.
+    */
+    if (originalRequest?._retry) {
+      return Promise.reject(error)
+    }
+
+    if (refreshToken && originalRequest) {
       if (!refreshPromise) {
         refreshPromise = refreshClient
           .post('/auth/refresh', { refreshToken })
@@ -90,7 +97,8 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         return Promise.reject(refreshError)
       }
-    } else if (error.response?.status === 401 && !authRequest) {
+    } else {
+      // 재발급에 쓸 리프레시 토큰이 없으면 실제로 로그인이 필요한 상태다.
       clearAuthSession()
       redirectToLogin()
     }

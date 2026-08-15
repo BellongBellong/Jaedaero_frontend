@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 
 import analysisIcon from '@/assets/ai-coach/analysis.svg'
 import coachCharacter from '@/assets/ai-coach/coach-character.svg'
@@ -8,17 +8,17 @@ import glidepathImage from '@/assets/ai-coach/glidepath.svg'
 import historyIcon from '@/assets/ai-coach/history.svg'
 import whatIfIcon from '@/assets/ai-coach/what-if.svg'
 import nextArrowIcon from '@/assets/icons/nextArrowIcon.svg'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import { useTodayMarketIndicators } from '@/features/market-report/composables/useTodayMarketIndicators'
 import { useTodayMarketReport } from '@/features/market-report/composables/useTodayMarketReport'
 import {
   formatReportDate,
   mapMarketIndicators,
 } from '@/features/market-report/mappers/marketReport.mapper'
-import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
+import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
 
-const onboarding = useOnboardingStore()
-
-const nickname = computed(() => onboarding.form.nickname || '윤호')
+const router = useRouter()
+const { honorificNickname, loadNickname } = useCurrentUserNickname()
 
 const { report, error, load } = useTodayMarketReport()
 const {
@@ -34,6 +34,10 @@ function retryReport() {
   load()
   loadIndicators()
 }
+
+function openFinancialReport() {
+  router.push({ name: 'ai-financial-report' })
+}
 const reportDate = computed(() => {
   const formattedDate = formatReportDate(report.value)
   return formattedDate.replace(/\s\d{1,2}시(?=\s기준)/, '')
@@ -41,13 +45,14 @@ const reportDate = computed(() => {
 const reportSummary = computed(() => report.value?.summary || '')
 
 onMounted(() => {
+  loadNickname()
   load()
   loadIndicators()
 })
 
 const analysisMenus = [
   {
-    label: 'AI 분석',
+    label: 'AI 소비 분석',
     icon: analysisIcon,
     to: { name: 'ai-asset-analysis-result' },
   },
@@ -69,7 +74,7 @@ const analysisMenus = [
     <div class="ai-coach-screen__content">
       <header class="coach-intro">
         <h2>
-          지금 {{ nickname }}님에게 필요한<br>
+          지금 {{ honorificNickname }}에게 필요한<br>
           금융 행동은 무엇일까요?
         </h2>
       </header>
@@ -118,18 +123,12 @@ const analysisMenus = [
             </p>
           </div>
 
-          <RouterLink
+          <DetailLinkButton
             class="report-card__link"
-            :to="{ name: 'ai-financial-report' }"
+            @click="openFinancialReport"
           >
             전체 리포트 보기
-            <img
-              class="report-card__chevron"
-              :src="nextArrowIcon"
-              alt=""
-              aria-hidden="true"
-            >
-          </RouterLink>
+          </DetailLinkButton>
         </template>
 
         <div

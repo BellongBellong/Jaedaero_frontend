@@ -5,7 +5,7 @@ export const ANALYSIS_RECORD_TYPES = {
   WHAT_IF: 'WHAT_IF',
 }
 
-export const AI_ANALYSIS_TITLE = '오늘의 AI 투자 리포트'
+export const AI_ANALYSIS_TITLE = '오늘의 AI 소비 분석'
 export const WHAT_IF_TITLE = 'AI 추천 자산 계획'
 
 const WHAT_IF_SUMMARY = '현재 자산 흐름을 기준으로 가장 적합한 계획이에요.'
@@ -34,6 +34,70 @@ function orderKey(record) {
 function unwrapList(response) {
   if (Array.isArray(response)) return response
   return response?.simulations ?? response?.content ?? response?.data ?? []
+}
+
+function toConsumerFacingAiTitle(title) {
+  if (!title) return AI_ANALYSIS_TITLE
+
+  return title.replace('AI 금융 분석', 'AI 소비 분석').replace('AI 투자 리포트', 'AI 소비 분석')
+}
+
+/** 통합 분석 이력 API의 단일 항목을 카드 모델로 변환한다. */
+export function mapAnalysisHistoryItem(item) {
+  const type =
+    item?.historyType === 'WHAT_IF'
+      ? ANALYSIS_RECORD_TYPES.WHAT_IF
+      : ANALYSIS_RECORD_TYPES.AI_ANALYSIS
+  const metrics = []
+
+  if (type === ANALYSIS_RECORD_TYPES.AI_ANALYSIS && item?.spendingAmount != null) {
+    metrics.push({
+      label: '이번 달 소비',
+      value: formatWon(item.spendingAmount),
+      change: toRateChange(item.spendingChangeRate),
+    })
+  }
+
+  if (type === ANALYSIS_RECORD_TYPES.AI_ANALYSIS && item?.expectedAssetIncreaseAmount != null) {
+    metrics.push({
+      label: '예상 자산 증가',
+      value: formatWon(item.expectedAssetIncreaseAmount),
+    })
+  }
+
+  return {
+    id: `${type === ANALYSIS_RECORD_TYPES.WHAT_IF ? 'sim' : 'ai'}-${item?.sourceId}`,
+    sourceId: item?.sourceId,
+    type,
+    title:
+      type === ANALYSIS_RECORD_TYPES.WHAT_IF
+        ? item?.title || WHAT_IF_TITLE
+        : toConsumerFacingAiTitle(item?.title),
+    date: formatDate(item?.createdAt),
+    sortKey: item?.createdAt ?? '',
+    summary: item?.summary ?? '',
+    applied: Boolean(item?.isApplied),
+    metrics,
+    allocationRatios: type === ANALYSIS_RECORD_TYPES.WHAT_IF ? toAllocationRatios(item) : undefined,
+    projectedAsset: item?.expectedAsset == null ? '' : formatTenThousandWon(item.expectedAsset),
+    generationSource: item?.generationSource,
+  }
+}
+
+/** AnalysisHistoryPageResponse를 목록과 서버 집계 요약으로 변환한다. */
+export function mapAnalysisHistoryPage(response) {
+  const histories = Array.isArray(response?.histories) ? response.histories : []
+
+  return {
+    records: histories.map(mapAnalysisHistoryItem),
+    totalCount: toNumber(response?.totalCount),
+    hasNext: Boolean(response?.hasNext),
+    latestDate: formatDate(response?.latestAnalyzedAt),
+    latestProjectedAsset:
+      response?.latestExpectedAsset == null
+        ? ''
+        : formatTenThousandWon(response.latestExpectedAsset),
+  }
 }
 
 /** AiAnalysisResponse를 분석 기록 카드 모델로 변환한다. */
@@ -147,7 +211,7 @@ function withSequenceTitles(records) {
     })
 }
 
-/** AI 분석 목록과 시뮬레이션 목록을 하나의 기록 목록으로 합친다. */
+/** AI 소비 분석 목록과 시뮬레이션 목록을 하나의 기록 목록으로 합친다. */
 export function mapAnalysisHistoryRecords({ analyses, simulations, applications } = {}) {
   const appliedAnalysisIds = new Set(
     unwrapList(applications)

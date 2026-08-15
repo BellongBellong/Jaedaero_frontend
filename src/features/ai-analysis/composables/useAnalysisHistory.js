@@ -1,78 +1,76 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
-import { getAiAnalyses, getStrategyApplications } from '@/features/ai-analysis/api/aiAnalysis.api'
+import { getAnalysisHistories } from '@/features/ai-analysis/api/aiAnalysis.api'
 import {
   ANALYSIS_RECORD_TYPES,
-  mapAnalysisHistoryRecords,
-  sortAnalysisRecords,
+  mapAnalysisHistoryPage,
 } from '@/features/ai-analysis/mappers/analysisHistory.mapper'
-import { analysisHistoryRecords } from '@/features/ai-analysis/mocks/analysisHistory.mock'
-import { getSimulations } from '@/features/simulations/api/simulations.api'
 
 export const ANALYSIS_HISTORY_TABS = [
-  { value: 'ALL', label: '전체', summaryLabel: '전체 분석 기록' },
-  { value: ANALYSIS_RECORD_TYPES.WHAT_IF, label: 'What-if', summaryLabel: 'What-if 분석 기록' },
-  { value: ANALYSIS_RECORD_TYPES.AI_ANALYSIS, label: 'AI 분석', summaryLabel: 'AI 분석 기록' },
+  { value: 'ALL', apiValue: 'ALL', label: '전체', summaryLabel: '전체 분석 기록' },
+  {
+    value: ANALYSIS_RECORD_TYPES.WHAT_IF,
+    apiValue: 'WHAT_IF',
+    label: 'What-if',
+    summaryLabel: 'What-if 분석 기록',
+  },
+  {
+    value: ANALYSIS_RECORD_TYPES.AI_ANALYSIS,
+    apiValue: 'AI',
+    label: 'AI 소비 분석',
+    summaryLabel: 'AI 소비 분석 기록',
+  },
 ]
-
-function valueOf(result) {
-  return result.status === 'fulfilled' ? result.value : null
-}
 
 export function useAnalysisHistory() {
   const records = ref([])
   const loading = ref(false)
   const error = ref(null)
-  const source = ref('api')
   const activeTab = ref('ALL')
+  const pageSummary = ref({ totalCount: 0, latestDate: '', latestProjectedAsset: '' })
+  let requestSequence = 0
 
   async function load() {
+    const sequence = ++requestSequence
+    const tab = ANALYSIS_HISTORY_TABS.find((item) => item.value === activeTab.value)
+
     loading.value = true
     error.value = null
 
-    const [analyses, simulations, applications] = await Promise.allSettled([
-      getAiAnalyses(),
-      getSimulations(),
-      getStrategyApplications(),
-    ])
+    try {
+      const response = await getAnalysisHistories({
+        type: tab?.apiValue ?? 'ALL',
+        page: 0,
+        size: 100,
+      })
+      if (sequence !== requestSequence) return
 
-    // 두 목록이 모두 실패했을 때만 목데이터로 떨어진다. 한쪽만 살아있으면 그쪽만 보여준다.
-    if (analyses.status === 'rejected' && simulations.status === 'rejected') {
-      error.value = analyses.reason
-      records.value = sortAnalysisRecords(analysisHistoryRecords)
-      source.value = 'mock-fallback'
-    } else {
-      records.value = sortAnalysisRecords(
-        mapAnalysisHistoryRecords({
-          analyses: valueOf(analyses),
-          simulations: valueOf(simulations),
-          applications: valueOf(applications),
-        }),
-      )
-      error.value = analyses.reason ?? simulations.reason ?? null
-      source.value = error.value ? 'api-partial' : 'api'
+      const mapped = mapAnalysisHistoryPage(response)
+      records.value = mapped.records
+      pageSummary.value = mapped
+    } catch (loadError) {
+      if (sequence !== requestSequence) return
+
+      records.value = []
+      pageSummary.value = { totalCount: 0, latestDate: '', latestProjectedAsset: '' }
+      error.value = loadError
+    } finally {
+      if (sequence === requestSequence) loading.value = false
     }
-
-    loading.value = false
   }
 
-  const filteredRecords = computed(() =>
-    activeTab.value === 'ALL'
-      ? records.value
-      : records.value.filter((record) => record.type === activeTab.value),
-  )
+  const filteredRecords = computed(() => records.value)
 
   const summary = computed(() => ({
     label:
       ANALYSIS_HISTORY_TABS.find((tab) => tab.value === activeTab.value)?.summaryLabel ??
       '전체 분석 기록',
-    count: filteredRecords.value.length,
-    latestDate: filteredRecords.value[0]?.date || '-',
-    latestProjectedAsset:
-      filteredRecords.value.find((record) => record.projectedAsset)?.projectedAsset || '-',
+    count: pageSummary.value.totalCount,
+    latestDate: pageSummary.value.latestDate || '-',
+    latestProjectedAsset: pageSummary.value.latestProjectedAsset || '-',
   }))
 
-  load()
+  watch(activeTab, load, { immediate: true })
 
   return {
     records,
@@ -82,7 +80,6 @@ export function useAnalysisHistory() {
     tabs: ANALYSIS_HISTORY_TABS,
     loading,
     error,
-    source,
     reload: load,
   }
 }

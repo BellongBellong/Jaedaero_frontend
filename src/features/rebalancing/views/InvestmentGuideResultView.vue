@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import { getRebalancingRecommendation } from '@/features/rebalancing/api/rebalancing.api'
 
 const route = useRoute()
@@ -105,14 +106,13 @@ onMounted(loadGuidance)
       {{ loadError || '가이드를 불러오고 있어요.' }}
     </p>
 
-    <button
+    <DetailLinkButton
       class="detail-button"
-      type="button"
       :disabled="!guidance"
       @click="openDetail"
     >
-      가이드 상세보기 <span aria-hidden="true">›</span>
-    </button>
+      가이드 상세보기
+    </DetailLinkButton>
     <button
       class="home-button"
       type="button"
@@ -226,9 +226,9 @@ onMounted(loadGuidance)
   background: #62ff9c;
   color: #333;
 }
-.detail-button span {
-  font-size: 22px;
-  line-height: 1;
+.detail-button img {
+  width: 8px;
+  height: 14px;
 }
 .detail-button:disabled {
   background: #ececec;

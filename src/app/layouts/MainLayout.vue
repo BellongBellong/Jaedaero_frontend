@@ -7,20 +7,17 @@ import BottomNavigation from '@/common/components/BottomNavigation.vue'
 import MobileFrame from '@/common/components/MobileFrame.vue'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
-/* 방향 전환으로 인정할 최소 이동량 — 손가락 떨림으로 네비가 깜빡이지 않게 한다 */
-const DIRECTION_THRESHOLD = 6
-/* 이 지점을 지나야 네비가 줄어들기 시작한다 */
-const MINIMIZE_AFTER = 72
-/* 반대 방향으로 이 거리만큼 의도적으로 스크롤해야 다시 펼친다. */
-const DIRECTION_CONFIRMATION_DISTANCE = 28
+/* iOS의 소수점 스크롤 노이즈만 제외하고 첫 이동부터 방향을 반영한다. */
+const SCROLL_DIRECTION_EPSILON = 0.5
 
 const route = useRoute()
 const contentElement = ref(null)
+const headerElement = ref(null)
 const isHeaderCollapsed = ref(false)
+/* 접힌 뒤에는 헤더 높이가 0이라 측정할 수 없으므로 펼쳐져 있을 때 값을 기억해 둔다. */
+let expandedHeaderHeight = 0
 const isNavigationMinimized = ref(false)
 const lastScrollTop = ref(0)
-const scrollDirection = ref(null)
-const scrollDistanceInDirection = ref(0)
 const { mode } = useLeaveModeSchedule()
 
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
@@ -38,8 +35,6 @@ watch(
     isHeaderCollapsed.value = false
     isNavigationMinimized.value = false
     lastScrollTop.value = 0
-    scrollDirection.value = null
-    scrollDistanceInDirection.value = 0
     await nextTick()
     contentElement.value?.scrollTo({
       left: 0,
@@ -49,6 +44,32 @@ watch(
   },
 )
 
+function readExpandedHeaderHeight() {
+  const element = headerElement.value?.$el
+
+  if (element && !isHeaderCollapsed.value) {
+    const height = element.offsetHeight
+    if (height > 0) expandedHeaderHeight = height
+  }
+
+  return expandedHeaderHeight
+}
+
+/*
+  헤더를 접으면 본문 영역이 헤더 높이만큼 커져 최대 스크롤량이 그만큼 줄어든다.
+  스크롤 여유가 헤더 높이에 가까운 화면에서는 접히는 순간 scrollTop이 열림
+  임계값 아래로 잘려 다시 펼쳐지고, 이 과정이 반복되며 헤더가 떨린다.
+  접은 뒤에도 열림 임계값을 넘는 여유가 남는 경우에만 접도록 막는다.
+*/
+function canCollapseHeader(element) {
+  const currentMaxScroll = element.scrollHeight - element.clientHeight
+  const maxScrollAfterCollapse = isHeaderCollapsed.value
+    ? currentMaxScroll
+    : currentMaxScroll - readExpandedHeaderHeight()
+
+  return maxScrollAfterCollapse > 12
+}
+
 function handleContentScroll(event) {
   const scrollTop = event.currentTarget.scrollTop
   const delta = scrollTop - lastScrollTop.value
@@ -57,34 +78,23 @@ function handleContentScroll(event) {
     헤더는 내릴 때 32px, 올릴 때 12px의 여유를 둔다. iOS 관성 스크롤의 작은
     반동으로 닫힘/열림이 반복되지 않으면서도 Chrome과 같은 방향성은 유지한다.
   */
-  if (route.meta.keepHeaderOnScroll || route.meta.stickyTabs) {
+  if (
+    route.meta.keepHeaderOnScroll ||
+    route.meta.stickyTabs ||
+    !canCollapseHeader(event.currentTarget)
+  ) {
     isHeaderCollapsed.value = false
   } else if (isHeaderCollapsed.value ? scrollTop < 12 : scrollTop > 32) {
     isHeaderCollapsed.value = !isHeaderCollapsed.value
   }
 
-  /*
-    네비게이션도 첫 반대 방향 이벤트에 즉시 튀지 않게 한다. iOS는 감속 중
-    delta의 부호가 짧게 바뀌는 경우가 있어서, 28px의 실제 방향 전환을 확인한 뒤
-    움직인다.
-  */
-  if (scrollTop <= MINIMIZE_AFTER) {
+  /* 첫 하향 스크롤에서 바로 물러나고, 상향 스크롤에서 바로 복원한다. */
+  if (scrollTop <= SCROLL_DIRECTION_EPSILON) {
     isNavigationMinimized.value = false
-    scrollDirection.value = null
-    scrollDistanceInDirection.value = 0
-  } else if (Math.abs(delta) >= DIRECTION_THRESHOLD) {
-    const nextDirection = delta > 0 ? 'down' : 'up'
-
-    if (nextDirection === scrollDirection.value) {
-      scrollDistanceInDirection.value += Math.abs(delta)
-    } else {
-      scrollDirection.value = nextDirection
-      scrollDistanceInDirection.value = Math.abs(delta)
-    }
-
-    if (scrollDistanceInDirection.value >= DIRECTION_CONFIRMATION_DISTANCE) {
-      isNavigationMinimized.value = nextDirection === 'down'
-    }
+  } else if (delta > SCROLL_DIRECTION_EPSILON) {
+    isNavigationMinimized.value = true
+  } else if (delta < -SCROLL_DIRECTION_EPSILON) {
+    isNavigationMinimized.value = false
   }
 
   lastScrollTop.value = scrollTop
@@ -94,6 +104,7 @@ function handleContentScroll(event) {
 <template>
   <MobileFrame
     :class="{
+      'mobile-frame--dashboard': route.name === 'dashboard',
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
       'mobile-frame--investment-guide': route.meta.investmentGuide,
       'mobile-frame--vacation': isVacationDashboard,
@@ -102,6 +113,7 @@ function handleContentScroll(event) {
   >
     <AppHeader
       v-if="!route.meta.hideHeader"
+      ref="headerElement"
       :title="headerTitle"
       :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
@@ -156,18 +168,38 @@ function handleContentScroll(event) {
   position: absolute;
   z-index: var(--z-navigation, 20);
   right: 0;
-  bottom: 0;
+  /* 홈 인디케이터는 피하되, safe area를 컨테이너 높이에 중복 가산하지 않는다. */
+  bottom: max(5px, calc(var(--safe-area-bottom) - 7px));
   left: 0;
-  /*
-    PWA는 이미 홈 인디케이터 영역까지 앱 캔버스가 이어진다. safe area를 다시
-    더하면 바가 그 높이만큼 위로 떠 버리므로, 바는 화면 하단을 기준으로 둔다.
-  */
   height: var(--bottom-navigation-area-height);
   padding-top: 8px;
   padding-bottom: 4px;
   pointer-events: none;
   /* 콘텐츠가 글래스 바와 하단 safe area 뒤로 자연스럽게 이어진다. */
   background: transparent;
+}
+
+/*
+  AI 분석 로딩 단계는 배경이 화면 전체를 덮어야 한다.
+  안쪽 요소 높이를 dvh 로 맞추면 기기별 safe area 계산 차이로 바닥에 흰 여백이
+  남으므로, 프레임이 직접 칠해 레이아웃 계산과 무관하게 항상 꽉 차게 한다.
+*/
+:global(.mobile-frame:has(.analyzing)) {
+  background:
+    radial-gradient(
+      ellipse 500px 640px at -5% 91%,
+      var(--yellow-400) 0%,
+      rgb(255 236 189 / 0%) 100%
+    ),
+    radial-gradient(circle 576px at 100% 14.5%, var(--green-500) 0%, rgb(98 255 156 / 0%) 100%),
+    #f6f6f6;
+}
+
+/* 투명 iOS 상태바 뒤에서도 대시보드의 브랜드 배경이 끊기지 않게 이어 준다. */
+:global(.mobile-frame.mobile-frame--dashboard) {
+  background:
+    radial-gradient(circle at 88% 0%, rgb(98 255 156 / 24%), transparent 34%),
+    radial-gradient(circle at 8% 0%, rgb(255 229 114 / 14%), transparent 30%), var(--ui-background);
 }
 
 .main-layout__bottom > :deep(.bottom-navigation) {

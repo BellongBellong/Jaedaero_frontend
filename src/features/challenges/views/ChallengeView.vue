@@ -10,24 +10,25 @@ import rankingCharacterAirforce from '@/assets/ranking/characters/airforce.svg'
 import rankingCharacterArmy from '@/assets/ranking/characters/army.svg'
 import rankingCharacterMarine from '@/assets/ranking/characters/marine.svg'
 import rankingCharacterNavy from '@/assets/ranking/characters/navy.svg'
-import rankingFirstBase from '@/assets/ranking/podium/first-base.svg'
-import rankingFirstTop from '@/assets/ranking/podium/first-top.svg'
-import rankingSecondBase from '@/assets/ranking/podium/second-base.svg'
-import rankingSecondTop from '@/assets/ranking/podium/second-top.svg'
-import rankingThirdBase from '@/assets/ranking/podium/third-base.svg'
-import rankingThirdTop from '@/assets/ranking/podium/third-top.svg'
+import rankingFirstPodium from '@/assets/ranking/podium/ranking-first.png'
+import rankingSecondPodium from '@/assets/ranking/podium/ranking-second.png'
+import rankingThirdPodium from '@/assets/ranking/podium/ranking-third.png'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
+  BADGE_SELECTION_STORAGE_KEY,
   getBadgeImage,
   getBadgeLevelImage,
   getBadgeProgress,
   getBadgeTarget,
   getBadgeTier,
+  getEarnedBadges,
+  getSelectedBadge,
 } from '@/features/my-page/composables/investmentBadges'
 import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
+import { useMissionStore } from '@/features/missions/stores/mission.store'
 import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
 
-import { getChallengeGroup, getInvestmentBadges, getTodayMissions } from '../api/challenges.api'
+import { getChallengeGroup, getInvestmentBadges } from '../api/challenges.api'
 
 const activeTab = ref('missions')
 const challengeTabs = [
@@ -35,11 +36,13 @@ const challengeTabs = [
   { label: '랭킹', value: 'ranking' },
 ]
 const router = useRouter()
+const missionStore = useMissionStore()
 const loading = ref(true)
 const challenge = ref(null)
 const badges = ref([])
 const profile = ref(null)
-const apiMissions = ref([])
+const apiMissions = computed(() => missionStore.missions)
+const selectedBadgeId = ref(localStorage.getItem(BADGE_SELECTION_STORAGE_KEY) || '')
 const rankingPeriod = ref('CUMULATIVE')
 const rankingYearMonth = ref(getCurrentYearMonth())
 const modeMenuOpen = ref(false)
@@ -61,26 +64,17 @@ const characterImages = {
   DEFAULT: rankingCharacterArmy,
 }
 
-const rankingProfileBackgrounds = {
-  GREEN: '#e5fff4',
-  OLIVE: '#aebbaa',
-  YELLOW: '#fff0b8',
-  ORANGE: '#ffb39f',
-  GRAY: '#f7f7f7',
-  BLACK: '#333333',
-}
-
 const rankingPodium = {
-  1: { base: rankingFirstBase, crown: rankingCrownGold, top: rankingFirstTop },
-  2: { base: rankingSecondBase, crown: rankingCrownSilver, top: rankingSecondTop },
-  3: { base: rankingThirdBase, crown: null, top: rankingThirdTop },
+  1: { crown: rankingCrownGold, image: rankingFirstPodium },
+  2: { crown: rankingCrownSilver, image: rankingSecondPodium },
+  3: { crown: null, image: rankingThirdPodium },
 }
 
 const groupedMissions = computed(() => {
   if (apiMissions.value.length) {
     const groups = [
       { name: '오늘의 미션', categories: ['RECOMMENDED', 'TODAY'] },
-      { name: '데일리 미션', categories: ['DAILY'] },
+      { name: '공통 미션', categories: ['DAILY'] },
       { name: '한 번 미션', categories: ['ONE_TIME'] },
       { name: '이벤트 미션', categories: ['EVENT', 'CONDITIONAL'] },
     ]
@@ -129,6 +123,26 @@ const safeCount = computed(() =>
 const badgeProgress = computed(() =>
   getBadgeProgress(badges.value, profile.value?.investmentBadgeStatus),
 )
+const orderedBadgeProgress = computed(() =>
+  [...badgeProgress.value].sort((first, second) => {
+    const order = { SAFE: 0, BALANCED: 0, AGGRESSIVE: 1 }
+    return (order[first.type] ?? 2) - (order[second.type] ?? 2)
+  }),
+)
+const earnedInvestmentBadges = computed(() => getEarnedBadges(badgeProgress.value))
+const selectedInvestmentBadge = computed(() =>
+  getSelectedBadge(earnedInvestmentBadges.value, selectedBadgeId.value),
+)
+const badgePreviews = computed(() =>
+  orderedBadgeProgress.value
+    .map((progress) =>
+      getSelectedBadge(
+        earnedInvestmentBadges.value.filter((badge) => badge.type === progress.type),
+        selectedBadgeId.value,
+      ),
+    )
+    .filter(Boolean),
+)
 const aggressiveBadge = computed(() =>
   badgeProgress.value.find((badge) => badge.type === 'AGGRESSIVE'),
 )
@@ -141,6 +155,9 @@ const aggressiveTier = computed(() => getBadgeTier(aggressiveCount.value))
 const safeTier = computed(() => getBadgeTier(safeCount.value))
 const aggressiveTarget = computed(() => getBadgeTarget(aggressiveCount.value))
 const safeTarget = computed(() => getBadgeTarget(safeCount.value))
+const totalCompletedMissions = computed(() =>
+  badgeProgress.value.reduce((total, badge) => total + badge.missionCount, 0),
+)
 const showAggressiveBadge = computed(
   () => aggressiveCount.value > 0 && Boolean(aggressiveBadge.value),
 )
@@ -285,11 +302,6 @@ function getRankingCharacter(member) {
   return characterImages[normalized] || characterImages.DEFAULT
 }
 
-function getRankingProfileBackground(member) {
-  const source = String(member.profileSource || member.profile?.profileSource || '').toUpperCase()
-  return rankingProfileBackgrounds[source] || '#e5fff4'
-}
-
 function getRankingNo(member, fallback) {
   const value = member.rankingNo ?? member.rank ?? member.ranking
   const numericValue = Number(value)
@@ -379,9 +391,7 @@ const ranking = computed(() => {
                 : null),
         character: getRankingCharacter(member),
         crown: podium.crown,
-        podiumBase: podium.base,
-        podiumTop: podium.top,
-        profileBackground: getRankingProfileBackground(member),
+        podiumImage: podium.image,
       }
     })
 })
@@ -410,16 +420,12 @@ async function loadChallenge() {
   errorMessage.value = ''
   const [challengeResult, missionResult, badgeResult, profileResult] = await Promise.allSettled([
     getChallengeGroup(rankingRequestParams.value),
-    getTodayMissions(),
+    missionStore.loadTodayMissions(),
     getInvestmentBadges(),
     getMyPageProfile(),
   ])
 
   if (challengeResult.status === 'fulfilled') challenge.value = unwrap(challengeResult.value)
-  if (missionResult.status === 'fulfilled') {
-    const value = unwrap(missionResult.value)
-    apiMissions.value = Array.isArray(value) ? value : value?.missions || []
-  }
   if (badgeResult.status === 'fulfilled') {
     const value = unwrap(badgeResult.value)
     badges.value = Array.isArray(value) ? value : value?.badges || []
@@ -534,48 +540,30 @@ onBeforeUnmount(() => {
           v-else
           class="badge-summary"
         >
-          <article v-if="showAggressiveBadge">
+          <article
+            v-for="badge in badgePreviews"
+            :key="badge.id"
+            :class="{ 'is-selected': badge.id === selectedInvestmentBadge?.id }"
+          >
             <img
-              :src="getBadgeImage('AGGRESSIVE', aggressiveTier.key)"
-              :alt="`공격형 ${aggressiveTier.label} 뱃지`"
+              :src="badge.image"
+              :alt="`${badge.typeInfo.label} ${badge.levelInfo.label} 뱃지`"
             >
-            <span>공격형</span><b>{{ aggressiveTier.label }}</b><small>미션 달성 {{ aggressiveCount }}개</small>
-          </article>
-          <article v-if="showSafeBadge">
-            <img
-              :src="getBadgeImage(safeBadge?.type || 'SAFE', safeTier.key)"
-              :alt="`안정형 ${safeTier.label} 뱃지`"
-            >
-            <span>안정형</span><b>{{ safeTier.label }}</b><small>미션 달성 {{ safeCount }}개</small>
+            <span>{{ badge.typeInfo.label }}</span>
+            <b>{{ badge.levelInfo.label }}</b>
+            <small>미션 달성 {{ badge.missionCount }}개</small>
           </article>
           <aside>
             <span>달성한 총 미션</span>
-            <strong>{{ aggressiveCount + safeCount }}개</strong>
-            <small>공격형 {{ aggressiveCount }}개</small>
-            <small>안정형 {{ safeCount }}개</small>
+            <strong>{{ totalCompletedMissions }}개</strong>
+            <small
+              v-for="badge in orderedBadgeProgress"
+              :key="badge.type"
+            >{{ badge.typeInfo.label }} {{ badge.missionCount }}개</small>
           </aside>
         </div>
 
         <template v-if="hasBadge">
-          <div
-            v-if="showAggressiveBadge"
-            :class="['progress-row', tierClass(aggressiveTier)]"
-          >
-            <div class="progress-badge">
-              <img
-                :src="getBadgeImage('AGGRESSIVE', aggressiveTier.key)"
-                alt=""
-              >
-              <span>공격형</span>
-            </div>
-            <div>
-              <b :class="['tier-label', tierClass(aggressiveTier)]">{{ aggressiveTier.label }}</b><progress
-                :class="tierClass(aggressiveTier)"
-                :value="aggressiveCount"
-                :max="aggressiveTarget"
-              /><small>현재 {{ aggressiveCount }}개 <em>{{ aggressiveTarget }}개</em></small>
-            </div>
-          </div>
           <div
             v-if="showSafeBadge"
             :class="['progress-row', tierClass(safeTier)]"
@@ -593,6 +581,25 @@ onBeforeUnmount(() => {
                 :value="safeCount"
                 :max="safeTarget"
               /><small>현재 {{ safeCount }}개 <em>{{ safeTarget }}개</em></small>
+            </div>
+          </div>
+          <div
+            v-if="showAggressiveBadge"
+            :class="['progress-row', tierClass(aggressiveTier)]"
+          >
+            <div class="progress-badge">
+              <img
+                :src="getBadgeImage('AGGRESSIVE', aggressiveTier.key)"
+                alt=""
+              >
+              <span>공격형</span>
+            </div>
+            <div>
+              <b :class="['tier-label', tierClass(aggressiveTier)]">{{ aggressiveTier.label }}</b><progress
+                :class="tierClass(aggressiveTier)"
+                :value="aggressiveCount"
+                :max="aggressiveTarget"
+              /><small>현재 {{ aggressiveCount }}개 <em>{{ aggressiveTarget }}개</em></small>
             </div>
           </div>
         </template>
@@ -728,10 +735,7 @@ onBeforeUnmount(() => {
                 :src="member.crown"
                 alt=""
               >
-              <span
-                class="ranking-character-wrap"
-                :style="{ backgroundColor: member.profileBackground }"
-              >
+              <span class="ranking-character-wrap">
                 <img
                   class="ranking-character"
                   :src="member.character"
@@ -739,16 +743,10 @@ onBeforeUnmount(() => {
                 >
               </span>
               <img
-                class="ranking-podium-top"
-                :src="member.podiumTop"
+                class="ranking-podium"
+                :src="member.podiumImage"
                 alt=""
               >
-              <img
-                class="ranking-podium-base"
-                :src="member.podiumBase"
-                alt=""
-              >
-              <strong class="ranking-place">{{ member.rank }}</strong>
             </div>
           </article>
         </div>
@@ -829,7 +827,8 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 .achievement-section {
-  padding: 0 0 14px;
+  padding: 16px 20px 20px;
+  margin: 0 -20px;
 }
 .achievement-section h2 {
   margin: 12px 0 20px;
@@ -842,49 +841,71 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 22px;
-  min-height: 178px;
+  gap: 20px;
+  min-height: 190px;
 }
 .badge-summary article {
   display: flex;
+  width: 48px;
+  min-width: 48px;
   flex-direction: column;
   align-items: center;
   font-size: 12px;
+  gap: 0;
+  text-align: center;
+}
+.badge-summary article.is-selected {
+  width: 104px;
+  min-width: 104px;
+  gap: 4px;
 }
 .badge-summary article > span {
-  min-width: 96px;
-  padding: 6px 10px;
-  border-radius: 18px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 14px;
   color: #555;
   background: #edf0ed;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.1;
+  white-space: nowrap;
   text-align: center;
 }
 .badge-summary article img {
-  width: 72px;
-  height: 72px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
 }
+.badge-summary article.is-selected img {
+  width: 104px;
+  height: 104px;
+}
 .badge-summary article b {
-  margin-top: 5px;
   color: #969696;
-  font-size: 22px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 .badge-summary article small {
-  margin-top: 8px;
   color: #888;
+  font-size: 11px;
   font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.badge-summary article:not(.is-selected) span,
+.badge-summary article:not(.is-selected) b,
+.badge-summary article:not(.is-selected) small {
+  opacity: 0.55;
 }
 .badge-summary aside {
-  width: 134px;
-  min-width: 134px;
-  min-height: 142px;
-  padding: 18px 14px;
+  width: 136px;
+  min-width: 136px;
+  min-height: 146px;
+  padding: 18px 12px;
   border: 1px solid #fff;
-  border-radius: 14px;
-  background: #fff;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 58%);
   box-shadow: 0 2px 12px #00000008;
   color: #777;
   font-size: 12px;
@@ -926,7 +947,6 @@ onBeforeUnmount(() => {
 }
 .progress-row + .progress-row {
   padding-top: 14px;
-  border-top: 1px solid #edf0ed;
 }
 .progress-badge {
   display: flex;
@@ -1239,29 +1259,23 @@ onBeforeUnmount(() => {
   height: 100%;
 }
 .podium .rank-1 {
-  --base-height: 79px;
-  --base-width: 91px;
   --stage-height: 196px;
-  --top-height: 18px;
-  --top-width: 91px;
+  --character-bottom: 85px;
+  --podium-image-width: 91px;
   --podium-offset-x: 0px;
   order: 2;
 }
 .podium .rank-2 {
-  --base-height: 56px;
-  --base-width: 89px;
   --stage-height: 168px;
-  --top-height: 13px;
-  --top-width: 89px;
+  --character-bottom: 59px;
+  --podium-image-width: 91px;
   --podium-offset-x: 0px;
   order: 1;
 }
 .podium .rank-3 {
-  --base-height: 42px;
-  --base-width: 88px;
   --stage-height: 124px;
-  --top-height: 12px;
-  --top-width: 88px;
+  --character-bottom: 44px;
+  --podium-image-width: 91px;
   --podium-offset-x: -4.5px;
   order: 3;
 }
@@ -1319,22 +1333,21 @@ onBeforeUnmount(() => {
 .ranking-character-wrap {
   position: absolute;
   z-index: 2;
-  bottom: calc(var(--base-height) + var(--top-height) - 4px);
+  display: block;
+  bottom: var(--character-bottom);
   left: 50%;
   width: 70px;
   height: 70px;
-  border-radius: 50%;
   transform: translateX(-50%);
-  overflow: hidden;
 }
 .ranking-character {
+  display: block;
   width: 70px;
   height: 70px;
   object-fit: contain;
 }
 .ranking-crown,
-.ranking-podium-base,
-.ranking-podium-top {
+.ranking-podium {
   position: absolute;
   left: 50%;
   object-fit: contain;
@@ -1342,32 +1355,15 @@ onBeforeUnmount(() => {
 }
 .ranking-crown {
   z-index: 4;
-  bottom: calc(var(--base-height) + var(--top-height) + 66px);
+  bottom: calc(var(--character-bottom) + 66px);
   width: 30px;
   height: 29px;
 }
-.ranking-podium-top {
-  z-index: 3;
-  bottom: var(--base-height);
-  width: var(--top-width);
-  height: var(--top-height);
-}
-.ranking-podium-base {
+.ranking-podium {
   z-index: 1;
   bottom: 0;
-  width: var(--base-width);
-  height: var(--base-height);
-}
-.ranking-place {
-  position: absolute;
-  z-index: 4;
-  bottom: 8px;
-  left: 0;
-  width: 100%;
-  transform: translateX(var(--podium-offset-x));
-  color: #a0a0a0;
-  font-size: 34px;
-  line-height: 1;
+  width: var(--podium-image-width);
+  height: auto;
 }
 .ranking-empty {
   padding: 90px 0 70px;

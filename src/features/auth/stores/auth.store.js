@@ -23,7 +23,17 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
 
   const isAuthenticated = computed(() => Boolean(accessToken.value))
-  const isOnboardingCompleted = computed(() => Boolean(user.value?.onboardingCompleted))
+  const isOnboardingCompleted = computed(() => {
+    if (user.value?.onboardingCompleted) {
+      return true
+    }
+
+    try {
+      return localStorage.getItem('jaedaero-onboarding-complete') === 'true'
+    } catch {
+      return false
+    }
+  })
 
   function applySession(session) {
     accessToken.value = session.accessToken
@@ -71,12 +81,15 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function markOnboardingCompleted() {
-    if (!accessToken.value || !user.value) {
+    if (!accessToken.value) {
       return
     }
 
     const currentSession = readAuthSession()
-    const updatedUser = { ...user.value, onboardingCompleted: true }
+    const updatedUser = {
+      ...(user.value || currentSession.user || {}),
+      onboardingCompleted: true,
+    }
     const session = saveAuthSession({ ...currentSession, user: updatedUser })
 
     applySession(session)

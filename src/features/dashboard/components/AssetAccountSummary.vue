@@ -6,6 +6,7 @@ import accountsavingBlock from '@/assets/icons/account/accountsavingBlock.png'
 import assetBlock from '@/assets/icons/account/assetBlock.png'
 import consumptionBlock from '@/assets/icons/account/consumptionBlock.png'
 import investBlock from '@/assets/icons/account/investBlock.png'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 
 const props = defineProps({
   data: {
@@ -97,18 +98,12 @@ function formatWon(value) {
       </li>
     </ul>
 
-    <button
-      type="button"
+    <DetailLinkButton
       class="asset-account-summary__more"
       @click="$emit('view-all')"
     >
       전체 자산 보기
-      <img
-        :src="arrowIcon"
-        alt=""
-        aria-hidden="true"
-      >
-    </button>
+    </DetailLinkButton>
   </div>
 
   <p

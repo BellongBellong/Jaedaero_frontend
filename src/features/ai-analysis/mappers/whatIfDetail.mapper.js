@@ -1,6 +1,13 @@
 import { WHAT_IF_TITLE } from './analysisHistory.mapper.js'
 import { formatTenThousandWon, formatWon, toNumber, toPercent } from './format.js'
 
+/** 날짜가 비어 있으면 빈 칸 대신 '-'를 보여준다. */
+function formatDate(value) {
+  const date = String(value ?? '').trim()
+
+  return date ? date.replace(/-/g, '.') : '-'
+}
+
 /**
  * SimulationResponse를 시뮬레이션 상세 화면 모델로 변환한다.
  *
@@ -28,6 +35,8 @@ export function mapWhatIfDetail(simulation, { monthlySalary, saved = false, titl
     toNumber(calculation?.baseAsset) +
     toNumber(calculation?.cashflowIncreaseAmount) +
     projectedBenefit
+  const calculationPolicyVersion = effect?.calculationPolicyVersion ?? ''
+  const isUnifiedV4 = calculationPolicyVersion.startsWith('WHAT_IF_UNIFIED_ASSET_TIMELINE_V4')
 
   return {
     id: simulation?.simulationId ?? simulation?.id,
@@ -36,11 +45,15 @@ export function mapWhatIfDetail(simulation, { monthlySalary, saved = false, titl
     projectedAsset: formatTenThousandWon(expectedAsset),
     targetAmount: formatTenThousandWon(simulation?.targetAmount),
     targetReturnRate: `${returnRate}%`,
-    financialDischargeDate: String(simulation?.financialDischargeDate ?? '').replace(/-/g, '.'),
+    financialDischargeDate: formatDate(simulation?.financialDischargeDate),
     baseSalary: salary ? formatTenThousandWon(salary) : '-',
     hasCalculationDetail: Boolean(calculation && effect),
-    calculationConsistent: expectedAsset === recomposedAsset,
-    calculationPolicyVersion: effect?.calculationPolicyVersion ?? '',
+    calculationStatus: isUnifiedV4
+      ? expectedAsset === recomposedAsset
+        ? 'consistent'
+        : 'inconsistent'
+      : 'legacy',
+    calculationPolicyVersion,
     calculationRows: [
       { label: '현재 기준 자산', value: formatWon(calculation?.baseAsset) },
       { label: '급여에서 소비를 뺀 순증가', value: formatWon(calculation?.cashflowIncreaseAmount) },

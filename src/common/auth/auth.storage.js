@@ -2,6 +2,7 @@ const AUTH_SESSION_KEY = 'auth.session'
 const ACCESS_TOKEN_KEY = 'accessToken'
 const REFRESH_TOKEN_KEY = 'refreshToken'
 const USER_ID_KEY = 'userId'
+const ONBOARDING_COMPLETE_KEY = 'jaedaero-onboarding-complete'
 const AUTH_SESSION_UPDATED_EVENT = 'jaedaero:auth-session-updated'
 const AUTH_SESSION_CLEARED_EVENT = 'jaedaero:auth-session-cleared'
 
@@ -153,6 +154,7 @@ export function clearAuthSession() {
   removeItem(ACCESS_TOKEN_KEY)
   removeItem(REFRESH_TOKEN_KEY)
   removeItem(USER_ID_KEY)
+  removeItem(ONBOARDING_COMPLETE_KEY)
   dispatchAuthEvent(AUTH_SESSION_CLEARED_EVENT)
 }
 

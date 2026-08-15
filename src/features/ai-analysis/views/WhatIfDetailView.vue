@@ -87,9 +87,18 @@ function resimulate() {
           <h2>전역 예상 자산 계산 내역</h2>
           <span
             class="calculation-status"
-            :class="{ 'calculation-status--error': !detail.calculationConsistent }"
+            :class="{
+              'calculation-status--legacy': detail.calculationStatus === 'legacy',
+              'calculation-status--error': detail.calculationStatus === 'inconsistent',
+            }"
           >
-            {{ detail.calculationConsistent ? '합계 일치' : '합계 확인 필요' }}
+            {{
+              detail.calculationStatus === 'consistent'
+                ? '합계 일치'
+                : detail.calculationStatus === 'legacy'
+                  ? '이전 계산 기준'
+                  : '합계 확인 필요'
+            }}
           </span>
         </header>
 
@@ -247,7 +256,7 @@ function resimulate() {
 
 .summary-card__title strong {
   color: var(--gray-600);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: var(--weight-bold);
   line-height: 1.5;
 }
@@ -395,6 +404,11 @@ function resimulate() {
 .calculation-status--error {
   background: #fff1ec;
   color: var(--orange-700);
+}
+
+.calculation-status--legacy {
+  background: var(--gray-100);
+  color: var(--gray-500);
 }
 
 .calculation-subtitle {

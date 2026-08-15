@@ -142,10 +142,11 @@ const mainRoutes = [
           bottomNavigation: 'ai-coach',
           headerTitle: '오늘의 AI 시장 리포트',
           headerBadge: 'BETA',
+          hideBackOnScroll: true,
         },
       },
       {
-        path: 'ai-asset-analysis-result',
+        path: 'ai-asset-analysis-result/:analysisId?',
         name: 'ai-asset-analysis-result',
         component: () => import('@/features/ai-analysis/views/AiAssetAnalysisResultView.vue'),
         meta: {
@@ -161,7 +162,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          headerTitle: 'AI 분석 기록',
+          headerTitle: 'AI 소비 분석 기록',
           stickyTabs: true,
         },
       },

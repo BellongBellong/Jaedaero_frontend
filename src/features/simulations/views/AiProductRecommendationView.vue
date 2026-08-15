@@ -30,7 +30,7 @@ const RISK_GRADE_LABELS = {
 
 const route = useRoute()
 const router = useRouter()
-const { completeMissionAfterLoad } = useMissionCompletion(route, router)
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_DEPOSIT_PRODUCT')
 const products = ref([])
 const errorMessage = ref('')
 const scenario = ref({
@@ -49,6 +49,13 @@ const recommendedProducts = computed(() =>
     riskLabel: RISK_GRADE_LABELS[product.riskGrade] ?? '-',
   })),
 )
+
+// 시뮬레이션에서 계산된 비율은 소수점이 길게 떨어져 소수 첫째 자리까지만 보여준다.
+const investmentPercentLabel = computed(() => {
+  const percent = Number(scenario.value.investmentPercent)
+  if (!Number.isFinite(percent)) return '-'
+  return `${Math.round(percent * 10) / 10}`
+})
 
 const analysisDate = computed(() => {
   const date = new Date(scenario.value.generatedAt)
@@ -105,7 +112,7 @@ onMounted(async () => {
         </li>
         <li>
           <span aria-hidden="true">✓</span>
-          투자 비율 <b>{{ scenario.investmentPercent }}%</b>
+          투자 비율 <b>{{ investmentPercentLabel }}%</b>
         </li>
         <li>
           <span aria-hidden="true">✓</span>
@@ -199,6 +206,8 @@ onMounted(async () => {
 }
 
 .product-screen__header h1 {
+  /* 전역 h1 은 디스플레이 폰트라 공통 AppHeader 와 글꼴이 달라진다. */
+  font-family: var(--font-body);
   font-size: 20px;
   font-weight: 700;
   line-height: 1.5;

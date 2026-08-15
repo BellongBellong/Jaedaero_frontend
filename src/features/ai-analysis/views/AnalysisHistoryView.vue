@@ -1,21 +1,26 @@
 <script setup>
-import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
 
-import arrowIcon from '@/assets/icons/arrow.svg'
 import CommonTabs from '@/common/components/common/CommonTabs.vue'
+import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import { useAnalysisHistory } from '@/features/ai-analysis/composables/useAnalysisHistory'
 import { ANALYSIS_RECORD_TYPES } from '@/features/ai-analysis/mappers/analysisHistory.mapper'
 
-const { filteredRecords, summary, activeTab, tabs, loading } = useAnalysisHistory()
+const { filteredRecords, summary, activeTab, tabs, loading, error, reload } = useAnalysisHistory()
+const router = useRouter()
 
 function recordTypeLabel(record) {
-  return record.type === ANALYSIS_RECORD_TYPES.WHAT_IF ? 'What-if' : 'AI 분석'
+  return record.type === ANALYSIS_RECORD_TYPES.WHAT_IF ? 'What-if' : 'AI 소비 분석'
 }
 
 function detailRoute(record) {
   return record.type === ANALYSIS_RECORD_TYPES.WHAT_IF
     ? { name: 'what-if-detail', params: { simulationId: record.sourceId ?? record.id } }
-    : { name: 'ai-asset-analysis-result' }
+    : { name: 'ai-asset-analysis-result', params: { analysisId: record.sourceId } }
+}
+
+function openDetail(record) {
+  router.push(detailRoute(record))
 }
 </script>
 
@@ -56,6 +61,18 @@ function detailRoute(record) {
     >
       분석 기록을 불러오는 중이에요.
     </p>
+    <div
+      v-else-if="error"
+      class="record-list__empty record-list__error"
+    >
+      <p>분석 기록을 불러오지 못했어요.</p>
+      <button
+        type="button"
+        @click="reload"
+      >
+        다시 불러오기
+      </button>
+    </div>
     <ul
       v-else-if="filteredRecords.length"
       class="record-list"
@@ -89,6 +106,12 @@ function detailRoute(record) {
                 class="pill pill--green"
               >
                 적용중
+              </span>
+              <span
+                v-if="record.generationSource === 'FALLBACK'"
+                class="pill pill--olive"
+              >
+                기본 가이드
               </span>
             </div>
           </header>
@@ -148,17 +171,12 @@ function detailRoute(record) {
           </div>
 
           <footer class="record-card__footer">
-            <RouterLink
+            <DetailLinkButton
               class="record-card__link"
-              :to="detailRoute(record)"
+              @click="openDetail(record)"
             >
               상세보기
-              <img
-                :src="arrowIcon"
-                alt=""
-                aria-hidden="true"
-              >
-            </RouterLink>
+            </DetailLinkButton>
           </footer>
         </article>
       </li>
@@ -409,6 +427,22 @@ function detailRoute(record) {
   place-items: center;
   color: var(--ui-sub-title);
   font-size: 14px;
+}
+
+.record-list__error {
+  align-content: center;
+  gap: 12px;
+}
+
+.record-list__error button {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--green-100);
+  color: var(--green-800);
+  cursor: pointer;
+  font: inherit;
+  font-weight: var(--weight-bold);
 }
 
 @media (prefers-reduced-motion: no-preference) {
