@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 
 import arrowRightIcon from '@/assets/ai-analysis/arrowRightIcon.svg'
 import arrowUpIcon from '@/assets/ai-analysis/arrowUpIcon.svg'
@@ -8,7 +8,6 @@ import causeInfoIcon from '@/assets/ai-analysis/causeInfoIcon.svg'
 import chevronIcon from '@/assets/ai-analysis/chevronIcon.svg'
 import analysisGlow from '@/assets/ai-coach/analysis-glow.svg'
 import coachCharacter from '@/assets/ai-coach/coach-character.svg'
-import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import { applyAiStrategy, createAiAnalysis } from '@/features/ai-analysis/api/aiAnalysis.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
@@ -54,7 +53,6 @@ const PRODUCT_STYLES = {
   CMA: { emoji: '💵', theme: 'yellow' },
 }
 
-const router = useRouter()
 const onboarding = useOnboardingStore()
 
 const phase = ref('analyzing')
@@ -242,22 +240,6 @@ async function handleApplyStrategy() {
         class="analyzing"
         aria-live="polite"
       >
-        <header class="analyzing__header">
-          <button
-            class="back-button"
-            type="button"
-            aria-label="이전 페이지"
-            @click="router.back()"
-          >
-            <img
-              :src="backArrowIcon"
-              alt=""
-              aria-hidden="true"
-            >
-          </button>
-          <h1>AI 코치</h1>
-        </header>
-
         <div class="analyzing__content">
           <h2 class="analyzing__title">
             {{ nickname }}님의 자산을<br>
@@ -291,21 +273,6 @@ async function handleApplyStrategy() {
         key="error"
         class="status-panel"
       >
-        <header class="result__header">
-          <button
-            class="back-button"
-            type="button"
-            aria-label="이전 페이지"
-            @click="router.back()"
-          >
-            <img
-              :src="backArrowIcon"
-              alt=""
-              aria-hidden="true"
-            >
-          </button>
-          <h1>AI 분석</h1>
-        </header>
         <div class="status-panel__body">
           <p>{{ errorMessage }}</p>
           <button
@@ -324,22 +291,6 @@ async function handleApplyStrategy() {
         key="result"
         class="result"
       >
-        <header class="result__header">
-          <button
-            class="back-button"
-            type="button"
-            aria-label="이전 페이지"
-            @click="router.back()"
-          >
-            <img
-              :src="backArrowIcon"
-              alt=""
-              aria-hidden="true"
-            >
-          </button>
-          <h1>AI 분석</h1>
-        </header>
-
         <div class="result__body">
           <!-- 소비 패턴 분석 -->
           <article class="card card--expense">

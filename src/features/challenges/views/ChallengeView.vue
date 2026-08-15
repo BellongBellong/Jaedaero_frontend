@@ -819,21 +819,6 @@ onBeforeUnmount(() => {
   color: #333;
   background: #fafafa;
 }
-.challenge-tabs {
-  position: sticky;
-  z-index: calc(var(--z-header) - 1);
-  top: 0;
-  margin-top: -12px;
-  margin-bottom: 12px;
-  isolation: isolate;
-}
-.challenge-tabs::before {
-  position: absolute;
-  z-index: -1;
-  background: var(--ui-background);
-  content: '';
-  inset: 0 -20px;
-}
 .challenge-error {
   padding: 9px 12px;
   margin: 8px 0;

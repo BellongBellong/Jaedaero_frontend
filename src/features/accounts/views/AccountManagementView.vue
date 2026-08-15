@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 import accountIcon from '@/assets/onboarding/icons/account-general.svg'
 import militarySavingsIcon from '@/assets/onboarding/icons/account-military-savings.svg'
@@ -19,7 +19,6 @@ import {
 } from '@/features/accounts/composables/institutionMapping'
 
 const route = useRoute()
-const router = useRouter()
 const accounts = ref([])
 const loading = ref(true)
 const loadError = ref('')
@@ -186,17 +185,6 @@ onMounted(loadAccounts)
 
 <template>
   <main class="account-management screen">
-    <header class="page-header">
-      <button
-        type="button"
-        aria-label="연동한 금융기관 목록으로 돌아가기"
-        @click="router.back()"
-      >
-        ‹
-      </button>
-      <h1>관리</h1>
-    </header>
-
     <section
       v-if="!loading && !loadError"
       class="bank-summary"

@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import arrowIcon from '@/assets/icons/arrow.svg'
-import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
+import CommonTabs from '@/common/components/common/CommonTabs.vue'
 import AssetAccountListItem from '@/features/dashboard/components/AssetAccountListItem.vue'
 import InvestmentAssetChart from '@/features/dashboard/components/InvestmentAssetChart.vue'
 import InvestmentHoldingsList from '@/features/dashboard/components/InvestmentHoldingsList.vue'
@@ -12,6 +12,10 @@ import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 const route = useRoute()
 const router = useRouter()
 const activeTab = ref(route.query.tab === 'investment' ? 'investment' : 'account')
+const tabs = [
+  { value: 'account', label: '계좌' },
+  { value: 'investment', label: '투자' },
+]
 const { dashboard, loading, error, reload } = useDashboard()
 const accounts = computed(() => dashboard.value.assetSummary.total.accounts ?? [])
 
@@ -55,19 +59,6 @@ function openAccount(account) {
 
 <template>
   <main class="account-assets screen app-page">
-    <button
-      class="account-assets__back"
-      type="button"
-      aria-label="이전 페이지"
-      @click="router.back()"
-    >
-      <img
-        :src="backArrowIcon"
-        alt=""
-        aria-hidden="true"
-      >
-    </button>
-
     <section
       v-if="loading"
       class="account-assets__state"
@@ -102,30 +93,11 @@ function openAccount(account) {
         >
       </button>
 
-      <div
-        class="account-assets__tabs"
-        role="tablist"
+      <CommonTabs
+        v-model="activeTab"
+        :items="tabs"
         aria-label="자산 유형"
-      >
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="activeTab === 'account'"
-          :class="{ 'account-assets__tab--active': activeTab === 'account' }"
-          @click="activeTab = 'account'"
-        >
-          계좌
-        </button>
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="activeTab === 'investment'"
-          :class="{ 'account-assets__tab--active': activeTab === 'investment' }"
-          @click="activeTab = 'investment'"
-        >
-          투자
-        </button>
-      </div>
+      />
 
       <template v-if="activeTab === 'account'">
         <section class="account-assets__section">
@@ -273,28 +245,6 @@ function openAccount(account) {
   width: 7px;
   height: 11px;
   margin-left: 2px;
-}
-
-.account-assets__tabs {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.account-assets__tabs button {
-  min-height: 42px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--gray-400);
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: var(--weight-bold);
-}
-
-.account-assets__tabs .account-assets__tab--active {
-  border-bottom-color: var(--green-700);
-  color: var(--green-700);
 }
 
 .account-assets__section {

@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import dropdownIcon from '@/assets/icons/dropdownIcon.svg'
 import { getDashboardMock, transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import AccountTransactionItem from '@/features/transactions/components/AccountTransactionItem.vue'
@@ -77,6 +76,12 @@ function openTransaction(transaction) {
   })
 }
 
+onMounted(() => {
+  router.replace({
+    query: { ...route.query, headerTitle: accountName.value },
+  })
+})
+
 onMounted(async () => {
   if (usesMockScenario.value) return
 
@@ -93,21 +98,6 @@ onMounted(async () => {
 
 <template>
   <main class="account-detail screen app-page">
-    <header class="account-detail__header">
-      <button
-        type="button"
-        aria-label="이전 페이지"
-        @click="router.back()"
-      >
-        <img
-          :src="backArrowIcon"
-          alt=""
-          aria-hidden="true"
-        >
-      </button>
-      <h1>{{ accountName }}</h1>
-    </header>
-
     <section
       v-if="account"
       class="account-detail__summary"
