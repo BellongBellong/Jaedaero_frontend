@@ -1,8 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
-import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import editIcon from '@/assets/icons/pencilIcon.svg'
 import { transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import CategoryChangeSheet from '@/features/transactions/components/CategoryChangeSheet.vue'
@@ -17,7 +16,6 @@ import {
 } from '@/features/transactions/composables/transactionCategoryIconMapping'
 
 const route = useRoute()
-const router = useRouter()
 const usesMockScenario = Boolean(route.query.persona || route.query.scenario)
 const transaction = ref(
   getCachedTransaction(route.params.transactionId) ??
@@ -114,21 +112,6 @@ onMounted(async () => {
 
 <template>
   <main class="transaction-detail screen app-page">
-    <header class="transaction-detail__header">
-      <button
-        type="button"
-        aria-label="이전 페이지"
-        @click="router.back()"
-      >
-        <img
-          :src="backArrowIcon"
-          alt=""
-          aria-hidden="true"
-        >
-      </button>
-      <h1>상세 내역</h1>
-    </header>
-
     <template v-if="transaction">
       <section class="transaction-detail__hero">
         <div>

@@ -2,8 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import dropdownIcon from '@/assets/icons/dropdownIcon.svg'
+import CommonTabs from '@/common/components/common/CommonTabs.vue'
 import { getDashboardMock, transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import AccountTransactionItem from '@/features/transactions/components/AccountTransactionItem.vue'
@@ -131,46 +131,18 @@ onMounted(async () => {
 
 <template>
   <main class="transaction-history screen app-page">
-    <header class="transaction-history__header">
-      <button
-        type="button"
-        aria-label="이전 페이지"
-        @click="router.back()"
-      >
-        <img
-          :src="backArrowIcon"
-          alt=""
-          aria-hidden="true"
-        >
-      </button>
-      <div>
-        <h1>{{ isVacationPeriod ? '휴가 거래 내역' : '거래 내역' }}</h1>
-        <p
-          v-if="isVacationPeriod"
-          class="transaction-history__period"
-        >
-          {{ vacationPeriodLabel }}
-        </p>
-      </div>
-    </header>
-
-    <div
-      class="transaction-history__tabs"
-      role="tablist"
-      aria-label="거래 자산 유형"
+    <p
+      v-if="isVacationPeriod"
+      class="transaction-history__period"
     >
-      <button
-        v-for="tab in tabs"
-        :key="tab.value"
-        type="button"
-        role="tab"
-        :aria-selected="activeTab === tab.value"
-        :class="{ 'transaction-history__tab--active': activeTab === tab.value }"
-        @click="activeTab = tab.value"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
+      {{ vacationPeriodLabel }}
+    </p>
+
+    <CommonTabs
+      v-model="activeTab"
+      :items="tabs"
+      aria-label="거래 자산 유형"
+    />
 
     <section class="transaction-history__card">
       <button
@@ -264,30 +236,6 @@ onMounted(async () => {
   color: var(--gray-500);
   font-size: 12px;
   line-height: 1.4;
-}
-
-.transaction-history__tabs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin: 4px 0 12px;
-}
-
-.transaction-history__tabs button {
-  height: 52px;
-  padding: 0;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--gray-400);
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.transaction-history__tabs .transaction-history__tab--active {
-  border-bottom-color: var(--green-700);
-  color: var(--green-700);
 }
 
 .transaction-history__card {

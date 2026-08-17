@@ -21,6 +21,13 @@ const lastScrollTop = ref(0)
 const { mode } = useLeaveModeSchedule()
 
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
+const headerTitle = computed(() => {
+  if (route.name === 'transactions' && route.query.period === 'vacation') return '휴가 거래 내역'
+  if (route.name === 'account-transactions' && route.query.headerTitle) {
+    return String(route.query.headerTitle)
+  }
+  return String(route.meta.headerTitle || '')
+})
 
 watch(
   () => route.fullPath,
@@ -71,7 +78,11 @@ function handleContentScroll(event) {
     헤더는 내릴 때 32px, 올릴 때 12px의 여유를 둔다. iOS 관성 스크롤의 작은
     반동으로 닫힘/열림이 반복되지 않으면서도 Chrome과 같은 방향성은 유지한다.
   */
-  if (route.meta.keepHeaderOnScroll || !canCollapseHeader(event.currentTarget)) {
+  if (
+    route.meta.keepHeaderOnScroll ||
+    route.meta.stickyTabs ||
+    !canCollapseHeader(event.currentTarget)
+  ) {
     isHeaderCollapsed.value = false
   } else if (isHeaderCollapsed.value ? scrollTop < 12 : scrollTop > 32) {
     isHeaderCollapsed.value = !isHeaderCollapsed.value
@@ -97,23 +108,23 @@ function handleContentScroll(event) {
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
       'mobile-frame--investment-guide': route.meta.investmentGuide,
       'mobile-frame--vacation': isVacationDashboard,
-      'mobile-frame--fixed-header-tabs': route.meta.keepHeaderOnScroll,
+      'mobile-frame--fixed-header-tabs': route.meta.keepHeaderOnScroll || route.meta.stickyTabs,
     }"
   >
     <AppHeader
       v-if="!route.meta.hideHeader"
       ref="headerElement"
-      :title="route.meta.headerTitle"
+      :title="headerTitle"
       :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
       :collapsed="isHeaderCollapsed"
-      :hide-back-when-collapsed="route.meta.hideBackOnScroll"
     />
 
     <main
       ref="contentElement"
       class="main-layout__content"
       :class="{
+        'main-layout__content--home': route.name === 'dashboard',
         'main-layout__content--without-navigation': route.meta.hideBottomNavigation,
         'main-layout__content--vacation': isVacationDashboard,
         'main-layout__content--sticky-tabs': route.meta.stickyTabs,
@@ -147,6 +158,10 @@ function handleContentScroll(event) {
 
 .main-layout__content::-webkit-scrollbar {
   display: none;
+}
+
+.main-layout__content--home {
+  padding-top: calc(var(--app-header-height) + var(--safe-area-top));
 }
 
 .main-layout__bottom {
@@ -201,17 +216,13 @@ function handleContentScroll(event) {
   background: var(--ui-background);
 }
 
-:global(.mobile-frame.mobile-frame--investment-guide .app-header) {
-  background: var(--ui-background);
-}
-
 :global(.mobile-frame.mobile-frame--investment-guide .app-header h1) {
   font-size: 18px;
 }
 
 :global(.mobile-frame.mobile-frame--fixed-header-tabs .app-header) {
-  background: rgb(243 255 248 / 20%);
-  backdrop-filter: blur(18px);
+  padding-bottom: 0;
+  background: var(--ui-background);
 }
 
 :global(.mobile-frame.mobile-frame--vacation) {
@@ -252,7 +263,20 @@ function handleContentScroll(event) {
   position: sticky;
   z-index: calc(var(--z-header) - 1);
   top: 0;
+  margin-top: 0;
+  overflow: visible;
   background: var(--ui-background);
+}
+
+.main-layout__content--sticky-tabs :deep([role='tablist']::before) {
+  position: absolute;
+  z-index: -1;
+  top: -1px;
+  right: calc(50% - 50vw);
+  bottom: -12px;
+  left: calc(50% - 50vw);
+  background: var(--ui-background);
+  content: '';
 }
 
 .main-layout__bottom--vacation {

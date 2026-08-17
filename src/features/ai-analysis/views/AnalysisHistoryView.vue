@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 
+import CommonTabs from '@/common/components/common/CommonTabs.vue'
 import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import { useAnalysisHistory } from '@/features/ai-analysis/composables/useAnalysisHistory'
 import { ANALYSIS_RECORD_TYPES } from '@/features/ai-analysis/mappers/analysisHistory.mapper'
@@ -48,23 +49,11 @@ function openDetail(record) {
       </div>
     </article>
 
-    <div
-      class="history-tabs"
-      role="tablist"
+    <CommonTabs
+      v-model="activeTab"
+      :items="tabs"
       aria-label="분석 기록 유형"
-    >
-      <button
-        v-for="tab in tabs"
-        :key="tab.value"
-        type="button"
-        role="tab"
-        :aria-selected="activeTab === tab.value"
-        :class="{ 'history-tabs__tab--active': activeTab === tab.value }"
-        @click="activeTab = tab.value"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
+    />
 
     <p
       v-if="loading"
@@ -275,33 +264,6 @@ function openDetail(record) {
   height: 24px;
   flex: 0 0 auto;
   background: var(--ui-sub-title-light);
-}
-
-.history-tabs {
-  display: flex;
-  gap: 14px;
-  padding: 0 20px;
-}
-
-.history-tabs button {
-  flex: 1;
-  padding: 10px 0;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 14px 14px 0 0;
-  background: transparent;
-  color: var(--ui-sub-title-light);
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  font-weight: var(--weight-bold);
-  line-height: 1.5;
-}
-
-.history-tabs .history-tabs__tab--active {
-  border-bottom-color: var(--green-700);
-  background: rgb(243 255 248 / 20%);
-  color: var(--green-700);
 }
 
 .record-list {

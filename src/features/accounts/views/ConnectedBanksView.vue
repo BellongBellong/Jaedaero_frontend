@@ -143,15 +143,6 @@ onMounted(loadAccounts)
 
 <template>
   <main class="connected-banks screen">
-    <button
-      type="button"
-      class="back-button"
-      aria-label="마이페이지로 돌아가기"
-      @click="router.back()"
-    >
-      ‹
-    </button>
-
     <section class="content">
       <p
         v-if="loading"

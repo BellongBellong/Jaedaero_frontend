@@ -3,7 +3,7 @@ import { onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import jaedaeroWordmark from '@/assets/JaedaeroWordmark.svg'
-import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
+import backwardIcon from '@/assets/icons/backArrowIcon.svg'
 import ModeSwitch from '@/common/components/ModeSwitch.vue'
 import NotificationButton from '@/common/components/NotificationButton.vue'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
@@ -71,7 +71,7 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
         @click="router.back()"
       >
         <img
-          :src="backArrowIcon"
+          :src="backwardIcon"
           alt=""
           aria-hidden="true"
         >
@@ -121,18 +121,32 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
   pointer-events: none;
 }
 .app-header--collapsed .app-header__back {
-  position: absolute;
+  position: fixed;
   top: calc(var(--safe-area-top) + 10px);
-  left: max(var(--layout-page-padding), var(--safe-area-left));
-  z-index: 1;
+  left: max(
+    calc(var(--safe-area-left) + var(--layout-page-padding)),
+    calc((100vw - var(--design-mobile-width)) / 2 + var(--layout-page-padding))
+  );
+  z-index: var(--z-header);
   margin: 0;
 }
 .app-header--collapsed.app-header--hide-collapsed-back .app-header__back {
   display: none;
 }
 .app-header--home {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
   align-items: center;
   justify-content: space-between;
+  background: linear-gradient(180deg, rgb(250 250 250 / 100%) 0%, rgb(255 255 255 / 0%) 100%);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+}
+.app-header--back {
+  align-items: center;
+  gap: 14px;
 }
 .app-header__brand {
   display: block;
@@ -146,14 +160,23 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
 }
 .app-header__back {
   display: grid;
-  width: 24px;
-  height: 24px;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
   place-items: center;
-  margin-bottom: 2px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 90%);
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 18%);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
 }
 .app-header__back img {
+  display: block;
   width: 10px;
   height: 17px;
+  object-fit: contain;
 }
 .app-header__title-row {
   display: flex;

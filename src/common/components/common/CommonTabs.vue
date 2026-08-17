@@ -30,12 +30,15 @@ defineEmits(['update:modelValue'])
 
 <style scoped>
 .common-tabs {
+  position: relative;
   display: flex;
   width: 100%;
   align-items: flex-start;
   gap: 0;
+  margin: 0 0 12px;
   overflow: hidden;
-  background: transparent;
+  isolation: isolate;
+  background: var(--ui-background);
 }
 
 .common-tabs button {
@@ -60,7 +63,14 @@ defineEmits(['update:modelValue'])
 
 .common-tabs .common-tabs__tab--active {
   border-bottom: 2px solid var(--Brand-DeepGreen, var(--green-700));
-  background: rgb(243 255 248 / 20%);
+  background: rgb(243 255 248 / 10%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 92%),
+    inset 1px 0 0 rgb(255 255 255 / 58%),
+    inset -1px 0 0 rgb(255 255 255 / 42%),
+    0 -6px 18px rgb(86 103 82 / 7%);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
   color: var(--Brand-DeepGreen, var(--green-700));
 }
 </style>
