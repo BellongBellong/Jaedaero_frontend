@@ -6,6 +6,7 @@ import { mapDashboardResponse } from '@/features/dashboard/mappers/dashboardResp
 import { getDashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
 import { getTodayMarketReport } from '@/features/market-report/api/marketReport.api'
 import { getTodayMissions } from '@/features/missions/api/missions.api'
+import { isSecuritiesAccount } from '@/features/accounts/composables/institutionMapping'
 
 function normalizeMissions(response) {
   const value = response?.data ?? response
@@ -147,11 +148,8 @@ export function useDashboard(options) {
         name: account.accountName,
         amount: account.balance,
       }))
-      model.assetSummary.monthly.investment.hasSecuritiesAccount = accounts.some((account) =>
-        ['INVESTMENT', 'SECURITIES', 'SECURITY'].includes(
-          String(account.accountType || '').toUpperCase(),
-        ),
-      )
+      model.assetSummary.monthly.investment.hasSecuritiesAccount =
+        accounts.some(isSecuritiesAccount)
 
       dashboard.value = model
       source.value = 'api'

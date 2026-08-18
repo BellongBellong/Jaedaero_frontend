@@ -169,6 +169,21 @@ export function accountInstitutionName(account) {
   )
 }
 
+const securitiesAccountTypes = ['ST', 'SECURITIES', 'SECURITY', 'INVESTMENT']
+
+export function isSecuritiesAccount(account) {
+  const businessType = String(
+    account?.businessType || account?.institutionType || account?.financialBusinessType || '',
+  ).toUpperCase()
+  const accountType = String(account?.accountType || account?.type || '').toUpperCase()
+
+  return (
+    securitiesAccountTypes.includes(businessType) ||
+    securitiesAccountTypes.includes(accountType) ||
+    /증권|금융투자/.test(accountInstitutionName(account))
+  )
+}
+
 export function accountInstitutionKey(account) {
   return (
     accountOrganizationCode(account) || normalizeInstitutionName(accountInstitutionName(account))

@@ -6,6 +6,7 @@ import calendarIcon from '@/assets/icons/CalenderIcon.svg'
 import monthlyInvestmentIcon from '@/assets/rebalancing-monthly-account-icon.png'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import { getAccounts } from '@/features/accounts/api/accounts.api'
+import { isSecuritiesAccount } from '@/features/accounts/composables/institutionMapping'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
   createInvestmentGuidance,
@@ -122,12 +123,6 @@ function storedWhatIfAmount() {
   } catch {
     return 0
   }
-}
-
-function isSecuritiesAccount(account) {
-  return ['ST', 'SECURITIES', 'INVESTMENT'].includes(
-    String(account.businessType || account.accountType || '').toUpperCase(),
-  )
 }
 
 function formatWon(value) {
