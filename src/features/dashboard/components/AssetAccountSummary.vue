@@ -6,6 +6,7 @@ import accountsavingBlock from '@/assets/icons/account/accountsavingBlock.png'
 import assetBlock from '@/assets/icons/account/assetBlock.png'
 import consumptionBlock from '@/assets/icons/account/consumptionBlock.png'
 import investBlock from '@/assets/icons/account/investBlock.png'
+import { isSecuritiesAccount } from '@/features/accounts/composables/institutionMapping'
 import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 
 const props = defineProps({
@@ -24,8 +25,8 @@ const accountIcons = {
 }
 
 function accountGroup(account) {
+  if (isSecuritiesAccount(account)) return 'investment'
   const type = String(account.accountType || account.type || '').toUpperCase()
-  if (['INVESTMENT', 'SECURITIES', 'SECURITY'].includes(type)) return 'investment'
   if (['MILITARY_SAVINGS', 'SAVINGS', 'INSTALLMENT_SAVINGS'].includes(type)) return 'savings'
   return 'account'
 }
