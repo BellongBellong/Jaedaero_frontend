@@ -331,7 +331,7 @@ watch(investmentProductCode, (code) => {
                 class="calendar-icon"
                 :src="calendarIcon"
                 alt=""
-              />
+              >
             </button>
 
             <div
@@ -370,7 +370,7 @@ watch(investmentProductCode, (code) => {
                 contributionAmount ? contributionAmount.toLocaleString('ko-KR') : '300,000'
               "
               @input="updateAmount('contribution', $event)"
-            />
+            >
             <em>원</em>
           </span>
         </label>
@@ -385,12 +385,14 @@ watch(investmentProductCode, (code) => {
                 maximumMonthlyAmount ? maximumMonthlyAmount.toLocaleString('ko-KR') : '300,000'
               "
               @input="updateAmount('maximum', $event)"
-            />
+            >
             <em>원</em>
           </span>
         </label>
 
-        <p class="limit-helper">AI가 증액을 추천할 때도 이 한도를 초과하지 않아요.</p>
+        <p class="limit-helper">
+          AI가 증액을 추천할 때도 이 한도를 초과하지 않아요.
+        </p>
         <p
           v-if="frequency === 'WEEKLY'"
           class="monthly-conversion"
@@ -417,14 +419,14 @@ watch(investmentProductCode, (code) => {
             <img
               :src="monthlyInvestmentIcon"
               alt=""
-            />
+            >
           </span>
           <span class="choice-copy">
             <strong>{{ accountLabel }}</strong>
             <small>{{
               selectedAccount?.accountNumberMasked ||
-              selectedAccount?.accountNumber ||
-              '연결된 계좌'
+                selectedAccount?.accountNumber ||
+                '연결된 계좌'
             }}</small>
           </span>
           <select
@@ -449,11 +451,12 @@ watch(investmentProductCode, (code) => {
           <span
             class="choice-chevron"
             aria-hidden="true"
-            >›</span
-          >
+          >›</span>
         </label>
 
-        <h3 class="product-title">투자 상품</h3>
+        <h3 class="product-title">
+          투자 상품
+        </h3>
         <label class="choice-row product-choice">
           <span class="choice-icon choice-icon--product">📈</span>
           <span class="choice-copy">
@@ -474,10 +477,11 @@ watch(investmentProductCode, (code) => {
           <span
             class="choice-chevron"
             aria-hidden="true"
-            >›</span
-          >
+          >›</span>
         </label>
-        <p class="investment-policy">실제 주문 방식과 동의 절차는 증권사 정책을 따릅니다.</p>
+        <p class="investment-policy">
+          실제 주문 방식과 동의 절차는 증권사 정책을 따릅니다.
+        </p>
       </section>
 
       <p
@@ -507,8 +511,10 @@ watch(investmentProductCode, (code) => {
         aria-live="polite"
       >
         <header class="creating-screen__heading">
-          <p v-if="nickname">{{ nickname }}님을 위한</p>
-          <h2>적립식 투자 가이드를<br />만들고있어요</h2>
+          <p v-if="nickname">
+            {{ nickname }}님을 위한
+          </p>
+          <h2>적립식 투자 가이드를<br>만들고있어요</h2>
         </header>
 
         <span class="creating-screen__visual">
@@ -516,10 +522,12 @@ watch(investmentProductCode, (code) => {
             :src="aiRecommendationBot"
             alt=""
             aria-hidden="true"
-          />
+          >
         </span>
 
-        <p class="creating-screen__note">가이드 생성까지<br />1분정도 소요돼요</p>
+        <p class="creating-screen__note">
+          가이드 생성까지<br>1분정도 소요돼요
+        </p>
       </section>
 
       <section

@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import { getProductRecommendations } from '@/features/reports/api/reports.api'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
@@ -92,22 +91,6 @@ onMounted(async () => {
 
 <template>
   <section class="product-screen">
-    <header class="product-screen__header">
-      <button
-        class="back-button"
-        type="button"
-        aria-label="이전 페이지"
-        @click="router.back()"
-      >
-        <img
-          :src="backArrowIcon"
-          alt=""
-          aria-hidden="true"
-        >
-      </button>
-      <h1>투자상품 추천</h1>
-    </header>
-
     <section class="analysis-card">
       <div class="analysis-card__head">
         <span class="analysis-card__bot">

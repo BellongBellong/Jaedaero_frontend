@@ -52,13 +52,17 @@ const mainRoutes = [
         path: 'mypage/connected-banks',
         name: 'connected-banks',
         component: () => import('@/features/accounts/views/ConnectedBanksView.vue'),
-        meta: { requiresAuth: true, hideHeader: true, hideBottomNavigation: true },
+        meta: {
+          requiresAuth: true,
+          headerTitle: '연동한 금융기관',
+          hideBottomNavigation: true,
+        },
       },
       {
         path: 'mypage/connected-banks/:institutionKey',
         name: 'connected-bank-management',
         component: () => import('@/features/accounts/views/AccountManagementView.vue'),
-        meta: { requiresAuth: true, hideHeader: true, hideBottomNavigation: true },
+        meta: { requiresAuth: true, headerTitle: '계좌 관리', hideBottomNavigation: true },
       },
       {
         path: 'transactions',
@@ -67,7 +71,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'home',
-          hideHeader: true,
+          headerTitle: '거래 내역',
           stickyTabs: true,
         },
       },
@@ -113,7 +117,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'home',
-          hideHeader: true,
+          headerTitle: '자산 현황',
           stickyTabs: true,
         },
       },
@@ -121,13 +125,13 @@ const mainRoutes = [
         path: 'transactions/detail/:transactionId',
         name: 'transaction-detail',
         component: () => import('@/features/transactions/views/TransactionDetailView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
+        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '상세 내역' },
       },
       {
         path: 'transactions/accounts/:accountId',
         name: 'account-transactions',
         component: () => import('@/features/transactions/views/AccountTransactionView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', hideHeader: true },
+        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '계좌 상세' },
       },
       {
         path: 'ai-financial-report',
@@ -148,7 +152,7 @@ const mainRoutes = [
         meta: {
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
-          hideHeader: true,
+          headerTitle: 'AI 분석',
         },
       },
       {
@@ -180,14 +184,17 @@ const mainRoutes = [
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
           headerTitle: 'What-if 시뮬레이션',
-          hideBackOnScroll: true,
         },
       },
       {
         path: 'ai-product-recommendation',
         name: 'ai-product-recommendation',
         component: () => import('@/features/simulations/views/AiProductRecommendationView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'ai-coach', hideHeader: true },
+        meta: {
+          requiresAuth: true,
+          bottomNavigation: 'ai-coach',
+          headerTitle: '투자상품 추천',
+        },
       },
       {
         path: 'investment-guide',
@@ -198,7 +205,6 @@ const mainRoutes = [
           bottomNavigation: 'ai-coach',
           headerTitle: '적립식 투자 가이드',
           investmentGuide: true,
-          hideBackOnScroll: true,
         },
       },
       {
@@ -210,7 +216,6 @@ const mainRoutes = [
           bottomNavigation: 'ai-coach',
           headerTitle: '월 적립 계획 설정',
           investmentGuide: true,
-          hideBackOnScroll: true,
         },
       },
       {
@@ -222,7 +227,6 @@ const mainRoutes = [
           bottomNavigation: 'ai-coach',
           headerTitle: '월 적립 계획 수정',
           investmentGuide: true,
-          hideBackOnScroll: true,
         },
       },
       {
@@ -234,7 +238,6 @@ const mainRoutes = [
           bottomNavigation: 'ai-coach',
           headerTitle: '적립식 투자 가이드',
           investmentGuide: true,
-          hideBackOnScroll: true,
         },
       },
       {

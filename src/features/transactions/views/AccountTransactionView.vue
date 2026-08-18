@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
 import CommonTabs from '@/common/components/common/CommonTabs.vue'
 import DropdownMenu from '@/common/components/common/DropdownMenu.vue'
 import AccountEditPanel from '@/features/accounts/components/AccountEditPanel.vue'
@@ -87,6 +86,10 @@ function applySavedAccount(preferences) {
 }
 
 onMounted(async () => {
+  await router.replace({
+    query: { ...route.query, headerTitle: accountName.value },
+  })
+
   if (usesMockScenario.value) return
 
   try {
@@ -102,21 +105,6 @@ onMounted(async () => {
 
 <template>
   <main class="account-detail screen app-page">
-    <header class="account-detail__header">
-      <button
-        type="button"
-        aria-label="이전 페이지"
-        @click="router.back()"
-      >
-        <img
-          :src="backArrowIcon"
-          alt=""
-          aria-hidden="true"
-        >
-      </button>
-      <h1>{{ accountName }}</h1>
-    </header>
-
     <section
       v-if="account"
       class="account-detail__summary"
