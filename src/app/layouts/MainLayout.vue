@@ -83,14 +83,16 @@ function handleContentScroll(event) {
 
   if (isSynchronizedChrome.value) {
     isHeaderCollapsed.value = false
-    isNavigationMinimized.value = false
 
     if (scrollTop <= SCROLL_DIRECTION_EPSILON) {
       isChromeHidden.value = false
+      isNavigationMinimized.value = false
     } else if (delta > SCROLL_DIRECTION_EPSILON) {
       isChromeHidden.value = true
+      isNavigationMinimized.value = true
     } else if (delta < -SCROLL_DIRECTION_EPSILON) {
       isChromeHidden.value = false
+      isNavigationMinimized.value = false
     }
 
     lastScrollTop.value = scrollTop
@@ -164,12 +166,9 @@ function handleContentScroll(event) {
       class="main-layout__bottom"
       :class="{
         'main-layout__bottom--vacation': isVacationDashboard,
-        'main-layout__bottom--hidden': isSynchronizedChrome && isChromeHidden,
       }"
-      :aria-hidden="isSynchronizedChrome && isChromeHidden ? 'true' : undefined"
-      :inert="isSynchronizedChrome && isChromeHidden"
     >
-      <BottomNavigation :minimized="!isSynchronizedChrome && isNavigationMinimized" />
+      <BottomNavigation :minimized="isNavigationMinimized" />
     </div>
   </MobileFrame>
 </template>
@@ -214,15 +213,6 @@ function handleContentScroll(event) {
   will-change: transform, opacity;
 }
 
-.main-layout__bottom--hidden {
-  opacity: 0;
-  transform: translate3d(0, calc(100% + var(--safe-area-bottom) + 12px), 0);
-}
-
-.main-layout__bottom--hidden > :deep(.bottom-navigation) {
-  pointer-events: none;
-}
-
 /*
   AI 분석 로딩 단계는 배경이 화면 전체를 덮어야 한다.
   안쪽 요소 높이를 dvh 로 맞추면 기기별 safe area 계산 차이로 바닥에 흰 여백이
@@ -257,7 +247,7 @@ function handleContentScroll(event) {
 }
 
 /*
-  AI 코치는 헤더와 하단 바를 하나의 앱 크롬처럼 움직인다.
+  AI 코치는 하나의 스크롤 방향 신호로 헤더의 출입과 하단 바의 축소를 맞춘다.
   헤더를 문서 흐름에서 분리하고 동일한 높이를 콘텐츠에 항상 예약해 두므로,
   다시 나타날 때 본문을 아래로 밀지 않는다.
 */
@@ -272,9 +262,14 @@ function handleContentScroll(event) {
   right: 0;
   left: 0;
   flex: none;
-  background: linear-gradient(180deg, rgb(246 246 246 / 96%) 58%, rgb(246 246 246 / 72%) 100%);
-  backdrop-filter: blur(16px) saturate(120%);
-  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  background: linear-gradient(
+    180deg,
+    rgb(246 246 246 / 42%) 0%,
+    rgb(246 246 246 / 16%) 72%,
+    rgb(246 246 246 / 0%) 100%
+  );
+  backdrop-filter: blur(4px) saturate(112%);
+  -webkit-backdrop-filter: blur(4px) saturate(112%);
 }
 
 .mobile-frame--synchronized-chrome .main-layout__content {

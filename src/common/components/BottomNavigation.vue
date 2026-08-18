@@ -6,6 +6,7 @@ import aiCoachIcon from '@/assets/icons/aiCoachIcon.svg'
 import challengeIcon from '@/assets/icons/challengeIcon.svg'
 import homeIcon from '@/assets/icons/homeIcon.svg'
 import myIcon from '@/assets/icons/myIcon.svg'
+import LiquidGlassContainer from '@/common/components/liquid-glass/LiquidGlassContainer.vue'
 
 const props = defineProps({
   minimized: { type: Boolean, default: false },
@@ -107,8 +108,12 @@ function selectTab(item) {
 </script>
 
 <template>
-  <nav
-    class="bottom-navigation glass glass--dark"
+  <LiquidGlassContainer
+    as="nav"
+    class="bottom-navigation"
+    tone="dark"
+    radius="999px"
+    :blur="3"
     aria-label="주요 메뉴"
     :class="{
       'bottom-navigation--dragging': isDragging,
@@ -141,17 +146,10 @@ function selectTab(item) {
         aria-hidden="true"
       >
     </button>
-  </nav>
+  </LiquidGlassContainer>
 </template>
 
 <style scoped>
-/*
-  글래스 재료는 .glass / .glass--dark 유틸이 담당한다 (utilities.css).
-  여기서는 형태와 배치만 다룬다 — 재료 속성을 다시 선언하면
-  스코프 선택자가 유틸을 덮어써서 토큰 단일 소스가 깨진다.
-
-  아이콘 자산이 fill="white" 하드코딩이라 dark appearance를 쓴다.
-*/
 .bottom-navigation {
   position: relative;
   z-index: 10;

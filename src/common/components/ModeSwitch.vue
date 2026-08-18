@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 import switchIcon from '@/assets/icons/reflectIcon.svg'
+import LiquidGlassContainer from '@/common/components/liquid-glass/LiquidGlassContainer.vue'
 
 const props = defineProps({
   modelValue: { type: String, default: 'military' },
@@ -28,9 +29,14 @@ function toggleMode() {
 </script>
 
 <template>
-  <button
+  <LiquidGlassContainer
+    as="button"
     class="mode-switch"
     :class="currentMode.className"
+    tone="clear"
+    radius="999px"
+    :blur="4"
+    type="button"
     @click="toggleMode"
   >
     <div class="mode-switch__icon">
@@ -66,7 +72,7 @@ function toggleMode() {
       :src="switchIcon"
       alt=""
     >
-  </button>
+  </LiquidGlassContainer>
 </template>
 
 <style scoped>
@@ -78,7 +84,6 @@ function toggleMode() {
   height: 40px;
   padding: 4px 10px;
 
-  border: 1px solid rgb(255 255 255 / 48%);
   border-radius: 999px;
 
   cursor: pointer;
@@ -87,14 +92,6 @@ function toggleMode() {
     background 0.35s ease,
     transform 0.2s ease,
     box-shadow 0.35s ease;
-
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 72%),
-    inset 0 -1px 0 rgb(255 255 255 / 18%),
-    0 6px 16px rgb(35 54 42 / 8%);
-
-  backdrop-filter: blur(16px) saturate(130%);
-  -webkit-backdrop-filter: blur(16px) saturate(130%);
 }
 
 .mode-switch:hover {
@@ -106,13 +103,13 @@ function toggleMode() {
 }
 
 .mode-switch.military {
-  background:
+  --liquid-glass-fill:
     linear-gradient(180deg, rgb(255 255 255 / 38%), rgb(255 255 255 / 8%)),
     linear-gradient(180deg, rgb(192 251 215 / 48%), rgb(255 244 186 / 42%));
 }
 
 .mode-switch.vacation {
-  background:
+  --liquid-glass-fill:
     linear-gradient(180deg, rgb(255 255 255 / 38%), rgb(255 255 255 / 8%)),
     linear-gradient(180deg, rgb(190 221 255 / 54%), rgb(225 239 255 / 42%));
 }

@@ -9,6 +9,7 @@ import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import returnRateIconBackground from '@/assets/simulations/return-rate-icon-bg.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import LiquidGlassSlider from '@/common/components/liquid-glass/LiquidGlassSlider.vue'
 import { getDashboard } from '@/features/dashboard/api/dashboard.api'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
@@ -196,10 +197,6 @@ function changeReturnRate(change) {
   savedMessage.value = ''
   errorMessage.value = ''
   schedulePreview()
-}
-
-function rangeProgress(row) {
-  return `${row.maxAmount ? (row.amount / row.maxAmount) * 100 : 0}%`
 }
 
 function formatMoney(value) {
@@ -506,20 +503,16 @@ onBeforeUnmount(() => {
               aria-hidden="true"
             >
             <label :for="`allocation-${row.id}`">{{ row.label }}</label>
-            <input
+            <LiquidGlassSlider
               :id="`allocation-${row.id}`"
-              type="range"
-              min="0"
+              :model-value="row.amount"
+              :min="0"
               :max="row.maxAmount"
               :step="ALLOCATION_STEP"
-              :value="row.amount"
+              :color="hasScenarioChanges ? row.color : 'var(--gray-300)'"
               :aria-label="`${row.label} 월 금액`"
-              :style="{
-                '--range-progress': rangeProgress(row),
-                '--range-color': hasScenarioChanges ? row.color : 'var(--gray-300)',
-              }"
-              @input="updateAllocation(row.id, $event.target.value)"
-            >
+              @update:model-value="updateAllocation(row.id, $event)"
+            />
             <output :for="`allocation-${row.id}`">{{ formatMoney(row.amount) }}</output>
             <span
               v-if="row.id === 'investment'"
@@ -844,61 +837,6 @@ onBeforeUnmount(() => {
   color: var(--gray-600);
   font-size: 13px;
   font-weight: 700;
-}
-
-.allocation-row input {
-  width: 100%;
-  height: 16px;
-  margin: 0;
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.allocation-row input::-webkit-slider-runnable-track {
-  height: 5px;
-  border-radius: 999px;
-  background: linear-gradient(
-    to right,
-    var(--range-color) 0 var(--range-progress),
-    var(--gray-200) var(--range-progress) 100%
-  );
-}
-
-.allocation-row input::-webkit-slider-thumb {
-  width: 11px;
-  height: 11px;
-  margin-top: -3px;
-  appearance: none;
-  border: 0;
-  border-radius: 50%;
-  background: var(--range-color);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
-}
-
-.allocation-row input::-moz-range-track {
-  height: 5px;
-  border-radius: 999px;
-  background: var(--gray-200);
-}
-
-.allocation-row input::-moz-range-progress {
-  height: 5px;
-  border-radius: 999px;
-  background: var(--range-color);
-}
-
-.allocation-row input::-moz-range-thumb {
-  width: 11px;
-  height: 11px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--range-color);
-}
-
-.allocation-row input:focus-visible {
-  outline: 2px solid var(--green-300);
-  outline-offset: 3px;
 }
 
 .allocation-row output {
