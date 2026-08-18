@@ -1,4 +1,7 @@
 const CATEGORY_ALIASES = {
+  CARD: '카드',
+  CARD_BENEFIT: '카드',
+  CREDIT_CARD: '카드',
   TRANSPORT: '교통',
   TRANSPORTATION: '교통',
   LEISURE: '여가',

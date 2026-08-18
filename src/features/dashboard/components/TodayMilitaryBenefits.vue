@@ -7,7 +7,7 @@ defineProps({
   loading: { type: Boolean, default: false },
 })
 
-defineEmits(['view-all'])
+defineEmits(['select', 'view-all'])
 </script>
 
 <template>
@@ -30,17 +30,20 @@ defineEmits(['view-all'])
       v-else-if="benefits.length"
       class="military-benefits__rail"
     >
-      <article
+      <button
         v-for="benefit in benefits"
         :key="benefit.id"
+        type="button"
         class="military-benefits__item"
+        :aria-label="`${benefit.title} 혜택 상세 보기`"
+        @click="$emit('select', benefit)"
       >
         <BenefitCategoryLabel :category="benefit.category" />
         <div class="military-benefits__copy">
           <span>{{ benefit.title }}</span>
           <strong>{{ benefit.discountSummary }}</strong>
         </div>
-      </article>
+      </button>
     </div>
 
     <p
@@ -108,6 +111,10 @@ defineEmits(['view-all'])
   gap: var(--space-4);
   padding: var(--space-20) var(--space-16);
   background: var(--white);
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
 }
 .military-benefits__copy {
   display: flex;

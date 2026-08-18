@@ -40,6 +40,10 @@ const props = defineProps({
     type: Number,
     default: null,
   },
+  characterImage: {
+    type: String,
+    default: '',
+  },
 })
 
 const calculatedAchievementRate = computed(() => {
@@ -219,7 +223,7 @@ const formattedAchievementRate = computed(() => {
         <div class="financial-dday-card__character-wrap">
           <span class="financial-dday-card__character-shadow" />
           <img
-            :src="armyCharacter"
+            :src="characterImage || armyCharacter"
             alt=""
             aria-hidden="true"
           >

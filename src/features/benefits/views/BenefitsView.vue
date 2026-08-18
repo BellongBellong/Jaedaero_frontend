@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 import arrowIcon from '@/assets/icons/arrow.svg'
 import CommonTabs from '@/common/components/common/CommonTabs.vue'
@@ -9,13 +10,13 @@ import {
   normalizeBenefitCategory,
   normalizeBenefits,
 } from '@/features/benefits/utils/benefitMapper'
-import { getBenefits } from '@/features/reports/api/reports.api'
 
-const categoryNames = ['전체', '교통', '여가', '자기계발', '숙박', '기타']
+const route = useRoute()
+
+const categoryNames = ['전체', '카드', '교통', '여가', '자기계발', '숙박', '기타']
 const categoryOptions = categoryNames.map((category) => ({ label: category, value: category }))
 const benefits = ref([])
 const loading = ref(true)
-const usingExample = ref(false)
 const activeCategory = ref('전체')
 const expandedId = ref(null)
 
@@ -62,18 +63,24 @@ function showCategory(category) {
   document.querySelector('.benefits-view')?.scrollIntoView({ block: 'start' })
 }
 
-onMounted(async () => {
-  try {
-    const apiBenefits = normalizeBenefits(await getBenefits())
-    benefits.value = apiBenefits.length ? apiBenefits : normalizeBenefits(benefitExamples)
-    usingExample.value = !apiBenefits.length
-  } catch {
-    benefits.value = normalizeBenefits(benefitExamples)
-    usingExample.value = true
-  } finally {
-    loading.value = false
+function loadBenefits() {
+  benefits.value = normalizeBenefits(benefitExamples)
+
+  const selectedId = Array.isArray(route.query.benefitId)
+    ? route.query.benefitId[0]
+    : route.query.benefitId
+  const selectedBenefit = benefits.value.find(
+    (benefit) => String(benefit.id) === String(selectedId),
+  )
+  if (selectedBenefit) {
+    activeCategory.value = selectedBenefit.category
+    expandedId.value = selectedBenefit.id
   }
-})
+
+  loading.value = false
+}
+
+onMounted(loadBenefits)
 </script>
 
 <template>
@@ -87,12 +94,6 @@ onMounted(async () => {
     />
 
     <p
-      v-if="usingExample"
-      class="benefits-view__notice"
-    >
-      군인 혜택 API 준비 전 예시 데이터를 표시하고 있어요.
-    </p>
-    <p
       v-if="loading"
       class="benefits-view__state"
     >
@@ -101,7 +102,6 @@ onMounted(async () => {
 
     <section
       v-for="group in groupedBenefits"
-      v-else
       :key="group.category"
       class="benefits-view__section"
     >
@@ -187,14 +187,6 @@ onMounted(async () => {
   margin-inline: calc(var(--layout-page-padding) * -1);
   width: calc(100% + var(--layout-page-padding) * 2);
   padding-inline: var(--layout-page-padding);
-}
-.benefits-view__notice {
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  background: rgb(255 255 255 / 56%);
-  color: var(--gray-500);
-  font-size: 11px;
 }
 .benefits-view__section {
   display: flex;

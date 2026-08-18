@@ -17,7 +17,7 @@ const props = defineProps({
   },
 })
 
-defineEmits(['view-report', 'view-spending'])
+const emit = defineEmits(['view-report', 'view-income', 'view-investment', 'view-spending'])
 
 const spendingRate = computed(() => {
   const amount = props.data?.spending?.amount ?? 0
@@ -66,6 +66,10 @@ function formatSignedRate(value) {
   const sign = rate > 0 ? '+' : ''
   return `${sign}${rate}%`
 }
+
+function openInvestmentTransactions() {
+  if (investmentState.value !== 'disconnected') emit('view-investment')
+}
 </script>
 
 <template>
@@ -73,7 +77,12 @@ function formatSignedRate(value) {
     v-if="data"
     class="monthly-assets"
   >
-    <article class="monthly-assets__income">
+    <button
+      type="button"
+      class="monthly-assets__income"
+      aria-label="이번 달 수입 거래 내역 보기"
+      @click="$emit('view-income')"
+    >
       <div class="monthly-assets__income-heading">
         <img
           :src="assetBlock"
@@ -102,12 +111,17 @@ function formatSignedRate(value) {
           </small>
         </div>
       </div>
-    </article>
+    </button>
 
     <div class="monthly-assets__lower">
       <article
         class="monthly-assets__tile monthly-assets__tile--investment"
         :class="`monthly-assets__tile--investment-${investmentState}`"
+        :role="investmentState === 'disconnected' ? undefined : 'button'"
+        :tabindex="investmentState === 'disconnected' ? undefined : 0"
+        @click="openInvestmentTransactions"
+        @keydown.enter.prevent="openInvestmentTransactions"
+        @keydown.space.prevent="openInvestmentTransactions"
       >
         <div class="monthly-assets__investment-content">
           <div class="monthly-assets__investment-heading">
@@ -154,6 +168,7 @@ function formatSignedRate(value) {
             params: { assetType: 'securities' },
             query: { source: 'dashboard', mode: 'additional' },
           }"
+          @click.stop
         >
           증권계좌연결
         </RouterLink>
@@ -258,7 +273,8 @@ function formatSignedRate(value) {
   gap: var(--dashboard-card-gap);
 }
 
-.monthly-assets article {
+.monthly-assets article,
+.monthly-assets button {
   color: var(--gray-900);
 }
 
@@ -299,6 +315,21 @@ function formatSignedRate(value) {
   border-radius: 20px;
   background:
     linear-gradient(90deg, rgb(166 255 199 / 22%), rgb(255 255 255 / 12%)), rgb(255 255 255 / 16%);
+  border: 1px solid rgb(255 255 255 / 58%);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.monthly-assets__income:focus-visible,
+.monthly-assets__tile--investment[role='button']:focus-visible {
+  outline: 2px solid var(--green-700);
+  outline-offset: 2px;
+}
+
+.monthly-assets__tile--investment[role='button'] {
+  cursor: pointer;
 }
 
 .monthly-assets__income-heading {

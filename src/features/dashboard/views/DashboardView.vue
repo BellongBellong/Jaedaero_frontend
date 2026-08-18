@@ -2,6 +2,10 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import airForceCharacter from '@/assets/icons/character/airForce.png'
+import armyCharacter from '@/assets/icons/character/army.png'
+import marineCharacter from '@/assets/icons/character/marineCorps.png'
+import navyCharacter from '@/assets/icons/character/navy.png'
 import DailyReportBanner from '@/features/dashboard/components/DailyReportBanner.vue'
 import DashboardAssetSwitcher from '@/features/dashboard/components/DashboardAssetSwitcher.vue'
 import DashboardSkeleton from '@/features/dashboard/components/DashboardSkeleton.vue'
@@ -15,12 +19,12 @@ import VacationBudgetCard from '@/features/dashboard/components/VacationBudgetCa
 import VacationBudgetSheet from '@/features/dashboard/components/VacationBudgetSheet.vue'
 import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
-import { getBenefits } from '@/features/reports/api/reports.api'
-import { normalizeBenefits, selectDailyBenefits } from '@/features/benefits/utils/benefitMapper'
 import { benefitExamples } from '@/features/benefits/mocks/benefits.mock'
+import { normalizeBenefits, selectDailyBenefits } from '@/features/benefits/utils/benefitMapper'
 import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
 import { useMissionStore } from '@/features/missions/stores/mission.store'
 import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
+import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import { transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import { useVacationBudget } from '@/features/leave-mode/composables/useVacationBudget'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
@@ -37,6 +41,13 @@ const vacationSpentAmount = ref(0)
 const vacationSpendingLoading = ref(false)
 const militaryBenefits = ref([])
 const benefitsLoading = ref(false)
+const dashboardCharacterImage = ref(armyCharacter)
+const characterImages = {
+  ARMY: armyCharacter,
+  NAVY: navyCharacter,
+  AIRFORCE: airForceCharacter,
+  MARINE: marineCharacter,
+}
 const { mode } = useLeaveModeSchedule()
 const isVacationMode = computed(() => mode.value === 'vacation')
 const dashboardOptions = computed(() => {
@@ -114,23 +125,30 @@ onMounted(async () => {
   }
 })
 
+onMounted(async () => {
+  try {
+    const profile = await getMyPageProfile()
+    const profileCode = String(profile?.profileImage || 'ARMY')
+      .replace(/^profile-/i, '')
+      .replace(/^character-/i, '')
+      .replace(/\.[^.]+$/, '')
+      .replace(/[-_\s]/g, '')
+      .toUpperCase()
+
+    dashboardCharacterImage.value = characterImages[profileCode] || armyCharacter
+  } catch {
+    dashboardCharacterImage.value = armyCharacter
+  }
+})
+
 watch(
   isVacationMode,
-  async (vacationMode) => {
+  (vacationMode) => {
     if (!vacationMode || militaryBenefits.value.length) return
 
     benefitsLoading.value = true
-    try {
-      const apiBenefits = normalizeBenefits(await getBenefits())
-      militaryBenefits.value = selectDailyBenefits(
-        apiBenefits.length ? apiBenefits : normalizeBenefits(benefitExamples),
-        4,
-      )
-    } catch {
-      militaryBenefits.value = selectDailyBenefits(normalizeBenefits(benefitExamples), 4)
-    } finally {
-      benefitsLoading.value = false
-    }
+    militaryBenefits.value = selectDailyBenefits(normalizeBenefits(benefitExamples), 4)
+    benefitsLoading.value = false
   },
   { immediate: true },
 )
@@ -259,10 +277,14 @@ function openVacationTransactions() {
         v-if="isVacationMode"
         :benefits="militaryBenefits"
         :loading="benefitsLoading"
+        @select="(benefit) => router.push({ name: 'benefits', query: { benefitId: benefit.id } })"
         @view-all="router.push({ name: 'benefits' })"
       />
 
-      <FinancialDdayCard v-bind="dashboardData.financialDday" />
+      <FinancialDdayCard
+        v-bind="dashboardData.financialDday"
+        :character-image="dashboardCharacterImage"
+      />
 
       <div class="dashboard__quick-cards">
         <UpcomingEventsCard
@@ -284,6 +306,18 @@ function openVacationTransactions() {
         :total-assets="dashboardData.assetSummary.total"
         @view-report="
           router.push({ name: 'transactions', query: { ...route.query, period: 'month' } })
+        "
+        @view-income="
+          router.push({
+            name: 'transactions',
+            query: { ...route.query, period: 'month', type: 'INCOME' },
+          })
+        "
+        @view-investment="
+          router.push({
+            name: 'transactions',
+            query: { ...route.query, period: 'month', tab: 'INVESTMENT' },
+          })
         "
         @view-spending="
           router.push({

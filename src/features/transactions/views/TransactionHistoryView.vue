@@ -1,14 +1,17 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import dropdownIcon from '@/assets/icons/dropdownIcon.svg'
 import CommonTabs from '@/common/components/common/CommonTabs.vue'
+import DropdownMenu from '@/common/components/common/DropdownMenu.vue'
+import { getAccounts } from '@/features/accounts/api/accounts.api'
 import { getDashboardMock, transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import AccountTransactionItem from '@/features/transactions/components/AccountTransactionItem.vue'
-import TransactionFilterSheet from '@/features/transactions/components/TransactionFilterSheet.vue'
-import { getTransactions } from '@/features/transactions/api/transactions.api'
+import {
+  getSecuritiesTransactions,
+  getTransactions,
+} from '@/features/transactions/api/transactions.api'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,11 +31,17 @@ const activeTab = ref(String(route.query.tab || 'ALL').toUpperCase())
 const transactionFilter = ref(
   filterOptions.some(({ value }) => value === initialType) ? initialType : 'ALL',
 )
-const filterOpen = ref(false)
 const usesMockScenario = computed(() => Boolean(route.query.persona || route.query.scenario))
 const loadedTransactions = ref(usesMockScenario.value ? transactionResponses : [])
+const connectedAccounts = ref([])
 const loading = ref(!usesMockScenario.value)
 const loadError = ref(null)
+const syncSentinel = ref(null)
+const syncing = ref(false)
+const syncStatus = ref('idle')
+const syncAttempted = ref(false)
+const hasUserScrolled = ref(false)
+let syncObserver
 const dashboard = computed(() => {
   const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
   const scenario = Array.isArray(route.query.scenario)
@@ -40,20 +49,26 @@ const dashboard = computed(() => {
     : route.query.scenario
   return getDashboardMock({ persona, scenario })
 })
+function isInvestmentAccount(account) {
+  const accountType = String(account.accountType || account.type || '').toUpperCase()
+  const businessType = String(account.businessType || '').toUpperCase()
+  return (
+    businessType === 'ST' ||
+    ['INVESTMENT', 'SECURITIES', 'SECURITY'].includes(accountType) ||
+    /증권|투자/.test(
+      String(account.institutionName || account.bankName || account.accountName || ''),
+    )
+  )
+}
+
+const investmentAccounts = computed(() => {
+  const accounts = usesMockScenario.value
+    ? (dashboard.value.assetSummary.total.accounts ?? [])
+    : connectedAccounts.value
+  return accounts.filter(isInvestmentAccount)
+})
 const investmentAccountIds = computed(
-  () =>
-    new Set(
-      (dashboard.value.assetSummary.total.accounts ?? [])
-        .filter((account) =>
-          ['INVESTMENT', 'SECURITIES', 'SECURITY'].includes(
-            String(account.accountType || account.type).toUpperCase(),
-          ),
-        )
-        .map((account) => String(account.id ?? account.accountId)),
-    ),
-)
-const activeFilterLabel = computed(
-  () => filterOptions.find(({ value }) => value === transactionFilter.value)?.label ?? '전체',
+  () => new Set(investmentAccounts.value.map((account) => String(account.id ?? account.accountId))),
 )
 const isVacationPeriod = computed(() => route.query.period === 'vacation')
 const vacationPeriodLabel = computed(() => {
@@ -109,15 +124,86 @@ function monthRange() {
   }
 }
 
+function requestRange() {
+  if (isVacationPeriod.value) {
+    return { startDate: route.query.startDate, endDate: route.query.endDate }
+  }
+  return route.query.period === 'month' ? monthRange() : {}
+}
+
+function mergeTransactions(...transactionGroups) {
+  const transactionMap = new Map()
+  transactionGroups.flat().forEach((transaction) => {
+    const key = String(
+      transaction.id ??
+        transaction.transactionId ??
+        `${transaction.accountId}-${transaction.transactionDate}-${transaction.amount}`,
+    )
+    transactionMap.set(key, transaction)
+  })
+  return [...transactionMap.values()]
+}
+
+async function loadLiveTransactions({ refresh = false } = {}) {
+  const range = requestRange()
+  const [accounts, regularTransactions] = await Promise.all([
+    getAccounts({ params: { refresh } }),
+    getTransactions(range),
+  ])
+  connectedAccounts.value = accounts
+
+  const securitiesResults = await Promise.allSettled(
+    accounts
+      .filter(isInvestmentAccount)
+      .map((account) =>
+        getSecuritiesTransactions(account.accountId ?? account.id, { ...range, refresh }),
+      ),
+  )
+  const securitiesTransactions = securitiesResults
+    .filter(({ status }) => status === 'fulfilled')
+    .flatMap(({ value }) => value)
+
+  loadedTransactions.value = mergeTransactions(regularTransactions, securitiesTransactions)
+}
+
+async function syncCodefAssets() {
+  if (usesMockScenario.value || syncing.value || syncAttempted.value) return
+
+  syncAttempted.value = true
+  syncing.value = true
+  syncStatus.value = 'loading'
+  try {
+    await loadLiveTransactions({ refresh: true })
+    syncStatus.value = 'success'
+  } catch (error) {
+    console.error('CODEF 자산 동기화 실패:', error)
+    syncStatus.value = 'error'
+  } finally {
+    syncing.value = false
+  }
+}
+
+function trackUserScroll(event) {
+  const target = event.target
+  const scrollTop = target === document ? window.scrollY : Number(target?.scrollTop || 0)
+  if (scrollTop > 24) hasUserScrolled.value = true
+}
+
+function observeSyncSentinel() {
+  if (!syncSentinel.value || usesMockScenario.value) return
+  syncObserver = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting && hasUserScrolled.value) syncCodefAssets()
+    },
+    { rootMargin: '0px 0px 80px' },
+  )
+  syncObserver.observe(syncSentinel.value)
+}
+
 onMounted(async () => {
   if (!usesMockScenario.value) {
     try {
-      const requestRange = isVacationPeriod.value
-        ? { startDate: route.query.startDate, endDate: route.query.endDate }
-        : route.query.period === 'month'
-          ? monthRange()
-          : {}
-      loadedTransactions.value = await getTransactions(requestRange)
+      await loadLiveTransactions()
     } catch (error) {
       loadError.value = error
       loadedTransactions.value = []
@@ -126,6 +212,14 @@ onMounted(async () => {
     }
   }
   completeMissionAfterLoad()
+  window.addEventListener('scroll', trackUserScroll, true)
+  await nextTick()
+  observeSyncSentinel()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', trackUserScroll, true)
+  syncObserver?.disconnect()
 })
 </script>
 
@@ -145,20 +239,11 @@ onMounted(async () => {
     />
 
     <section class="transaction-history__card">
-      <button
-        class="transaction-history__filter"
-        type="button"
-        :aria-expanded="filterOpen"
-        aria-haspopup="dialog"
-        @click="filterOpen = true"
-      >
-        {{ activeFilterLabel }}
-        <img
-          :src="dropdownIcon"
-          alt=""
-          aria-hidden="true"
-        >
-      </button>
+      <DropdownMenu
+        v-model="transactionFilter"
+        :options="filterOptions"
+        aria-label="거래내역 필터"
+      />
 
       <p
         v-if="loading"
@@ -185,12 +270,25 @@ onMounted(async () => {
       </p>
     </section>
 
-    <TransactionFilterSheet
-      v-if="filterOpen"
-      v-model="transactionFilter"
-      :options="filterOptions"
-      @close="filterOpen = false"
-    />
+    <div
+      ref="syncSentinel"
+      class="transaction-history__sync"
+      aria-live="polite"
+    >
+      <template v-if="syncStatus === 'loading'">
+        <span
+          class="transaction-history__sync-spinner"
+          aria-hidden="true"
+        />
+        CODEF 자산 정보를 동기화하고 있어요.
+      </template>
+      <template v-else-if="syncStatus === 'success'">
+        최신 자산 정보로 동기화했어요.
+      </template>
+      <template v-else-if="syncStatus === 'error'">
+        자산 정보를 동기화하지 못했어요.
+      </template>
+    </div>
   </main>
 </template>
 
@@ -245,27 +343,6 @@ onMounted(async () => {
   background: var(--white);
 }
 
-.transaction-history__filter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 10px;
-  border: 0;
-  background: transparent;
-  color: var(--gray-600);
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.transaction-history__filter img {
-  width: 8px;
-  height: 7px;
-  object-fit: contain;
-}
-
 .transaction-history__card ul {
   display: grid;
   gap: 2px;
@@ -281,5 +358,30 @@ onMounted(async () => {
   color: var(--gray-400);
   font-size: 14px;
   place-items: center;
+}
+
+.transaction-history__sync {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--gray-500);
+  font-size: 12px;
+}
+
+.transaction-history__sync-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--green-100);
+  border-top-color: var(--green-700);
+  border-radius: 50%;
+  animation: transaction-sync-spin 0.8s linear infinite;
+}
+
+@keyframes transaction-sync-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
