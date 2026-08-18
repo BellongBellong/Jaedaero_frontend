@@ -6,11 +6,6 @@ import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import ProfileAppearanceSheet from '@/features/onboarding/components/ProfileAppearanceSheet.vue'
-import {
-  checkNickname,
-  saveNickname,
-  saveProfileAppearance,
-} from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 import airforce from '../../../assets/features/onboarding/profiles/profile-airforce.png'
 import army from '../../../assets/features/onboarding/profiles/profile-army.png'
@@ -90,7 +85,7 @@ async function validateNickname() {
   status.value = 'checking'
   errorMessage.value = ''
   try {
-    const result = await checkNickname(nicknameToCheck)
+    const result = await onboarding.checkNickname(nicknameToCheck)
     if (nickname.value !== nicknameToCheck) return
     status.value = result.available ? 'available' : 'duplicate'
   } catch (error) {
@@ -110,13 +105,13 @@ async function saveAppearance(image, color) {
   appearanceLoading.value = true
   errorMessage.value = ''
   try {
-    await saveProfileAppearance({
-      profileImage: profileImageCodes[image],
-      profileSource: profileSourceCodes[color],
-    })
-    onboarding.form.profileImage = image
-    onboarding.form.profileBackgroundColor = color
-    onboarding.persist()
+    await onboarding.saveProfileAppearance(
+      {
+        profileImage: profileImageCodes[image],
+        profileSource: profileSourceCodes[color],
+      },
+      { profileImage: image, profileBackgroundColor: color },
+    )
     showProfileSheet.value = false
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
@@ -134,10 +129,8 @@ async function next() {
 
   loading.value = true
   errorMessage.value = ''
-  onboarding.form.nickname = nickname.value
   try {
-    await saveNickname(onboarding.form.nickname)
-    onboarding.persist()
+    await onboarding.saveNickname(nickname.value)
     router.push({ name: 'military-info' })
   } catch (error) {
     errorMessage.value = getApiErrorMessage(

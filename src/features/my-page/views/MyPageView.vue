@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, toRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
@@ -13,9 +13,7 @@ import profileAirforce from '../../../assets/features/onboarding/profiles/profil
 import profileArmy from '../../../assets/features/onboarding/profiles/profile-army.png'
 import profileMarine from '../../../assets/features/onboarding/profiles/profile-marine.png'
 import profileNavy from '../../../assets/features/onboarding/profiles/profile-navy.png'
-import { getAccounts } from '@/features/accounts/api/accounts.api'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
-import { getInvestmentBadges } from '@/features/challenges/api/challenges.api'
 import GoalAmountModal from '@/features/my-page/components/GoalAmountModal.vue'
 import NotificationSettingsModal from '@/features/my-page/components/NotificationSettingsModal.vue'
 import {
@@ -24,31 +22,24 @@ import {
   getEarnedBadges,
   getSelectedBadge,
 } from '@/features/my-page/composables/investmentBadges'
+import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 import ProfileAppearanceSheet from '@/features/onboarding/components/ProfileAppearanceSheet.vue'
-import {
-  checkNicknameAvailability,
-  getGoal,
-  getMyPageProfile,
-  updateNickname,
-  updateGoal,
-  updateProfileAppearance,
-  withdrawUser,
-} from '@/features/my-page/api/myPage.api'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const profile = ref(null)
-const connectedAccountCount = ref(0)
-const investmentBadges = ref([])
-const pageLoading = ref(true)
-const badgesLoading = ref(true)
+const myPageStore = useMyPageStore()
+const profile = toRef(myPageStore, 'profile')
+const connectedAccountCount = toRef(myPageStore, 'connectedAccountCount')
+const investmentBadges = toRef(myPageStore, 'investmentBadges')
+const pageLoading = toRef(myPageStore, 'pageLoading')
+const badgesLoading = toRef(myPageStore, 'badgesLoading')
+const goalAmount = toRef(myPageStore, 'goalAmount')
 const selectedBadgeId = ref(localStorage.getItem(BADGE_SELECTION_STORAGE_KEY) || '')
 const activeDialog = ref('')
 const saving = ref(false)
 const errorMessage = ref('')
 const nicknameInput = ref('')
 const nicknameStatus = ref('idle')
-const goalAmount = ref(0)
 const defaultNotificationSettings = {
   aiReport: false,
   mission: true,
@@ -163,8 +154,7 @@ async function saveGoalAmount(targetAmount) {
   saving.value = true
   errorMessage.value = ''
   try {
-    const result = await updateGoal(targetAmount)
-    goalAmount.value = result?.targetAmount ?? targetAmount
+    await myPageStore.saveGoal(targetAmount)
     activeDialog.value = ''
   } catch {
     errorMessage.value = '목표 금액을 변경하지 못했어요. 잠시 후 다시 시도해주세요.'
@@ -178,7 +168,7 @@ async function validateNickname() {
   saving.value = true
   errorMessage.value = ''
   try {
-    const result = await checkNicknameAvailability(nicknameInput.value)
+    const result = await myPageStore.checkNickname(nicknameInput.value)
     nicknameStatus.value = result.available ? 'available' : 'duplicate'
   } catch {
     errorMessage.value = '중복 확인 중 오류가 발생했어요.'
@@ -191,8 +181,7 @@ async function saveNickname() {
   if (nicknameStatus.value !== 'available' || saving.value) return
   saving.value = true
   try {
-    await updateNickname(nicknameInput.value)
-    profile.value = { ...profile.value, nickname: nicknameInput.value }
+    await myPageStore.saveNickname(nicknameInput.value)
     activeDialog.value = ''
   } catch {
     errorMessage.value = '닉네임을 변경하지 못했어요. 잠시 후 다시 시도해주세요.'
@@ -206,16 +195,17 @@ async function saveAppearance(image, color) {
   saving.value = true
   errorMessage.value = ''
   try {
-    await updateProfileAppearance({
-      profileImage: imageCodes[image],
-      profileSource: backgroundCodes[color],
-    })
-    profile.value = {
-      ...profile.value,
-      profileImage: imageCodes[image],
-      profileSource: backgroundCodes[color],
-      profileBackgroundColor: color,
-    }
+    await myPageStore.saveAppearance(
+      {
+        profileImage: imageCodes[image],
+        profileSource: backgroundCodes[color],
+      },
+      {
+        profileImage: imageCodes[image],
+        profileSource: backgroundCodes[color],
+        profileBackgroundColor: color,
+      },
+    )
     activeDialog.value = ''
   } catch {
     errorMessage.value = '프로필 이미지를 변경하지 못했어요.'
@@ -239,7 +229,7 @@ async function confirmWithdraw() {
   if (saving.value) return
   saving.value = true
   try {
-    await withdrawUser()
+    await myPageStore.withdraw()
     authStore.clearSession()
     await router.replace({ name: 'social-login' })
   } catch {
@@ -259,22 +249,7 @@ onMounted(async () => {
     localStorage.removeItem('jaedaero-notification-settings')
   }
 
-  const [profileResult, accountsResult, goalResult, badgesResult] = await Promise.allSettled([
-    getMyPageProfile(),
-    getAccounts(),
-    getGoal(),
-    getInvestmentBadges(),
-  ])
-  if (profileResult.status === 'fulfilled') profile.value = profileResult.value
-  if (accountsResult.status === 'fulfilled') {
-    connectedAccountCount.value = new Set(
-      accountsResult.value.map((account) => account.organizationCode || account.institutionName),
-    ).size
-  }
-  if (goalResult.status === 'fulfilled') goalAmount.value = goalResult.value?.targetAmount || 0
-  if (badgesResult.status === 'fulfilled') investmentBadges.value = badgesResult.value
-  badgesLoading.value = false
-  pageLoading.value = false
+  await myPageStore.load()
 })
 </script>
 
