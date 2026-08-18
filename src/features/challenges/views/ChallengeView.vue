@@ -75,8 +75,7 @@ const groupedMissions = computed(() => {
     const groups = [
       { name: '오늘의 미션', categories: ['RECOMMENDED', 'TODAY'] },
       { name: '공통 미션', categories: ['DAILY'] },
-      { name: '한 번 미션', categories: ['ONE_TIME'] },
-      { name: '이벤트 미션', categories: ['EVENT', 'CONDITIONAL'] },
+      { name: '이벤트 미션', categories: ['ONE_TIME', 'EVENT', 'CONDITIONAL'] },
     ]
 
     return groups
@@ -1059,7 +1058,17 @@ onBeforeUnmount(() => {
   box-shadow: 0 10px 24px #dff9e855;
 }
 .mission-group.event {
-  background: linear-gradient(145deg, #f4ffea, #fff4b6);
+  background: linear-gradient(180deg, var(--green-50) 0%, var(--yellow-300) 100%);
+}
+.mission-group.event .mission-card {
+  grid-template-columns: 24px minmax(0, 1fr) 12px;
+  column-gap: 22px;
+  min-height: 84px;
+  padding: 16px;
+}
+.mission-group.event .mission-card small {
+  line-height: 16px;
+  white-space: normal;
 }
 .mission-group header {
   display: flex;
