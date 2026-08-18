@@ -1,5 +1,5 @@
 <script setup>
-import plusIcon from '@/assets/icons/Category/plusIcon.svg'
+import plusIcon from '@/assets/icons/plusIcon.svg'
 import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
 import EventTimeline from '@/features/dashboard/components/EventTimeline.vue'
 import MiniEventCalendar from '@/features/dashboard/components/MiniEventCalendar.vue'
