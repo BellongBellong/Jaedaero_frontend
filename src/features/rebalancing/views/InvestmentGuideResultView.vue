@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 import { getRebalancingRecommendation } from '@/features/rebalancing/api/rebalancing.api'
 
 const route = useRoute()

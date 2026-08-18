@@ -3,7 +3,7 @@ import { RouterView } from 'vue-router'
 
 // import HomeIndicator from '@/common/components/HomeIndicator.vue'
 // import MobileStatusBar from '@/common/components/MobileStatusBar.vue'
-import MobileFrame from '@/common/components/MobileFrame.vue'
+import MobileFrame from '../../common/components/layout/MobileFrame.vue'
 </script>
 
 <template>

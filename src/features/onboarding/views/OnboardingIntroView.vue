@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router'
 
 import introMascot from '../../../assets/features/onboarding/intro/intro-mascot.png'
-import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 
 const router = useRouter()

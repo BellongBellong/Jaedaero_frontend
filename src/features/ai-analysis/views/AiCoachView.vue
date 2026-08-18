@@ -8,7 +8,7 @@ import glidepathImage from '../../../assets/features/ai-coach/glidepath.svg'
 import historyIcon from '../../../assets/features/ai-coach/history.svg'
 import whatIfIcon from '../../../assets/features/ai-coach/what-if.svg'
 import nextArrowIcon from '@/assets/icons/nextArrowIcon.svg'
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 import { useTodayMarketIndicators } from '@/features/market-report/composables/useTodayMarketIndicators'
 import { useTodayMarketReport } from '@/features/market-report/composables/useTodayMarketReport'
 import {

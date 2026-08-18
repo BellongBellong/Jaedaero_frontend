@@ -1,7 +1,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-import SelectionOptionButton from '@/common/components/common/SelectionOptionButton.vue'
+import SelectionOptionButton from '../../../common/components/buttons/SelectionOptionButton.vue'
 
 defineProps({
   modelValue: {

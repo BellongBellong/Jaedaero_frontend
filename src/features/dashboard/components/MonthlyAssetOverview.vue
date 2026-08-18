@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import assetBlock from '@/assets/icons/account/assetBlock.png'
 import consumptionBlock from '@/assets/icons/account/consumptionBlock.png'
 import investBlock from '@/assets/icons/account/investBlock.png'
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 
 const props = defineProps({
   data: {

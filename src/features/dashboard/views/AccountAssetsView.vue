@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import arrowIcon from '@/assets/icons/arrow.svg'
-import CommonTabs from '@/common/components/common/CommonTabs.vue'
+import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
 import AssetAccountListItem from '@/features/dashboard/components/AssetAccountListItem.vue'
 import InvestmentAssetChart from '@/features/dashboard/components/InvestmentAssetChart.vue'
 import InvestmentHoldingsList from '@/features/dashboard/components/InvestmentHoldingsList.vue'

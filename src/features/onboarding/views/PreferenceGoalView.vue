@@ -8,7 +8,7 @@ import profileArmy from '../../../assets/features/onboarding/profiles/profile-ar
 import profileDefault from '../../../assets/features/onboarding/profiles/profile-default.png'
 import profileMarine from '../../../assets/features/onboarding/profiles/profile-marine.png'
 import profileNavy from '../../../assets/features/onboarding/profiles/profile-navy.png'
-import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import { generateCashflow } from '@/features/cashflow/api/cashflow.api'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'

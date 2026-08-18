@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import arrowIcon from '@/assets/icons/arrow.svg'
-import CommonTabs from '@/common/components/common/CommonTabs.vue'
+import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
 import BenefitCategoryLabel from '@/features/benefits/components/BenefitCategoryLabel.vue'
 import { benefitExamples } from '@/features/benefits/mocks/benefits.mock'
 import {

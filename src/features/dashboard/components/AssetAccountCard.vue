@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 import AccountTitleHeader from '@/features/dashboard/components/AccountTitleHeader.vue'
 import AssetAccountListItem from '@/features/dashboard/components/AssetAccountListItem.vue'
 

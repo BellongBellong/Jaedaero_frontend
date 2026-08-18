@@ -1,6 +1,6 @@
 <script setup>
-import plusIcon from '@/assets/icons/Category/plusIcon.svg'
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import plusIcon from '../../../assets/icons/Category/plusIcon.svg'
+import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 
 defineProps({
   events: {

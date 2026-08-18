@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import detailViewIcon from '../../../assets/features/my-page/detail-view.svg'
 import securityDefault from '../../../assets/features/onboarding/institutions/security-0.svg'
 import { getAccounts } from '@/features/accounts/api/accounts.api'
-import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
+import { bankAccountBlockIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import {
   accountConnectionStatus,
   accountConnectionStatusLabel,
@@ -123,7 +123,7 @@ function institutionIcon(institution) {
       securityDefault
     )
   }
-  return bankAccountIcon(institution.accounts[0])
+  return bankAccountBlockIcon(institution.accounts[0])
 }
 
 async function loadAccounts() {

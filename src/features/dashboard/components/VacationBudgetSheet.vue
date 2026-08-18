@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import PrimaryButton from '@/common/components/buttons/PrimaryButton.vue'
 
 const props = defineProps({
   modelValue: { type: Number, default: null },

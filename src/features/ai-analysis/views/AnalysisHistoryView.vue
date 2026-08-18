@@ -1,8 +1,8 @@
 <script setup>
 import { useRouter } from 'vue-router'
 
-import CommonTabs from '@/common/components/common/CommonTabs.vue'
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
+import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 import { useAnalysisHistory } from '@/features/ai-analysis/composables/useAnalysisHistory'
 import { ANALYSIS_RECORD_TYPES } from '@/features/ai-analysis/mappers/analysisHistory.mapper'
 

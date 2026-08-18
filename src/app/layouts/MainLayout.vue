@@ -2,9 +2,9 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
-import AppHeader from '@/common/components/AppHeader.vue'
-import BottomNavigation from '@/common/components/BottomNavigation.vue'
-import MobileFrame from '@/common/components/MobileFrame.vue'
+import AppHeader from '../../common/components/layout/AppHeader.vue'
+import BottomNavigation from '../../common/components/layout/BottomNavigation.vue'
+import MobileFrame from '../../common/components/layout/MobileFrame.vue'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
 /* iOS의 소수점 스크롤 노이즈만 제외하고 첫 이동부터 방향을 반영한다. */

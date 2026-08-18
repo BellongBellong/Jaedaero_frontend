@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import militarySavingsIcon from '../../../assets/features/onboarding/icons/military-savings.svg'
 import personalAssetsIcon from '../../../assets/features/onboarding/icons/personal-assets.svg'
 import salaryAccountIcon from '../../../assets/features/onboarding/icons/salary-account.svg'
-import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 

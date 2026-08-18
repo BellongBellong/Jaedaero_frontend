@@ -7,8 +7,10 @@ import accountEmptyMascot from '../../../assets/features/onboarding/icons/accoun
 import militarySavingsAccountIcon from '../../../assets/features/onboarding/icons/account-military-savings.svg'
 import recommendedAccountIcon from '../../../assets/features/onboarding/icons/account-recommended.svg'
 import detailViewIcon from '../../../assets/features/my-page/detail-view.svg'
+import selectedCheckIcon from '@/assets/icons/stateCheckIcon.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
-import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
+import BaseTooltip from '@/common/components/feedback/BaseTooltip.vue'
 import {
   connectAccount,
   disconnectAccount,
@@ -22,6 +24,7 @@ import {
   normalizeOrganizationCode,
   normalizeInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
+import { bankAccountBlockIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
@@ -44,16 +47,49 @@ const accountsConfirming = ref(false)
 const requiredAccountNoticeId = ref(null)
 const showConnectedSummary = ref(false)
 const connectedInstitutions = ref([])
-const institutionAssets = import.meta.glob('@/assets/onboarding/institutions/*.svg', {
+const institutionAssets = import.meta.glob('@/assets/features/onboarding/institutions/*.svg', {
   eager: true,
   import: 'default',
   query: '?url',
 })
+const bankAssets = import.meta.glob('@/assets/institutions/banks/*.svg', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+})
+
+const institutionAssetsByFilename = Object.fromEntries(
+  Object.entries(institutionAssets).map(([assetPath, assetUrl]) => [
+    assetPath.split('/').pop(),
+    assetUrl,
+  ]),
+)
+const bankAssetsByFilename = Object.fromEntries(
+  Object.entries(bankAssets).map(([assetPath, assetUrl]) => [assetPath.split('/').pop(), assetUrl]),
+)
+const bankLogoFilenames = {
+  kb: 'KB.svg',
+  ibk: 'IBK.svg',
+  shinhan: 'Shinhan.svg',
+  woochekook: 'Wochekook.svg',
+  nh: 'NH.svg',
+  nhlocal: 'NHlocal.svg',
+  sh: 'SH.svg',
+  woori: 'Woori.svg',
+  im: 'iM.svg',
+  gwangju: 'KJB.svg',
+  jeju: 'Jeju.svg',
+  gyeongnam: 'Kyeongnam.svg',
+  busan: 'Busan.svg',
+  jeonbok: 'JeonBok.svg',
+  sc: 'SC.svg',
+  mg: 'MG.svg',
+  kbank: 'Kbank.svg',
+}
 const fallbackBanks = [
   { organizationCode: '0004', displayName: '국민은행', logoKey: 'kb' },
   { organizationCode: '0003', displayName: '기업은행', logoKey: 'ibk' },
   { organizationCode: '0088', displayName: '신한은행', logoKey: 'shinhan' },
-  { organizationCode: '0081', displayName: '하나은행', logoKey: 'hana' },
   { organizationCode: '0071', displayName: '우체국', logoKey: 'woochekook' },
   { organizationCode: '0011', displayName: '농협은행', logoKey: 'nh' },
   { organizationCode: '0007', displayName: '수협은행', logoKey: 'sh' },
@@ -107,18 +143,39 @@ const isMockMode =
 const canSubmit = computed(
   () => form.value.organizationCode && form.value.loginId && form.value.password && !loading.value,
 )
+
+function findApiInstitution(template, templates, apiInstitutions) {
+  const templateCode = normalizeOrganizationCode(template.organizationCode)
+  const templateName = normalizeInstitutionName(template.displayName)
+  const codeMatch = apiInstitutions.find(
+    (institution) => normalizeOrganizationCode(institution.organizationCode) === templateCode,
+  )
+
+  if (codeMatch) return codeMatch
+
+  const exactNameMatch = apiInstitutions.find(
+    (institution) => normalizeInstitutionName(institution.displayName) === templateName,
+  )
+
+  if (exactNameMatch) return exactNameMatch
+
+  return apiInstitutions.find((institution) => {
+    const apiName = normalizeInstitutionName(institution.displayName)
+    const closestTemplateName = templates
+      .map((item) => normalizeInstitutionName(item.displayName))
+      .filter((name) => apiName.includes(name) || name.includes(apiName))
+      .sort((first, second) => second.length - first.length)[0]
+
+    return closestTemplateName === templateName
+  })
+}
+
 const visibleInstitutions = computed(() => {
   const templates = form.value.businessType === 'BK' ? fallbackBanks : fallbackSecurities
   const apiInstitutions = form.value.businessType === 'BK' ? banks.value : securities.value
 
   return templates.map((template) => {
-    const templateName = normalizeInstitutionName(template.displayName)
-    const matchedInstitution = apiInstitutions.find((institution) => {
-      const apiName = normalizeInstitutionName(institution.displayName)
-      return (
-        apiName === templateName || apiName.includes(templateName) || templateName.includes(apiName)
-      )
-    })
+    const matchedInstitution = findApiInstitution(template, templates, apiInstitutions)
 
     return matchedInstitution
       ? {
@@ -130,12 +187,16 @@ const visibleInstitutions = computed(() => {
 })
 const pendingInstitution = computed(() =>
   visibleInstitutions.value.find(
-    (institution) => institution.organizationCode === pendingOrganizationCode.value,
+    (institution) =>
+      normalizeOrganizationCode(institution.organizationCode) ===
+      normalizeOrganizationCode(pendingOrganizationCode.value),
   ),
 )
 const selectedInstitution = computed(() =>
   visibleInstitutions.value.find(
-    (institution) => institution.organizationCode === form.value.organizationCode,
+    (institution) =>
+      normalizeOrganizationCode(institution.organizationCode) ===
+      normalizeOrganizationCode(form.value.organizationCode),
   ),
 )
 
@@ -150,7 +211,6 @@ const bankLogoRules = [
   ['국민', 'kb'],
   ['기업', 'ibk'],
   ['신한', 'shinhan'],
-  ['하나', 'hana'],
   ['우체국', 'woochekook'],
   ['지역농협', 'nhlocal'],
   ['농협', 'nh'],
@@ -187,24 +247,28 @@ const securityLogoNames = [
 ]
 
 function institutionLogo(institution, selected, businessType = form.value.businessType) {
-  const selectedSuffix = selected ? '-selected' : ''
   if (businessType === 'BK') {
     const logoKey =
       institution.logoKey ||
       bankLogoRules.find(([name]) => institution.displayName.includes(name))?.[1] ||
       'kb'
-    return institutionAssets[
-      `/src/assets/onboarding/institutions/bank-${logoKey}${selectedSuffix}.svg`
-    ]
+    return bankAssetsByFilename[bankLogoFilenames[logoKey]]
   }
 
+  const selectedSuffix = selected ? '-selected' : ''
   const logoIndex =
     institution.logoIndex ??
     securityLogoNames.findIndex((name) => institution.displayName.includes(name))
   const safeIndex = logoIndex >= 0 ? logoIndex : 0
-  return institutionAssets[
-    `/src/assets/onboarding/institutions/security-${safeIndex}${selectedSuffix}.svg`
-  ]
+  return institutionAssetsByFilename[`security-${safeIndex}${selectedSuffix}.svg`]
+}
+
+function connectedInstitutionLogo(connection) {
+  if (connection.businessType !== 'BK') {
+    return institutionLogo(connection.institution, false, connection.businessType)
+  }
+
+  return bankAccountBlockIcon(connection.accounts[0])
 }
 
 function isInstitutionConnected(institution) {
@@ -297,7 +361,7 @@ function selectBusinessType(type) {
   if (loading.value || (type === 'ST' && !allowsSecurities.value)) return
   form.value.businessType = type
   errorMessage.value = ''
-  pendingOrganizationCode.value = form.value.organizationCode
+  pendingOrganizationCode.value = ''
   institutionModalOpen.value = true
 }
 
@@ -319,15 +383,18 @@ function confirmInstitution() {
 }
 
 function togglePendingInstitution(organizationCode) {
+  const normalizedCode = normalizeOrganizationCode(organizationCode)
   const institution = visibleInstitutions.value.find(
-    (item) => item.organizationCode === organizationCode,
+    (item) => normalizeOrganizationCode(item.organizationCode) === normalizedCode,
   )
   if (!institution || isInstitutionConnected(institution)) {
     return
   }
 
   pendingOrganizationCode.value =
-    pendingOrganizationCode.value === organizationCode ? '' : organizationCode
+    normalizeOrganizationCode(pendingOrganizationCode.value) === normalizedCode
+      ? ''
+      : normalizedCode
 }
 
 function accountId(account, index) {
@@ -635,7 +702,7 @@ onBeforeUnmount(abortAccountRequest)
         >
           <span class="connected-card-icon">
             <img
-              :src="institutionLogo(connection.institution, false, connection.businessType)"
+              :src="connectedInstitutionLogo(connection)"
               alt=""
             >
           </span>
@@ -657,12 +724,12 @@ onBeforeUnmount(abortAccountRequest)
             aria-hidden="true"
           >✓</span>
         </article>
-        <p
+        <BaseTooltip
           v-if="!isAdditionalConnection && form.businessType === 'BK'"
           class="additional-tip"
         >
           💡 군적금 계좌가 있다면 연동해보세요!
-        </p>
+        </BaseTooltip>
       </div>
 
       <template v-else>
@@ -851,12 +918,12 @@ onBeforeUnmount(abortAccountRequest)
               한 번에 하나씩만 가능해요.
             </p>
           </header>
-          <p
+          <BaseTooltip
             v-if="form.businessType === 'BK'"
             class="sheet-tip"
           >
             💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.
-          </p>
+          </BaseTooltip>
           <div class="institution-list">
             <button
               v-for="institution in visibleInstitutions"
@@ -864,7 +931,7 @@ onBeforeUnmount(abortAccountRequest)
               type="button"
               class="institution-row"
               :class="{
-                selected: isPendingInstitution(institution) || isInstitutionConnected(institution),
+                selected: isPendingInstitution(institution),
                 connected: isInstitutionConnected(institution),
               }"
               :aria-label="
@@ -877,15 +944,26 @@ onBeforeUnmount(abortAccountRequest)
               :disabled="isInstitutionConnected(institution)"
               @click="togglePendingInstitution(institution.organizationCode)"
             >
+              <span class="institution-row__content">
+                <img
+                  class="institution-row__logo"
+                  :src="institutionLogo(institution, false)"
+                  alt=""
+                >
+                <span class="institution-row__name">{{ institution.displayName }}</span>
+              </span>
               <img
-                :src="
-                  institutionLogo(
-                    institution,
-                    isPendingInstitution(institution) || isInstitutionConnected(institution),
-                  )
-                "
+                v-if="isPendingInstitution(institution)"
+                class="institution-row__check"
+                :src="selectedCheckIcon"
                 alt=""
+                aria-hidden="true"
               >
+              <span
+                v-if="isInstitutionConnected(institution)"
+                class="institution-connected-check"
+                aria-hidden="true"
+              >✓</span>
             </button>
             <p
               v-if="loadingInstitutions"
@@ -1372,13 +1450,7 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .additional-tip {
-  padding: 10px 14px;
   margin: auto 0 0;
-  border-radius: 12px;
-  background: #effff5;
-  color: #7c9b80;
-  font-size: 10px;
-  line-height: 16px;
 }
 
 .summary-actions {
@@ -1540,7 +1612,7 @@ select:focus {
   z-index: 20;
   display: flex;
   align-items: flex-end;
-  padding: 10px 12px 0;
+  padding: 0;
   background: rgb(0 0 0 / 48%);
   inset: 0;
 }
@@ -1549,61 +1621,62 @@ select:focus {
   position: relative;
   display: flex;
   width: 100%;
-  height: min(78dvh, 660px);
-  max-height: calc(100dvh - 92px);
+  height: min(710px, calc(100dvh - 120px));
+  max-height: 710px;
   flex-direction: column;
-  padding: 38px 16px 12px;
-  border-radius: 24px 24px 0 0;
+  padding: 64px 20px 10px;
+  border-radius: 50px 50px 0 0;
   background: #fff;
 }
 
 .sheet-close {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
+  top: 30px;
+  right: 20px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   background: transparent;
   color: #555;
   cursor: pointer;
-  font-size: 30px;
-  line-height: 30px;
+  font-size: 28px;
+  line-height: 24px;
 }
 
 .institution-sheet h2 {
   margin: 0;
   color: #333;
-  font-size: 18px;
-  line-height: 27px;
+  font-family: var(--body-heading-h4-bold-font-family, 'Pretendard-Bold', sans-serif);
+  font-size: var(--body-heading-h4-bold-font-size, 24px);
+  font-weight: var(--body-heading-h4-bold-font-weight, 700);
+  line-height: var(--body-heading-h4-bold-line-height, 150%);
 }
 
 .institution-sheet header p {
-  margin: 1px 0 0;
+  margin: 2px 0 0;
   color: #757575;
-  font-size: 11px;
-  line-height: 16px;
+  font-family: var(--body-body-medium-regular-font-family, 'Pretendard-Regular', sans-serif);
+  font-size: var(--body-body-medium-regular-font-size, 16px);
+  line-height: var(--body-body-medium-regular-line-height, 150%);
 }
 
 .sheet-tip {
-  padding: 9px 12px;
-  margin: 10px 0 12px;
-  border-radius: 10px;
-  background: #effff5;
-  color: #5e7666;
-  font-size: 9px;
-  line-height: 14px;
+  margin: 20px auto 25px;
 }
 
 .institution-list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-auto-rows: 68px;
+  grid-template-columns: repeat(3, minmax(0, 91.65px));
+  grid-auto-rows: auto;
   align-content: start;
-  gap: 4px;
+  justify-content: space-between;
+  column-gap: 14px;
+  row-gap: 23px;
+  height: 390px;
   min-height: 0;
-  flex: 1;
+  flex: 1 1 390px;
+  padding: 0 10px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
@@ -1618,29 +1691,77 @@ select:focus {
 
 .institution-row {
   position: relative;
-  display: grid;
+  display: flex;
   width: 100%;
-  height: 68px;
-  place-items: center;
+  max-width: 91.65px;
+  aspect-ratio: 1;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: transparent;
+  background: rgb(51 51 51 / 5%);
   cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .institution-row.selected {
-  background: transparent;
+  border: 1px solid var(--green-600, #3be178);
+  background: var(--green-200, #cbffe0);
+  box-shadow: 0 0 4px var(--green-200, #cbffe0);
 }
 
 .institution-row.connected {
   cursor: default;
+  opacity: 0.55;
 }
 
-.institution-row img {
+.institution-row__content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+}
+
+.institution-row .institution-row__logo {
   display: block;
-  width: 68px;
-  height: 68px;
+  width: 38px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.institution-row__name {
+  max-width: 78px;
+  overflow: hidden;
+  color: var(--ui-sub-title, #757575);
+  font-family: var(--body-body-xsmall-regular-font-family, 'Pretendard-Regular', sans-serif);
+  font-size: var(--body-body-xsmall-regular-font-size, 12px);
+  font-weight: var(--body-body-xsmall-regular-font-weight, 400);
+  line-height: var(--body-body-xsmall-regular-line-height, 130%);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.institution-row .institution-row__check {
+  position: absolute;
+  top: 11px;
+  right: 0;
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 360px) {
+  .institution-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 10px;
+    padding: 0 4px;
+  }
 }
 
 .institution-connected-check {
@@ -1675,6 +1796,22 @@ select:focus {
   background: #62ff9c;
   color: #173522;
   font-size: 13px;
+}
+
+@media (max-height: 760px) {
+  .institution-sheet {
+    height: calc(100dvh - 72px);
+    padding-top: 58px;
+  }
+
+  .institution-list {
+    height: auto;
+    flex-basis: 280px;
+  }
+
+  .sheet-tip {
+    margin: 12px auto 16px;
+  }
 }
 
 .institution-sheet > .primary-button:disabled {

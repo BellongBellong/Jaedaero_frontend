@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
-import CommonTabs from '@/common/components/common/CommonTabs.vue'
+import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
 import rankingCrownGold from '../../../assets/features/ranking/crown-gold.svg'
 import rankingCrownSilver from '../../../assets/features/ranking/crown-silver.svg'
 import rankingCharacterAirforce from '../../../assets/features/ranking/characters/airforce.svg'

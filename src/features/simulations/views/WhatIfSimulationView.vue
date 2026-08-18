@@ -8,7 +8,7 @@ import savingsIcon from '@/assets/icons/account/savingsBlock.png'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import returnRateIconBackground from '@/assets/simulations/return-rate-icon-bg.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 import { getDashboard } from '@/features/dashboard/api/dashboard.api'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
