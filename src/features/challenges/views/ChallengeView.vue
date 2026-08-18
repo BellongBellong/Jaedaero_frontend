@@ -1224,41 +1224,55 @@ onBeforeUnmount(() => {
   color: #999;
 }
 .podium {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  position: relative;
   height: 250px;
   margin: 16px -4px 0;
 }
 .podium article {
-  position: relative;
+  position: absolute;
+  right: auto;
+  bottom: var(--rank-bottom);
+  left: var(--rank-left);
   display: flex;
   align-items: center;
   flex-direction: column;
   justify-content: flex-end;
   width: 31%;
   height: 100%;
+  transform: translateX(-50%);
+  --rank-left: 50%;
+  --rank-bottom: 0px;
+  --label-offset-x: 0px;
+  --label-offset-y: 0px;
+  --visual-offset-x: 0px;
+  --visual-offset-y: 0px;
+  --character-offset-x: 0px;
+  --character-offset-y: 0px;
+  --crown-offset-x: 0px;
+  --crown-offset-y: 0px;
+  --podium-offset-x: 0px;
+  --podium-offset-y: 0px;
 }
 .podium .rank-1 {
+  --rank-left: 50%;
   --stage-height: 196px;
-  --character-bottom: 85px;
+  --character-bottom: 83px;
   --podium-image-width: 91px;
-  --podium-offset-x: 0px;
-  order: 2;
 }
 .podium .rank-2 {
+  --rank-left: 24%;
   --stage-height: 168px;
   --character-bottom: 59px;
   --podium-image-width: 91px;
-  --podium-offset-x: 0px;
-  order: 1;
+  --podium-offset-x: -5px;
 }
 .podium .rank-3 {
+  --rank-left: 77%;
   --stage-height: 124px;
   --character-bottom: 44px;
   --podium-image-width: 91px;
-  --podium-offset-x: -4.5px;
-  order: 3;
+  --crown-offset-x: -4.5px;
+  --podium-offset-x: 1px;
 }
 .member-label {
   position: absolute;
@@ -1271,6 +1285,7 @@ onBeforeUnmount(() => {
   min-height: 52px;
   padding: 4px 2px;
   font-size: 11px;
+  transform: translate(var(--label-offset-x), var(--label-offset-y));
 }
 .member-name-row {
   display: flex;
@@ -1310,15 +1325,16 @@ onBeforeUnmount(() => {
   height: var(--stage-height);
   flex: 0 0 auto;
   margin: 0 auto;
+  transform: translate(var(--visual-offset-x), var(--visual-offset-y));
 }
 .ranking-character-wrap {
   position: absolute;
   z-index: 2;
   display: block;
-  bottom: var(--character-bottom);
-  left: 50%;
+  bottom: calc(var(--character-bottom) + var(--character-offset-y));
+  left: calc(50% + var(--character-offset-x));
   width: 70px;
-  height: 70px;
+  height: 65px;
   transform: translateX(-50%);
 }
 .ranking-character {
@@ -1327,16 +1343,20 @@ onBeforeUnmount(() => {
   height: 70px;
   object-fit: contain;
 }
+.podium .rank-2 .ranking-character {
+  transform: scaleX(-1);
+}
 .ranking-crown,
 .ranking-podium {
   position: absolute;
-  left: 50%;
+  left: calc(50% + var(--podium-offset-x));
   object-fit: contain;
-  transform: translateX(calc(-50% + var(--podium-offset-x)));
+  transform: translateX(-50%);
 }
 .ranking-crown {
   z-index: 4;
-  bottom: calc(var(--character-bottom) + 66px);
+  bottom: calc(var(--character-bottom) + 66px + var(--crown-offset-y));
+  left: calc(50% + var(--crown-offset-x));
   width: 30px;
   height: 29px;
 }
@@ -1345,6 +1365,7 @@ onBeforeUnmount(() => {
   bottom: 0;
   width: var(--podium-image-width);
   height: auto;
+  transform: translate(-50%, var(--podium-offset-y));
 }
 .ranking-empty {
   padding: 90px 0 70px;
