@@ -2,8 +2,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import CommonTabs from '@/common/components/common/CommonTabs.vue'
-import DropdownMenu from '@/common/components/common/DropdownMenu.vue'
+import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
+import DropdownMenu from '../../../common/components/forms/DropdownMenu.vue'
 import { getAccounts } from '@/features/accounts/api/accounts.api'
 import { getDashboardMock, transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'

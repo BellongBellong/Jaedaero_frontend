@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 import assetBlockIcon from '@/assets/icons/account/assetBlock.png'
 import pencilIcon from '@/assets/icons/pencilIcon.svg'
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import DetailLinkButton from '@/common/components/navigation/DetailLinkButton.vue'
 
 const props = defineProps({
   spentAmount: { type: Number, default: 0 },

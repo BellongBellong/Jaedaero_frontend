@@ -2,11 +2,11 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-import jaedaeroWordmark from '@/assets/JaedaeroWordmark.svg'
-import backwardIcon from '@/assets/icons/backArrowIcon.svg'
-import ModeSwitch from '@/common/components/ModeSwitch.vue'
-import NotificationButton from '@/common/components/NotificationButton.vue'
-import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
+import jaedaeroWordmark from '../../../assets/JaedaeroWordmark.svg'
+import backwardIcon from '../../../assets/icons/backArrowIcon.svg'
+import ModeSwitch from '../buttons/ModeSwitch.vue'
+import NotificationButton from '../buttons/NotificationButton.vue'
+import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule.js'
 
 defineProps({
   title: { type: String, default: '' },

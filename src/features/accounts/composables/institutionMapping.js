@@ -13,11 +13,9 @@ const institutionAliases = {
   '0039': ['경남은행'],
   '0045': ['새마을금고'],
   '0071': ['우체국'],
-  '0081': ['하나은행'],
   '0088': ['신한은행'],
   '0089': ['케이뱅크'],
   '0090': ['카카오뱅크'],
-  '0092': ['토스뱅크'],
   '0111': ['지역농협'],
   '0209': ['유안타증권'],
   '0218': ['KB증권'],
@@ -53,11 +51,9 @@ const institutionNamesByCode = {
   '0039': '\uACBD\uB0A8\uC740\uD589',
   '0045': '\uC0C8\uB9C8\uC744\uAE08\uACE0',
   '0071': '\uC6B0\uCCB4\uAD6D',
-  '0081': '\uD558\uB098\uC740\uD589',
   '0088': '\uC2E0\uD55C\uC740\uD589',
   '0089': '\uCF00\uC774\uB465\uD06C',
   '0090': '\uCE74\uCE74\uC624\uB465\uD06C',
-  '0092': '\uD1A0\uC2A4\uB465\uD06C',
   '0111': '\uC9C0\uC5ED\uB18D\uCD95\uD611',
   '0209': '\uC720\uC548\uD0C0\uC99D\uAD8C',
   '0218': 'KB\uC99D\uAD8C',
@@ -78,9 +74,44 @@ const institutionNamesByCode = {
   '0287': '\uBA54\uB9AC\uCE20\uC99D\uAD8C',
 }
 
+// Backend/CODEF uses four-digit organization codes, while account responses can
+// also contain the three-digit financial institution code (`bankCode`). Keep the
+// conversion explicit because local agricultural cooperatives are `012` in the
+// common code system but `0111` in the CODEF organization code system.
+export const bankOrganizationCodeByBankCode = Object.freeze({
+  '003': '0003',
+  '004': '0004',
+  '007': '0007',
+  '011': '0011',
+  '012': '0111',
+  '020': '0020',
+  '023': '0023',
+  '031': '0031',
+  '032': '0032',
+  '034': '0034',
+  '035': '0035',
+  '037': '0037',
+  '039': '0039',
+  '045': '0045',
+  '071': '0071',
+  '088': '0088',
+  '089': '0089',
+  '090': '0090',
+})
+
 export function normalizeOrganizationCode(code) {
   const value = String(code || '').trim()
   return /^\d{1,4}$/.test(value) ? value.padStart(4, '0') : value
+}
+
+export function normalizeBankCode(code) {
+  const value = String(code || '').trim()
+  return /^\d{1,3}$/.test(value) ? value.padStart(3, '0') : value
+}
+
+export function organizationCodeFromBankCode(bankCode) {
+  const normalizedBankCode = normalizeBankCode(bankCode)
+  return bankOrganizationCodeByBankCode[normalizedBankCode] || ''
 }
 
 export function normalizeInstitutionName(name) {
@@ -93,16 +124,19 @@ export function accountOrganizationCode(account) {
   const nestedCode =
     account?.organization?.code || account?.institution?.code || account?.financialInstitution?.code
 
-  return normalizeOrganizationCode(
+  const organizationCode = normalizeOrganizationCode(
     account?.organizationCode ||
       account?.institutionCode ||
       account?.financialInstitutionCode ||
-      account?.bankCode ||
       account?.codefOrganizationCode ||
       account?.orgCode ||
       account?.orgCd ||
       nestedCode,
   )
+
+  if (organizationCode) return organizationCode
+
+  return organizationCodeFromBankCode(account?.bankCode)
 }
 
 export function accountInstitutionName(account) {

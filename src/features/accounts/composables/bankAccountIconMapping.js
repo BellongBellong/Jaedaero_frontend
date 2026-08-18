@@ -1,22 +1,39 @@
-import bankBusan from '../../../assets/institutions/banks/Busan.png'
-import bankGyeongnam from '../../../assets/institutions/banks/Gyeonnam.png'
-import bankHana from '../../../assets/institutions/banks/Hana.png'
-import bankIbk from '../../../assets/institutions/banks/IBK.png'
-import bankJeju from '../../../assets/institutions/banks/Jeju.png'
-import bankJeonbuk from '../../../assets/institutions/banks/Jeonbook.png'
-import bankKb from '../../../assets/institutions/banks/KB.png'
-import bankGwangju from '../../../assets/institutions/banks/KJB.png'
-import bankKbank from '../../../assets/institutions/banks/Kbank.png'
-import bankMg from '../../../assets/institutions/banks/MG.png'
-import bankNh from '../../../assets/institutions/banks/NH.png'
-import bankNhLocal from '../../../assets/institutions/banks/NHlocal.png'
-import bankSc from '../../../assets/institutions/banks/SC.png'
-import bankSh from '../../../assets/institutions/banks/SH.png'
-import bankShinhan from '../../../assets/institutions/banks/Shinhan.png'
-import bankPost from '../../../assets/institutions/banks/Wochekook.png'
-import bankWoori from '../../../assets/institutions/banks/Woori.png'
+import bankBusan from '../../../assets/institutions/banks/Busan.svg'
+import bankGyeongnam from '../../../assets/institutions/banks/Kyeongnam.svg'
+import bankHana from '../../../assets/institutions/banks/Hana.svg'
+import bankIbk from '../../../assets/institutions/banks/IBK.svg'
+import bankJeju from '../../../assets/institutions/banks/Jeju.svg'
+import bankJeonbuk from '../../../assets/institutions/banks/JeonBok.svg'
+import bankKb from '../../../assets/institutions/banks/KB.svg'
+import bankGwangju from '../../../assets/institutions/banks/KJB.svg'
+import bankKbank from '../../../assets/institutions/banks/Kbank.svg'
+import bankMg from '../../../assets/institutions/banks/MG.svg'
+import bankNh from '../../../assets/institutions/banks/NH.svg'
+import bankNhLocal from '../../../assets/institutions/banks/NHlocal.svg'
+import bankSc from '../../../assets/institutions/banks/SC.svg'
+import bankSh from '../../../assets/institutions/banks/SH.svg'
+import bankShinhan from '../../../assets/institutions/banks/Shinhan.svg'
+import bankPost from '../../../assets/institutions/banks/Wochekook.svg'
+import bankWoori from '../../../assets/institutions/banks/Woori.svg'
 import bankFallback from '../../../assets/features/onboarding/icons/bank-building.png'
-import bankIm from '../../../assets/institutions/banks/iM.png'
+import bankIm from '../../../assets/institutions/banks/iM.svg'
+import bankBlockBusan from '../../../assets/institutions/banks/block/Busan.png'
+import bankBlockGyeongnam from '../../../assets/institutions/banks/block/Gyeonnam.png'
+import bankBlockIbk from '../../../assets/institutions/banks/block/IBK.png'
+import bankBlockJeju from '../../../assets/institutions/banks/block/Jeju.png'
+import bankBlockJeonbuk from '../../../assets/institutions/banks/block/Jeonbook.png'
+import bankBlockKb from '../../../assets/institutions/banks/block/KB.png'
+import bankBlockGwangju from '../../../assets/institutions/banks/block/KJB.png'
+import bankBlockKbank from '../../../assets/institutions/banks/block/Kbank.png'
+import bankBlockMg from '../../../assets/institutions/banks/block/MG.png'
+import bankBlockNh from '../../../assets/institutions/banks/block/NH.png'
+import bankBlockNhLocal from '../../../assets/institutions/banks/block/NHlocal.png'
+import bankBlockSc from '../../../assets/institutions/banks/block/SC.png'
+import bankBlockSh from '../../../assets/institutions/banks/block/SH.png'
+import bankBlockShinhan from '../../../assets/institutions/banks/block/Shinhan.png'
+import bankBlockPost from '../../../assets/institutions/banks/block/Wochekook.png'
+import bankBlockWoori from '../../../assets/institutions/banks/block/Woori.png'
+import bankBlockIm from '../../../assets/institutions/banks/block/iM.png'
 import {
   accountInstitutionName,
   accountOrganizationCode,
@@ -30,6 +47,7 @@ const iconsByCode = {
   '0011': bankNh,
   '0020': bankWoori,
   '0023': bankSc,
+  '0031': bankIm,
   '0032': bankBusan,
   '0034': bankGwangju,
   '0035': bankJeju,
@@ -37,7 +55,6 @@ const iconsByCode = {
   '0039': bankGyeongnam,
   '0045': bankMg,
   '0071': bankPost,
-  '0081': bankHana,
   '0088': bankShinhan,
   '0089': bankKbank,
   '0111': bankNhLocal,
@@ -68,6 +85,51 @@ const iconsByName = {
   케이뱅크: bankKbank,
 }
 
+const blockIconsByCode = {
+  '0003': bankBlockIbk,
+  '0004': bankBlockKb,
+  '0007': bankBlockSh,
+  '0011': bankBlockNh,
+  '0020': bankBlockWoori,
+  '0023': bankBlockSc,
+  '0031': bankBlockIm,
+  '0032': bankBlockBusan,
+  '0034': bankBlockGwangju,
+  '0035': bankBlockJeju,
+  '0037': bankBlockJeonbuk,
+  '0039': bankBlockGyeongnam,
+  '0045': bankBlockMg,
+  '0071': bankBlockPost,
+  '0088': bankBlockShinhan,
+  '0089': bankBlockKbank,
+  '0111': bankBlockNhLocal,
+}
+
+const blockIconsByName = {
+  ibk기업: bankBlockIbk,
+  기업: bankBlockIbk,
+  kb국민: bankBlockKb,
+  국민: bankBlockKb,
+  수협: bankBlockSh,
+  nh농협: bankBlockNh,
+  농협: bankBlockNh,
+  지역농축협: bankBlockNhLocal,
+  지역농협: bankBlockNhLocal,
+  우리: bankBlockWoori,
+  sc제일: bankBlockSc,
+  대구: bankBlockIm,
+  im: bankBlockIm,
+  부산: bankBlockBusan,
+  광주: bankBlockGwangju,
+  제주: bankBlockJeju,
+  전북: bankBlockJeonbuk,
+  경남: bankBlockGyeongnam,
+  새마을금고: bankBlockMg,
+  우체국: bankBlockPost,
+  신한: bankBlockShinhan,
+  케이뱅크: bankBlockKbank,
+}
+
 export function bankAccountIcon(account) {
   const code = accountOrganizationCode(account)
   if (iconsByCode[code]) return iconsByCode[code]
@@ -75,4 +137,13 @@ export function bankAccountIcon(account) {
   const normalizedName = normalizeInstitutionName(accountInstitutionName(account))
   const matchedName = Object.keys(iconsByName).find((name) => normalizedName.includes(name))
   return iconsByName[matchedName] || bankFallback
+}
+
+export function bankAccountBlockIcon(account) {
+  const code = accountOrganizationCode(account)
+  if (blockIconsByCode[code]) return blockIconsByCode[code]
+
+  const normalizedName = normalizeInstitutionName(accountInstitutionName(account))
+  const matchedName = Object.keys(blockIconsByName).find((name) => normalizedName.includes(name))
+  return blockIconsByName[matchedName] || bankBlockKb
 }

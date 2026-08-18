@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { saveAgreements } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'

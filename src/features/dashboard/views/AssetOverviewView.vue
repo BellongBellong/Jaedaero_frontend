@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 import AccountTitleHeader from '@/features/dashboard/components/AccountTitleHeader.vue'
 import AssetAccountCard from '@/features/dashboard/components/AssetAccountCard.vue'
 import MonthlyAssetOverview from '@/features/dashboard/components/MonthlyAssetOverview.vue'

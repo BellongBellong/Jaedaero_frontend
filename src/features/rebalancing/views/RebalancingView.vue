@@ -6,7 +6,7 @@ import allocationGuideVisual from '../../../assets/features/ai-coach/allocation-
 import allocationIcon from '../../../assets/features/ai-coach/what-if.svg'
 import monthlyInvestmentIcon from '../../../assets/features/ai-coach/monthly-investment-icon.png'
 import planGuideVisual from '../../../assets/features/ai-coach/plan-guide-visual.png'
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 import {
   getRebalancingRecommendation,
   getRecurringInvestmentPlan,

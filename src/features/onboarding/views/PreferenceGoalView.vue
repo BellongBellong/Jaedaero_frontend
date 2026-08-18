@@ -8,9 +8,11 @@ import profileArmy from '../../../assets/features/onboarding/profiles/profile-ar
 import profileDefault from '../../../assets/features/onboarding/profiles/profile-default.png'
 import profileMarine from '../../../assets/features/onboarding/profiles/profile-marine.png'
 import profileNavy from '../../../assets/features/onboarding/profiles/profile-navy.png'
-import PrimaryButton from '@/common/components/PrimaryButton.vue'
+import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
+import { generateCashflow } from '@/features/cashflow/api/cashflow.api'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
+import { previewInvestmentPreference } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
@@ -84,7 +86,11 @@ async function next() {
   loading.value = true
   errorMessage.value = ''
   try {
-    await onboarding.previewPreference()
+    await previewInvestmentPreference({
+      investmentPreference: onboarding.form.investmentPreference,
+      targetAmount: onboarding.form.targetAmount,
+    })
+    onboarding.persist()
     showConfirmModal.value = true
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
@@ -123,7 +129,8 @@ async function complete() {
   errorMessage.value = ''
 
   try {
-    await onboarding.completeOnboarding()
+    await generateCashflow()
+    onboarding.complete()
     await router.replace({ name: 'dashboard' })
   } catch (error) {
     const serverMessage = error.response?.data?.message

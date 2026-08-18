@@ -1,5 +1,5 @@
 <script setup>
-import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
+import DetailLinkButton from '@/common/components/navigation/DetailLinkButton.vue'
 import BenefitCategoryLabel from '@/features/benefits/components/BenefitCategoryLabel.vue'
 
 defineProps({

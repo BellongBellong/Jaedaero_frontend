@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import CommonTabs from '@/common/components/common/CommonTabs.vue'
+import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
 import AssetAccountSummary from '@/features/dashboard/components/AssetAccountSummary.vue'
 import AssetTransactionList from '@/features/dashboard/components/AssetTransactionList.vue'
 import { getMockAssetReport } from '@/features/dashboard/mocks/asset-report.mock'
