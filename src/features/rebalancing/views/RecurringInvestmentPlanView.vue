@@ -176,9 +176,11 @@ function selectContributionDay(day) {
 /* 증권 계좌가 없을 때 연동 화면으로 보낸다. 연동 후 이 화면으로 돌아온다. */
 function openAccountConnect() {
   router.push({
-    name: 'connect-codef-bank',
-    params: { assetType: 'personal-assets' },
-    query: { source: 'investment-plan' },
+    name: 'investment-plan-connect-securities',
+    query: {
+      source: 'investment-plan',
+      returnTo: isEdit.value ? 'investment-plan-edit' : 'investment-plan-create',
+    },
   })
 }
 
