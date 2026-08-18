@@ -9,11 +9,6 @@ frontend/
 │   ├── api-endpoint-mapping.md
 │   ├── screen-data-spec.md
 │   └── file-structure.md
-├── mock-server/
-│   ├── db.json
-│   ├── server.js
-│   ├── package.json
-│   └── README.md
 ├── public/
 ├── src/
 │   ├── app/
@@ -82,10 +77,8 @@ features/dashboard/
 
 1. `docs/screen-data-spec.md`에서 백엔드 DTO 기반 화면 데이터 계약을 정의합니다.
 2. `docs/api-endpoint-mapping.md`에 명시된 API만 호출합니다.
-3. `mock-server/server.js`는 동일한 Method와 `/api/v1` 경로를 제공합니다.
-4. `mock-server/db.json`은 목 서버 응답의 원본 데이터를 관리합니다.
-5. 기능별 API는 `src/common/api/endpoints.js`의 경로를 사용합니다.
-6. 실제 백엔드 연결 시 `VITE_API_BASE_URL`만 변경합니다.
+3. 기능별 API는 `src/common/api/endpoints.js`의 경로를 사용합니다.
+4. 실제 백엔드 연결 시 `VITE_API_BASE_URL`만 변경합니다.
 
 빈 폴더는 저장소에서 유지될 수 있도록 `example.vue` placeholder를 둡니다. 실제 파일을
 추가하면 placeholder는 제거할 수 있습니다.

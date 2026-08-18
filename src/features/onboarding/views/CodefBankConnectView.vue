@@ -107,9 +107,6 @@ const isAdditionalConnection = computed(
       String(route.query.source || ''),
     ),
 )
-const isMockMode =
-  import.meta.env.MODE === 'mock' || import.meta.env.VITE_USE_MOCK_SERVER === 'true'
-
 const canSubmit = computed(
   () => form.value.organizationCode && form.value.loginId && form.value.password && !loading.value,
 )
@@ -523,7 +520,7 @@ async function submit() {
     return
   }
 
-  const userId = Number(localStorage.getItem('userId')) || (isMockMode ? 1 : 0)
+  const userId = Number(localStorage.getItem('userId')) || 0
   if (!userId) {
     errorMessage.value = '로그인 사용자 정보를 찾을 수 없어요. 다시 로그인해주세요.'
     return
