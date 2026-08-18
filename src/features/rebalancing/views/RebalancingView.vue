@@ -32,7 +32,8 @@ const recommendation = computed(() => guidance.value?.recommendation || guidance
 const plan = computed(() => guidance.value?.currentPlan || recurringPlan.value || {})
 const goalProgress = computed(() => guidance.value?.goalProgress || {})
 
-const hasActiveGuide = computed(() => hasRecurringPlan.value)
+// 자산분배 목표와 적립 계획이 모두 설정돼야 이번달 투자 가이드를 보여준다.
+const hasActiveGuide = computed(() => hasAllocationGoal.value && hasRecurringPlan.value)
 
 const monthlyContribution = computed(() => {
   const amount = Number(plan.value?.contributionAmount || 0)
@@ -321,16 +322,29 @@ onMounted(async () => {
             class="empty-guide"
           >
             <img
+              v-if="!hasAllocationGoal"
               class="allocation-visual"
               :src="allocationGuideVisual"
               alt=""
               aria-hidden="true"
             >
-            <strong>
+            <strong
+              v-if="hasAllocationGoal"
+              class="allocation-complete-title"
+            >
+              설정한 자산 분배 목표가 있어요
+            </strong>
+            <strong v-else>
               아직 세부자산분배 목표를<br>
               설정하지 않았어요
             </strong>
-            <p>
+            <p
+              v-if="hasAllocationGoal"
+              class="allocation-complete-copy"
+            >
+              What-if 시뮬레이션에서 목표를 다시 조정할 수 있어요
+            </p>
+            <p v-else>
               What-if 시뮬레이션으로<br>
               나에게 맞는 자산 분배 목표를 먼저 설정해보세요
             </p>
@@ -339,7 +353,7 @@ onMounted(async () => {
               type="button"
               @click="openWhatIfSimulation"
             >
-              목표 설정하러가기
+              {{ hasAllocationGoal ? '목표 다시 설정하기' : '목표 설정하러가기' }}
             </button>
           </div>
         </article>
@@ -789,6 +803,7 @@ button.guide-card__header {
   font-weight: 700;
   line-height: 1.4;
   letter-spacing: -0.3px;
+  word-break: keep-all;
 }
 
 .empty-guide > p {
@@ -799,6 +814,7 @@ button.guide-card__header {
   font-weight: 500;
   line-height: 1.55;
   letter-spacing: -0.18px;
+  word-break: keep-all;
 }
 
 .allocation-visual {
@@ -825,6 +841,21 @@ button.guide-card__header {
 
 #plan-guide-content > p {
   margin: 10px 0 20px;
+}
+
+/* 완료 문구는 <br> 없이 한 줄이라 미설정 상태의 고정폭을 그대로 쓰면 좁게 잘린다. */
+#allocation-guide-content > .allocation-complete-title,
+#plan-guide-content > .plan-complete-title {
+  width: auto;
+}
+
+#allocation-guide-content > .allocation-complete-title {
+  margin-top: 24px;
+  color: #333;
+}
+
+#allocation-guide-content > .allocation-complete-copy {
+  color: #757575;
 }
 
 #plan-guide-content > .plan-complete-title {
