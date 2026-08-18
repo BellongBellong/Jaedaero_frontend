@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, toRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
@@ -13,7 +13,6 @@ import rankingCharacterNavy from '../../../assets/features/ranking/characters/na
 import rankingFirstPodium from '../../../assets/features/ranking/podium/ranking-first.png'
 import rankingSecondPodium from '../../../assets/features/ranking/podium/ranking-second.png'
 import rankingThirdPodium from '../../../assets/features/ranking/podium/ranking-third.png'
-import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
   BADGE_SELECTION_STORAGE_KEY,
   getBadgeImage,
@@ -26,8 +25,7 @@ import {
 import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
 import { useMissionStore } from '@/features/missions/stores/mission.store'
 import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
-
-import { getChallengeGroup, getInvestmentBadges } from '../api/challenges.api'
+import { useChallengeStore } from '@/features/challenges/stores/challenge.store'
 
 const activeTab = ref('missions')
 const challengeTabs = [
@@ -36,14 +34,15 @@ const challengeTabs = [
 ]
 const router = useRouter()
 const missionStore = useMissionStore()
-const loading = ref(true)
-const challenge = ref(null)
-const badges = ref([])
-const profile = ref(null)
+const challengeStore = useChallengeStore()
+const loading = toRef(challengeStore, 'loading')
+const challenge = toRef(challengeStore, 'challenge')
+const badges = toRef(challengeStore, 'badges')
+const profile = toRef(challengeStore, 'profile')
 const apiMissions = computed(() => missionStore.missions)
 const selectedBadgeId = ref(localStorage.getItem(BADGE_SELECTION_STORAGE_KEY) || '')
-const rankingPeriod = ref('CUMULATIVE')
-const rankingYearMonth = ref(getCurrentYearMonth())
+const rankingPeriod = toRef(challengeStore, 'rankingPeriod')
+const rankingYearMonth = toRef(challengeStore, 'rankingYearMonth')
 const modeMenuOpen = ref(false)
 const errorMessage = ref('')
 const now = ref(new Date())
@@ -394,59 +393,35 @@ const ranking = computed(() => {
 
 const apiRanking = computed(() => ranking.value)
 
-const rankingRequestParams = computed(() => ({
-  period: rankingPeriod.value,
-  ...(rankingPeriod.value === 'MONTHLY' && rankingYearMonth.value
-    ? { yearMonth: rankingYearMonth.value }
-    : {}),
-}))
-
 function getCurrentYearMonth() {
   const date = new Date()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   return `${date.getFullYear()}-${month}`
 }
 
-function unwrap(value) {
-  return value?.data ?? value ?? null
-}
-
 async function loadChallenge() {
-  loading.value = true
   errorMessage.value = ''
-  const [challengeResult, missionResult, badgeResult, profileResult] = await Promise.allSettled([
-    getChallengeGroup(rankingRequestParams.value),
+  const [challengeResult, missionResult] = await Promise.allSettled([
+    challengeStore.load(),
     missionStore.loadTodayMissions(),
-    getInvestmentBadges(),
-    getMyPageProfile(),
   ])
 
-  if (challengeResult.status === 'fulfilled') challenge.value = unwrap(challengeResult.value)
-  if (badgeResult.status === 'fulfilled') {
-    const value = unwrap(badgeResult.value)
-    badges.value = Array.isArray(value) ? value : value?.badges || []
-  }
-  if (profileResult.status === 'fulfilled') profile.value = profileResult.value
   if (challengeResult.status === 'rejected' && missionResult.status === 'rejected') {
     errorMessage.value = '챌린지 정보를 불러오지 못했어요.'
   }
-  loading.value = false
 }
 
 async function changeRankingPeriod() {
-  loading.value = true
   errorMessage.value = ''
   try {
-    challenge.value = unwrap(await getChallengeGroup(rankingRequestParams.value))
+    await challengeStore.load({ force: true })
   } catch {
     errorMessage.value = '랭킹 정보를 불러오지 못했어요.'
-  } finally {
-    loading.value = false
   }
 }
 
 function selectRankingPeriod(period) {
-  rankingPeriod.value = period
+  challengeStore.setRankingPeriod(period)
   modeMenuOpen.value = false
   changeRankingPeriod()
 }
@@ -458,7 +433,7 @@ function shiftRankingMonth(offset) {
   const nextDate = new Date(year, month - 1 + offset, 1)
   const nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`
   if (nextYearMonth > getCurrentYearMonth()) return
-  rankingYearMonth.value = nextYearMonth
+  challengeStore.setRankingYearMonth(nextYearMonth)
   changeRankingPeriod()
 }
 

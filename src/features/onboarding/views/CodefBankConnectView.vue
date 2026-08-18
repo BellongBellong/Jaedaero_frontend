@@ -217,10 +217,15 @@ function isInstitutionConnected(institution) {
 }
 
 function markConnected() {
-  if (route.params.assetType === 'military-savings') onboarding.form.militarySavingsConnected = true
-  if (route.params.assetType === 'salary-account') onboarding.form.salaryAccountConnected = true
-  if (route.params.assetType === 'personal-assets') onboarding.form.accountsConnected = true
-  onboarding.persist()
+  if (route.params.assetType === 'military-savings') {
+    onboarding.updateForm({ militarySavingsConnected: true })
+  }
+  if (route.params.assetType === 'salary-account') {
+    onboarding.updateForm({ salaryAccountConnected: true })
+  }
+  if (route.params.assetType === 'personal-assets') {
+    onboarding.updateForm({ accountsConnected: true })
+  }
 }
 
 function accountBusinessType(account) {
