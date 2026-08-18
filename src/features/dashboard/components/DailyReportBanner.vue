@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import reportMascot from '@/assets/ai-coach/coach-character.png'
+import reportMascot from '../../../assets/features/ai-coach/coach-character.png'
 import smallMoney from '@/assets/icons/Smallmoney.png'
 import starGradient from '@/assets/icons/starGradient.png'
 

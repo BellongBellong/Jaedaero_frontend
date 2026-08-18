@@ -8,11 +8,6 @@ import safeDiamond from '@/assets/badges/safe/diamond.png'
 import safeGold from '@/assets/badges/safe/gold.png'
 import safePlatinum from '@/assets/badges/safe/platinum.png'
 import safeSilver from '@/assets/badges/safe/silver.png'
-import levelBronze from '@/assets/badges/levels/bronze.png'
-import levelDiamond from '@/assets/badges/levels/diamond.png'
-import levelGold from '@/assets/badges/levels/gold.png'
-import levelPlatinum from '@/assets/badges/levels/platinum.png'
-import levelSilver from '@/assets/badges/levels/silver.png'
 
 export const BADGE_SELECTION_STORAGE_KEY = 'jaedaero-selected-investment-badge'
 
@@ -62,18 +57,6 @@ const badgeImages = {
     PLATINUM: aggressivePlatinum,
     DIAMOND: aggressiveDiamond,
   },
-}
-
-const levelImages = {
-  BRONZE: levelBronze,
-  SILVER: levelSilver,
-  GOLD: levelGold,
-  PLATINUM: levelPlatinum,
-  DIAMOND: levelDiamond,
-}
-
-export function getBadgeLevelImage(levelKey) {
-  return levelImages[String(levelKey || '').toUpperCase()] || levelImages.BRONZE
 }
 
 function toBadgeArray(payload) {

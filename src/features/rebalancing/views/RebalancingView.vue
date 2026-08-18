@@ -2,10 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import allocationGuideVisual from '@/assets/ai-coach/allocation-guide-visual.png'
-import allocationIcon from '@/assets/ai-coach/what-if.svg'
-import monthlyInvestmentIcon from '@/assets/ai-coach/monthly-investment-icon.png'
-import planGuideVisual from '@/assets/ai-coach/plan-guide-visual.png'
+import allocationGuideVisual from '../../../assets/features/ai-coach/allocation-guide-visual.png'
+import allocationIcon from '../../../assets/features/ai-coach/what-if.svg'
+import monthlyInvestmentIcon from '../../../assets/features/ai-coach/monthly-investment-icon.png'
+import planGuideVisual from '../../../assets/features/ai-coach/plan-guide-visual.png'
 import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 import {
   getRebalancingRecommendation,

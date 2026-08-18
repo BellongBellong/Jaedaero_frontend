@@ -2,11 +2,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import generalAccountIcon from '@/assets/onboarding/icons/account-general.svg'
-import accountEmptyMascot from '@/assets/onboarding/icons/account-empty-mascot.svg'
-import militarySavingsAccountIcon from '@/assets/onboarding/icons/account-military-savings.svg'
-import recommendedAccountIcon from '@/assets/onboarding/icons/account-recommended.svg'
-import detailViewIcon from '@/assets/my-page/detail-view.svg'
+import generalAccountIcon from '../../../assets/features/onboarding/icons/account-general.svg'
+import accountEmptyMascot from '../../../assets/features/onboarding/icons/account-empty-mascot.svg'
+import militarySavingsAccountIcon from '../../../assets/features/onboarding/icons/account-military-savings.svg'
+import recommendedAccountIcon from '../../../assets/features/onboarding/icons/account-recommended.svg'
+import detailViewIcon from '../../../assets/features/my-page/detail-view.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import PrimaryButton from '@/common/components/PrimaryButton.vue'
 import {

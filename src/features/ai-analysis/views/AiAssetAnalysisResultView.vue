@@ -2,11 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import arrowRightIcon from '@/assets/ai-analysis/arrowRightIcon.svg'
-import arrowUpIcon from '@/assets/ai-analysis/arrowUpIcon.svg'
-import causeInfoIcon from '@/assets/ai-analysis/causeInfoIcon.svg'
-import analysisGlow from '@/assets/ai-coach/analysis-glow.svg'
-import coachCharacter from '@/assets/ai-coach/coach-character.svg'
+import arrowRightIcon from '../../../assets/features/ai-analysis/arrowRightIcon.svg'
+import arrowUpIcon from '../../../assets/features/ai-analysis/arrowUpIcon.svg'
+import causeInfoIcon from '../../../assets/features/ai-analysis/causeInfoIcon.svg'
+import analysisGlow from '../../../assets/features/ai-coach/analysis-glow.svg'
+import coachCharacter from '../../../assets/features/ai-coach/coach-character.svg'
 import {
   applyAiStrategy,
   createAiAnalysis,

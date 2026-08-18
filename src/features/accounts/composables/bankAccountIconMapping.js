@@ -1,22 +1,22 @@
-import bankBusan from '@/assets/icons/bank-account-lcon/account-list/Busan.png'
-import bankGyeongnam from '@/assets/icons/bank-account-lcon/account-list/Gyeonnam.png'
-import bankHana from '@/assets/icons/bank-account-lcon/account-list/Hana.png'
-import bankIbk from '@/assets/icons/bank-account-lcon/account-list/IBK.png'
-import bankJeju from '@/assets/icons/bank-account-lcon/account-list/Jeju.png'
-import bankJeonbuk from '@/assets/icons/bank-account-lcon/account-list/Jeonbook.png'
-import bankKb from '@/assets/icons/bank-account-lcon/account-list/KB.png'
-import bankGwangju from '@/assets/icons/bank-account-lcon/account-list/KJB.png'
-import bankKbank from '@/assets/icons/bank-account-lcon/account-list/Kbank.png'
-import bankMg from '@/assets/icons/bank-account-lcon/account-list/MG.png'
-import bankNh from '@/assets/icons/bank-account-lcon/account-list/NH.png'
-import bankNhLocal from '@/assets/icons/bank-account-lcon/account-list/NHlocal.png'
-import bankSc from '@/assets/icons/bank-account-lcon/account-list/SC.png'
-import bankSh from '@/assets/icons/bank-account-lcon/account-list/SH.png'
-import bankShinhan from '@/assets/icons/bank-account-lcon/account-list/Shinhan.png'
-import bankPost from '@/assets/icons/bank-account-lcon/account-list/Wochekook.png'
-import bankWoori from '@/assets/icons/bank-account-lcon/account-list/Woori.png'
-import bankIm from '@/assets/icons/bank-account-lcon/account-list/iM.png'
-import bankFallback from '@/assets/onboarding/icons/bank-building.png'
+import bankBusan from '../../../assets/institutions/banks/Busan.png'
+import bankGyeongnam from '../../../assets/institutions/banks/Gyeonnam.png'
+import bankHana from '../../../assets/institutions/banks/Hana.png'
+import bankIbk from '../../../assets/institutions/banks/IBK.png'
+import bankJeju from '../../../assets/institutions/banks/Jeju.png'
+import bankJeonbuk from '../../../assets/institutions/banks/Jeonbook.png'
+import bankKb from '../../../assets/institutions/banks/KB.png'
+import bankGwangju from '../../../assets/institutions/banks/KJB.png'
+import bankKbank from '../../../assets/institutions/banks/Kbank.png'
+import bankMg from '../../../assets/institutions/banks/MG.png'
+import bankNh from '../../../assets/institutions/banks/NH.png'
+import bankNhLocal from '../../../assets/institutions/banks/NHlocal.png'
+import bankSc from '../../../assets/institutions/banks/SC.png'
+import bankSh from '../../../assets/institutions/banks/SH.png'
+import bankShinhan from '../../../assets/institutions/banks/Shinhan.png'
+import bankPost from '../../../assets/institutions/banks/Wochekook.png'
+import bankWoori from '../../../assets/institutions/banks/Woori.png'
+import bankFallback from '../../../assets/features/onboarding/icons/bank-building.png'
+import bankIm from '../../../assets/institutions/banks/iM.png'
 import {
   accountInstitutionName,
   accountOrganizationCode,
@@ -30,7 +30,6 @@ const iconsByCode = {
   '0011': bankNh,
   '0020': bankWoori,
   '0023': bankSc,
-  '0031': bankIm,
   '0032': bankBusan,
   '0034': bankGwangju,
   '0035': bankJeju,
@@ -56,7 +55,6 @@ const iconsByName = {
   지역농협: bankNhLocal,
   우리: bankWoori,
   sc제일: bankSc,
-  im: bankIm,
   대구: bankIm,
   부산: bankBusan,
   광주: bankGwangju,
@@ -67,7 +65,7 @@ const iconsByName = {
   우체국: bankPost,
   하나: bankHana,
   신한: bankShinhan,
-  케이: bankKbank,
+  케이뱅크: bankKbank,
 }
 
 export function bankAccountIcon(account) {
