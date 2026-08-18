@@ -1,10 +1,13 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
 import analysisIcon from '../../../assets/features/ai-coach/analysis.svg'
 import coachCharacter from '../../../assets/features/ai-coach/coach-character.svg'
-import glidepathImage from '../../../assets/features/ai-coach/glidepath.svg'
+import glidepathCorporal from '../../../assets/features/ai-coach/glidepath-corporal.png'
+import glidepathPrivateFirstClass from '../../../assets/features/ai-coach/glidepath-private-first-class.png'
+import glidepathPrivate from '../../../assets/features/ai-coach/glidepath-private.png'
+import glidepathSergeant from '../../../assets/features/ai-coach/glidepath-sergeant.png'
 import historyIcon from '../../../assets/features/ai-coach/history.svg'
 import whatIfIcon from '../../../assets/features/ai-coach/what-if.svg'
 import nextArrowIcon from '@/assets/icons/nextArrowIcon.svg'
@@ -15,7 +18,67 @@ import {
   formatReportDate,
   mapMarketIndicators,
 } from '@/features/market-report/mappers/marketReport.mapper'
+import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
+
+/*
+  적립식 투자 가이드 카드는 계급에 따라 문구, 전역 D-day, 안전/위험 비율,
+  비행기 그래프 이미지가 모두 달라진다. 값은 기획에서 정한 고정값이다.
+*/
+const GLIDEPATH_STAGES = {
+  PRIVATE: {
+    rankLabel: '이병',
+    dday: 384,
+    safeRate: 30,
+    riskRate: 70,
+    image: glidepathPrivate,
+  },
+  PRIVATE_FIRST_CLASS: {
+    rankLabel: '일병',
+    dday: 284,
+    safeRate: 52,
+    riskRate: 48,
+    image: glidepathPrivateFirstClass,
+  },
+  CORPORAL: {
+    rankLabel: '상병',
+    dday: 54,
+    safeRate: 66,
+    riskRate: 33,
+    image: glidepathCorporal,
+  },
+  SERGEANT: {
+    rankLabel: '병장',
+    dday: 54,
+    safeRate: 85,
+    riskRate: 15,
+    image: glidepathSergeant,
+  },
+}
+
+/* 서버는 militaryRank 에 '일병' 같은 한글을 담아 보낸다. enum 으로 오는 경우도 함께 받는다. */
+const RANK_KEYS_BY_LABEL = {
+  이병: 'PRIVATE',
+  일병: 'PRIVATE_FIRST_CLASS',
+  상병: 'CORPORAL',
+  병장: 'SERGEANT',
+}
+
+const rank = ref('')
+/* 계급을 아직 못 받았으면 첫 단계 기준으로 보여준다. */
+const glidepathStage = computed(() => {
+  const key = RANK_KEYS_BY_LABEL[rank.value] || rank.value
+  return GLIDEPATH_STAGES[key] || GLIDEPATH_STAGES.PRIVATE
+})
+
+async function loadRank() {
+  try {
+    const profile = await getMyPageProfile()
+    rank.value = profile?.militaryRank || profile?.rank || ''
+  } catch {
+    // 계급을 못 받으면 기본 단계로 표시한다.
+  }
+}
 
 const router = useRouter()
 const { honorificNickname, loadNickname } = useCurrentUserNickname()
@@ -46,6 +109,7 @@ const reportSummary = computed(() => report.value?.summary || '')
 
 onMounted(() => {
   loadNickname()
+  loadRank()
   load()
   loadIndicators()
 })
@@ -199,11 +263,11 @@ const analysisMenus = [
         <div class="glidepath-card__summary">
           <div>
             <span class="glidepath-card__eyebrow">현재 단계</span>
-            <strong>4단계 <em>집중 납입기</em></strong>
-            <span class="glidepath-card__badge">전역 D-54</span>
+            <strong>{{ glidepathStage.rankLabel }} <em>집중 납입기</em></strong>
+            <span class="glidepath-card__badge">전역 D-{{ glidepathStage.dday }}</span>
           </div>
           <img
-            :src="glidepathImage"
+            :src="glidepathStage.image"
             alt=""
             aria-hidden="true"
           >
@@ -211,8 +275,8 @@ const analysisMenus = [
         <div class="glidepath-card__footer">
           <div class="risk-bar">
             <div class="risk-bar__labels">
-              <span>안전 85%</span>
-              <span>위험 15%</span>
+              <span>안전 {{ glidepathStage.safeRate }}%</span>
+              <span>위험 {{ glidepathStage.riskRate }}%</span>
             </div>
             <div
               class="risk-bar__track"
