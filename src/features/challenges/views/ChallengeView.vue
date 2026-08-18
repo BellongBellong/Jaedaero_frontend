@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, toRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
@@ -13,7 +13,6 @@ import rankingCharacterNavy from '../../../assets/features/ranking/characters/na
 import rankingFirstPodium from '../../../assets/features/ranking/podium/ranking-first.png'
 import rankingSecondPodium from '../../../assets/features/ranking/podium/ranking-second.png'
 import rankingThirdPodium from '../../../assets/features/ranking/podium/ranking-third.png'
-import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
   BADGE_SELECTION_STORAGE_KEY,
   getBadgeImage,
@@ -26,8 +25,7 @@ import {
 import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
 import { useMissionStore } from '@/features/missions/stores/mission.store'
 import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
-
-import { getChallengeGroup, getInvestmentBadges } from '../api/challenges.api'
+import { useChallengeStore } from '@/features/challenges/stores/challenge.store'
 
 const activeTab = ref('missions')
 const challengeTabs = [
@@ -36,14 +34,15 @@ const challengeTabs = [
 ]
 const router = useRouter()
 const missionStore = useMissionStore()
-const loading = ref(true)
-const challenge = ref(null)
-const badges = ref([])
-const profile = ref(null)
+const challengeStore = useChallengeStore()
+const loading = toRef(challengeStore, 'loading')
+const challenge = toRef(challengeStore, 'challenge')
+const badges = toRef(challengeStore, 'badges')
+const profile = toRef(challengeStore, 'profile')
 const apiMissions = computed(() => missionStore.missions)
 const selectedBadgeId = ref(localStorage.getItem(BADGE_SELECTION_STORAGE_KEY) || '')
-const rankingPeriod = ref('CUMULATIVE')
-const rankingYearMonth = ref(getCurrentYearMonth())
+const rankingPeriod = toRef(challengeStore, 'rankingPeriod')
+const rankingYearMonth = toRef(challengeStore, 'rankingYearMonth')
 const modeMenuOpen = ref(false)
 const errorMessage = ref('')
 const now = ref(new Date())
@@ -394,59 +393,35 @@ const ranking = computed(() => {
 
 const apiRanking = computed(() => ranking.value)
 
-const rankingRequestParams = computed(() => ({
-  period: rankingPeriod.value,
-  ...(rankingPeriod.value === 'MONTHLY' && rankingYearMonth.value
-    ? { yearMonth: rankingYearMonth.value }
-    : {}),
-}))
-
 function getCurrentYearMonth() {
   const date = new Date()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   return `${date.getFullYear()}-${month}`
 }
 
-function unwrap(value) {
-  return value?.data ?? value ?? null
-}
-
 async function loadChallenge() {
-  loading.value = true
   errorMessage.value = ''
-  const [challengeResult, missionResult, badgeResult, profileResult] = await Promise.allSettled([
-    getChallengeGroup(rankingRequestParams.value),
+  const [challengeResult, missionResult] = await Promise.allSettled([
+    challengeStore.load(),
     missionStore.loadTodayMissions(),
-    getInvestmentBadges(),
-    getMyPageProfile(),
   ])
 
-  if (challengeResult.status === 'fulfilled') challenge.value = unwrap(challengeResult.value)
-  if (badgeResult.status === 'fulfilled') {
-    const value = unwrap(badgeResult.value)
-    badges.value = Array.isArray(value) ? value : value?.badges || []
-  }
-  if (profileResult.status === 'fulfilled') profile.value = profileResult.value
   if (challengeResult.status === 'rejected' && missionResult.status === 'rejected') {
     errorMessage.value = '챌린지 정보를 불러오지 못했어요.'
   }
-  loading.value = false
 }
 
 async function changeRankingPeriod() {
-  loading.value = true
   errorMessage.value = ''
   try {
-    challenge.value = unwrap(await getChallengeGroup(rankingRequestParams.value))
+    await challengeStore.load({ force: true })
   } catch {
     errorMessage.value = '랭킹 정보를 불러오지 못했어요.'
-  } finally {
-    loading.value = false
   }
 }
 
 function selectRankingPeriod(period) {
-  rankingPeriod.value = period
+  challengeStore.setRankingPeriod(period)
   modeMenuOpen.value = false
   changeRankingPeriod()
 }
@@ -458,7 +433,7 @@ function shiftRankingMonth(offset) {
   const nextDate = new Date(year, month - 1 + offset, 1)
   const nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`
   if (nextYearMonth > getCurrentYearMonth()) return
-  rankingYearMonth.value = nextYearMonth
+  challengeStore.setRankingYearMonth(nextYearMonth)
   changeRankingPeriod()
 }
 
@@ -1249,41 +1224,55 @@ onBeforeUnmount(() => {
   color: #999;
 }
 .podium {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  position: relative;
   height: 250px;
   margin: 16px -4px 0;
 }
 .podium article {
-  position: relative;
+  position: absolute;
+  right: auto;
+  bottom: var(--rank-bottom);
+  left: var(--rank-left);
   display: flex;
   align-items: center;
   flex-direction: column;
   justify-content: flex-end;
   width: 31%;
   height: 100%;
+  transform: translateX(-50%);
+  --rank-left: 50%;
+  --rank-bottom: 0px;
+  --label-offset-x: 0px;
+  --label-offset-y: 0px;
+  --visual-offset-x: 0px;
+  --visual-offset-y: 0px;
+  --character-offset-x: 0px;
+  --character-offset-y: 0px;
+  --crown-offset-x: 0px;
+  --crown-offset-y: 0px;
+  --podium-offset-x: 0px;
+  --podium-offset-y: 0px;
 }
 .podium .rank-1 {
+  --rank-left: 50%;
   --stage-height: 196px;
-  --character-bottom: 85px;
+  --character-bottom: 83px;
   --podium-image-width: 91px;
-  --podium-offset-x: 0px;
-  order: 2;
 }
 .podium .rank-2 {
+  --rank-left: 24%;
   --stage-height: 168px;
   --character-bottom: 59px;
   --podium-image-width: 91px;
-  --podium-offset-x: 0px;
-  order: 1;
+  --podium-offset-x: -5px;
 }
 .podium .rank-3 {
+  --rank-left: 77%;
   --stage-height: 124px;
   --character-bottom: 44px;
   --podium-image-width: 91px;
-  --podium-offset-x: -4.5px;
-  order: 3;
+  --crown-offset-x: -4.5px;
+  --podium-offset-x: 1px;
 }
 .member-label {
   position: absolute;
@@ -1296,6 +1285,7 @@ onBeforeUnmount(() => {
   min-height: 52px;
   padding: 4px 2px;
   font-size: 11px;
+  transform: translate(var(--label-offset-x), var(--label-offset-y));
 }
 .member-name-row {
   display: flex;
@@ -1335,15 +1325,16 @@ onBeforeUnmount(() => {
   height: var(--stage-height);
   flex: 0 0 auto;
   margin: 0 auto;
+  transform: translate(var(--visual-offset-x), var(--visual-offset-y));
 }
 .ranking-character-wrap {
   position: absolute;
   z-index: 2;
   display: block;
-  bottom: var(--character-bottom);
-  left: 50%;
+  bottom: calc(var(--character-bottom) + var(--character-offset-y));
+  left: calc(50% + var(--character-offset-x));
   width: 70px;
-  height: 70px;
+  height: 65px;
   transform: translateX(-50%);
 }
 .ranking-character {
@@ -1352,16 +1343,20 @@ onBeforeUnmount(() => {
   height: 70px;
   object-fit: contain;
 }
+.podium .rank-2 .ranking-character {
+  transform: scaleX(-1);
+}
 .ranking-crown,
 .ranking-podium {
   position: absolute;
-  left: 50%;
+  left: calc(50% + var(--podium-offset-x));
   object-fit: contain;
-  transform: translateX(calc(-50% + var(--podium-offset-x)));
+  transform: translateX(-50%);
 }
 .ranking-crown {
   z-index: 4;
-  bottom: calc(var(--character-bottom) + 66px);
+  bottom: calc(var(--character-bottom) + 66px + var(--crown-offset-y));
+  left: calc(50% + var(--crown-offset-x));
   width: 30px;
   height: 29px;
 }
@@ -1370,6 +1365,7 @@ onBeforeUnmount(() => {
   bottom: 0;
   width: var(--podium-image-width);
   height: auto;
+  transform: translate(-50%, var(--podium-offset-y));
 }
 .ranking-empty {
   padding: 90px 0 70px;

@@ -2,6 +2,14 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { useAuthStore } from '@/features/auth/stores/auth.store'
+import {
+  checkNickname as checkNicknameRequest,
+  previewInvestmentPreference,
+  saveMilitaryInfo as saveMilitaryInfoRequest,
+  saveNickname as saveNicknameRequest,
+  saveProfileAppearance as saveProfileAppearanceRequest,
+} from '@/features/onboarding/api/onboarding.api'
+import { generateCashflow } from '@/features/cashflow/api/cashflow.api'
 
 const initialState = {
   agreements: [],
@@ -36,6 +44,49 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     sessionStorage.setItem('jaedaero-onboarding', JSON.stringify(form.value))
   }
 
+  function updateForm(patch) {
+    Object.assign(form.value, patch)
+    persist()
+  }
+
+  async function checkNickname(nickname) {
+    return checkNicknameRequest(nickname)
+  }
+
+  async function saveNickname(nickname) {
+    await saveNicknameRequest(nickname)
+    updateForm({ nickname })
+  }
+
+  async function saveProfileAppearance(payload, appearance) {
+    await saveProfileAppearanceRequest(payload)
+    updateForm(appearance)
+  }
+
+  async function saveMilitaryInfo(payload, challengeGroupTargetAmountAverage) {
+    const soldierProfile = await saveMilitaryInfoRequest(payload)
+    updateForm({
+      challengeGroupTargetAmountAverage: Number(
+        soldierProfile?.challengeGroupTargetAmountAverage ?? challengeGroupTargetAmountAverage ?? 0,
+      ),
+    })
+    return soldierProfile
+  }
+
+  async function previewPreference() {
+    const response = await previewInvestmentPreference({
+      investmentPreference: form.value.investmentPreference,
+      targetAmount: form.value.targetAmount,
+    })
+    persist()
+    return response
+  }
+
+  async function completeOnboarding() {
+    await generateCashflow()
+    complete()
+  }
+
   function complete() {
     persist()
     isComplete.value = true
@@ -43,5 +94,18 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     useAuthStore().markOnboardingCompleted()
   }
 
-  return { form, isComplete, targetAmountInTenThousands, persist, complete }
+  return {
+    form,
+    isComplete,
+    targetAmountInTenThousands,
+    persist,
+    updateForm,
+    checkNickname,
+    saveNickname,
+    saveProfileAppearance,
+    saveMilitaryInfo,
+    previewPreference,
+    complete,
+    completeOnboarding,
+  }
 })

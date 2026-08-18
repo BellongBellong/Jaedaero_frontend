@@ -6,7 +6,6 @@ import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import RankInsignia from '@/features/onboarding/components/RankInsignia.vue'
-import { saveMilitaryInfo } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
@@ -63,15 +62,11 @@ async function next() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const soldierProfile = await saveMilitaryInfo({
+    await onboarding.saveMilitaryInfo({
       soldierType: soldierTypeCodes[onboarding.form.militaryType],
       rankName: ranks.find((rank) => rank.value === onboarding.form.rank)?.label,
       enlistmentDate: onboarding.form.enlistmentDate,
     })
-    onboarding.form.challengeGroupTargetAmountAverage = Number(
-      soldierProfile.challengeGroupTargetAmountAverage ?? 0,
-    )
-    onboarding.persist()
     router.push({ name: 'preference-goal' })
   } catch (error) {
     errorMessage.value = getApiErrorMessage(

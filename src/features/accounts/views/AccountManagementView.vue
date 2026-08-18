@@ -384,6 +384,7 @@ onMounted(loadAccounts)
 }
 .bank-summary > span:last-child {
   display: grid;
+  min-width: 0;
   gap: 4px;
 }
 .bank-summary small {
@@ -391,7 +392,10 @@ onMounted(loadAccounts)
   font-size: 12px;
 }
 .bank-summary b {
+  overflow: hidden;
   font-size: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .account-list {
   display: grid;
@@ -429,18 +433,23 @@ onMounted(loadAccounts)
 }
 .account-copy > span {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 9px;
 }
-.account-tags {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
 .account-copy b {
+  min-width: 0;
+  flex: 1;
   overflow: hidden;
   font-size: 17px;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-tags {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
   white-space: nowrap;
 }
 .account-copy em {
@@ -449,6 +458,7 @@ onMounted(loadAccounts)
   font-size: 11px;
   font-style: normal;
   font-weight: 700;
+  white-space: nowrap;
 }
 .account-status--active {
   background: #e4fff0;

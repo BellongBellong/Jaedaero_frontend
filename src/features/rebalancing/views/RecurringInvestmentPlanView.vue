@@ -141,7 +141,26 @@ function updateAmount(target, event) {
   event.target.value = number ? number.toLocaleString('ko-KR') : ''
 }
 
+/*
+  주기를 바꿔도 월 환산 투자금은 그대로 유지되도록 회차별 적립금을 환산한다.
+  환산하지 않으면 월간 금액이 주간 1회분으로 그대로 들어가 월 환산액이
+  약 4.33배로 뛰고, 곧바로 월 최대 투자 한도를 초과한다.
+*/
+function convertContributionAmount(nextFrequency) {
+  const amount = Number(contributionAmount.value)
+  if (!amount || nextFrequency === frequency.value) return amount
+
+  /*
+    월간 -> 주간은 내림으로 환산한다. 반올림하면 월 환산액이 원래 금액을
+    몇 원 넘겨 월 최대 투자 한도를 초과했다는 경고가 잘못 뜬다.
+  */
+  return nextFrequency === 'WEEKLY'
+    ? Math.floor((amount * 12) / 52)
+    : Math.round((amount * 52) / 12)
+}
+
 function changeFrequency(value) {
+  contributionAmount.value = convertContributionAmount(value)
   frequency.value = value
   contributionDay.value = value === 'WEEKLY' ? 1 : 10
   contributionDayTouched.value = false
@@ -152,6 +171,17 @@ function selectContributionDay(day) {
   contributionDay.value = day
   contributionDayTouched.value = true
   dayPickerOpen.value = false
+}
+
+/* 증권 계좌가 없을 때 연동 화면으로 보낸다. 연동 후 이 화면으로 돌아온다. */
+function openAccountConnect() {
+  router.push({
+    name: 'investment-plan-connect-securities',
+    query: {
+      source: 'investment-plan',
+      returnTo: isEdit.value ? 'investment-plan-edit' : 'investment-plan-create',
+    },
+  })
 }
 
 function openConfirmation() {
@@ -185,8 +215,18 @@ async function submitPlan() {
       investmentProductCode: investmentProductCode.value,
       investmentProductName: investmentProductName.value,
     })
-    const guidance = await createInvestmentGuidance()
-    sessionStorage.setItem('latestInvestmentGuidance', JSON.stringify(guidance || {}))
+    /*
+      여기까지 왔으면 적립 계획은 이미 저장됐다. 가이드 생성이 실패하더라도
+      확인 팝업으로 되돌리면 사용자가 다시 눌러 중복 저장하게 되므로,
+      가이드 실패는 삼키고 가이드 화면으로 넘긴다. 가이드는 그 화면에서 다시 불러온다.
+    */
+    try {
+      const guidance = await createInvestmentGuidance()
+      sessionStorage.setItem('latestInvestmentGuidance', JSON.stringify(guidance || {}))
+    } catch {
+      sessionStorage.removeItem('latestInvestmentGuidance')
+    }
+
     await holdLoadingUntilMinimum(loadingStartedAt)
     router.replace({ name: 'investment-guide' })
   } catch (error) {
@@ -222,8 +262,11 @@ async function loadForm() {
   }
 
   if (accountResult.status === 'fulfilled') {
-    const securitiesAccounts = accountResult.value.filter(isSecuritiesAccount)
-    accounts.value = securitiesAccounts.length ? securitiesAccounts : accountResult.value
+    /*
+      증권 계좌가 없을 때 은행 계좌를 대신 보여주면 선택은 되지만 저장 시
+      서버가 거절한다. 증권 계좌만 남기고, 없으면 연결을 유도한다.
+    */
+    accounts.value = accountResult.value.filter(isSecuritiesAccount)
     brokerageAccountId.value = accounts.value[0]?.id || null
   }
 
@@ -414,7 +457,10 @@ watch(investmentProductCode, (code) => {
           <p>연결된 증권 계좌를 선택해주세요</p>
         </header>
 
-        <label class="choice-row account-choice">
+        <label
+          v-if="accounts.length"
+          class="choice-row account-choice"
+        >
           <span class="choice-icon choice-icon--account">
             <img
               :src="monthlyInvestmentIcon"
@@ -434,13 +480,6 @@ watch(investmentProductCode, (code) => {
             aria-label="연결한 증권 계좌"
           >
             <option
-              v-if="!accounts.length"
-              :value="null"
-              disabled
-            >
-              연결된 계좌가 없어요
-            </option>
-            <option
               v-for="account in accounts"
               :key="account.id"
               :value="account.id"
@@ -453,6 +492,21 @@ watch(investmentProductCode, (code) => {
             aria-hidden="true"
           >›</span>
         </label>
+
+        <div
+          v-else
+          class="account-empty"
+        >
+          <p>연결된 증권 계좌가 없어요</p>
+          <small>적립 계획은 증권 계좌로만 설정할 수 있어요.</small>
+          <button
+            type="button"
+            class="account-empty__cta"
+            @click="openAccountConnect"
+          >
+            증권 계좌 연결하기
+          </button>
+        </div>
 
         <h3 class="product-title">
           투자 상품
@@ -837,6 +891,45 @@ watch(investmentProductCode, (code) => {
   font-size: 12px;
   font-weight: 700;
   font-style: normal;
+}
+
+.account-empty {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-top: 13px;
+  padding: 22px 18px;
+  border-radius: 18px;
+  background: #f7f7f7;
+  text-align: center;
+}
+
+.account-empty p {
+  margin: 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+.account-empty small {
+  color: #8c8c8c;
+  font-size: 12px;
+  word-break: keep-all;
+}
+
+.account-empty__cta {
+  height: 42px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--radius-full, 999px);
+  margin-top: 10px;
+  background: #62ff9c;
+  color: #333;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  word-break: keep-all;
 }
 
 .limit-helper,

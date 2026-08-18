@@ -128,14 +128,20 @@ const form = ref({
   password: '',
   birthDate: '',
 })
-const isSecuritiesOnly = computed(() => route.params.assetType === 'securities')
-const allowsSecurities = computed(() =>
-  ['personal-assets', 'securities'].includes(String(route.params.assetType)),
+const isSecuritiesOnly = computed(
+  () => route.params.assetType === 'securities' || route.meta.securitiesOnly === true,
+)
+const allowsSecurities = computed(
+  () =>
+    isSecuritiesOnly.value ||
+    ['personal-assets', 'securities'].includes(String(route.params.assetType)),
 )
 const isAdditionalConnection = computed(
   () =>
     route.query.mode === 'additional' ||
-    ['my-page', 'dashboard', 'investment-assets'].includes(String(route.query.source || '')),
+    ['my-page', 'dashboard', 'investment-assets', 'investment-plan'].includes(
+      String(route.query.source || ''),
+    ),
 )
 const isMockMode =
   import.meta.env.MODE === 'mock' || import.meta.env.VITE_USE_MOCK_SERVER === 'true'
@@ -281,10 +287,15 @@ function isInstitutionConnected(institution) {
 }
 
 function markConnected() {
-  if (route.params.assetType === 'military-savings') onboarding.form.militarySavingsConnected = true
-  if (route.params.assetType === 'salary-account') onboarding.form.salaryAccountConnected = true
-  if (route.params.assetType === 'personal-assets') onboarding.form.accountsConnected = true
-  onboarding.persist()
+  if (route.params.assetType === 'military-savings') {
+    onboarding.updateForm({ militarySavingsConnected: true })
+  }
+  if (route.params.assetType === 'salary-account') {
+    onboarding.updateForm({ salaryAccountConnected: true })
+  }
+  if (route.params.assetType === 'personal-assets') {
+    onboarding.updateForm({ accountsConnected: true })
+  }
 }
 
 function accountBusinessType(account) {
@@ -538,7 +549,16 @@ function nextFromSummary() {
       query: { tab: 'investment' },
     },
   }
-  const destination = destinations[String(route.query.source || '')]
+  const source = String(route.query.source || '')
+  const destination =
+    source === 'investment-plan'
+      ? {
+          name:
+            route.query.returnTo === 'investment-plan-edit'
+              ? 'investment-plan-edit'
+              : 'investment-plan-create',
+        }
+      : destinations[source]
 
   if (destination) {
     router.replace(destination)
