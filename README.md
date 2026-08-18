@@ -41,18 +41,12 @@ docs/
 - [API 명세 반영표](docs/api-endpoint-mapping.md)
 - [화면별 데이터 타입 명세서](docs/screen-data-spec.md)
 - [파일 구조 문서](docs/file-structure.md)
-- [목데이터](mock-server/db.json)
-- [목 서버 사용법](mock-server/README.md)
 
 ## 프로젝트 구조
 
 ```text
 frontend/
 ├── docs/
-├── mock-server/
-│   ├── db.json
-│   ├── server.js
-│   └── README.md
 ├── public/
 ├── src/
 │   ├── app/
@@ -86,51 +80,7 @@ frontend/
 
 상세 구조는 `docs/file-structure.md`에서 확인합니다.
 
-## API 호환 목 서버
-
-기본 json-server 경로인 `/users`, `/transactions`를 프론트엔드에서 직접 사용하지 않습니다. `mock-server/server.js`가 백엔드 명세와 같은 `/api/v1/...` 경로와 HTTP Method를 제공합니다.
-
-### 설치
-
-```bash
-npm install --save-dev json-server@0.17.4 concurrently
-```
-
-### package.json
-
-```json
-{
-  "scripts": {
-    "dev": "vite",
-    "mock": "node mock-server/server.js",
-    "dev:mock": "concurrently -k -n VITE,MOCK \"npm run dev\" \"npm run mock\"",
-    "build": "vite build",
-    "preview": "vite preview"
-  }
-}
-```
-
-### 환경변수
-
-```env
-VITE_API_BASE_URL=http://localhost:3001/api/v1
-VITE_USE_MOCK_SERVER=true
-VITE_GOOGLE_CLIENT_ID=
-VITE_KAKAO_CLIENT_ID=
-```
-
-### 실행
-
-```bash
-npm run dev:mock
-```
-
-```text
-Vue:      http://localhost:5173
-Mock API: http://localhost:3001/api/v1
-```
-
-## 주요 목 API
+## API 데이터 계약
 
 ```text
 POST   /api/v1/auth/login
@@ -188,10 +138,8 @@ TypeScript 대신 `docs/screen-data-spec.md`를 화면 데이터 계약으로 �
 데이터 필드가 변경되면 다음 파일을 함께 수정합니다.
 
 1. `docs/screen-data-spec.md`
-2. `mock-server/db.json`
-3. `mock-server/server.js`
-4. `src/common/api/endpoints.js`
-5. 해당 Feature의 `api/*.api.js`
+2. `src/common/api/endpoints.js`
+3. 해당 Feature의 `api/*.api.js`
 
 ## 제공된 API 명세에 없는 기능
 
@@ -209,12 +157,10 @@ TypeScript 대신 `docs/screen-data-spec.md`를 화면 데이터 계약으로 �
 
 ```env
 VITE_API_BASE_URL=http://localhost:8080/api/v1
-VITE_USE_MOCK_SERVER=false
 ```
 
 ```text
-개발: Vue → json-server 호환 목 서버 → db.json
-운영: Vue → Spring Framework → MyBatis → MySQL
+개발/운영: Vue → Spring Framework → MyBatis → MySQL
                               ├→ CODEF
                               ├→ 캐시플로우 엔진
                               └→ AI 분석 API

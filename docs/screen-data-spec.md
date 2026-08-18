@@ -338,9 +338,9 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 | `warnings`             | `string[]`                        |    O |
 | `generatedAt`          | `string(date-time)`               |    O |
 
-> `spendingPattern`, `expectedEffect`, `recommendedProducts`와 `causes` 항목 구조는 AI 분석 화면(3-2) 구현을 위한 확장 필드로, 백엔드 확정 전까지 목 서버(`mock-server/db.json`) 기준으로 관리합니다.
+> `spendingPattern`, `expectedEffect`, `recommendedProducts`와 `causes` 항목 구조는 AI 분석 화면(3-2) 구현을 위한 확장 필드로, 백엔드 확정 전까지 프론트엔드 Mock 데이터 기준으로 관리합니다.
 
-> `investmentPattern`과 `spendingPattern.changeRate`는 분석 기록 화면(3-4)의 카드 지표(`이번 달 소비` / `투자 자산`과 증감 배지)를 위한 FE 확장 필드로, 백엔드 확정 전까지 목 서버(`mock-server/db.json`) 기준으로 관리합니다. **아직 백엔드에는 구현되지 않아 추가 요청이 필요합니다.** 응답에 없으면 프론트는 해당 지표 칸을 그리지 않습니다(대체값을 넣지 않음).
+> `investmentPattern`과 `spendingPattern.changeRate`는 분석 기록 화면(3-4)의 카드 지표(`이번 달 소비` / `투자 자산`과 증감 배지)를 위한 FE 확장 필드로, 백엔드 확정 전까지 프론트엔드 Mock 데이터 기준으로 관리합니다. **아직 백엔드에는 구현되지 않아 추가 요청이 필요합니다.** 응답에 없으면 프론트는 해당 지표 칸을 그리지 않습니다(대체값을 넣지 않음).
 
 ### InvestmentPatternResponse
 
@@ -684,8 +684,6 @@ Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입
 ## DTO 변경 관리 규칙
 
 1. 백엔드 DTO 필드가 변경되면 이 문서를 먼저 수정합니다.
-2. `mock-server/db.json`의 동일 DTO 예시를 수정합니다.
-3. `mock-server/server.js` 응답 매핑을 수정합니다.
-4. 기능별 `api/*.api.js`와 화면을 수정합니다.
-5. DTO 명칭은 백엔드 명세의 클래스 이름과 동일하게 유지합니다.
-6. 제공된 API 명세에 없는 엔드포인트를 임의로 추가하지 않습니다.
+2. 기능별 `api/*.api.js`와 화면을 수정합니다.
+3. DTO 명칭은 백엔드 명세의 클래스 이름과 동일하게 유지합니다.
+4. 제공된 API 명세에 없는 엔드포인트를 임의로 추가하지 않습니다.

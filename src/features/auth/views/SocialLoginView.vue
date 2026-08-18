@@ -1,9 +1,8 @@
 <script setup>
 import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 import { rememberLoginRedirect, startSocialLogin } from '@/features/auth/oauth'
-import { useAuthStore } from '@/features/auth/stores/auth.store'
 import brandLogo from '../../../assets/features/onboarding/brand/brand-logo.svg'
 import googleLogo from '../../../assets/features/onboarding/brand/google-logo.svg'
 import kakaoLogo from '../../../assets/features/onboarding/brand/kakao-logo.svg'
@@ -15,38 +14,16 @@ import navy from '../../../assets/features/onboarding/characters/character-navy.
 const loadingProvider = ref('')
 const errorMessage = ref('')
 const characters = [army, navy, airforce, marine]
-const router = useRouter()
 const route = useRoute()
-const authStore = useAuthStore()
-const isMockMode =
-  import.meta.env.MODE === 'mock' || import.meta.env.VITE_USE_MOCK_SERVER === 'true'
-
 async function handleLogin(provider) {
   loadingProvider.value = provider
   errorMessage.value = ''
 
   try {
-    if (isMockMode) {
-      const response = await authStore.login({
-        socialType: provider,
-        authorizationCode: 'mock-login',
-      })
-
-      const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/home'
-      await router.push(
-        (response.user?.onboardingCompleted ?? response.onboardingCompleted)
-          ? redirect
-          : { name: 'terms' },
-      )
-      return
-    }
-
     rememberLoginRedirect(route.query.redirect)
     startSocialLogin(provider)
   } catch {
-    errorMessage.value = isMockMode
-      ? '로그인에 실패했어요. 목 서버 실행 상태를 확인해 주세요.'
-      : '소셜 로그인 설정을 확인해 주세요.'
+    errorMessage.value = '소셜 로그인 설정을 확인해 주세요.'
   } finally {
     loadingProvider.value = ''
   }

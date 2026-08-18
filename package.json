@@ -5,8 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "mock": "node mock-server/server.js",
-    "dev:mock": "concurrently -k -n VITE,MOCK \"vite --mode mock\" \"npm run mock\"",
     "build": "vite build",
     "format": "prettier --write .",
     "lint": "eslint .",
@@ -34,7 +32,6 @@
     "@commitlint/config-conventional": "^21.2.0",
     "@eslint/js": "^10.0.1",
     "@vitejs/plugin-vue": "^6.0.8",
-    "concurrently": "^9.2.4",
     "eslint": "^10.7.0",
     "eslint-plugin-vue": "^10.10.0",
     "globals": "^17.7.0",

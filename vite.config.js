@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   plugins: [
     vue(),
     VitePWA({
@@ -94,10 +94,7 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
     proxy: {
       '/api': {
-        target:
-          mode === 'mock'
-            ? 'http://localhost:8080'
-            : 'https://jaedaerobackend-production.up.railway.app/',
+        target: 'https://jaedaerobackend-production.up.railway.app/',
         changeOrigin: true,
       },
     },
