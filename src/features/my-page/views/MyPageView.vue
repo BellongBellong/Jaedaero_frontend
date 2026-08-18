@@ -364,12 +364,15 @@ onMounted(async () => {
           v-else
           class="badge-empty-state"
         >
-          <img
+          <span
             class="badge-empty-state__icon"
-            :src="emptyBadgeState"
-            alt=""
             aria-hidden="true"
           >
+            <img
+              :src="emptyBadgeState"
+              alt=""
+            >
+          </span>
           <strong>뱃지가 없어요</strong>
           <small>금융 미션을 달성하고<br>뱃지를 획득해보세요</small>
         </span>
@@ -940,10 +943,18 @@ onMounted(async () => {
   text-align: center;
 }
 .badge-empty-state__icon {
-  width: 42px;
-  height: 47px;
+  display: block;
+  width: 47px;
+  height: 57px;
   margin-bottom: 2px;
-  object-fit: contain;
+  overflow: hidden;
+}
+.badge-empty-state__icon img {
+  display: block;
+  width: 313px;
+  max-width: none;
+  height: 173px;
+  transform: translate(-79px, -20px);
 }
 .badge-empty-state strong {
   color: #aaa;
