@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import reportMascot from '@/assets/ai-coach/coach-character.svg'
+import reportMascot from '@/assets/ai-coach/coach-character.png'
 import smallMoney from '@/assets/icons/Smallmoney.png'
 import starGradient from '@/assets/icons/starGradient.png'
 
@@ -232,8 +232,8 @@ const dateTime = computed(() => {
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
-  width: 31px;
-  height: 31px;
+  width: 39px;
+  height: 44px;
   object-fit: contain;
 }
 

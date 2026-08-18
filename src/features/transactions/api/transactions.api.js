@@ -52,6 +52,32 @@ export async function getTransactions(params = {}) {
   })
 }
 
+export async function getSecuritiesTransactions(accountId, params = {}) {
+  const userId = Number(localStorage.getItem('userId')) || 1
+  const supportedParams = {
+    startDate: params.startDate,
+    endDate: params.endDate,
+    refresh: params.refresh,
+  }
+  const { data } = await apiClient.get(ENDPOINTS.transactions.securities(accountId), {
+    params: Object.fromEntries(
+      Object.entries(supportedParams).filter(([, value]) => value !== undefined && value !== ''),
+    ),
+    headers: { 'X-User-Id': userId },
+  })
+  const payload = data?.data ?? data
+  const items = Array.isArray(payload) ? payload : (payload?.content ?? payload?.transactions ?? [])
+
+  return items.map((transaction) => {
+    const normalized = normalizeTransaction({
+      ...transaction,
+      accountId: transaction.accountId ?? accountId,
+    })
+    transactionCache.set(String(normalized.id), normalized)
+    return normalized
+  })
+}
+
 export function getCachedTransaction(transactionId) {
   return transactionCache.get(String(transactionId)) ?? null
 }

@@ -39,6 +39,7 @@ export const ENDPOINTS = {
   strategyApplications: '/strategy-applications',
   transactions: {
     list: '/transactions',
+    securities: (accountId) => `/transactions/securities/${accountId}`,
     category: (transactionId) => `/transactions/${transactionId}/category`,
   },
   soldierSavings: '/soldier-savings',

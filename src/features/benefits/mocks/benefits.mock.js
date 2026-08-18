@@ -1,5 +1,25 @@
 export const benefitExamples = [
   {
+    id: 'example-narasarang-card-px',
+    category: '카드',
+    title: '나라사랑카드',
+    discountSummary: 'PX 및 군마트 할인 혜택',
+    target: '나라사랑카드 이용 장병',
+    content: 'PX 및 군마트 이용 시 카드사별 할인 혜택 제공',
+    method: '나라사랑카드로 결제',
+    precautions: '카드사와 이용처에 따라 할인 조건이 다를 수 있어요.',
+  },
+  {
+    id: 'example-narasarang-card-transport',
+    category: '카드',
+    title: '나라사랑카드 교통 혜택',
+    discountSummary: '대중교통 이용요금 할인',
+    target: '나라사랑카드 이용 장병',
+    content: '버스와 지하철 등 대중교통 이용금액 할인',
+    method: '후불교통 기능이 등록된 나라사랑카드 이용',
+    precautions: '전월 이용실적과 월 할인한도를 확인해주세요.',
+  },
+  {
     id: 'example-lotte-world',
     category: '여가',
     title: '롯데월드',

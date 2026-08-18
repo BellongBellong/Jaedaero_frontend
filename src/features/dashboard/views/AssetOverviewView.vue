@@ -57,6 +57,24 @@ onMounted(() => {
         <MonthlyAssetOverview
           :data="dashboard.assetSummary.monthly"
           :show-report-link="false"
+          @view-income="
+            router.push({
+              name: 'transactions',
+              query: { ...route.query, period: 'month', type: 'INCOME' },
+            })
+          "
+          @view-investment="
+            router.push({
+              name: 'transactions',
+              query: { ...route.query, period: 'month', tab: 'INVESTMENT' },
+            })
+          "
+          @view-spending="
+            router.push({
+              name: 'transactions',
+              query: { ...route.query, period: 'month', type: 'EXPENSE' },
+            })
+          "
         />
         <DetailLinkButton
           class="asset-overview__transactions"

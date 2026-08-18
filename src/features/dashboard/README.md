@@ -55,34 +55,35 @@
 `src/assets/icons/arrow.svg` 에셋을 공통으로 사용합니다. 캘린더 월 이동과 헤더 뒤로가기는
 각 용도에 맞는 별도 아이콘을 유지합니다.
 
-| 컴포넌트                        | 표시 데이터                                        | 현재 목데이터                                              | 예정 API                                                                    | 상태                                   |
-| ------------------------------- | -------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------- |
-| `DailyReportBanner.vue`         | 인사말, 금융 AI 리포트 제목, 오늘 날짜             | `dashboardResponses[].dailyBriefing`                       | 대시보드 응답에 필드 없음                                                   | 목 유지                                |
-| `FinancialDdayCard.vue`         | 재정적 전역일, 실제 전역일, 현재 자산, 목표 달성률 | API 응답 + 목 fallback                                     | `GET /api/v1/dashboard`                                                     | API 연결                               |
-| `UpcomingEventsCard.vue`        | 예정 이벤트 목록과 D-day                           | `eventResponses`                                           | `GET /api/v1/dashboard`의 `upcomingEvents`                                  | 조회 목 연결, 이벤트 CRUD API 미정     |
-| `EventAddModal.vue`             | 이벤트명, 시작·종료일, 휴가 모드 자동 전환 여부    | 로컬 이벤트 상태, `localStorage` 휴가 일정                 | 이벤트 생성 API의 `startDate`, `endDate`, `autoVacationMode`                | UI·목 저장 연결, 생성 API 미정         |
-| `MiniEventCalendar.vue`         | 월간 날짜, 오늘·선택일, 이벤트 기간 표시           | `eventResponses`의 `startDate`, `endDate`                  | 예정 이벤트 조회 API                                                        | 목 연결, 별도 캘린더 API 불필요        |
-| `SelectedEventList.vue`         | 선택 날짜에 포함되는 일정과 오늘 기준 D-day        | `eventResponses`                                           | 예정 이벤트 조회 API                                                        | 목 연결                                |
-| `EventTimeline.vue`             | 가까운 일정순 제목·기간·D-day와 긴급도             | `eventResponses`                                           | 예정 이벤트 조회 API                                                        | 목 연결                                |
-| `TodayMilitaryBenefits.vue`     | 휴가 모드의 오늘의 군인 할인 혜택 3건 요약         | 없음                                                       | `GET /api/v1/benefits?category=&rank=`                                      | API 호출 연결, 백엔드 Swagger 미노출   |
-| `TodayMissionCard.vue`          | 오늘만 제공되는 `TODAY` 미션                       | `missionResponses`                                         | `GET /api/v1/missions/today`                                                | 목 연결                                |
-| `MissionListSheet.vue`          | 데일리 미션과 오늘의 미션 전체                     | `missionResponses`                                         | `GET /api/v1/missions/today`                                                | 목 연결                                |
-| `DashboardAssetSwitcher.vue`    | 이번 달 자산 현황과 나의 총 자산 전환              | API 응답 + 목 fallback                                     | `GET /api/v1/dashboard`, 계좌 조회 API                                      | 대시보드 요약 API 연결                 |
-| `MonthlyAssetOverview.vue` 수입 | 이번 달 수입 합계, 복무별 월급, 기타 수입          | `soldierProfileResponse`, `transactionResponses`           | `GET /api/v1/users/me`, `GET /api/v1/transactions?startDate=&endDate=`      | 목 연결                                |
-| `MonthlyAssetOverview.vue` 투자 | 증권계좌 잔액, 이번 달 변동액·변동률, 연결 여부    | `connectedAccountResponses`, `investmentChangeResponses`   | `GET /api/v1/accounts/{userId}` + 월별 증권계좌 변동 조회 API               | 목 연결, 변동 조회 API 확인 필요       |
-| `MonthlyAssetOverview.vue` 지출 | 이번 달 지출 합계, 지출 목표와 초과 여부           | `dashboardResponses[].assetSnapshot`                       | `GET /api/v1/dashboard` 또는 `GET /api/v1/transactions?startDate=&endDate=` | 목 연결                                |
-| `AssetAccountSummary.vue`       | 총 자산과 계좌·적금·투자 유형별 통합 자산          | `connectedAccountResponses`, 퍼소나별 `assetSummary.total` | `GET /api/v1/accounts/{userId}`                                             | 목 연결                                |
-| `AssetOverviewView.vue`         | 총 자산 계좌 목록과 이번 달 지출 카드              | `assetSummary.total`, `assetSummary.monthly`               | `GET /api/v1/accounts/{userId}`, `GET /api/v1/dashboard`                    | 목 연결                                |
-| `AssetAccountCard.vue`          | 총 자산, 대표 계좌 3개, 남은 계좌 수               | `connectedAccountResponses`                                | `GET /api/v1/accounts/{userId}`                                             | 목 연결                                |
-| `AssetAccountListItem.vue`      | 은행 아이콘, 잔액, 계좌명을 표시하는 공통 계좌 행  | `connectedAccountResponses[]`                              | `GET /api/v1/accounts/{userId}`                                             | 목 연결                                |
-| `AccountAssetsView.vue`         | 입출금·저축·투자 계좌 분류와 유형별 합계           | `connectedAccountResponses`                                | `GET /api/v1/accounts/{userId}`                                             | 목 연결                                |
-| `InvestmentAssetChart.vue`      | 투자 원금·평가액·수익률과 최근 4개월 월별 수익률   | `assetSummary.monthly.investment`                          | 월별 증권계좌 수익률 조회 API                                               | 요약 목 연결, 월별 이력 API 확인 필요  |
-| `InvestmentHoldingsList.vue`    | 보유 투자 상품명·수량·평가액·수익률                | `investmentHoldingResponses`                               | 증권계좌 보유 상품 조회 API                                                 | 목 연결, API 경로 확인 필요            |
-| `AccountTransactionView.vue`    | 계좌번호 복사, 잔액과 계좌별 거래내역              | 거래내역 API + 목 fallback                                 | `GET /api/v1/accounts/{userId}`, `GET /api/v1/transactions?accountId=`      | 거래내역 API 연결                      |
-| `TransactionFilterSheet.vue`    | 전체·입금·출금 거래 필터 바텀시트                  | 계좌별 거래내역의 `transactionType`                        | 별도 API 없음, 조회 결과 프론트 필터                                        | 연결                                   |
-| `TransactionDetailView.vue`     | 거래 항목별 적요·카테고리·유형·입출금처·일시·잔액  | 목록 API 응답 캐시 + 목 시나리오                           | `GET /api/v1/transactions`, 거래 단건 상세 조회 API                         | 목록 API 연결, 단건 API 경로 확인 필요 |
-| `CategoryChangeSheet.vue`       | 현재 카테고리와 카테고리 선택·변경 바텀시트        | 거래 단건의 `category`                                     | `PUT /api/v1/transactions/{transactionId}/category`                         | UI·목 상태 연결                        |
-| `DischargeAssetChart.vue`       | 월별 예상 자산과 목표 자산                         | `dashboardResponses[].assetForecast`                       | `GET /api/v1/cashflow?months=`                                              | 목 연결                                |
+| 컴포넌트                        | 표시 데이터                                         | 현재 목데이터                                              | 예정 API                                                                           | 상태                                   |
+| ------------------------------- | --------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------- |
+| `DailyReportBanner.vue`         | 인사말, 금융 AI 리포트 제목, 오늘 날짜              | `dashboardResponses[].dailyBriefing`                       | 대시보드 응답에 필드 없음                                                          | 목 유지                                |
+| `FinancialDdayCard.vue`         | 재정적 전역일, 실제 전역일, 현재 자산, 목표 달성률  | API 응답 + 목 fallback                                     | `GET /api/v1/dashboard`                                                            | API 연결                               |
+| `UpcomingEventsCard.vue`        | 예정 이벤트 목록과 D-day                            | `eventResponses`                                           | `GET /api/v1/dashboard`의 `upcomingEvents`                                         | 조회 목 연결, 이벤트 CRUD API 미정     |
+| `EventAddModal.vue`             | 이벤트명, 시작·종료일, 휴가 모드 자동 전환 여부     | 로컬 이벤트 상태, `localStorage` 휴가 일정                 | 이벤트 생성 API의 `startDate`, `endDate`, `autoVacationMode`                       | UI·목 저장 연결, 생성 API 미정         |
+| `MiniEventCalendar.vue`         | 월간 날짜, 오늘·선택일, 이벤트 기간 표시            | `eventResponses`의 `startDate`, `endDate`                  | 예정 이벤트 조회 API                                                               | 목 연결, 별도 캘린더 API 불필요        |
+| `SelectedEventList.vue`         | 선택 날짜에 포함되는 일정과 오늘 기준 D-day         | `eventResponses`                                           | 예정 이벤트 조회 API                                                               | 목 연결                                |
+| `EventTimeline.vue`             | 가까운 일정순 제목·기간·D-day와 긴급도              | `eventResponses`                                           | 예정 이벤트 조회 API                                                               | 목 연결                                |
+| `TodayMilitaryBenefits.vue`     | 휴가 모드의 오늘의 군인 할인 혜택 4건 요약 및 카드 선택 | `features/benefits/mocks/benefits.mock.js`              | 미연결                                                                               | 카드 선택·상세 이동 연결              |
+| `TodayMissionCard.vue`          | 오늘만 제공되는 `TODAY` 미션                        | `missionResponses`                                         | `GET /api/v1/missions/today`                                                       | 목 연결                                |
+| `MissionListSheet.vue`          | 데일리 미션과 오늘의 미션 전체                      | `missionResponses`                                         | `GET /api/v1/missions/today`                                                       | 목 연결                                |
+| `DashboardAssetSwitcher.vue`    | 이번 달 자산 현황과 나의 총 자산 전환               | API 응답 + 목 fallback                                     | `GET /api/v1/dashboard`, 계좌 조회 API                                             | 대시보드 요약 API 연결                 |
+| `MonthlyAssetOverview.vue` 수입 | 이번 달 수입 합계, 복무별 월급, 기타 수입           | `soldierProfileResponse`, `transactionResponses`           | `GET /api/v1/users/me`, `GET /api/v1/transactions?startDate=&endDate=`             | 카드 선택 시 월간 입금 내역으로 이동   |
+| `MonthlyAssetOverview.vue` 투자 | 증권계좌 잔액, 이번 달 변동액·변동률, 연결 여부     | `connectedAccountResponses`, `investmentChangeResponses`   | `GET /api/v1/accounts?refresh=`, `GET /api/v1/transactions/securities/{accountId}` | 실제 증권계좌 거래 API 연결            |
+| `MonthlyAssetOverview.vue` 지출 | 이번 달 지출 합계, 지출 목표와 초과 여부            | `dashboardResponses[].assetSnapshot`                       | `GET /api/v1/dashboard` 또는 `GET /api/v1/transactions?startDate=&endDate=`        | 카드 선택 시 월간 출금 내역으로 이동   |
+| `AssetAccountSummary.vue`       | 총 자산과 계좌·적금·투자 유형별 통합 자산           | `connectedAccountResponses`, 퍼소나별 `assetSummary.total` | `GET /api/v1/accounts/{userId}`                                                    | 목 연결                                |
+| `AssetOverviewView.vue`         | 총 자산 계좌 목록과 이번 달 지출 카드               | `assetSummary.total`, `assetSummary.monthly`               | `GET /api/v1/accounts/{userId}`, `GET /api/v1/dashboard`                           | 목 연결                                |
+| `AssetAccountCard.vue`          | 총 자산, 대표 계좌 3개, 남은 계좌 수                | `connectedAccountResponses`                                | `GET /api/v1/accounts/{userId}`                                                    | 목 연결                                |
+| `AssetAccountListItem.vue`      | 은행 아이콘, 잔액, 계좌명을 표시하는 공통 계좌 행   | `connectedAccountResponses[]`                              | `GET /api/v1/accounts/{userId}`                                                    | 목 연결                                |
+| `AccountAssetsView.vue`         | 입출금·저축·투자 계좌 분류와 유형별 합계            | `connectedAccountResponses`                                | `GET /api/v1/accounts/{userId}`                                                    | 목 연결                                |
+| `InvestmentAssetChart.vue`      | 투자 원금·평가액·수익률과 최근 4개월 월별 수익률    | `assetSummary.monthly.investment`                          | 월별 증권계좌 수익률 조회 API                                                      | 요약 목 연결, 월별 이력 API 확인 필요  |
+| `InvestmentHoldingsList.vue`    | 보유 투자 상품명·수량·평가액·수익률                 | `investmentHoldingResponses`                               | 증권계좌 보유 상품 조회 API                                                        | 목 연결, API 경로 확인 필요            |
+| `AccountTransactionView.vue`    | 계좌번호 복사, 잔액, 계좌별 거래내역과 계좌 수정 탭 | 거래내역 API + 목 fallback, 계좌 수정 예시 설정            | `GET /api/v1/accounts/{userId}`, `GET /api/v1/transactions?accountId=`             | 거래내역 API 연결, 수정값은 로컬 저장  |
+| `AccountEditPanel.vue`          | 계좌 별칭·용도·자산 포함 여부·주 계좌 설정          | 계좌 정보와 브라우저 로컬 저장소                           | 계좌 수정 API 미제공                                                               | API 추가 전 예시 UI                    |
+| `TransactionFilterSheet.vue`    | 전체·입금·출금 거래 필터 바텀시트                   | 계좌별 거래내역의 `transactionType`                        | 별도 API 없음, 조회 결과 프론트 필터                                               | 연결                                   |
+| `TransactionDetailView.vue`     | 거래 항목별 적요·카테고리·유형·입출금처·일시·잔액   | 목록 API 응답 캐시 + 목 시나리오                           | `GET /api/v1/transactions`, 거래 단건 상세 조회 API                                | 목록 API 연결, 단건 API 경로 확인 필요 |
+| `CategoryChangeSheet.vue`       | 현재 카테고리와 카테고리 선택·변경 바텀시트         | 거래 단건의 `category`                                     | `PUT /api/v1/transactions/{transactionId}/category`                                | UI·목 상태 연결                        |
+| `DischargeAssetChart.vue`       | 월별 예상 자산과 목표 자산                          | `dashboardResponses[].assetForecast`                       | `GET /api/v1/cashflow?months=`                                                     | 목 연결                                |
 
 ## 자산 현황 화면
 
@@ -103,6 +104,13 @@
   생성합니다. 그래프를 가리키면 월과 해당 월의 수익률을 표시합니다.
 - 두 번째 카드에는 이번 달 지출 합계와 월간 수입·투자·지출 블록을 표시합니다.
 - `전체 내역 보기`는 `/transactions`로 이동합니다.
+- 대시보드 수입·지출 블록은 `/transactions?period=month&type=INCOME|EXPENSE`로 이동합니다.
+- 대시보드 투자 블록은 `/transactions?period=month&tab=INVESTMENT`로 이동합니다.
+- 거래내역 투자 탭은 `GET /api/v1/accounts`의 `accountType=SECURITIES` 또는
+  `businessType=ST` 계좌를 기준으로 `GET /api/v1/transactions/securities/{accountId}`를
+  조회합니다. 응답의 `DEPOSIT`은 입금, `WITHDRAW`는 출금으로 표시합니다.
+- 거래내역 페이지 끝까지 스크롤하면 계좌 목록과 증권 거래 API에 `refresh=true`를 전달해
+  CODEF 최신 자산 동기화를 요청하고, 완료된 결과로 목록을 다시 그립니다.
 - 카드 헤더는 `AccountTitleHeader.vue`를 공통으로 사용합니다.
 - 은행 아이콘은 `institutionMapping.js`에서 정규화한 기관 코드·이름을
   `bankAccountIconMapping.js`에서 `bank-account-lcon/account-list` 에셋에 연결합니다.
@@ -211,17 +219,16 @@
 
 휴가 모드에서는 `TodayMilitaryBenefits.vue`가 군인 혜택 API 응답 중 하루 4건을 가로 스크롤 카드로 표시합니다.
 
-- 조회 예정 API: `GET /api/v1/benefits?category=&rank=`
+- 현재 데이터: `features/benefits/mocks/benefits.mock.js`
 - 화면 필드: `id`, `title`, `category`, `discountSummary`
 - 응답이 배열이거나 `data`, `benefits`, `content`, `items`로 감싸진 경우를 모두 정규화합니다.
 - 선택 결과는 매일 오전 6시를 기준으로 변경되며, 같은 날짜 구간에는 새로고침해도 같은 조합을 유지합니다.
 - 카테고리는 교통, 여가, 숙박, 자기계발, 기타 색상으로 매핑합니다.
+- 카드를 누르면 `/benefits?benefitId={id}`로 이동해 선택한 혜택 상세 카드를 펼칩니다.
 - 전체 보기 클릭 시 `/benefits`에서 카테고리별 전체 목록을 표시합니다.
 - 전체 목록 카드는 클릭 시 기간, 대상, 내용, 이용 방법, 유의사항을 드롭다운으로 펼칩니다.
-- API 미제공 중에는 롯데월드 혜택 예시 1건만 표시하며, API 응답이 생기면 서버 데이터가 우선됩니다.
-- 로딩 중에는 휴가 모드 색상의 스켈레톤을, 조회 실패 또는 빈 응답에는 빈 상태 문구를 표시합니다.
-
-현재 배포 Swagger에는 `/benefits`가 아직 노출되지 않았으므로 백엔드 API가 추가되기 전에는 빈 상태가 표시됩니다.
+- 백엔드 API 연결은 보류했으며 휴가 모드 대시보드와 전체 혜택 페이지 모두 예시 데이터를 표시합니다.
+- 카드 선택, 상세 카드 펼치기, 카드 혜택을 포함한 카테고리 필터와 하루 4건 선택 동작은 유지합니다.
 
 ## 증권계좌 연결 동선
 

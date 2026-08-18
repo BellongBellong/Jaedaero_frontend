@@ -3,16 +3,22 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import backArrowIcon from '@/assets/icons/backArrowIcon.svg'
-import dropdownIcon from '@/assets/icons/dropdownIcon.svg'
+import CommonTabs from '@/common/components/common/CommonTabs.vue'
+import DropdownMenu from '@/common/components/common/DropdownMenu.vue'
+import AccountEditPanel from '@/features/accounts/components/AccountEditPanel.vue'
 import { getDashboardMock, transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import AccountTransactionItem from '@/features/transactions/components/AccountTransactionItem.vue'
-import TransactionFilterSheet from '@/features/transactions/components/TransactionFilterSheet.vue'
 import { getTransactions } from '@/features/transactions/api/transactions.api'
 
 const route = useRoute()
 const router = useRouter()
 const copied = ref(false)
-const filterOpen = ref(false)
+const activeTab = ref(route.query.tab === 'edit' ? 'EDIT' : 'TRANSACTIONS')
+const savedAccountAlias = ref('')
+const accountTabs = [
+  { value: 'TRANSACTIONS', label: '거래 내역' },
+  { value: 'EDIT', label: '계좌 수정' },
+]
 const usesMockScenario = computed(() => Boolean(route.query.persona || route.query.scenario))
 const loadedTransactions = ref(usesMockScenario.value ? transactionResponses : [])
 const loading = ref(!usesMockScenario.value)
@@ -45,10 +51,9 @@ const accountTransactions = computed(() =>
     )
     .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate)),
 )
-const activeFilterLabel = computed(
-  () => filterOptions.find(({ value }) => value === transactionFilter.value)?.label ?? '전체',
+const accountName = computed(
+  () => savedAccountAlias.value || account.value?.accountName || account.value?.name || '계좌 상세',
 )
-const accountName = computed(() => account.value?.accountName || account.value?.name || '계좌 상세')
 const accountNumber = computed(
   () => account.value?.accountNumber || account.value?.accountNumberMasked || '계좌번호 정보 없음',
 )
@@ -75,6 +80,10 @@ function openTransaction(transaction) {
     params: { transactionId: transaction.id },
     query: route.query,
   })
+}
+
+function applySavedAccount(preferences) {
+  savedAccountAlias.value = preferences.accountAlias
 }
 
 onMounted(async () => {
@@ -128,25 +137,23 @@ onMounted(async () => {
       <strong>{{ accountBalance }}원</strong>
     </section>
 
-    <section
+    <CommonTabs
       v-if="account"
+      v-model="activeTab"
+      :items="accountTabs"
+      aria-label="계좌 상세 메뉴"
+    />
+
+    <section
+      v-if="account && activeTab === 'TRANSACTIONS'"
       class="account-detail__transactions"
     >
       <h2>거래 내역</h2>
-      <button
-        class="account-detail__filter"
-        type="button"
-        :aria-expanded="filterOpen"
-        aria-haspopup="dialog"
-        @click="filterOpen = true"
-      >
-        {{ activeFilterLabel }}
-        <img
-          :src="dropdownIcon"
-          alt=""
-          aria-hidden="true"
-        >
-      </button>
+      <DropdownMenu
+        v-model="transactionFilter"
+        :options="filterOptions"
+        aria-label="계좌 거래내역 필터"
+      />
       <p
         v-if="loading"
         aria-live="polite"
@@ -172,11 +179,10 @@ onMounted(async () => {
       </p>
     </section>
 
-    <TransactionFilterSheet
-      v-if="filterOpen"
-      v-model="transactionFilter"
-      :options="filterOptions"
-      @close="filterOpen = false"
+    <AccountEditPanel
+      v-else-if="account && activeTab === 'EDIT'"
+      :account="account"
+      @saved="applySavedAccount"
     />
 
     <p
@@ -269,27 +275,6 @@ onMounted(async () => {
   color: var(--gray-600);
   font-size: 16px;
   line-height: 1.5;
-}
-
-.account-detail__filter {
-  display: inline-flex;
-  width: fit-content;
-  align-items: center;
-  padding: 18px 20px 2px;
-  border: 0;
-  background: transparent;
-  color: var(--gray-600);
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: var(--weight-bold);
-}
-
-.account-detail__filter img {
-  width: 8px;
-  height: 7px;
-  margin-left: 6px;
-  object-fit: contain;
 }
 
 .account-detail__transactions ul {
