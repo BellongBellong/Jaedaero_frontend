@@ -219,6 +219,18 @@ const mainRoutes = [
         },
       },
       {
+        path: 'investment-guide/plan/connect-securities',
+        name: 'investment-plan-connect-securities',
+        component: () => import('@/features/onboarding/views/CodefBankConnectView.vue'),
+        meta: {
+          requiresAuth: true,
+          hideHeader: true,
+          hideBottomNavigation: true,
+          investmentGuide: true,
+          securitiesOnly: true,
+        },
+      },
+      {
         path: 'investment-guide/plan/edit',
         name: 'investment-plan-edit',
         component: () => import('@/features/rebalancing/views/RecurringInvestmentPlanView.vue'),
