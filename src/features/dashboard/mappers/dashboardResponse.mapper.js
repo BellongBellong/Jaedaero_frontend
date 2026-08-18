@@ -52,9 +52,11 @@ export function mapDashboardResponse(response, fallbackModel, now = new Date()) 
   const monthlyInvestmentGoal = toNumber(source.monthlyInvestmentGoal)
   const monthlySpendingGoal = toNumber(source.monthlySpendingGoal)
   const expectedAsset = toNumber(source.expectedAsset)
+  const targetAmount = toNumber(source.targetAmount)
   const currentExpectedAsset = toNumber(source.currentExpectedAsset, currentAsset)
   const derivedTargetAmount =
     achievementRate > 0 ? Math.round(expectedAsset / (achievementRate / 100)) : 0
+  const dashboardTargetAmount = targetAmount > 0 ? targetAmount : derivedTargetAmount
 
   return {
     ...fallbackModel,
@@ -76,7 +78,7 @@ export function mapDashboardResponse(response, fallbackModel, now = new Date()) 
       achievementRate,
       currentAsset: toTenThousandWon(currentAsset),
       expectedAsset: toTenThousandWon(currentExpectedAsset),
-      targetAmount: toTenThousandWon(derivedTargetAmount),
+      targetAmount: toTenThousandWon(dashboardTargetAmount),
     },
     assetSummary: {
       ...fallbackModel.assetSummary,
