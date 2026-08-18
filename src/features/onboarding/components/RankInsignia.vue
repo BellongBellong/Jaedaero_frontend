@@ -1,8 +1,8 @@
 <script setup>
-import rankCorporal from '@/assets/onboarding/icons/rank-corporal.svg'
-import rankPrivate from '@/assets/onboarding/icons/rank-private.svg'
-import rankPrivateFirstClass from '@/assets/onboarding/icons/rank-private-first-class.svg'
-import rankSergeant from '@/assets/onboarding/icons/rank-sergeant.svg'
+import rankCorporal from '../../../assets/features/onboarding/icons/rank-corporal.svg'
+import rankPrivate from '../../../assets/features/onboarding/icons/rank-private.svg'
+import rankPrivateFirstClass from '../../../assets/features/onboarding/icons/rank-private-first-class.svg'
+import rankSergeant from '../../../assets/features/onboarding/icons/rank-sergeant.svg'
 
 const props = defineProps({
   level: { type: Number, required: true },

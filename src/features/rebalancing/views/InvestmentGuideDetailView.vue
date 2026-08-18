@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import glideJet from '@/assets/ai-coach/glide-jet.svg'
+import glideJet from '../../../assets/features/ai-coach/glide-jet.svg'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
   applyRebalancing,

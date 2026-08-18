@@ -4,20 +4,19 @@ import { useRouter } from 'vue-router'
 
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
 import CommonTabs from '@/common/components/common/CommonTabs.vue'
-import rankingCrownGold from '@/assets/ranking/crown-gold.svg'
-import rankingCrownSilver from '@/assets/ranking/crown-silver.svg'
-import rankingCharacterAirforce from '@/assets/ranking/characters/airforce.svg'
-import rankingCharacterArmy from '@/assets/ranking/characters/army.svg'
-import rankingCharacterMarine from '@/assets/ranking/characters/marine.svg'
-import rankingCharacterNavy from '@/assets/ranking/characters/navy.svg'
-import rankingFirstPodium from '@/assets/ranking/podium/ranking-first.png'
-import rankingSecondPodium from '@/assets/ranking/podium/ranking-second.png'
-import rankingThirdPodium from '@/assets/ranking/podium/ranking-third.png'
+import rankingCrownGold from '../../../assets/features/ranking/crown-gold.svg'
+import rankingCrownSilver from '../../../assets/features/ranking/crown-silver.svg'
+import rankingCharacterAirforce from '../../../assets/features/ranking/characters/airforce.svg'
+import rankingCharacterArmy from '../../../assets/features/ranking/characters/army.svg'
+import rankingCharacterMarine from '../../../assets/features/ranking/characters/marine.svg'
+import rankingCharacterNavy from '../../../assets/features/ranking/characters/navy.svg'
+import rankingFirstPodium from '../../../assets/features/ranking/podium/ranking-first.png'
+import rankingSecondPodium from '../../../assets/features/ranking/podium/ranking-second.png'
+import rankingThirdPodium from '../../../assets/features/ranking/podium/ranking-third.png'
 import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import {
   BADGE_SELECTION_STORAGE_KEY,
   getBadgeImage,
-  getBadgeLevelImage,
   getBadgeProgress,
   getBadgeTarget,
   getBadgeTier,
@@ -383,11 +382,9 @@ const ranking = computed(() => {
           badge.image ||
           (hasEarnedBadge && memberType
             ? getBadgeImage(memberType, tierInfo.key)
-            : hasEarnedBadge
-              ? getBadgeLevelImage(tierInfo.key)
-              : ownBadge
-                ? getBadgeImage(ownBadge.type, ownBadge.levelInfo.key)
-                : null),
+            : ownBadge
+              ? getBadgeImage(ownBadge.type, ownBadge.levelInfo.key)
+              : null),
         character: getRankingCharacter(member),
         crown: podium.crown,
         podiumImage: podium.image,

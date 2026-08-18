@@ -1,7 +1,7 @@
 <script setup>
-import battery from '@/assets/onboarding/status/status-battery.svg'
-import cellular from '@/assets/onboarding/status/status-cellular.svg'
-import wifi from '@/assets/onboarding/status/status-wifi.svg'
+import battery from '../../assets/features/onboarding/status/status-battery.svg'
+import cellular from '../../assets/features/onboarding/status/status-cellular.svg'
+import wifi from '../../assets/features/onboarding/status/status-wifi.svg'
 </script>
 
 <template>

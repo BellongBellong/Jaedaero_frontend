@@ -1,5 +1,5 @@
 <script setup>
-import backIcon from '@/assets/onboarding/icons/step1-icon0.svg'
+import backIcon from '@/assets/features/onboarding/icons/step1-icon0.svg'
 
 const props = defineProps({
   step: { type: Number, default: 0 },

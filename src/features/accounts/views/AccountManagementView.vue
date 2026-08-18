@@ -2,8 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import accountIcon from '@/assets/onboarding/icons/account-general.svg'
-import militarySavingsIcon from '@/assets/onboarding/icons/account-military-savings.svg'
+import accountIcon from '../../../assets/features/onboarding/icons/account-general.svg'
+import militarySavingsIcon from '../../../assets/features/onboarding/icons/account-military-savings.svg'
 import {
   disconnectAccount,
   getAccounts,

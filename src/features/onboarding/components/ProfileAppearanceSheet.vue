@@ -1,10 +1,10 @@
 <script setup>
 import { ref } from 'vue'
 
-import airforce from '@/assets/onboarding/profiles/profile-airforce.png'
-import army from '@/assets/onboarding/profiles/profile-army.png'
-import marine from '@/assets/onboarding/profiles/profile-marine.png'
-import navy from '@/assets/onboarding/profiles/profile-navy.png'
+import airforce from '@/assets/features/onboarding/profiles/profile-airforce.png'
+import army from '@/assets/features/onboarding/profiles/profile-army.png'
+import marine from '@/assets/features/onboarding/profiles/profile-marine.png'
+import navy from '@/assets/features/onboarding/profiles/profile-navy.png'
 
 const props = defineProps({
   image: { type: String, required: true },

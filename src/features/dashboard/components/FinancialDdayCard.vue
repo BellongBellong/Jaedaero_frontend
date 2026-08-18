@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-import armyCharacter from '@/assets/icons/character/army.png'
+import armyCharacter from '../../../assets/character/army.png'
 import DetailLinkButton from '@/common/components/common/DetailLinkButton.vue'
 
 const router = useRouter()

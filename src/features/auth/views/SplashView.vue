@@ -2,11 +2,11 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-import brandLogo from '@/assets/onboarding/brand/brand-logo.svg'
-import airforce from '@/assets/onboarding/characters/character-airforce.png'
-import army from '@/assets/onboarding/characters/character-army.png'
-import marine from '@/assets/onboarding/characters/character-marine.png'
-import navy from '@/assets/onboarding/characters/character-navy.png'
+import brandLogo from '../../../assets/features/onboarding/brand/brand-logo.svg'
+import airforce from '../../../assets/features/onboarding/characters/character-airforce.png'
+import army from '../../../assets/features/onboarding/characters/character-army.png'
+import marine from '../../../assets/features/onboarding/characters/character-marine.png'
+import navy from '../../../assets/features/onboarding/characters/character-navy.png'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 
 const router = useRouter()

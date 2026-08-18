@@ -4,13 +4,13 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { rememberLoginRedirect, startSocialLogin } from '@/features/auth/oauth'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
-import brandLogo from '@/assets/onboarding/brand/brand-logo.svg'
-import googleLogo from '@/assets/onboarding/brand/google-logo.svg'
-import kakaoLogo from '@/assets/onboarding/brand/kakao-logo.svg'
-import airforce from '@/assets/onboarding/characters/character-airforce.png'
-import army from '@/assets/onboarding/characters/character-army.png'
-import marine from '@/assets/onboarding/characters/character-marine.png'
-import navy from '@/assets/onboarding/characters/character-navy.png'
+import brandLogo from '../../../assets/features/onboarding/brand/brand-logo.svg'
+import googleLogo from '../../../assets/features/onboarding/brand/google-logo.svg'
+import kakaoLogo from '../../../assets/features/onboarding/brand/kakao-logo.svg'
+import airforce from '../../../assets/features/onboarding/characters/character-airforce.png'
+import army from '../../../assets/features/onboarding/characters/character-army.png'
+import marine from '../../../assets/features/onboarding/characters/character-marine.png'
+import navy from '../../../assets/features/onboarding/characters/character-navy.png'
 
 const loadingProvider = ref('')
 const errorMessage = ref('')

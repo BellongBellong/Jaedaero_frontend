@@ -12,11 +12,11 @@ import {
   saveProfileAppearance,
 } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
-import airforce from '@/assets/onboarding/profiles/profile-airforce.png'
-import army from '@/assets/onboarding/profiles/profile-army.png'
-import defaultProfile from '@/assets/onboarding/profiles/profile-default.png'
-import marine from '@/assets/onboarding/profiles/profile-marine.png'
-import navy from '@/assets/onboarding/profiles/profile-navy.png'
+import airforce from '../../../assets/features/onboarding/profiles/profile-airforce.png'
+import army from '../../../assets/features/onboarding/profiles/profile-army.png'
+import defaultProfile from '../../../assets/features/onboarding/profiles/profile-default.png'
+import marine from '../../../assets/features/onboarding/profiles/profile-marine.png'
+import navy from '../../../assets/features/onboarding/profiles/profile-navy.png'
 
 const router = useRouter()
 const onboarding = useOnboardingStore()
