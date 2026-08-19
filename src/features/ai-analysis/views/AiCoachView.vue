@@ -296,8 +296,8 @@ const analysisMenus = [
               class="risk-bar__track"
               aria-hidden="true"
             >
-              <span />
-              <span />
+              <span :style="{ flex: glidepathStage.safeRate }" />
+              <span :style="{ flex: glidepathStage.riskRate }" />
             </div>
           </div>
           <span class="glidepath-card__link">
@@ -862,13 +862,12 @@ const analysisMenus = [
   margin-top: 1px;
 }
 
+/* 폭은 안전/위험 수치에 따라 인라인 스타일로 정한다. */
 .risk-bar__track span:first-child {
-  width: 106px;
   background: linear-gradient(94deg, var(--yellow-300), var(--green-600));
 }
 
 .risk-bar__track span:last-child {
-  width: 20px;
   background: linear-gradient(90deg, var(--orange-50), var(--orange-500));
 }
 
