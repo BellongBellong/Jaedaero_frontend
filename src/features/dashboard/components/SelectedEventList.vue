@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 
-import plusIcon from '@/assets/icons/Category/plusIcon.svg'
+import plusIcon from '@/assets/icons/plusIcon.svg'
 
 const props = defineProps({
   events: {
