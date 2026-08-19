@@ -37,12 +37,12 @@ const loadedTransactions = computed(() =>
 const connectedAccounts = computed(() => accountsStore.accounts)
 const loading = ref(!usesMockScenario.value)
 const loadError = ref(null)
-const syncSentinel = ref(null)
-const syncing = ref(false)
-const syncStatus = ref('idle')
-const syncAttempted = ref(false)
+const historySentinel = ref(null)
+const loadingMore = ref(false)
+const hasMoreHistory = ref(true)
+const oldestRequestedStartDate = ref(null)
 const hasUserScrolled = ref(false)
-let syncObserver
+let historyObserver
 const dashboard = computed(() => {
   const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
   const scenario = Array.isArray(route.query.scenario)
@@ -72,6 +72,9 @@ const investmentAccountIds = computed(
   () => new Set(investmentAccounts.value.map((account) => String(account.id ?? account.accountId))),
 )
 const isVacationPeriod = computed(() => route.query.period === 'vacation')
+const canLoadMoreHistory = computed(
+  () => !isVacationPeriod.value && route.query.period !== 'month' && hasMoreHistory.value,
+)
 const vacationPeriodLabel = computed(() => {
   if (!isVacationPeriod.value) return ''
   const title = String(route.query.vacationTitle || '휴가')
@@ -125,36 +128,65 @@ function monthRange() {
   }
 }
 
+function formatDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate(),
+  ).padStart(2, '0')}`
+}
+
+function previousMonthsRange(endDate, months) {
+  const end = new Date(`${endDate}T00:00:00`)
+  const start = new Date(end)
+  start.setMonth(start.getMonth() - months)
+  return { startDate: formatDate(start), endDate: formatDate(end) }
+}
+
 function requestRange() {
   if (isVacationPeriod.value) {
     return { startDate: route.query.startDate, endDate: route.query.endDate }
   }
-  return route.query.period === 'month' ? monthRange() : {}
+  if (route.query.period === 'month') return monthRange()
+  return previousMonthsRange(formatDate(new Date()), 3)
 }
 
-async function loadLiveTransactions({ refresh = false } = {}) {
+async function loadLiveTransactions() {
   const range = requestRange()
   await accountsStore.load({ force: true })
   await transactionsStore.loadWithSecurities(accountsStore.accounts.filter(isInvestmentAccount), {
     ...range,
-    refresh,
+    refresh: false,
   })
+  oldestRequestedStartDate.value = range.startDate
 }
 
-async function syncCodefAssets() {
-  if (usesMockScenario.value || syncing.value || syncAttempted.value) return
+async function loadOlderTransactions() {
+  if (
+    usesMockScenario.value ||
+    loadingMore.value ||
+    !canLoadMoreHistory.value ||
+    !oldestRequestedStartDate.value
+  ) {
+    return
+  }
 
-  syncAttempted.value = true
-  syncing.value = true
-  syncStatus.value = 'loading'
+  const previousEndDate = new Date(`${oldestRequestedStartDate.value}T00:00:00`)
+  previousEndDate.setDate(previousEndDate.getDate() - 1)
+  const range = previousMonthsRange(formatDate(previousEndDate), 1)
+  const previousCount = transactionsStore.transactions.length
+
+  loadingMore.value = true
   try {
-    await loadLiveTransactions({ refresh: true })
-    syncStatus.value = 'success'
+    await transactionsStore.loadWithSecurities(
+      accountsStore.accounts.filter(isInvestmentAccount),
+      { ...range, refresh: false },
+      { append: true },
+    )
+    oldestRequestedStartDate.value = range.startDate
+    hasMoreHistory.value = transactionsStore.transactions.length > previousCount
   } catch (error) {
-    console.error('CODEF 자산 동기화 실패:', error)
-    syncStatus.value = 'error'
+    console.error('과거 거래내역 조회 실패:', error)
   } finally {
-    syncing.value = false
+    loadingMore.value = false
   }
 }
 
@@ -164,15 +196,15 @@ function trackUserScroll(event) {
   if (scrollTop > 24) hasUserScrolled.value = true
 }
 
-function observeSyncSentinel() {
-  if (!syncSentinel.value || usesMockScenario.value) return
-  syncObserver = new IntersectionObserver(
+function observeHistorySentinel() {
+  if (!historySentinel.value || usesMockScenario.value) return
+  historyObserver = new IntersectionObserver(
     ([entry]) => {
-      if (entry.isIntersecting && hasUserScrolled.value) syncCodefAssets()
+      if (entry.isIntersecting && hasUserScrolled.value) loadOlderTransactions()
     },
     { rootMargin: '0px 0px 80px' },
   )
-  syncObserver.observe(syncSentinel.value)
+  historyObserver.observe(historySentinel.value)
 }
 
 onMounted(async () => {
@@ -189,12 +221,12 @@ onMounted(async () => {
   completeMissionAfterLoad()
   window.addEventListener('scroll', trackUserScroll, true)
   await nextTick()
-  observeSyncSentinel()
+  observeHistorySentinel()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', trackUserScroll, true)
-  syncObserver?.disconnect()
+  historyObserver?.disconnect()
 })
 </script>
 
@@ -246,22 +278,20 @@ onBeforeUnmount(() => {
     </section>
 
     <div
-      ref="syncSentinel"
+      v-if="canLoadMoreHistory"
+      ref="historySentinel"
       class="transaction-history__sync"
       aria-live="polite"
     >
-      <template v-if="syncStatus === 'loading'">
+      <template v-if="loadingMore">
         <span
           class="transaction-history__sync-spinner"
           aria-hidden="true"
         />
-        CODEF 자산 정보를 동기화하고 있어요.
+        이전 거래 내역을 불러오고 있어요.
       </template>
-      <template v-else-if="syncStatus === 'success'">
-        최신 자산 정보로 동기화했어요.
-      </template>
-      <template v-else-if="syncStatus === 'error'">
-        자산 정보를 동기화하지 못했어요.
+      <template v-else>
+        아래로 내려 이전 거래 내역을 불러오세요.
       </template>
     </div>
   </main>
