@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import checkboxFalseIcon from '@/assets/icons/CheckboxFalse.svg'
-import checkboxIcon from '@/assets/icons/CheckboxTrue.svg'
+import checkboxTrueIcon from '@/assets/icons/CheckboxTrue.svg'
 import closeIcon from '@/assets/icons/closeIcon.svg'
 import arrowIcon from '@/assets/icons/arrow.svg'
 
@@ -121,7 +121,7 @@ onBeforeUnmount(() => {
               >
                 <img
                   class="mission-sheet__check"
-                  :src="mission.completed ? checkboxIcon : checkboxFalseIcon"
+                  :src="mission.completed ? checkboxTrueIcon : checkboxFalseIcon"
                   alt=""
                   aria-hidden="true"
                 >

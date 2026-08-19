@@ -1,6 +1,6 @@
 <script setup>
 import checkboxFalseIcon from '@/assets/icons/CheckboxFalse.svg'
-import checkboxIcon from '@/assets/icons/CheckboxIcon.png'
+import checkboxTrueIcon from '@/assets/icons/CheckboxTrue.svg'
 
 defineProps({
   missions: {
@@ -28,7 +28,7 @@ defineEmits(['mission-click', 'show-all'])
           <span class="today-mission-card__mission">
             <img
               class="today-mission-card__check"
-              :src="mission.completed ? checkboxIcon : checkboxFalseIcon"
+              :src="mission.completed ? checkboxTrueIcon : checkboxFalseIcon"
               alt=""
               aria-hidden="true"
             >
