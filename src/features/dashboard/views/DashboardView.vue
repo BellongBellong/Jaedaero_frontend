@@ -50,7 +50,7 @@ const characterImages = {
   AIRFORCE: airForceCharacter,
   MARINE: marineCharacter,
 }
-const { mode } = useLeaveModeSchedule()
+const { mode, currentLeaveMode } = useLeaveModeSchedule()
 const isVacationMode = computed(() => mode.value === 'vacation')
 const dashboardOptions = computed(() => {
   const persona = Array.isArray(route.query.persona) ? route.query.persona[0] : route.query.persona
@@ -77,10 +77,16 @@ const activeVacation = computed(() => {
       const end = event.endDate || start
       return start <= today && today <= end
     }) ||
-    (isVacationMode.value ? { id: 'manual-vacation', startDate: today, endDate: today } : null)
+    (isVacationMode.value
+      ? {
+          id: currentLeaveMode.value?.leaveModeId,
+          startDate: currentLeaveMode.value?.startDate || today,
+          endDate: currentLeaveMode.value?.endDate || today,
+        }
+      : null)
   )
 })
-const { budget: vacationBudget, setBudget: setVacationBudget } = useVacationBudget(activeVacation)
+const { budget: vacationBudget, setBudget: setVacationBudget } = useVacationBudget()
 const allMissions = computed(() =>
   liveMissions.value.length ? liveMissions.value : dashboardData.value.missions,
 )
@@ -193,9 +199,13 @@ watch(
   { immediate: true },
 )
 
-function saveEvent(event) {
-  addEvent(event)
-  showEventModal.value = false
+async function saveEvent(event) {
+  try {
+    await addEvent(event)
+    showEventModal.value = false
+  } catch {
+    window.alert('휴가 일정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+  }
 }
 
 function openMission(mission) {
@@ -208,14 +218,22 @@ function openMission(mission) {
   })
 }
 
-function saveBudget(amount) {
-  setVacationBudget(amount)
-  showBudgetSheet.value = false
+async function saveBudget(amount) {
+  try {
+    await setVacationBudget(amount)
+    showBudgetSheet.value = false
+  } catch {
+    window.alert('휴가 예산을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+  }
 }
 
-function deleteBudget() {
-  setVacationBudget(null)
-  showBudgetSheet.value = false
+async function deleteBudget() {
+  try {
+    await setVacationBudget(null)
+    showBudgetSheet.value = false
+  } catch {
+    window.alert('휴가 예산을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.')
+  }
 }
 
 function openVacationTransactions() {

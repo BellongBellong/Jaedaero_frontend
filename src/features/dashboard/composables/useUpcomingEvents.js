@@ -1,5 +1,6 @@
 import { computed, isRef, ref, toRaw, unref, watch } from 'vue'
 
+import { startLeaveMode } from '@/features/leave-mode/api/leaveMode.api'
 import { setEventLeaveModeSchedules } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
 const EVENT_STORAGE_KEY = 'jaedaero-upcoming-events'
@@ -84,8 +85,8 @@ export function useUpcomingEvents(initialEvents = []) {
       })),
   )
 
-  function addEvent(event) {
-    events.value.push({
+  async function addEvent(event) {
+    const nextEvent = {
       id: Date.now(),
       userId: 1,
       eventType: event.eventType || 'CUSTOM',
@@ -95,9 +96,22 @@ export function useUpcomingEvents(initialEvents = []) {
       expectedExpense: Number(event.expectedExpense || 0),
       notificationEnabled: event.notificationEnabled ?? true,
       ...(event.autoVacationMode === undefined ? {} : { autoVacationMode: event.autoVacationMode }),
-    })
+    }
+
+    if (nextEvent.autoVacationMode) {
+      const leaveMode = await startLeaveMode({
+        eventName: nextEvent.title,
+        startDate: nextEvent.startDate,
+        endDate: nextEvent.endDate,
+        isLeaveModeEnabled: true,
+        budgetAmount: null,
+      })
+      nextEvent.leaveModeId = leaveMode.leaveModeId
+    }
+
+    events.value.push(nextEvent)
     persistEvents()
-    setEventLeaveModeSchedules(events.value)
+    await setEventLeaveModeSchedules()
   }
 
   return {

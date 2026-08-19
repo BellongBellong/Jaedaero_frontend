@@ -74,6 +74,7 @@ export const ENDPOINTS = {
   leaveMode: {
     start: '/leave-mode',
     current: '/leave-mode/current',
+    budget: (leaveModeId) => `/leave-mode/${leaveModeId}/budget`,
   },
   marketReport: {
     today: '/market-reports/today',

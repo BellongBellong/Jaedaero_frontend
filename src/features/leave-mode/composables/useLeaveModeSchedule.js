@@ -12,7 +12,7 @@ export function setEventLeaveModeSchedules(events = []) {
 
 export function useLeaveModeSchedule() {
   const store = useLeaveModeStore()
-  const { mode, schedules } = storeToRefs(store)
+  const { mode, currentLeaveMode } = storeToRefs(store)
 
-  return { mode, schedules, setMode: store.setMode, refreshMode: store.refreshMode }
+  return { mode, currentLeaveMode, setMode: store.setMode, refreshMode: store.refreshMode }
 }
