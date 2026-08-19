@@ -11,6 +11,32 @@ const TRANSACTION_TYPE_MAP = {
   EXPENSE: 'EXPENSE',
 }
 
+function normalizeTransactionDate(value) {
+  if (Array.isArray(value)) {
+    const [year, month, day, hour = 0, minute = 0, second = 0] = value.map(Number)
+    if (!year || !month || !day) return ''
+
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(
+      hour,
+    ).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`
+  }
+
+  if (value && typeof value === 'object') {
+    const year = Number(value.year)
+    const month = Number(value.monthValue ?? value.month)
+    const day = Number(value.dayOfMonth ?? value.day)
+    if (!year || !month || !day) return ''
+
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(
+      Number(value.hour || 0),
+    ).padStart(2, '0')}:${String(Number(value.minute || 0)).padStart(2, '0')}:${String(
+      Number(value.second || 0),
+    ).padStart(2, '0')}`
+  }
+
+  return value || ''
+}
+
 function normalizeTransaction(transaction) {
   const id = transaction.transactionId ?? transaction.id
   const transactionType =
@@ -22,7 +48,9 @@ function normalizeTransaction(transaction) {
     id,
     transactionId: id,
     transactionType,
-    transactionDate: transaction.transactionAt ?? transaction.transactionDate,
+    transactionDate: normalizeTransactionDate(
+      transaction.transactionAt ?? transaction.transactionDate,
+    ),
     merchantName:
       transaction.merchantName ?? transaction.description ?? transaction.title ?? '거래 내역',
   }
