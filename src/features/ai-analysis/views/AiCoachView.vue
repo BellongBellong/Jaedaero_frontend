@@ -23,33 +23,41 @@ import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 
 /*
   적립식 투자 가이드 카드는 계급에 따라 문구, 전역 D-day, 안전/위험 비율,
-  비행기 그래프 이미지가 모두 달라진다. 값은 기획에서 정한 고정값이다.
+  비행기 그래프 이미지가 모두 달라진다.
+
+  D-day 는 육군 복무 18개월, 진급 최저복무기간 2-6-6-4개월(이병-일병-상병-병장)
+  기준으로 각 계급 구간의 중간 시점에서 전역까지 남은 일수를 계산한 값이다.
+  구간 시작이나 끝을 쓰면 인접 계급과 값이 겹치거나 0에 가까워져 중간값을 쓴다.
+    이병 0~2개월  -> 중간 1개월  -> 17개월 남음 -> 517일
+    일병 2~8개월  -> 중간 5개월  -> 13개월 남음 -> 396일
+    상병 8~14개월 -> 중간 11개월 -> 7개월 남음  -> 213일
+    병장 14~18개월 -> 중간 16개월 -> 2개월 남음  -> 61일
 */
 const GLIDEPATH_STAGES = {
   PRIVATE: {
     rankLabel: '이병',
-    dday: 384,
+    dday: 517,
     safeRate: 30,
     riskRate: 70,
     image: glidepathPrivate,
   },
   PRIVATE_FIRST_CLASS: {
     rankLabel: '일병',
-    dday: 284,
+    dday: 396,
     safeRate: 52,
     riskRate: 48,
     image: glidepathPrivateFirstClass,
   },
   CORPORAL: {
     rankLabel: '상병',
-    dday: 54,
+    dday: 213,
     safeRate: 66,
     riskRate: 33,
     image: glidepathCorporal,
   },
   SERGEANT: {
     rankLabel: '병장',
-    dday: 54,
+    dday: 61,
     safeRate: 85,
     riskRate: 15,
     image: glidepathSergeant,
