@@ -35,7 +35,7 @@ const mainRoutes = [
           headerTitle: '챌린지',
           headerVariant: 'title',
           stickyTabs: true,
-          keepHeaderOnScroll: true,
+          collapseHeaderOnScroll: true,
         },
       },
       {

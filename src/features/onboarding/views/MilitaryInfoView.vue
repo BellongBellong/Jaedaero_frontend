@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
@@ -30,6 +30,65 @@ const ranks = [
   { value: 'CORPORAL', level: 3, label: '상병' },
   { value: 'SERGEANT', level: 4, label: '병장' },
 ]
+const serviceMonthsByMilitaryType = {
+  ARMY: 18,
+  NAVY: 20,
+  AIR_FORCE: 21,
+  MARINE: 18,
+}
+const promotionMonths = {
+  PRIVATE_FIRST_CLASS: 2,
+  CORPORAL: 8,
+  SERGEANT: 14,
+}
+
+function parseDateOnly(value) {
+  const dateValue = String(value || '').trim()
+  const dateParts = dateValue.split('-').map(Number)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue) || dateParts.length !== 3) return null
+
+  const [year, month, day] = dateParts
+  const date = new Date(year, month - 1, day)
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() + 1 !== month ||
+    date.getDate() !== day ||
+    date > new Date()
+  ) {
+    return null
+  }
+
+  return date
+}
+
+function completedMonthsSince(date) {
+  const today = new Date()
+  let months = (today.getFullYear() - date.getFullYear()) * 12 + today.getMonth() - date.getMonth()
+
+  if (today.getDate() < date.getDate()) months -= 1
+  return Math.max(months, 0)
+}
+
+function rankByEnlistmentDate(value, militaryType) {
+  const enlistmentDate = parseDateOnly(value)
+  if (!enlistmentDate) return null
+
+  const serviceMonths = serviceMonthsByMilitaryType[militaryType]
+  const months = Math.min(completedMonthsSince(enlistmentDate), serviceMonths || Infinity)
+  if (months >= promotionMonths.SERGEANT) return 'SERGEANT'
+  if (months >= promotionMonths.CORPORAL) return 'CORPORAL'
+  if (months >= promotionMonths.PRIVATE_FIRST_CLASS) return 'PRIVATE_FIRST_CLASS'
+  return 'PRIVATE'
+}
+
+watch(
+  () => [onboarding.form.enlistmentDate, onboarding.form.militaryType],
+  ([enlistmentDate, militaryType]) => {
+    const rank = rankByEnlistmentDate(enlistmentDate, militaryType)
+    if (rank && onboarding.form.rank !== rank) onboarding.updateForm({ rank })
+  },
+  { immediate: true },
+)
 
 async function next() {
   if (!onboarding.form.militaryType || !onboarding.form.rank) {
