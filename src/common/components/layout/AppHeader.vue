@@ -153,7 +153,7 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
   left: 0;
   align-items: center;
   justify-content: space-between;
-  background: transparent;
+  background: var(--ui-background);
 }
 .app-header--back {
   align-items: center;
