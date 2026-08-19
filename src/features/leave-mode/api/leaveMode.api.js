@@ -6,6 +6,11 @@ export async function startLeaveMode(payload) {
   return data
 }
 
+export async function getLeaveModes() {
+  const { data } = await apiClient.get(ENDPOINTS.leaveMode.list)
+  return Array.isArray(data) ? data : []
+}
+
 export async function getCurrentLeaveMode() {
   const response = await apiClient.get(ENDPOINTS.leaveMode.current)
   return response.status === 204 ? null : response.data

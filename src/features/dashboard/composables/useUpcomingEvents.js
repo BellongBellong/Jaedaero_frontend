@@ -1,6 +1,10 @@
-import { computed, isRef, ref, toRaw, unref, watch } from 'vue'
+import { computed, ref } from 'vue'
 
-import { deleteLeaveMode, startLeaveMode } from '@/features/leave-mode/api/leaveMode.api'
+import {
+  deleteLeaveMode,
+  getLeaveModes,
+  startLeaveMode,
+} from '@/features/leave-mode/api/leaveMode.api'
 import { setEventLeaveModeSchedules } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
 const EVENT_STORAGE_KEY = 'jaedaero-upcoming-events'
@@ -20,53 +24,77 @@ function calculateDurationDays(startDate, endDate) {
   return Math.max(1, Math.round((end - start) / 86_400_000) + 1)
 }
 
-export function useUpcomingEvents(initialEvents = []) {
+function readStoredEvents() {
+  try {
+    const storedEvents = JSON.parse(localStorage.getItem(EVENT_STORAGE_KEY) || '[]')
+    return Array.isArray(storedEvents) ? storedEvents : []
+  } catch {
+    return []
+  }
+}
+
+function toEvent(leaveMode) {
+  const autoVacationMode = Boolean(leaveMode.isLeaveModeEnabled ?? leaveMode.leaveModeEnabled)
+
+  return {
+    id: leaveMode.leaveModeId,
+    leaveModeId: leaveMode.leaveModeId,
+    eventType: autoVacationMode ? 'VACATION' : 'CUSTOM',
+    title: leaveMode.eventName,
+    startDate: leaveMode.startDate,
+    endDate: leaveMode.endDate,
+    autoVacationMode,
+  }
+}
+
+function isSameEvent(event, leaveMode) {
+  const startDate = event.startDate || event.date
+  const endDate = event.endDate || startDate
+  const leaveModeEnabled = Boolean(leaveMode.isLeaveModeEnabled ?? leaveMode.leaveModeEnabled)
+
+  return (
+    event.title === leaveMode.eventName &&
+    startDate === leaveMode.startDate &&
+    endDate === leaveMode.endDate &&
+    Boolean(event.autoVacationMode) === leaveModeEnabled
+  )
+}
+
+export function useUpcomingEvents() {
   const events = ref([])
 
-  function cloneEvents(value) {
-    return structuredClone(toRaw(unref(value) ?? []))
-  }
+  async function migrateStoredEvents(serverLeaveModes) {
+    const storedEvents = readStoredEvents()
+    if (!storedEvents.length) return false
 
-  function readStoredEvents() {
-    try {
-      const storedEvents = JSON.parse(localStorage.getItem(EVENT_STORAGE_KEY) || '[]')
-      return Array.isArray(storedEvents) ? storedEvents : []
-    } catch {
-      return []
+    for (const event of storedEvents) {
+      if (serverLeaveModes.some((leaveMode) => isSameEvent(event, leaveMode))) continue
+
+      const startDate = event.startDate || event.date
+      const endDate = event.endDate || startDate
+      if (!event.title || !startDate) continue
+
+      await startLeaveMode({
+        eventName: event.title,
+        startDate,
+        endDate,
+        isLeaveModeEnabled: Boolean(event.autoVacationMode),
+        budgetAmount: null,
+      })
     }
+
+    localStorage.removeItem(EVENT_STORAGE_KEY)
+    return true
   }
 
-  function mergeEvents(sourceEvents) {
-    const mergedEvents = new Map()
+  async function loadEvents() {
+    let leaveModes = await getLeaveModes()
+    if (await migrateStoredEvents(leaveModes)) {
+      leaveModes = await getLeaveModes()
+    }
 
-    ;[...cloneEvents(sourceEvents), ...readStoredEvents()].forEach((event) => {
-      const key =
-        event.id ??
-        [event.title, event.startDate || event.date, event.endDate || event.startDate || event.date]
-          .filter(Boolean)
-          .join(':')
-      mergedEvents.set(String(key), event)
-    })
-
-    return [...mergedEvents.values()]
-  }
-
-  function persistEvents() {
-    localStorage.setItem(EVENT_STORAGE_KEY, JSON.stringify(toRaw(events.value)))
-  }
-
-  if (isRef(initialEvents)) {
-    watch(
-      initialEvents,
-      (value) => {
-        events.value = mergeEvents(value)
-        setEventLeaveModeSchedules(events.value)
-      },
-      { immediate: true },
-    )
-  } else {
-    events.value = mergeEvents(initialEvents)
-    setEventLeaveModeSchedules(events.value)
+    events.value = leaveModes.map(toEvent)
+    await setEventLeaveModeSchedules(events.value)
   }
 
   const sortedEvents = computed(() =>
@@ -86,49 +114,27 @@ export function useUpcomingEvents(initialEvents = []) {
   )
 
   async function addEvent(event) {
-    const nextEvent = {
-      id: Date.now(),
-      userId: 1,
-      eventType: event.eventType || 'CUSTOM',
-      title: event.title,
+    await startLeaveMode({
+      eventName: event.title,
       startDate: event.startDate || event.date,
       endDate: event.endDate || event.startDate || event.date,
-      expectedExpense: Number(event.expectedExpense || 0),
-      notificationEnabled: event.notificationEnabled ?? true,
-      ...(event.autoVacationMode === undefined ? {} : { autoVacationMode: event.autoVacationMode }),
-    }
-
-    if (nextEvent.autoVacationMode) {
-      const leaveMode = await startLeaveMode({
-        eventName: nextEvent.title,
-        startDate: nextEvent.startDate,
-        endDate: nextEvent.endDate,
-        isLeaveModeEnabled: true,
-        budgetAmount: null,
-      })
-      nextEvent.leaveModeId = leaveMode.leaveModeId
-    }
-
-    events.value.push(nextEvent)
-    persistEvents()
-    await setEventLeaveModeSchedules()
+      isLeaveModeEnabled: Boolean(event.autoVacationMode),
+      budgetAmount: null,
+    })
+    await loadEvents()
   }
 
   async function removeEvent(eventId) {
     const event = events.value.find((item) => String(item.id) === String(eventId))
     if (!event) return
 
-    if (event.leaveModeId) {
-      await deleteLeaveMode(event.leaveModeId)
-    }
-
-    events.value = events.value.filter((item) => String(item.id) !== String(eventId))
-    persistEvents()
-    await setEventLeaveModeSchedules()
+    await deleteLeaveMode(event.leaveModeId || event.id)
+    await loadEvents()
   }
 
   return {
     events: sortedEvents,
+    loadEvents,
     addEvent,
     removeEvent,
   }
