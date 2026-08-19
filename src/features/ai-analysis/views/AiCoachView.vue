@@ -18,38 +18,38 @@ import {
   formatReportDate,
   mapMarketIndicators,
 } from '@/features/market-report/mappers/marketReport.mapper'
+import { useDashboardStore } from '@/features/dashboard/stores/dashboard.store'
 import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
 import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 
 /*
   적립식 투자 가이드 카드는 계급에 따라 문구, 전역 D-day, 안전/위험 비율,
-  비행기 그래프 이미지가 모두 달라진다. 값은 기획에서 정한 고정값이다.
+  비행기 그래프 이미지가 모두 달라진다.
+
+  전역 D-day 만은 계급 고정값이 아니라 사용자의 실제 전역 예정일로 계산한 값을 쓴다.
+  대시보드가 같은 값을 이미 보여주고 있어, 화면마다 다른 전역일이 뜨는 것을 막는다.
 */
 const GLIDEPATH_STAGES = {
   PRIVATE: {
     rankLabel: '이병',
-    dday: 384,
     safeRate: 30,
     riskRate: 70,
     image: glidepathPrivate,
   },
   PRIVATE_FIRST_CLASS: {
     rankLabel: '일병',
-    dday: 284,
     safeRate: 52,
     riskRate: 48,
     image: glidepathPrivateFirstClass,
   },
   CORPORAL: {
     rankLabel: '상병',
-    dday: 54,
     safeRate: 66,
     riskRate: 33,
     image: glidepathCorporal,
   },
   SERGEANT: {
     rankLabel: '병장',
-    dday: 54,
     safeRate: 85,
     riskRate: 15,
     image: glidepathSergeant,
@@ -66,6 +66,13 @@ const RANK_KEYS_BY_LABEL = {
 
 const rank = ref('')
 const myPageStore = useMyPageStore()
+const dashboardStore = useDashboardStore()
+
+/* 서버가 전역 예정일로 계산해 둔 D-day 를 그대로 쓴다. 없으면 배지를 숨긴다. */
+const dischargeDday = computed(() => {
+  const dday = dashboardStore.dashboard?.financialDday?.actualDday
+  return Number.isFinite(dday) ? dday : null
+})
 /* 계급을 아직 못 받았으면 첫 단계 기준으로 보여준다. */
 const glidepathStage = computed(() => {
   const key = RANK_KEYS_BY_LABEL[rank.value] || rank.value
@@ -112,6 +119,8 @@ const reportSummary = computed(() => report.value?.summary || '')
 onMounted(() => {
   loadNickname()
   loadRank()
+  /* 전역 D-day 는 대시보드 응답에서 가져온다. 실패해도 카드의 나머지는 그대로 보인다. */
+  dashboardStore.load().catch(() => {})
   load()
   loadIndicators()
 })
@@ -266,7 +275,10 @@ const analysisMenus = [
           <div>
             <span class="glidepath-card__eyebrow">현재 단계</span>
             <strong>{{ glidepathStage.rankLabel }} <em>집중 납입기</em></strong>
-            <span class="glidepath-card__badge">전역 D-{{ glidepathStage.dday }}</span>
+            <span
+              v-if="dischargeDday !== null"
+              class="glidepath-card__badge"
+            >전역 D-{{ dischargeDday }}</span>
           </div>
           <img
             :src="glidepathStage.image"
