@@ -129,6 +129,7 @@ function handleContentScroll(event) {
     :class="{
       'mobile-frame--dashboard': route.name === 'dashboard',
       'mobile-frame--ai-coach': ['ai-coach', 'ai-financial-report'].includes(route.name),
+      'mobile-frame--challenge': route.name === 'challenge',
       'mobile-frame--investment-guide': route.meta.investmentGuide,
       'mobile-frame--vacation': isVacationDashboard,
       'mobile-frame--fixed-header-tabs': route.meta.keepHeaderOnScroll || route.meta.stickyTabs,
@@ -241,9 +242,7 @@ function handleContentScroll(event) {
 
 /* 투명 iOS 상태바 뒤에서도 대시보드의 브랜드 배경이 끊기지 않게 이어 준다. */
 :global(.mobile-frame.mobile-frame--dashboard) {
-  background:
-    radial-gradient(circle at 88% 0%, rgb(98 255 156 / 24%), transparent 34%),
-    radial-gradient(circle at 8% 0%, rgb(255 229 114 / 14%), transparent 30%), var(--ui-background);
+  background: var(--ui-background);
 }
 
 .main-layout__bottom > :deep(.bottom-navigation) {
@@ -292,6 +291,10 @@ function handleContentScroll(event) {
 :global(.mobile-frame.mobile-frame--fixed-header-tabs .app-header) {
   padding-bottom: 0;
   background: var(--ui-background);
+}
+
+:global(.mobile-frame.mobile-frame--challenge .app-header) {
+  padding-bottom: var(--space-10);
 }
 
 :global(.mobile-frame.mobile-frame--vacation) {
