@@ -28,6 +28,73 @@ const RISK_GRADE_LABELS = {
   5: '매우높음',
 }
 
+/* 새 응답의 riskLevel(문자열)을 화면 라벨과 카드 테마에 대응시킨다. */
+const RISK_LEVEL_LABELS = {
+  LOW: '매우낮음',
+  MEDIUM: '보통',
+  HIGH: '높음',
+  VERY_HIGH: '매우높음',
+}
+
+const RISK_LEVEL_THEMES = {
+  LOW: 'product-card--green',
+  MEDIUM: 'product-card--olive',
+  HIGH: 'product-card--yellow',
+}
+
+/* 화면에 노출할 추천 상품 개수. */
+const RECOMMENDATION_LIMIT = 5
+
+/* 상품명 앞머리가 곧 운용사 브랜드라 이를 제공사로 보여준다. */
+function providerFromName(name) {
+  return (
+    String(name || '')
+      .trim()
+      .split(/\s+/)[0] || 'ETF'
+  )
+}
+
+function returnRateOf(item) {
+  const rates = Array.isArray(item?.returns) ? item.returns : []
+  const preferred =
+    rates.find((rate) => rate.period === 'ONE_YEAR' && rate.available) ||
+    rates.find((rate) => rate.available)
+
+  return preferred?.returnRate ?? null
+}
+
+/*
+  추천 상품 응답이 KRX ETF 기준으로 바뀌면서 상품 배열이 아니라
+  자산군/위험등급별 그룹 객체로 내려온다. 사용자의 투자성향에 맞는
+  그룹만 골라 화면 모델로 바꾼다. items 는 서버가 시가총액 내림차순으로
+  정렬해 주므로 앞에서부터 잘라 쓴다.
+*/
+function mapRecommendations(response) {
+  if (Array.isArray(response)) return response
+
+  const groups = Array.isArray(response?.groups) ? response.groups : []
+  const preference = response?.investmentPreference === 'RISK' ? 'RISK' : 'SAFE'
+  const matched = groups.filter(
+    (group) => group.assetBucket === preference && group.eligibleForRecommendation !== false,
+  )
+
+  return matched
+    .flatMap((group) => group.items ?? [])
+    .slice(0, RECOMMENDATION_LIMIT)
+    .map((item) => ({
+      id: item.isuCd,
+      productName: item.name,
+      provider: providerFromName(item.name),
+      expectedReturnRate: returnRateOf(item),
+      riskLevel: item.riskLevel,
+      reason: item.classificationReasons?.[0] ?? '',
+      rateLabel: '최근 1년',
+      badge: null,
+      minDepositLabel: '제한없음',
+      maxDepositLabel: '제한없음',
+    }))
+}
+
 const route = useRoute()
 const router = useRouter()
 const reportsStore = useReportsStore()
@@ -45,9 +112,12 @@ const recommendedProducts = computed(() =>
   products.value.map((product) => ({
     ...product,
     emoji: PRODUCT_EMOJIS[product.productName] ?? '🏦',
-    themeClass: RATE_TONE_THEMES[product.rateTone] ?? 'product-card--olive',
+    themeClass:
+      RISK_LEVEL_THEMES[product.riskLevel] ??
+      RATE_TONE_THEMES[product.rateTone] ??
+      'product-card--olive',
     rateText: product.expectedReturnRate == null ? '-' : `${product.expectedReturnRate}%`,
-    riskLabel: RISK_GRADE_LABELS[product.riskGrade] ?? '-',
+    riskLabel: RISK_LEVEL_LABELS[product.riskLevel] ?? RISK_GRADE_LABELS[product.riskGrade] ?? '-',
   })),
 )
 
@@ -81,7 +151,7 @@ onMounted(async () => {
   }
 
   try {
-    products.value = await reportsStore.loadProductRecommendations()
+    products.value = mapRecommendations(await reportsStore.loadProductRecommendations())
     await completeMissionAfterLoad()
   } catch {
     errorMessage.value = '추천 상품을 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
