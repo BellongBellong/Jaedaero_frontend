@@ -12,6 +12,7 @@ import {
   getRecurringInvestmentPlan,
 } from '@/features/rebalancing/api/rebalancing.api'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
+import { mapWhatIfDetail } from '@/features/ai-analysis/mappers/whatIfDetail.mapper'
 import { getSimulations } from '@/features/simulations/api/simulations.api'
 
 const route = useRoute()
@@ -24,6 +25,7 @@ const hasAllocationGoal = ref(false)
 const hasRecurringPlan = ref(false)
 const recurringPlan = ref(null)
 const guidance = ref(null)
+const latestSimulation = ref(null)
 const activeStep = ref(null)
 const isRefreshing = ref(false)
 
@@ -31,6 +33,14 @@ const isRefreshing = ref(false)
 const recommendation = computed(() => guidance.value?.recommendation || guidance.value || {})
 const plan = computed(() => guidance.value?.currentPlan || recurringPlan.value || {})
 const goalProgress = computed(() => guidance.value?.goalProgress || {})
+
+/*
+  설정을 마친 자산분배 목표는 시뮬레이션 상세와 같은 막대·범례로 보여준다.
+  비율 계산은 이미 있는 매퍼를 그대로 쓴다.
+*/
+const allocationSummary = computed(() =>
+  latestSimulation.value ? mapWhatIfDetail(latestSimulation.value) : null,
+)
 
 // 자산분배 목표와 적립 계획이 모두 설정돼야 이번달 투자 가이드를 보여준다.
 const hasActiveGuide = computed(() => hasAllocationGoal.value && hasRecurringPlan.value)
@@ -125,7 +135,9 @@ async function loadGuideStatus() {
   guidance.value = guidanceResult.status === 'fulfilled' ? guidanceResult.value : null
 
   if (simulationsResult.status === 'fulfilled') {
-    hasAllocationGoal.value = unwrapSimulations(simulationsResult.value).length > 0
+    const simulations = unwrapSimulations(simulationsResult.value)
+    hasAllocationGoal.value = simulations.length > 0
+    latestSimulation.value = simulations[0] ?? null
   } else if (!isMissingResource(simulationsResult.reason)) {
     loadError.value = '가이드 설정 정보를 불러오지 못했어요.'
   }
@@ -328,8 +340,51 @@ onMounted(async () => {
               alt=""
               aria-hidden="true"
             >
+            <div
+              v-if="hasAllocationGoal && allocationSummary"
+              class="allocation-summary"
+            >
+              <div class="allocation-summary__head">
+                <strong>현재 설정한 자산분배목표</strong>
+                <small>기준 월급 {{ allocationSummary.baseSalary }}</small>
+              </div>
+
+              <div
+                class="allocation-bar"
+                role="img"
+                :aria-label="
+                  allocationSummary.allocations
+                    .map((allocation) => `${allocation.label} ${allocation.percent}%`)
+                    .join(', ')
+                "
+              >
+                <span
+                  v-for="allocation in allocationSummary.allocations"
+                  :key="allocation.key"
+                  class="allocation-bar__segment"
+                  :class="`allocation-bar__segment--${allocation.tone}`"
+                  :style="{ width: `${allocation.percent}%` }"
+                />
+              </div>
+
+              <ul class="allocation-legend">
+                <li
+                  v-for="allocation in allocationSummary.allocations"
+                  :key="allocation.key"
+                >
+                  <span
+                    class="allocation-legend__dot"
+                    :class="`allocation-legend__dot--${allocation.tone}`"
+                    aria-hidden="true"
+                  />
+                  <span class="allocation-legend__label">{{ allocation.label }}</span>
+                  <span class="allocation-legend__percent">{{ allocation.percent }}%</span>
+                </li>
+              </ul>
+            </div>
+
             <strong
-              v-if="hasAllocationGoal"
+              v-else-if="hasAllocationGoal"
               class="allocation-complete-title"
             >
               설정한 자산 분배 목표가 있어요
@@ -339,12 +394,12 @@ onMounted(async () => {
               설정하지 않았어요
             </strong>
             <p
-              v-if="hasAllocationGoal"
+              v-if="hasAllocationGoal && !allocationSummary"
               class="allocation-complete-copy"
             >
               What-if 시뮬레이션에서 목표를 다시 조정할 수 있어요
             </p>
-            <p v-else>
+            <p v-else-if="!hasAllocationGoal">
               What-if 시뮬레이션으로<br>
               나에게 맞는 자산 분배 목표를 먼저 설정해보세요
             </p>
@@ -353,7 +408,7 @@ onMounted(async () => {
               type="button"
               @click="openWhatIfSimulation"
             >
-              {{ hasAllocationGoal ? '목표 다시 설정하기' : '목표 설정하러가기' }}
+              {{ hasAllocationGoal ? '다시 설정 하기' : '목표 설정하러가기' }}
             </button>
           </div>
         </article>
@@ -844,6 +899,114 @@ button.guide-card__header {
 }
 
 /* 완료 문구는 <br> 없이 한 줄이라 미설정 상태의 고정폭을 그대로 쓰면 좁게 잘린다. */
+/* 자산분배 요약. 막대와 범례 색은 시뮬레이션 상세 화면과 동일하게 맞춘다. */
+.allocation-summary {
+  width: 100%;
+  margin-top: 18px;
+  text-align: left;
+}
+
+.allocation-summary__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.allocation-summary__head strong {
+  color: #757575;
+  font-size: 13px;
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+.allocation-summary__head small {
+  color: #8c8c8c;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.allocation-bar {
+  display: flex;
+  height: 16px;
+  overflow: hidden;
+  border-radius: 50px;
+  background: var(--ui-light-gray, #ececec);
+}
+
+.allocation-bar__segment {
+  height: 100%;
+}
+
+.allocation-bar__segment--olive {
+  background: linear-gradient(90deg, var(--olive-500) 0%, #ccd5c8 100%);
+}
+
+.allocation-bar__segment--green {
+  background: linear-gradient(90deg, #5eb880 0%, #91ebb3 100%);
+}
+
+.allocation-bar__segment--orange {
+  background: linear-gradient(90deg, #ec947c 0%, #fed2c3 100%);
+}
+
+/* 미배분 구간은 트랙이 그대로 비치게 둔다. */
+.allocation-bar__segment--gray {
+  background: transparent;
+}
+
+.allocation-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0;
+  margin: 12px 0 0;
+  gap: 8px 12px;
+  list-style: none;
+}
+
+.allocation-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #888;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.allocation-legend__dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.allocation-legend__dot--olive {
+  background: linear-gradient(135deg, var(--olive-500) 0%, #ccd5c8 100%);
+}
+
+.allocation-legend__dot--green {
+  background: linear-gradient(135deg, #5eb880 0%, #91ebb3 100%);
+}
+
+.allocation-legend__dot--orange {
+  background: linear-gradient(135deg, #ec947c 0%, #fed2c3 100%);
+}
+
+.allocation-legend__dot--gray {
+  background: var(--ui-light-gray, #ececec);
+}
+
+.allocation-legend__label {
+  flex: 1;
+}
+
+.allocation-legend__percent {
+  color: #888;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
 #allocation-guide-content > .allocation-complete-title,
 #plan-guide-content > .plan-complete-title {
   width: auto;
@@ -867,8 +1030,14 @@ button.guide-card__header {
   color: #757575;
 }
 
+/* 자산분배 요약 바로 아래에 붙어 있어 간격을 준다. */
+.allocation-summary + .guide-cta {
+  margin-top: 20px;
+}
+
 .guide-cta {
   width: 100%;
+  height: 50px;
   min-height: 50px;
   border: 0;
   border-radius: 28px;
