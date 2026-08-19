@@ -4,14 +4,10 @@ import { useRouter } from 'vue-router'
 
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
+import { characterAssetsByProfileName } from '@/common/constants/characterAssets'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import ProfileAppearanceSheet from '@/features/onboarding/components/ProfileAppearanceSheet.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
-import airforce from '../../../assets/features/onboarding/profiles/profile-airforce.png'
-import army from '../../../assets/features/onboarding/profiles/profile-army.png'
-import defaultProfile from '../../../assets/features/onboarding/profiles/profile-default.png'
-import marine from '../../../assets/features/onboarding/profiles/profile-marine.png'
-import navy from '../../../assets/features/onboarding/profiles/profile-navy.png'
 
 const router = useRouter()
 const onboarding = useOnboardingStore()
@@ -24,11 +20,8 @@ const errorMessage = ref('')
 const loading = ref(false)
 const appearanceLoading = ref(false)
 const profiles = {
-  'profile-army.png': army,
-  'profile-marine.png': marine,
-  'profile-airforce.png': airforce,
-  'profile-navy.png': navy,
-  'profile-default.png': defaultProfile,
+  ...characterAssetsByProfileName,
+  'profile-default.png': characterAssetsByProfileName['profile-army.png'],
 }
 const profileImageCodes = {
   'profile-army.png': 'ARMY',

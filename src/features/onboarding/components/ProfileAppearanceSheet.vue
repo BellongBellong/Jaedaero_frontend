@@ -1,10 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 
-import airforce from '@/assets/features/onboarding/profiles/profile-airforce.png'
-import army from '@/assets/features/onboarding/profiles/profile-army.png'
-import marine from '@/assets/features/onboarding/profiles/profile-marine.png'
-import navy from '@/assets/features/onboarding/profiles/profile-navy.png'
+import { characterProfileOptions } from '@/common/constants/characterAssets'
 
 const props = defineProps({
   image: { type: String, required: true },
@@ -14,12 +11,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save'])
 const selectedImage = ref(props.image)
 const selectedColor = ref(props.backgroundColor)
-const profiles = [
-  ['profile-army.png', army],
-  ['profile-marine.png', marine],
-  ['profile-airforce.png', airforce],
-  ['profile-navy.png', navy],
-]
+const profiles = characterProfileOptions.map(({ name, source }) => [name, source])
 const colors = ['#E5FFF4', '#AEBBAA', '#FFF0B8', '#FFB39F', '#F7F7F7', '#333333']
 </script>
 

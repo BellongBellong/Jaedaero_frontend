@@ -3,13 +3,9 @@ import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import confirmationEditIcon from '../../../assets/features/onboarding/icons/confirmation-edit.svg'
-import profileAirforce from '../../../assets/features/onboarding/profiles/profile-airforce.png'
-import profileArmy from '../../../assets/features/onboarding/profiles/profile-army.png'
-import profileDefault from '../../../assets/features/onboarding/profiles/profile-default.png'
-import profileMarine from '../../../assets/features/onboarding/profiles/profile-marine.png'
-import profileNavy from '../../../assets/features/onboarding/profiles/profile-navy.png'
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
+import { characterAssets, characterAssetsByProfileName } from '@/common/constants/characterAssets'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
@@ -28,14 +24,11 @@ const preferences = [
   { value: 'AGGRESSIVE', icon: '🚀', label: '공격형', caption: '최대 수익 추구' },
 ]
 const profileImages = {
-  'profile-army.png': profileArmy,
-  'profile-navy.png': profileNavy,
-  'profile-airforce.png': profileAirforce,
-  'profile-marine.png': profileMarine,
-  'profile-default.png': profileDefault,
+  ...characterAssetsByProfileName,
+  'profile-default.png': characterAssets.ARMY,
 }
 const selectedProfileImage = computed(
-  () => profileImages[onboarding.form.profileImage] ?? profileArmy,
+  () => profileImages[onboarding.form.profileImage] ?? characterAssets.ARMY,
 )
 const selectedPreference = computed(() =>
   preferences.find((item) => item.value === onboarding.form.investmentPreference),

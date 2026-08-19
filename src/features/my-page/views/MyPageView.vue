@@ -9,10 +9,7 @@ import investmentProfileIcon from '../../../assets/features/my-page/investment-p
 import notificationSettingsIcon from '../../../assets/features/my-page/notification-settings.svg'
 import logoutIcon from '../../../assets/features/my-page/logout.svg'
 import withdrawIcon from '../../../assets/features/my-page/withdraw.svg'
-import profileAirforce from '../../../assets/features/onboarding/profiles/profile-airforce.png'
-import profileArmy from '../../../assets/features/onboarding/profiles/profile-army.png'
-import profileMarine from '../../../assets/features/onboarding/profiles/profile-marine.png'
-import profileNavy from '../../../assets/features/onboarding/profiles/profile-navy.png'
+import { characterAssets, characterAssetsByProfileName } from '@/common/constants/characterAssets'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 import GoalAmountModal from '@/features/my-page/components/GoalAmountModal.vue'
 import NotificationSettingsModal from '@/features/my-page/components/NotificationSettingsModal.vue'
@@ -75,14 +72,8 @@ const totalCompletedMissions = computed(() =>
 )
 
 const profileImages = {
-  ARMY: profileArmy,
-  NAVY: profileNavy,
-  AIRFORCE: profileAirforce,
-  MARINE: profileMarine,
-  'profile-army.png': profileArmy,
-  'profile-navy.png': profileNavy,
-  'profile-airforce.png': profileAirforce,
-  'profile-marine.png': profileMarine,
+  ...characterAssets,
+  ...characterAssetsByProfileName,
 }
 const imageNames = {
   ARMY: 'profile-army.png',
@@ -267,7 +258,7 @@ onMounted(async () => {
         @click="activeDialog = 'appearance'"
       >
         <img
-          :src="profileImages[profile?.profileImage] || profileArmy"
+          :src="profileImages[profile?.profileImage] || characterAssets.ARMY"
           alt="현재 프로필"
         >
         <span aria-hidden="true">↻</span>
