@@ -147,10 +147,12 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
   display: none;
 }
 .app-header--home {
-  position: absolute;
+  position: fixed;
   top: 0;
   right: 0;
   left: 0;
+  width: min(100%, var(--design-mobile-width));
+  margin: 0 auto;
   align-items: center;
   justify-content: space-between;
   background: transparent;
