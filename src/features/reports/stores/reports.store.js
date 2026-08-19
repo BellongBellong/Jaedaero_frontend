@@ -9,14 +9,20 @@ export const useReportsStore = defineStore('reports', () => {
   const error = ref(null)
 
   async function loadProductRecommendations({ force = false } = {}) {
-    if (productRecommendations.value.length && !force) return productRecommendations.value
+    const cached = productRecommendations.value
+    const hasCache = Array.isArray(cached) ? cached.length > 0 : Boolean(cached)
+    if (hasCache && !force) return cached
     loading.value = true
     error.value = null
     try {
       const response = await getProductRecommendations()
+      /*
+        KRX ETF 기준으로 바뀐 응답은 groups 안에 상품이 들어 있어
+        기존 배열 추출로는 비어버린다. 원본을 그대로 넘겨 화면에서 매핑한다.
+      */
       productRecommendations.value = Array.isArray(response)
         ? response
-        : response?.recommendations || response?.content || response?.items || []
+        : (response?.recommendations ?? response?.content ?? response?.items ?? response ?? [])
       return productRecommendations.value
     } catch (requestError) {
       error.value = requestError
