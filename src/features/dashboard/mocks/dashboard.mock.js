@@ -195,40 +195,6 @@ export const investmentHoldingResponses = [
   },
 ]
 
-export const eventResponses = [
-  {
-    id: 1,
-    userId: 1,
-    eventType: 'PAYDAY',
-    title: '월급날',
-    startDate: '2026-08-10',
-    endDate: '2026-08-10',
-    expectedExpense: 0,
-    notificationEnabled: true,
-  },
-  {
-    id: 2,
-    userId: 1,
-    eventType: 'VACATION',
-    title: '8월 정기휴가',
-    startDate: '2026-08-07',
-    endDate: '2026-08-10',
-    expectedExpense: 300000,
-    notificationEnabled: true,
-    autoVacationMode: true,
-  },
-  {
-    id: 3,
-    userId: 1,
-    eventType: 'PROMOTION',
-    title: '병장 진급',
-    startDate: '2026-09-01',
-    endDate: '2026-09-01',
-    expectedExpense: 50000,
-    notificationEnabled: true,
-  },
-]
-
 export const missionResponses = [
   {
     id: 1,
@@ -354,7 +320,7 @@ const baseDashboardMock = {
     ...mission,
     completed: mission.status === 'COMPLETED',
   })),
-  events: eventResponses,
+  events: [],
   assetSummary: {
     monthly: {
       income: {

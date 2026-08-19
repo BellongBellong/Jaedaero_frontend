@@ -152,6 +152,13 @@ function formatAmount(value) {
   return Number(value || 0).toLocaleString('ko-KR')
 }
 
+function formatExpectedAsset(value) {
+  return Number(value || 0).toLocaleString('ko-KR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
+}
+
 const formattedTargetAmount = computed(() => formatAmount(Math.round(props.targetAmount || 0)))
 const formattedCurrentAsset = computed(() => formatAmount(Math.round(props.currentAsset || 0)))
 const formattedAchievementRate = computed(() => {
@@ -208,7 +215,7 @@ const formattedAchievementRate = computed(() => {
       <div class="financial-dday-card__achievement">
         <p>전역 목표 금액 달성률</p>
         <strong>{{ formattedAchievementRate }}%</strong>
-        <span>전역 예상 자산 {{ formatAmount(expectedAsset) }}만원</span>
+        <span>전역 예상 자산 {{ formatExpectedAsset(expectedAsset) }}만원</span>
       </div>
 
       <div

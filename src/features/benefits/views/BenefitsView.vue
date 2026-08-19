@@ -11,6 +11,7 @@ import {
   normalizeBenefits,
 } from '@/features/benefits/utils/benefitMapper'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
+import { getBenefits } from '@/features/reports/api/reports.api'
 
 const route = useRoute()
 const router = useRouter()
@@ -22,6 +23,7 @@ const benefits = ref([])
 const loading = ref(true)
 const activeCategory = ref('전체')
 const expandedId = ref(null)
+const useMockServer = import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 
 const filteredBenefits = computed(() =>
   activeCategory.value === '전체'
@@ -70,8 +72,12 @@ function showCategory(category) {
   document.querySelector('.benefits-view')?.scrollIntoView({ block: 'start' })
 }
 
-function loadBenefits() {
-  benefits.value = normalizeBenefits(benefitExamples)
+async function loadBenefits() {
+  try {
+    benefits.value = normalizeBenefits(await getBenefits())
+  } catch {
+    benefits.value = useMockServer ? normalizeBenefits(benefitExamples) : []
+  }
 
   const selectedId = Array.isArray(route.query.benefitId)
     ? route.query.benefitId[0]
