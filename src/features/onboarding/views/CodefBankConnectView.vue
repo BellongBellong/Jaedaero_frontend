@@ -1541,7 +1541,7 @@ onBeforeUnmount(abortAccountRequest)
 .selected-institution-logo img {
   width: 48px;
   height: 48px;
-  transform: scale(1.32);
+  object-fit: contain;
 }
 
 .selected-institution-copy {
@@ -1841,7 +1841,7 @@ select:focus {
   display: flex;
   width: 100%;
   align-self: stretch;
-  height: min(78dvh, 660px);
+  height: min(72dvh, 600px);
   flex-direction: column;
   padding: 30px 16px 12px;
   box-sizing: border-box;

@@ -52,13 +52,13 @@ const characterImages = {
   ARMY: rankingCharacterArmy,
   AIRFORCE: rankingCharacterAirforce,
   AIR_FORCE: rankingCharacterAirforce,
-  NAVY: rankingCharacterMarine,
-  MARINE: rankingCharacterNavy,
-  MARINE_CORPS: rankingCharacterNavy,
+  NAVY: rankingCharacterNavy,
+  MARINE: rankingCharacterMarine,
+  MARINE_CORPS: rankingCharacterMarine,
   PROFILE_ARMY_PNG: rankingCharacterArmy,
   PROFILE_AIRFORCE_PNG: rankingCharacterAirforce,
-  PROFILE_NAVY_PNG: rankingCharacterMarine,
-  PROFILE_MARINE_PNG: rankingCharacterNavy,
+  PROFILE_NAVY_PNG: rankingCharacterNavy,
+  PROFILE_MARINE_PNG: rankingCharacterMarine,
   DEFAULT: rankingCharacterArmy,
 }
 
@@ -257,10 +257,7 @@ const enlistmentMonth = computed(() => {
   return date ? String(date).slice(5, 7).replace(/^0/, '') : ''
 })
 const currentRankingBadge = computed(() => {
-  return (
-    badgeProgress.value.find((badge) => badge.type === 'AGGRESSIVE') ||
-    badgeProgress.value.find((badge) => badge.type === 'SAFE')
-  )
+  return selectedInvestmentBadge.value
 })
 
 function isCurrentRankingMember(member) {

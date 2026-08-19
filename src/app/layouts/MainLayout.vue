@@ -23,6 +23,10 @@ const { mode } = useLeaveModeSchedule()
 
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
 const isSynchronizedChrome = computed(() => Boolean(route.meta.synchronizedChrome))
+const keepHeaderExpanded = computed(
+  () =>
+    !route.meta.collapseHeaderOnScroll && (route.meta.keepHeaderOnScroll || route.meta.stickyTabs),
+)
 const headerTitle = computed(() => {
   if (route.name === 'transactions' && route.query.period === 'vacation') return '휴가 거래 내역'
   if (route.name === 'account-transactions' && route.query.headerTitle) {
@@ -101,11 +105,7 @@ function handleContentScroll(event) {
     헤더는 내릴 때 32px, 올릴 때 12px의 여유를 둔다. iOS 관성 스크롤의 작은
     반동으로 닫힘/열림이 반복되지 않으면서도 Chrome과 같은 방향성은 유지한다.
   */
-  if (
-    route.meta.keepHeaderOnScroll ||
-    route.meta.stickyTabs ||
-    !canCollapseHeader(event.currentTarget)
-  ) {
+  if (keepHeaderExpanded.value || !canCollapseHeader(event.currentTarget)) {
     isHeaderCollapsed.value = false
   } else if (isHeaderCollapsed.value ? scrollTop < 12 : scrollTop > 32) {
     isHeaderCollapsed.value = !isHeaderCollapsed.value

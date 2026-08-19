@@ -153,9 +153,7 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
   left: 0;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(180deg, rgb(250 250 250 / 100%) 0%, rgb(255 255 255 / 0%) 100%);
-  backdrop-filter: blur(1.5px);
-  -webkit-backdrop-filter: blur(1.5px);
+  background: transparent;
 }
 .app-header--back {
   align-items: center;
