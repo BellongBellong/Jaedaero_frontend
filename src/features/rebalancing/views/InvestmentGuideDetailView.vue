@@ -3,15 +3,13 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import glideJet from '../../../assets/features/ai-coach/glide-jet.svg'
-import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
-import {
-  applyRebalancing,
-  getInvestmentGuidanceDetail,
-  getRebalancingRecommendation,
-} from '@/features/rebalancing/api/rebalancing.api'
+import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
+import { useRebalancingStore } from '@/features/rebalancing/stores/rebalancing.store'
 
 const route = useRoute()
 const router = useRouter()
+const myPageStore = useMyPageStore()
+const rebalancingStore = useRebalancingStore()
 
 const detail = ref(null)
 const profile = ref(null)
@@ -111,7 +109,7 @@ async function keepCurrentPlan() {
   try {
     const guidanceId =
       recommendation.value?.guidanceId || recommendation.value?.id || route.params.guidanceId
-    await applyRebalancing(guidanceId)
+    await rebalancingStore.applyGuidance(guidanceId)
     router.push({ name: 'investment-guide' })
   } catch (error) {
     applyError.value =
@@ -124,9 +122,9 @@ async function keepCurrentPlan() {
 async function loadDetail() {
   const [detailResult, profileResult] = await Promise.allSettled([
     route.params.guidanceId && route.params.guidanceId !== 'latest'
-      ? getInvestmentGuidanceDetail(route.params.guidanceId)
-      : getRebalancingRecommendation(),
-    getMyPageProfile(),
+      ? rebalancingStore.loadGuidanceDetail(route.params.guidanceId)
+      : rebalancingStore.loadRecommendation(),
+    myPageStore.load(),
   ])
 
   if (detailResult.status === 'fulfilled') {

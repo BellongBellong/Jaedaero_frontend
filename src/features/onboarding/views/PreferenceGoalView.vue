@@ -9,10 +9,8 @@ import profileDefault from '../../../assets/features/onboarding/profiles/profile
 import profileMarine from '../../../assets/features/onboarding/profiles/profile-marine.png'
 import profileNavy from '../../../assets/features/onboarding/profiles/profile-navy.png'
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
-import { generateCashflow } from '@/features/cashflow/api/cashflow.api'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
-import { previewInvestmentPreference } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
@@ -86,11 +84,7 @@ async function next() {
   loading.value = true
   errorMessage.value = ''
   try {
-    await previewInvestmentPreference({
-      investmentPreference: onboarding.form.investmentPreference,
-      targetAmount: onboarding.form.targetAmount,
-    })
-    onboarding.persist()
+    await onboarding.previewPreference()
     showConfirmModal.value = true
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
@@ -129,8 +123,7 @@ async function complete() {
   errorMessage.value = ''
 
   try {
-    await generateCashflow()
-    onboarding.complete()
+    await onboarding.completeOnboarding()
     await router.replace({ name: 'dashboard' })
   } catch (error) {
     const serverMessage = error.response?.data?.message

@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
-import { saveAgreements } from '@/features/onboarding/api/onboarding.api'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
@@ -47,9 +46,7 @@ async function submit() {
   loading.value = true
   errorMessage.value = ''
   try {
-    await saveAgreements(checked.value)
-    onboarding.form.agreements = checked.value
-    onboarding.persist()
+    await onboarding.saveAgreements(checked.value)
     router.push({ name: 'onboarding-intro' })
   } catch (error) {
     errorMessage.value = getApiErrorMessage(

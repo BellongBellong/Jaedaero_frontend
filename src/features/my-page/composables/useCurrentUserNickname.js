@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 
 import { useAuthStore } from '@/features/auth/stores/auth.store'
-import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
+import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 
 function normalizeNickname(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -9,6 +9,7 @@ function normalizeNickname(value) {
 
 export function useCurrentUserNickname() {
   const authStore = useAuthStore()
+  const myPageStore = useMyPageStore()
   const profileNickname = ref('')
 
   const nickname = computed(
@@ -18,7 +19,8 @@ export function useCurrentUserNickname() {
 
   async function loadNickname() {
     try {
-      const profile = await getMyPageProfile()
+      await myPageStore.load()
+      const profile = myPageStore.profile
       profileNickname.value = normalizeNickname(profile?.nickname)
     } catch {
       // 세션에 닉네임이 있으면 유지하고, 없으면 화면에서 "회원님"으로 표시한다.

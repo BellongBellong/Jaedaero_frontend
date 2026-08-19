@@ -1,15 +1,10 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 
 import accountIcon from '../../../assets/features/onboarding/icons/account-general.svg'
 import militarySavingsIcon from '../../../assets/features/onboarding/icons/account-military-savings.svg'
-import {
-  disconnectAccount,
-  getAccounts,
-  reconnectAccount as reconnectAccountRequest,
-  rememberDisconnectedAccount,
-} from '@/features/accounts/api/accounts.api'
 import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import {
   accountConnectionStatus,
@@ -17,10 +12,11 @@ import {
   accountInstitutionKey,
   accountInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
+import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 
 const route = useRoute()
-const accounts = ref([])
-const loading = ref(true)
+const accountsStore = useAccountsStore()
+const { accounts, loading } = storeToRefs(accountsStore)
 const loadError = ref('')
 const actionError = ref('')
 const selectedAccount = ref(null)
@@ -123,12 +119,7 @@ async function reconnectAccount(account) {
   reconnectErrorAccountId.value = null
 
   try {
-    await reconnectAccountRequest(account)
-    accounts.value = accounts.value.map((item) =>
-      String(item.accountId || item.id) === String(accountId)
-        ? { ...item, accountStatus: 'ACTIVE', isActive: true }
-        : item,
-    )
+    await accountsStore.reconnect(account)
   } catch {
     reconnectErrorAccountId.value = accountId
     reconnectError.value = '다시 연동하지 못했어요. 잠시 후 다시 시도해 주세요.'
@@ -141,7 +132,7 @@ async function loadAccounts() {
   loading.value = true
   loadError.value = ''
   try {
-    accounts.value = await getAccounts()
+    await accountsStore.load({ force: true })
   } catch {
     loadError.value = '계좌 정보를 불러오지 못했어요.'
   } finally {
@@ -164,14 +155,7 @@ async function confirmDisconnect() {
   disconnecting.value = true
   actionError.value = ''
   try {
-    const disconnectedId = selectedAccount.value.accountId
-    await disconnectAccount(disconnectedId)
-    rememberDisconnectedAccount(selectedAccount.value)
-    accounts.value = accounts.value.map((account) =>
-      account.accountId === disconnectedId
-        ? { ...account, accountStatus: 'DISCONNECTED' }
-        : account,
-    )
+    await accountsStore.disconnect(selectedAccount.value)
     selectedAccount.value = null
   } catch {
     actionError.value = '연결을 해제하지 못했어요. 잠시 후 다시 시도해주세요.'

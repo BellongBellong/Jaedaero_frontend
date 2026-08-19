@@ -1,8 +1,8 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import { getAccounts } from '@/features/accounts/api/accounts.api'
 import { getInvestmentBadges } from '@/features/challenges/api/challenges.api'
+import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 import {
   checkNicknameAvailability,
   getGoal,
@@ -14,6 +14,7 @@ import {
 } from '@/features/my-page/api/myPage.api'
 
 export const useMyPageStore = defineStore('my-page', () => {
+  const accountsStore = useAccountsStore()
   const profile = ref(null)
   const connectedAccountCount = ref(0)
   const investmentBadges = ref([])
@@ -30,7 +31,7 @@ export const useMyPageStore = defineStore('my-page', () => {
     try {
       const [profileResult, accountsResult, goalResult, badgesResult] = await Promise.allSettled([
         getMyPageProfile(),
-        getAccounts(),
+        accountsStore.load(),
         getGoal(),
         getInvestmentBadges(),
       ])
@@ -54,6 +55,7 @@ export const useMyPageStore = defineStore('my-page', () => {
         (result) => result.status === 'rejected',
       )
       if (failedResult) error.value = failedResult.reason
+      return profile.value
     } finally {
       badgesLoading.value = false
       pageLoading.value = false

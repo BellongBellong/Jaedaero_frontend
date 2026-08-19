@@ -24,15 +24,17 @@ import { normalizeBenefits, selectDailyBenefits } from '@/features/benefits/util
 import { findMissionRoute } from '@/features/missions/constants/missionActionRoutes'
 import { useMissionStore } from '@/features/missions/stores/mission.store'
 import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
-import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
+import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 import { transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import { useVacationBudget } from '@/features/leave-mode/composables/useVacationBudget'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
-import { getTransactions } from '@/features/transactions/api/transactions.api'
+import { useTransactionsStore } from '@/features/transactions/stores/transactions.store'
 
 const route = useRoute()
 const router = useRouter()
 const missionStore = useMissionStore()
+const myPageStore = useMyPageStore()
+const transactionsStore = useTransactionsStore()
 const showEventModal = ref(false)
 const showMissionSheet = ref(false)
 const liveMissions = computed(() => missionStore.missions.map(normalizeMission))
@@ -127,7 +129,8 @@ onMounted(async () => {
 
 onMounted(async () => {
   try {
-    const profile = await getMyPageProfile()
+    await myPageStore.load()
+    const profile = myPageStore.profile
     const profileCode = String(profile?.profileImage || 'ARMY')
       .replace(/^profile-/i, '')
       .replace(/^character-/i, '')
@@ -177,7 +180,7 @@ watch(
       const usesMockScenario = Boolean(route.query.persona || route.query.scenario)
       const transactions = usesMockScenario
         ? transactionResponses
-        : await getTransactions({ startDate, endDate })
+        : await transactionsStore.load({ startDate, endDate }, { force: true })
       vacationSpentAmount.value = transactions
         .filter((transaction) => isVacationExpense(transaction, vacation))
         .reduce((total, transaction) => total + Math.abs(Number(transaction.amount || 0)), 0)

@@ -7,10 +7,11 @@ import DropdownMenu from '../../../common/components/forms/DropdownMenu.vue'
 import AccountEditPanel from '@/features/accounts/components/AccountEditPanel.vue'
 import { getDashboardMock, transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import AccountTransactionItem from '@/features/transactions/components/AccountTransactionItem.vue'
-import { getTransactions } from '@/features/transactions/api/transactions.api'
+import { useTransactionsStore } from '@/features/transactions/stores/transactions.store'
 
 const route = useRoute()
 const router = useRouter()
+const transactionsStore = useTransactionsStore()
 const copied = ref(false)
 const activeTab = ref(route.query.tab === 'edit' ? 'EDIT' : 'TRANSACTIONS')
 const savedAccountAlias = ref('')
@@ -19,7 +20,9 @@ const accountTabs = [
   { value: 'EDIT', label: '계좌 수정' },
 ]
 const usesMockScenario = computed(() => Boolean(route.query.persona || route.query.scenario))
-const loadedTransactions = ref(usesMockScenario.value ? transactionResponses : [])
+const loadedTransactions = computed(() =>
+  usesMockScenario.value ? transactionResponses : transactionsStore.transactions,
+)
 const loading = ref(!usesMockScenario.value)
 const loadError = ref(null)
 const transactionFilter = ref('ALL')
@@ -93,10 +96,10 @@ onMounted(async () => {
   if (usesMockScenario.value) return
 
   try {
-    loadedTransactions.value = await getTransactions({ accountId: route.params.accountId })
+    await transactionsStore.load({ accountId: route.params.accountId }, { force: true })
   } catch (error) {
     loadError.value = error
-    loadedTransactions.value = []
+    transactionsStore.reset()
   } finally {
     loading.value = false
   }

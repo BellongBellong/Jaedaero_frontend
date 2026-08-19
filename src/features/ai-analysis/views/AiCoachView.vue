@@ -18,8 +18,8 @@ import {
   formatReportDate,
   mapMarketIndicators,
 } from '@/features/market-report/mappers/marketReport.mapper'
-import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
 import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
+import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 
 /*
   적립식 투자 가이드 카드는 계급에 따라 문구, 전역 D-day, 안전/위험 비율,
@@ -65,6 +65,7 @@ const RANK_KEYS_BY_LABEL = {
 }
 
 const rank = ref('')
+const myPageStore = useMyPageStore()
 /* 계급을 아직 못 받았으면 첫 단계 기준으로 보여준다. */
 const glidepathStage = computed(() => {
   const key = RANK_KEYS_BY_LABEL[rank.value] || rank.value
@@ -73,7 +74,8 @@ const glidepathStage = computed(() => {
 
 async function loadRank() {
   try {
-    const profile = await getMyPageProfile()
+    await myPageStore.load()
+    const profile = myPageStore.profile
     rank.value = profile?.militaryRank || profile?.rank || ''
   } catch {
     // 계급을 못 받으면 기본 단계로 표시한다.

@@ -4,17 +4,16 @@ import { useRoute, useRouter } from 'vue-router'
 
 import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
 import DropdownMenu from '../../../common/components/forms/DropdownMenu.vue'
-import { getAccounts } from '@/features/accounts/api/accounts.api'
+import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 import { getDashboardMock, transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import AccountTransactionItem from '@/features/transactions/components/AccountTransactionItem.vue'
-import {
-  getSecuritiesTransactions,
-  getTransactions,
-} from '@/features/transactions/api/transactions.api'
+import { useTransactionsStore } from '@/features/transactions/stores/transactions.store'
 
 const route = useRoute()
 const router = useRouter()
+const accountsStore = useAccountsStore()
+const transactionsStore = useTransactionsStore()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_TRANSACTION_HISTORY')
 const tabs = [
   { value: 'ALL', label: '전체' },
@@ -32,8 +31,10 @@ const transactionFilter = ref(
   filterOptions.some(({ value }) => value === initialType) ? initialType : 'ALL',
 )
 const usesMockScenario = computed(() => Boolean(route.query.persona || route.query.scenario))
-const loadedTransactions = ref(usesMockScenario.value ? transactionResponses : [])
-const connectedAccounts = ref([])
+const loadedTransactions = computed(() =>
+  usesMockScenario.value ? transactionResponses : transactionsStore.transactions,
+)
+const connectedAccounts = computed(() => accountsStore.accounts)
 const loading = ref(!usesMockScenario.value)
 const loadError = ref(null)
 const syncSentinel = ref(null)
@@ -131,39 +132,13 @@ function requestRange() {
   return route.query.period === 'month' ? monthRange() : {}
 }
 
-function mergeTransactions(...transactionGroups) {
-  const transactionMap = new Map()
-  transactionGroups.flat().forEach((transaction) => {
-    const key = String(
-      transaction.id ??
-        transaction.transactionId ??
-        `${transaction.accountId}-${transaction.transactionDate}-${transaction.amount}`,
-    )
-    transactionMap.set(key, transaction)
-  })
-  return [...transactionMap.values()]
-}
-
 async function loadLiveTransactions({ refresh = false } = {}) {
   const range = requestRange()
-  const [accounts, regularTransactions] = await Promise.all([
-    getAccounts({ params: { refresh } }),
-    getTransactions(range),
-  ])
-  connectedAccounts.value = accounts
-
-  const securitiesResults = await Promise.allSettled(
-    accounts
-      .filter(isInvestmentAccount)
-      .map((account) =>
-        getSecuritiesTransactions(account.accountId ?? account.id, { ...range, refresh }),
-      ),
-  )
-  const securitiesTransactions = securitiesResults
-    .filter(({ status }) => status === 'fulfilled')
-    .flatMap(({ value }) => value)
-
-  loadedTransactions.value = mergeTransactions(regularTransactions, securitiesTransactions)
+  await accountsStore.load({ force: true })
+  await transactionsStore.loadWithSecurities(accountsStore.accounts.filter(isInvestmentAccount), {
+    ...range,
+    refresh,
+  })
 }
 
 async function syncCodefAssets() {
@@ -206,7 +181,7 @@ onMounted(async () => {
       await loadLiveTransactions()
     } catch (error) {
       loadError.value = error
-      loadedTransactions.value = []
+      transactionsStore.reset()
     } finally {
       loading.value = false
     }

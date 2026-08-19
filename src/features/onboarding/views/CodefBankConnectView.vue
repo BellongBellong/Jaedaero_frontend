@@ -12,11 +12,6 @@ import { getApiErrorMessage } from '@/common/api/errorMessage'
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import BaseTooltip from '@/common/components/feedback/BaseTooltip.vue'
 import {
-  connectAccount,
-  disconnectAccount,
-  getAccounts,
-} from '@/features/accounts/api/accounts.api'
-import {
   accountConnectionStatus,
   accountInstitutionName,
   accountOrganizationCode,
@@ -27,10 +22,12 @@ import {
 import { bankAccountBlockIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
+import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 
 const route = useRoute()
 const router = useRouter()
 const onboarding = useOnboardingStore()
+const accountsStore = useAccountsStore()
 const banks = ref([])
 const securities = ref([])
 const loading = ref(false)
@@ -347,8 +344,8 @@ function restoreConnectedInstitutions(accounts) {
 
 async function restoreConnectionState() {
   try {
-    const accounts = await getAccounts()
-    restoreConnectedInstitutions(accounts)
+    await accountsStore.load()
+    restoreConnectedInstitutions(accountsStore.accounts)
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
       error,
@@ -489,9 +486,7 @@ async function confirmAccounts() {
   accountsConfirming.value = true
   errorMessage.value = ''
   try {
-    await Promise.all(
-      accountsToRemove.map((account) => disconnectAccount(account.accountId ?? account.id)),
-    )
+    await Promise.all(accountsToRemove.map((account) => accountsStore.disconnect(account)))
     const connection = {
       id: `${form.value.businessType}-${form.value.organizationCode}-${Date.now()}`,
       businessType: form.value.businessType,
@@ -599,7 +594,7 @@ async function submit() {
   accountsEmptyModalOpen.value = false
   errorMessage.value = ''
   try {
-    await connectAccount(
+    await accountsStore.connect(
       {
         userId,
         organizationCode: form.value.organizationCode,
@@ -610,7 +605,10 @@ async function submit() {
       },
       { signal: requestController.signal },
     )
-    const connectedAccounts = await getAccounts({ signal: requestController.signal })
+    const connectedAccounts = await accountsStore.load({
+      force: true,
+      config: { signal: requestController.signal },
+    })
     discoveredAccounts.value = connectedAccounts.filter((account) =>
       matchesAccountInstitution(account, selectedInstitution.value),
     )

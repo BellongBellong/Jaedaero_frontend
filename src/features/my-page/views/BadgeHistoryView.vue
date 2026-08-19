@@ -2,8 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
-import { getInvestmentBadges } from '@/features/challenges/api/challenges.api'
-import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
+import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 import {
   BADGE_LEVELS,
   BADGE_SELECTION_STORAGE_KEY,
@@ -16,6 +15,7 @@ import {
 } from '@/features/my-page/composables/investmentBadges'
 
 const badges = ref([])
+const myPageStore = useMyPageStore()
 const badgeStatus = ref(null)
 const loading = ref(true)
 const loadFailed = ref(false)
@@ -109,9 +109,9 @@ function selectBadge(badge) {
 
 onMounted(async () => {
   try {
-    const [badgeHistory, profile] = await Promise.all([getInvestmentBadges(), getMyPageProfile()])
-    badges.value = badgeHistory
-    badgeStatus.value = profile?.investmentBadgeStatus || null
+    await myPageStore.load()
+    badges.value = myPageStore.investmentBadges
+    badgeStatus.value = myPageStore.profile?.investmentBadgeStatus || null
     activeBadgeType.value = getSelectedBadge(earnedBadges.value, selectedBadgeId.value)?.type || ''
   } catch {
     loadFailed.value = true
