@@ -94,7 +94,7 @@ export default defineConfig(() => ({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'https://jaedaerobackend-production.up.railway.app/',
+        target: 'https://jaedaero.서버.한국/',
         changeOrigin: true,
       },
     },
