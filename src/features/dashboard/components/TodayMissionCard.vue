@@ -1,6 +1,6 @@
 <script setup>
-import checkboxFalseIcon from '@/assets/icons/Category/CheckboxFalse.svg'
-import checkboxIcon from '@/assets/icons/Category/CheckboxIcon.png'
+import checkboxFalseIcon from '@/assets/icons/CheckboxFalse.svg'
+import checkboxIcon from '@/assets/icons/CheckboxIcon.png'
 
 defineProps({
   missions: {
