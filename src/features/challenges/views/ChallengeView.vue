@@ -337,7 +337,8 @@ const ranking = computed(() => {
           0,
       )
       const badge = member.badge || member.investmentBadge || member.currentBadge || {}
-      const memberType = normalizeRankingBadgeType(
+      const isCurrentMember = isCurrentRankingMember(member)
+      const apiMemberType = normalizeRankingBadgeType(
         member.highestBadgeType ||
           member.investmentType ||
           member.badgeType ||
@@ -348,14 +349,19 @@ const ranking = computed(() => {
           badge.badgeType ||
           badge.type,
       )
-      const ownBadge = isCurrentRankingMember(member)
-        ? memberType === 'SAFE'
-          ? safeBadge.value
-          : memberType === 'AGGRESSIVE'
-            ? aggressiveBadge.value
-            : currentRankingBadge.value
+      const memberType = isCurrentMember
+        ? selectedInvestmentBadge.value?.type || apiMemberType
+        : apiMemberType
+      const ownBadge = isCurrentMember
+        ? selectedInvestmentBadge.value ||
+          (memberType === 'SAFE'
+            ? safeBadge.value
+            : memberType === 'AGGRESSIVE'
+              ? aggressiveBadge.value
+              : currentRankingBadge.value)
         : null
       const rawTier =
+        (isCurrentMember ? ownBadge?.levelInfo?.key : null) ||
         member.highestBadgeGrade ||
         member.badgeGrade ||
         member.grade ||
@@ -373,6 +379,7 @@ const ranking = computed(() => {
         ? { key: tierKey, label: `${tierKey[0]}${tierKey.slice(1).toLowerCase()}` }
         : getBadgeTier(missionCount)
       const hasEarnedBadge =
+        Boolean(ownBadge) ||
         Boolean(member.badgeImage || member.badge?.imageUrl || member.badge?.image) ||
         ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND'].includes(tierKey) ||
         missionCount > 0
@@ -383,9 +390,13 @@ const ranking = computed(() => {
         nickname: member.nickname || member.nickName || member.userNickname || '-',
         missionCount,
         hasBadge: hasEarnedBadge,
+        investmentType: memberType,
         tier: tierInfo.label,
         tierKey: tierInfo.key,
         badgeImage:
+          (isCurrentMember && ownBadge
+            ? getBadgeImage(ownBadge.type, ownBadge.levelInfo.key)
+            : null) ||
           member.badgeImage ||
           member.badge?.imageUrl ||
           member.badge?.image ||
@@ -429,7 +440,19 @@ function getEncouragementCount(member) {
 
 function getRankingMemberType(member) {
   const type = normalizeRankingBadgeType(
-    member.highestBadgeType || member.investmentType || member.badgeType || member.type,
+    member.investmentType ||
+      member.highestBadgeType ||
+      member.badgeType ||
+      member.missionType ||
+      member.type ||
+      member.badge?.investmentType ||
+      member.badge?.missionType ||
+      member.badge?.badgeType ||
+      member.badge?.type ||
+      member.investmentBadge?.investmentType ||
+      member.investmentBadge?.missionType ||
+      member.investmentBadge?.badgeType ||
+      member.investmentBadge?.type,
   )
   return type === 'SAFE' ? '안정형' : type === 'AGGRESSIVE' ? '공격형' : '공통'
 }
@@ -1436,14 +1459,14 @@ onBeforeUnmount(() => {
 .podium .rank-2 {
   --rank-left: 24%;
   --stage-height: 168px;
-  --character-bottom: 59px;
+  --character-bottom: 55px;
   --podium-image-width: 91px;
   --podium-offset-x: -5px;
 }
 .podium .rank-3 {
   --rank-left: 77%;
   --stage-height: 124px;
-  --character-bottom: 44px;
+  --character-bottom: 40px;
   --podium-image-width: 91px;
   --crown-offset-x: -4.5px;
   --podium-offset-x: 1px;
