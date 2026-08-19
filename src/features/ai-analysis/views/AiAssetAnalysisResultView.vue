@@ -7,14 +7,10 @@ import arrowUpIcon from '../../../assets/features/ai-analysis/arrowUpIcon.svg'
 import causeInfoIcon from '../../../assets/features/ai-analysis/causeInfoIcon.svg'
 import analysisGlow from '../../../assets/features/ai-coach/analysis-glow.svg'
 import coachCharacter from '../../../assets/features/ai-coach/coach-character.svg'
-import {
-  applyAiStrategy,
-  createAiAnalysis,
-  getAiAnalysis,
-} from '@/features/ai-analysis/api/aiAnalysis.api'
 import { mapAiAnalysisRequest } from '@/features/ai-analysis/mappers/aiAnalysisRequest.mapper'
+import { useAnalysisStore } from '@/features/ai-analysis/stores/analysis.store'
 import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
-import { getSimulationDefaults, getSimulations } from '@/features/simulations/api/simulations.api'
+import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
 
 const MINIMUM_ANALYZING_DURATION = 2600
 
@@ -56,6 +52,8 @@ const CAUSE_TAGS = {
 }
 
 const route = useRoute()
+const analysisStore = useAnalysisStore()
+const simulationsStore = useSimulationsStore()
 const { honorificNickname, loadNickname } = useCurrentUserNickname()
 
 const phase = ref('analyzing')
@@ -69,8 +67,8 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 async function createCurrentWhatIfAnalysis() {
   const [defaultsResult, simulationsResult] = await Promise.allSettled([
-    getSimulationDefaults(),
-    getSimulations({ page: 0, size: 1 }),
+    simulationsStore.loadDefaults(),
+    simulationsStore.loadList({ page: 0, size: 1 }),
   ])
 
   const payload = mapAiAnalysisRequest({
@@ -78,7 +76,7 @@ async function createCurrentWhatIfAnalysis() {
     simulations: simulationsResult.status === 'fulfilled' ? simulationsResult.value : null,
   })
 
-  return createAiAnalysis(payload)
+  return analysisStore.create(payload)
 }
 
 async function runAnalysis() {
@@ -90,7 +88,7 @@ async function runAnalysis() {
   try {
     const analysisId = route.params.analysisId
     const response = analysisId
-      ? await getAiAnalysis(analysisId)
+      ? await analysisStore.loadDetail(analysisId)
       : (await Promise.all([createCurrentWhatIfAnalysis(), delay(MINIMUM_ANALYZING_DURATION)]))[0]
     analysis.value = response
     phase.value = 'result'
@@ -304,7 +302,7 @@ async function handleApplyStrategy() {
   applyErrorMessage.value = ''
 
   try {
-    await applyAiStrategy(analysis.value.analysisId)
+    await analysisStore.applyStrategy(analysis.value.analysisId)
     applyState.value = 'applied'
   } catch {
     applyState.value = 'idle'

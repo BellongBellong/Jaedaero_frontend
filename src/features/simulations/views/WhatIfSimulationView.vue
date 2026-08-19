@@ -9,13 +9,9 @@ import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import returnRateIconBackground from '@/assets/simulations/return-rate-icon-bg.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
-import { getDashboard } from '@/features/dashboard/api/dashboard.api'
-import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
-import {
-  getSimulationDefaults,
-  getSimulations,
-  runSimulation,
-} from '@/features/simulations/api/simulations.api'
+import { useDashboardStore } from '@/features/dashboard/stores/dashboard.store'
+import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
+import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 
 const PREVIEW_DELAY_MS = 250
@@ -24,6 +20,9 @@ const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 
 const route = useRoute()
 const router = useRouter()
+const dashboardStore = useDashboardStore()
+const myPageStore = useMyPageStore()
+const simulationsStore = useSimulationsStore()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'RUN_WHAT_IF_SIMULATION')
 const dashboard = ref(null)
 const profile = ref(null)
@@ -244,10 +243,6 @@ function dateParts(value) {
   return match.slice(1).map(Number)
 }
 
-function unwrapApiData(response) {
-  return response?.data ?? response ?? null
-}
-
 function percentageOfIncome(amount) {
   if (!monthlySalary.value) return 0
   return Math.max(0, (Number(amount || 0) / monthlySalary.value) * 100)
@@ -342,7 +337,7 @@ async function loadPreview(requestId = ++previewRequestId) {
   previewErrorMessage.value = ''
 
   try {
-    const response = await runSimulation(simulationPayload(false))
+    const response = await simulationsStore.run(simulationPayload(false))
     if (requestId !== previewRequestId) return
     serverResult.value = response
   } catch (error) {
@@ -404,7 +399,7 @@ async function saveSimulation() {
   errorMessage.value = ''
 
   try {
-    const response = await runSimulation(simulationPayload(true))
+    const response = await simulationsStore.run(simulationPayload(true))
     serverResult.value = response
     setBaselineScenario()
     await completeMissionAfterLoad()
@@ -434,15 +429,14 @@ function openRecommendations() {
 onMounted(async () => {
   const [dashboardResult, profileResult, defaultsResult, simulationsResult] =
     await Promise.allSettled([
-      getDashboard(),
-      getMyPageProfile(),
-      getSimulationDefaults(),
-      getSimulations({ page: 0, size: 1 }),
+      dashboardStore.load(),
+      myPageStore.load(),
+      simulationsStore.loadDefaults(),
+      simulationsStore.loadList({ page: 0, size: 1 }),
     ])
 
-  dashboard.value =
-    dashboardResult.status === 'fulfilled' ? unwrapApiData(dashboardResult.value) : null
-  profile.value = profileResult.status === 'fulfilled' ? unwrapApiData(profileResult.value) : null
+  dashboard.value = dashboardResult.status === 'fulfilled' ? dashboardResult.value?.response : null
+  profile.value = profileResult.status === 'fulfilled' ? profileResult.value : myPageStore.profile
 
   if (defaultsResult.status === 'fulfilled') {
     applySimulationDefaults(defaultsResult.value)

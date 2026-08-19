@@ -3,10 +3,11 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
-import { getRebalancingRecommendation } from '@/features/rebalancing/api/rebalancing.api'
+import { useRebalancingStore } from '@/features/rebalancing/stores/rebalancing.store'
 
 const route = useRoute()
 const router = useRouter()
+const rebalancingStore = useRebalancingStore()
 const guidance = ref(null)
 const loadError = ref('')
 
@@ -45,7 +46,7 @@ function openDetail() {
 
 async function loadGuidance() {
   try {
-    guidance.value = await getRebalancingRecommendation()
+    guidance.value = await rebalancingStore.loadRecommendation()
   } catch {
     try {
       guidance.value = JSON.parse(sessionStorage.getItem('latestInvestmentGuidance') || 'null')

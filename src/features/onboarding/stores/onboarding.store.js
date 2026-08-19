@@ -5,6 +5,7 @@ import { useAuthStore } from '@/features/auth/stores/auth.store'
 import {
   checkNickname as checkNicknameRequest,
   previewInvestmentPreference,
+  saveAgreements as saveAgreementsRequest,
   saveMilitaryInfo as saveMilitaryInfoRequest,
   saveNickname as saveNicknameRequest,
   saveProfileAppearance as saveProfileAppearanceRequest,
@@ -51,6 +52,11 @@ export const useOnboardingStore = defineStore('onboarding', () => {
 
   async function checkNickname(nickname) {
     return checkNicknameRequest(nickname)
+  }
+
+  async function saveAgreements(agreements) {
+    await saveAgreementsRequest(agreements)
+    updateForm({ agreements })
   }
 
   async function saveNickname(nickname) {
@@ -101,6 +107,7 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     persist,
     updateForm,
     checkNickname,
+    saveAgreements,
     saveNickname,
     saveProfileAppearance,
     saveMilitaryInfo,

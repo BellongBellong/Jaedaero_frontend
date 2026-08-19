@@ -1,10 +1,10 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 
 import detailViewIcon from '../../../assets/features/my-page/detail-view.svg'
 import securityDefault from '../../../assets/features/onboarding/institutions/security-0.svg'
-import { getAccounts } from '@/features/accounts/api/accounts.api'
 import { bankAccountBlockIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import {
   accountConnectionStatus,
@@ -12,10 +12,11 @@ import {
   accountInstitutionKey,
   accountInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
+import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 
 const router = useRouter()
-const accounts = ref([])
-const loading = ref(true)
+const accountsStore = useAccountsStore()
+const { accounts, loading } = storeToRefs(accountsStore)
 const errorMessage = ref('')
 
 const securityAssets = import.meta.glob('@/assets/onboarding/institutions/security-*.svg', {
@@ -130,7 +131,7 @@ async function loadAccounts() {
   loading.value = true
   errorMessage.value = ''
   try {
-    accounts.value = await getAccounts()
+    await accountsStore.load({ force: true })
   } catch {
     errorMessage.value = '연동한 은행을 불러오지 못했어요.'
   } finally {

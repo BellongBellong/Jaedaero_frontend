@@ -7,16 +7,15 @@ import allocationIcon from '../../../assets/features/ai-coach/what-if.svg'
 import monthlyInvestmentIcon from '../../../assets/features/ai-coach/monthly-investment-icon.png'
 import planGuideVisual from '../../../assets/features/ai-coach/plan-guide-visual.png'
 import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
-import {
-  getRebalancingRecommendation,
-  getRecurringInvestmentPlan,
-} from '@/features/rebalancing/api/rebalancing.api'
+import { useRebalancingStore } from '@/features/rebalancing/stores/rebalancing.store'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import { mapWhatIfDetail } from '@/features/ai-analysis/mappers/whatIfDetail.mapper'
-import { getSimulations } from '@/features/simulations/api/simulations.api'
+import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
 
 const route = useRoute()
 const router = useRouter()
+const rebalancingStore = useRebalancingStore()
+const simulationsStore = useSimulationsStore()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_REBALANCING')
 
 const isLoading = ref(true)
@@ -126,9 +125,9 @@ async function loadGuideStatus() {
   loadError.value = ''
 
   const [simulationsResult, planResult, guidanceResult] = await Promise.allSettled([
-    getSimulations({ page: 0, size: 1 }),
-    getRecurringInvestmentPlan(),
-    getRebalancingRecommendation(),
+    simulationsStore.loadList({ page: 0, size: 1 }),
+    rebalancingStore.loadRecurringPlan(),
+    rebalancingStore.loadRecommendation(),
   ])
 
   // 가이드는 아직 생성 전일 수 있으므로 실패해도 화면을 막지 않는다.

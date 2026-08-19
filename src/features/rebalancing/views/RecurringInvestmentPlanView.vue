@@ -5,18 +5,18 @@ import { useRoute, useRouter } from 'vue-router'
 import calendarIcon from '@/assets/icons/CalenderIcon.svg'
 import monthlyInvestmentIcon from '@/assets/rebalancing-monthly-account-icon.png'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
-import { getAccounts } from '@/features/accounts/api/accounts.api'
 import { isSecuritiesAccount } from '@/features/accounts/composables/institutionMapping'
-import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
-import {
-  createInvestmentGuidance,
-  getRecurringInvestmentPlan,
-  saveRecurringInvestmentPlan,
-} from '@/features/rebalancing/api/rebalancing.api'
-import { getSimulation, getSimulations } from '@/features/simulations/api/simulations.api'
+import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
+import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
+import { useRebalancingStore } from '@/features/rebalancing/stores/rebalancing.store'
+import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
 
 const route = useRoute()
 const router = useRouter()
+const accountsStore = useAccountsStore()
+const myPageStore = useMyPageStore()
+const rebalancingStore = useRebalancingStore()
+const simulationsStore = useSimulationsStore()
 
 const frequency = ref('MONTHLY')
 const contributionDay = ref(10)
@@ -25,7 +25,7 @@ const dayPickerOpen = ref(false)
 const nickname = ref('')
 const contributionAmount = ref(0)
 const maximumMonthlyAmount = ref(0)
-const accounts = ref([])
+const accounts = computed(() => accountsStore.accounts.filter(isSecuritiesAccount))
 const brokerageAccountId = ref(null)
 const investmentProductCode = ref('069500')
 const investmentProductName = ref('KODEX 200')
@@ -201,7 +201,7 @@ async function submitPlan() {
   const loadingStartedAt = Date.now()
 
   try {
-    await saveRecurringInvestmentPlan({
+    await rebalancingStore.savePlan({
       frequency: frequency.value,
       contributionDay: Number(contributionDay.value),
       contributionAmount: Number(contributionAmount.value),
@@ -216,7 +216,7 @@ async function submitPlan() {
       가이드 실패는 삼키고 가이드 화면으로 넘긴다. 가이드는 그 화면에서 다시 불러온다.
     */
     try {
-      const guidance = await createInvestmentGuidance()
+      const guidance = await rebalancingStore.createGuidance()
       sessionStorage.setItem('latestInvestmentGuidance', JSON.stringify(guidance || {}))
     } catch {
       sessionStorage.removeItem('latestInvestmentGuidance')
@@ -234,10 +234,10 @@ async function submitPlan() {
 
 async function loadForm() {
   const [simulationsResult, planResult, accountResult, profileResult] = await Promise.allSettled([
-    getSimulations({ page: 0, size: 1 }),
-    isEdit.value ? getRecurringInvestmentPlan() : Promise.resolve(null),
-    getAccounts(),
-    getMyPageProfile(),
+    simulationsStore.loadList({ page: 0, size: 1 }),
+    isEdit.value ? rebalancingStore.loadRecurringPlan() : Promise.resolve(null),
+    accountsStore.load(),
+    myPageStore.load(),
   ])
 
   if (profileResult.status === 'fulfilled') nickname.value = profileResult.value?.nickname || ''
@@ -250,7 +250,7 @@ async function loadForm() {
   const latestSimulationId = latest?.simulationId ?? latest?.id
   if (!whatIfAmount && latestSimulationId) {
     try {
-      whatIfAmount = investmentAmountFrom(await getSimulation(latestSimulationId))
+      whatIfAmount = investmentAmountFrom(await simulationsStore.detail(latestSimulationId))
     } catch {
       // 목록 응답에 금액이 있으면 상세 조회 실패와 무관하게 폼을 계속 연다.
     }
@@ -261,7 +261,6 @@ async function loadForm() {
       증권 계좌가 없을 때 은행 계좌를 대신 보여주면 선택은 되지만 저장 시
       서버가 거절한다. 증권 계좌만 남기고, 없으면 연결을 유도한다.
     */
-    accounts.value = accountResult.value.filter(isSecuritiesAccount)
     brokerageAccountId.value = accounts.value[0]?.id || null
   }
 
