@@ -219,18 +219,28 @@ const rankingComparison = computed(() => {
   return `${difference >= 0 ? '+' : ''}${difference}개`
 })
 const nearbyRanking = computed(() => {
-  const myRank = Number(rankingSummary.value.rank) || 18
-  const myMissionCount = Number(rankingSummary.value.missionCount) || 28
-  const aboveRank = Math.max(1, myRank - 1)
-  const aboveMissionCount = myMissionCount + 2
+  const source = challenge.value || {}
+  const result = source.monthlyResult || source.rankingResult || source.ranking || source
+  const myRank = Number(rankingSummary.value.rank) || 0
+  const myMissionCount = Number(rankingSummary.value.missionCount) || 0
+  const rankAbove = result.rankAbove ?? source.rankAbove ?? null
+  const rankBelow = result.rankBelow ?? source.rankBelow ?? null
+  const aboveRank = Number(rankAbove?.rank) || 0
+  const aboveMissionCount = Number(rankAbove?.missionCount) || 0
   const todayMissionCount = 2
 
   return {
     myRank,
     myMissionCount,
+    rankAbove,
+    rankBelow,
     aboveRank,
     aboveMissionCount,
-    missionsToNextRank: Math.max(0, aboveMissionCount - myMissionCount),
+    hasNextRank: Boolean(rankAbove),
+    isFirstPlace: myRank === 1,
+    missionsToNextRank:
+      Number(result.missionsToNextRank ?? source.missionsToNextRank) ||
+      Math.max(0, aboveMissionCount - myMissionCount),
     projectedRank: Math.max(1, myRank - Math.min(todayMissionCount, myRank - 1)),
     todayMissionCount,
   }
@@ -797,7 +807,10 @@ onBeforeUnmount(() => {
           <span>평균<b>{{ rankingSummary.averageMissionCount || 0 }}개</b></span>
           <span>상위 10%<b>{{ rankingSummary.topTenMissionCount || 0 }}개</b></span>
         </div>
-        <div class="next-rank-goal">
+        <div
+          v-if="nearbyRanking.hasNextRank"
+          class="next-rank-goal"
+        >
           <div class="next-rank-goal__heading">
             <span>다음 순위까지</span>
             <strong>{{ nearbyRanking.missionsToNextRank }}개 남았어요</strong>
@@ -817,6 +830,16 @@ onBeforeUnmount(() => {
             오늘 미션 {{ nearbyRanking.todayMissionCount }}개를 완료하면
             {{ nearbyRanking.projectedRank }}위까지 올라갈 수 있어요.
           </p>
+        </div>
+        <div
+          v-else-if="nearbyRanking.isFirstPlace"
+          class="next-rank-goal"
+        >
+          <div class="next-rank-goal__heading">
+            <span>현재 순위</span>
+            <strong>현재 1위예요!</strong>
+          </div>
+          <p>지금의 페이스를 유지해 동기 랭킹 1위를 지켜보세요.</p>
         </div>
         <div class="chart">
           <div
