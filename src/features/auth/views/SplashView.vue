@@ -3,15 +3,17 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import brandLogo from '../../../assets/features/onboarding/brand/brand-logo.svg'
-import airforce from '../../../assets/features/onboarding/characters/character-airforce.png'
-import army from '../../../assets/features/onboarding/characters/character-army.png'
-import marine from '../../../assets/features/onboarding/characters/character-marine.png'
-import navy from '../../../assets/features/onboarding/characters/character-navy.png'
+import { characterAssets } from '@/common/constants/characterAssets'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const characters = [army, navy, airforce, marine]
+const characters = [
+  characterAssets.ARMY,
+  characterAssets.NAVY,
+  characterAssets.AIRFORCE,
+  characterAssets.MARINE,
+]
 
 onMounted(() => {
   window.setTimeout(() => {

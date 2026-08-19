@@ -1839,17 +1839,18 @@ select:focus {
   display: flex;
   width: 100%;
   align-self: stretch;
-  height: min(72dvh, 600px);
+  height: min(710px, calc(100dvh - 120px));
+  max-height: 710px;
   flex-direction: column;
-  padding: 30px 16px 12px;
+  padding: 64px 20px 10px;
   box-sizing: border-box;
-  border-radius: 24px 24px 0 0;
+  border-radius: 50px 50px 0 0;
   background: #fff;
 }
 
 .accounts-sheet-close {
-  top: 14px;
-  right: 16px;
+  top: 30px;
+  right: 20px;
   z-index: 1;
 }
 
@@ -1858,7 +1859,13 @@ select:focus {
 }
 
 .accounts-backdrop {
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  justify-content: flex-end;
   box-sizing: border-box;
+  position: absolute;
+  inset: 0;
 }
 
 .account-status-backdrop {

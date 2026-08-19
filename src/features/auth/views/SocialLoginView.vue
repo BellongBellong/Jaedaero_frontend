@@ -6,14 +6,16 @@ import { rememberLoginRedirect, startSocialLogin } from '@/features/auth/oauth'
 import brandLogo from '../../../assets/features/onboarding/brand/brand-logo.svg'
 import googleLogo from '../../../assets/features/onboarding/brand/google-logo.svg'
 import kakaoLogo from '../../../assets/features/onboarding/brand/kakao-logo.svg'
-import airforce from '../../../assets/features/onboarding/characters/character-airforce.png'
-import army from '../../../assets/features/onboarding/characters/character-army.png'
-import marine from '../../../assets/features/onboarding/characters/character-marine.png'
-import navy from '../../../assets/features/onboarding/characters/character-navy.png'
+import { characterAssets } from '@/common/constants/characterAssets'
 
 const loadingProvider = ref('')
 const errorMessage = ref('')
-const characters = [army, navy, airforce, marine]
+const characters = [
+  characterAssets.ARMY,
+  characterAssets.NAVY,
+  characterAssets.AIRFORCE,
+  characterAssets.MARINE,
+]
 const route = useRoute()
 async function handleLogin(provider) {
   loadingProvider.value = provider

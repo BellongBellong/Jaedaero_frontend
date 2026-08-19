@@ -6,13 +6,10 @@ import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
 import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
 import rankingCrownGold from '../../../assets/features/ranking/crown-gold.svg'
 import rankingCrownSilver from '../../../assets/features/ranking/crown-silver.svg'
-import rankingCharacterAirforce from '../../../assets/features/ranking/characters/airforce.svg'
-import rankingCharacterArmy from '../../../assets/features/ranking/characters/army.svg'
-import rankingCharacterMarine from '../../../assets/features/ranking/characters/marine.svg'
-import rankingCharacterNavy from '../../../assets/features/ranking/characters/navy.svg'
 import rankingFirstPodium from '../../../assets/features/ranking/podium/ranking-first.png'
 import rankingSecondPodium from '../../../assets/features/ranking/podium/ranking-second.png'
 import rankingThirdPodium from '../../../assets/features/ranking/podium/ranking-third.png'
+import { getCharacterAsset } from '@/common/constants/characterAssets'
 import {
   BADGE_SELECTION_STORAGE_KEY,
   getBadgeImage,
@@ -46,21 +43,10 @@ const rankingYearMonth = toRef(challengeStore, 'rankingYearMonth')
 const modeMenuOpen = ref(false)
 const errorMessage = ref('')
 const now = ref(new Date())
+const ENCOURAGEMENT_STORAGE_KEY = 'jaedaero-challenge-encouragements'
+const selectedRankingMember = ref(null)
+const encouragedMemberKeys = ref(loadEncouragedMemberKeys())
 let timerId
-
-const characterImages = {
-  ARMY: rankingCharacterArmy,
-  AIRFORCE: rankingCharacterAirforce,
-  AIR_FORCE: rankingCharacterAirforce,
-  NAVY: rankingCharacterNavy,
-  MARINE: rankingCharacterMarine,
-  MARINE_CORPS: rankingCharacterMarine,
-  PROFILE_ARMY_PNG: rankingCharacterArmy,
-  PROFILE_AIRFORCE_PNG: rankingCharacterAirforce,
-  PROFILE_NAVY_PNG: rankingCharacterNavy,
-  PROFILE_MARINE_PNG: rankingCharacterMarine,
-  DEFAULT: rankingCharacterArmy,
-}
 
 const rankingPodium = {
   1: { crown: rankingCrownGold, image: rankingFirstPodium },
@@ -232,6 +218,23 @@ const rankingComparison = computed(() => {
   const difference = mine - average
   return `${difference >= 0 ? '+' : ''}${difference}개`
 })
+const nearbyRanking = computed(() => {
+  const myRank = Number(rankingSummary.value.rank) || 18
+  const myMissionCount = Number(rankingSummary.value.missionCount) || 28
+  const aboveRank = Math.max(1, myRank - 1)
+  const aboveMissionCount = myMissionCount + 2
+  const todayMissionCount = 2
+
+  return {
+    myRank,
+    myMissionCount,
+    aboveRank,
+    aboveMissionCount,
+    missionsToNextRank: Math.max(0, aboveMissionCount - myMissionCount),
+    projectedRank: Math.max(1, myRank - Math.min(todayMissionCount, myRank - 1)),
+    todayMissionCount,
+  }
+})
 const rankingTitle = computed(() => {
   const title = challenge.value?.cohortName || challenge.value?.groupName || '입대 동기'
   return title.endsWith('랭킹') ? title : `${title} 랭킹`
@@ -292,8 +295,7 @@ function getRankingCharacter(member) {
   const rawValue = String(value || '').trim()
   if (/^(https?:|data:|\/)/i.test(rawValue)) return value
 
-  const normalized = rawValue.toUpperCase().replace(/[.\s-]+/g, '_')
-  return characterImages[normalized] || characterImages.DEFAULT
+  return getCharacterAsset(rawValue)
 }
 
 function getRankingNo(member, fallback) {
@@ -361,13 +363,16 @@ const ranking = computed(() => {
         ? { key: tierKey, label: `${tierKey[0]}${tierKey.slice(1).toLowerCase()}` }
         : getBadgeTier(missionCount)
       const hasEarnedBadge =
-        ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND'].includes(tierKey) || missionCount > 0
+        Boolean(member.badgeImage || member.badge?.imageUrl || member.badge?.image) ||
+        ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND'].includes(tierKey) ||
+        missionCount > 0
       const podium = rankingPodium[rank] || rankingPodium[3]
       return {
         ...member,
         rank,
         nickname: member.nickname || member.nickName || member.userNickname || '-',
         missionCount,
+        hasBadge: hasEarnedBadge,
         tier: tierInfo.label,
         tierKey: tierInfo.key,
         badgeImage:
@@ -389,6 +394,53 @@ const ranking = computed(() => {
 })
 
 const apiRanking = computed(() => ranking.value)
+
+function loadEncouragedMemberKeys() {
+  try {
+    const savedKeys = JSON.parse(localStorage.getItem(ENCOURAGEMENT_STORAGE_KEY) || '[]')
+    return new Set(Array.isArray(savedKeys) ? savedKeys : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function getRankingMemberKey(member) {
+  return String(member.userId ?? member.memberId ?? member.nickname ?? member.rank)
+}
+
+function hasSentEncouragement(member) {
+  return encouragedMemberKeys.value.has(getRankingMemberKey(member))
+}
+
+function getEncouragementCount(member) {
+  const count = Number(member.encouragementCount ?? member.cheerCount ?? member.likeCount ?? 0)
+  return count + (hasSentEncouragement(member) ? 1 : 0)
+}
+
+function getRankingMemberType(member) {
+  const type = normalizeRankingBadgeType(
+    member.highestBadgeType || member.investmentType || member.badgeType || member.type,
+  )
+  return type === 'SAFE' ? '안정형' : type === 'AGGRESSIVE' ? '공격형' : '공통'
+}
+
+function openRankingMember(member) {
+  selectedRankingMember.value = member
+}
+
+function closeRankingMember() {
+  selectedRankingMember.value = null
+}
+
+function sendEncouragement() {
+  const member = selectedRankingMember.value
+  if (!member || isCurrentRankingMember(member) || hasSentEncouragement(member)) return
+
+  const nextKeys = new Set(encouragedMemberKeys.value)
+  nextKeys.add(getRankingMemberKey(member))
+  encouragedMemberKeys.value = nextKeys
+  localStorage.setItem(ENCOURAGEMENT_STORAGE_KEY, JSON.stringify([...nextKeys]))
+}
 
 function getCurrentYearMonth() {
   const date = new Date()
@@ -703,13 +755,18 @@ onBeforeUnmount(() => {
                 :src="member.crown"
                 alt=""
               >
-              <span class="ranking-character-wrap">
+              <button
+                class="ranking-character-wrap"
+                type="button"
+                :aria-label="`${member.nickname} 프로필 보기`"
+                @click.stop="openRankingMember(member)"
+              >
                 <img
                   class="ranking-character"
                   :src="member.character"
                   :alt="`${member.nickname} 캐릭터`"
                 >
-              </span>
+              </button>
               <img
                 class="ranking-podium"
                 :src="member.podiumImage"
@@ -739,6 +796,27 @@ onBeforeUnmount(() => {
           <span>나<b>{{ rankingSummary.missionCount || 0 }}개</b></span>
           <span>평균<b>{{ rankingSummary.averageMissionCount || 0 }}개</b></span>
           <span>상위 10%<b>{{ rankingSummary.topTenMissionCount || 0 }}개</b></span>
+        </div>
+        <div class="next-rank-goal">
+          <div class="next-rank-goal__heading">
+            <span>다음 순위까지</span>
+            <strong>{{ nearbyRanking.missionsToNextRank }}개 남았어요</strong>
+          </div>
+          <div class="next-rank-goal__track">
+            <span
+              :style="{
+                width: `${(nearbyRanking.myMissionCount / nearbyRanking.aboveMissionCount) * 100}%`,
+              }"
+            />
+          </div>
+          <div class="next-rank-goal__labels">
+            <span>{{ nearbyRanking.myRank }}위 · {{ nearbyRanking.myMissionCount }}개</span>
+            <span>{{ nearbyRanking.aboveRank }}위 · {{ nearbyRanking.aboveMissionCount }}개</span>
+          </div>
+          <p>
+            오늘 미션 {{ nearbyRanking.todayMissionCount }}개를 완료하면
+            {{ nearbyRanking.projectedRank }}위까지 올라갈 수 있어요.
+          </p>
         </div>
         <div class="chart">
           <div
@@ -772,6 +850,79 @@ onBeforeUnmount(() => {
         <div class="chart-legend">
           <span class="legend-me">나</span>
           <span class="legend-average">동기 평균</span>
+        </div>
+      </section>
+
+      <section
+        v-if="selectedRankingMember"
+        class="ranking-profile-backdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ranking-profile-title"
+        @click.self="closeRankingMember"
+      >
+        <div class="ranking-profile-modal">
+          <button
+            class="ranking-profile-close"
+            type="button"
+            aria-label="프로필 모달 닫기"
+            @click="closeRankingMember"
+          >
+            ×
+          </button>
+
+          <div class="ranking-profile-visual">
+            <span class="ranking-profile-rank">{{ selectedRankingMember.rank }}위</span>
+            <img
+              :src="selectedRankingMember.character"
+              :alt="`${selectedRankingMember.nickname} 캐릭터`"
+            >
+          </div>
+
+          <h2 id="ranking-profile-title">
+            {{ selectedRankingMember.nickname }}
+          </h2>
+          <p class="ranking-profile-subtitle">
+            <template v-if="selectedRankingMember.hasBadge">
+              {{ getRankingMemberType(selectedRankingMember) }} · {{ selectedRankingMember.tier }}
+            </template>
+            <template v-else>
+              뱃지가 없어요
+            </template>
+          </p>
+
+          <div class="ranking-profile-stats">
+            <span>랭킹<strong>{{ selectedRankingMember.rank }}위</strong></span>
+            <span>미션<strong>{{ selectedRankingMember.missionCount }}개</strong></span>
+            <span>응원<strong>{{ getEncouragementCount(selectedRankingMember) }}개</strong></span>
+          </div>
+
+          <button
+            class="encouragement-button"
+            :class="{ sent: hasSentEncouragement(selectedRankingMember) }"
+            type="button"
+            :disabled="
+              isCurrentRankingMember(selectedRankingMember) ||
+                hasSentEncouragement(selectedRankingMember)
+            "
+            @click="sendEncouragement"
+          >
+            <span aria-hidden="true">👍</span>
+            {{
+              isCurrentRankingMember(selectedRankingMember)
+                ? '내 프로필이에요'
+                : hasSentEncouragement(selectedRankingMember)
+                  ? '응원을 보냈어요'
+                  : '응원 보내기'
+            }}
+          </button>
+          <p class="ranking-profile-hint">
+            {{
+              isCurrentRankingMember(selectedRankingMember)
+                ? '다른 동기에게 응원을 보내보세요.'
+                : '같은 사용자에게 한 번만 응원을 보낼 수 있어요.'
+            }}
+          </p>
         </div>
       </section>
     </template>
@@ -1332,7 +1483,16 @@ onBeforeUnmount(() => {
   left: calc(50% + var(--character-offset-x));
   width: 70px;
   height: 65px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
   transform: translateX(-50%);
+}
+.ranking-character-wrap:focus-visible {
+  border-radius: 24px;
+  outline: 3px solid #42d985;
+  outline-offset: 4px;
 }
 .ranking-character {
   display: block;
@@ -1368,6 +1528,133 @@ onBeforeUnmount(() => {
   padding: 90px 0 70px;
   color: #aaa;
   font-size: 12px;
+}
+.ranking-profile-backdrop {
+  position: fixed;
+  z-index: var(--z-modal, 1000);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(27 38 32 / 42%);
+}
+.ranking-profile-modal {
+  position: relative;
+  width: min(100%, 320px);
+  padding: 28px 20px 22px;
+  border: 1px solid rgb(255 255 255 / 78%);
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 18px 45px rgb(30 70 48 / 20%);
+  text-align: center;
+}
+.ranking-profile-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  color: #9ca5a0;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+.ranking-profile-visual {
+  position: relative;
+  display: grid;
+  width: 104px;
+  height: 104px;
+  place-items: center;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #effff5, #e1f7ec);
+}
+.ranking-profile-visual img {
+  width: 82px;
+  height: 82px;
+  object-fit: contain;
+}
+.ranking-profile-rank {
+  position: absolute;
+  right: -7px;
+  bottom: 0;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #fff;
+  background: #31bd6d;
+  font-size: 11px;
+  font-weight: 700;
+}
+.ranking-profile-modal h2 {
+  margin: 0;
+  color: #343b37;
+  font-size: 20px;
+}
+.ranking-profile-subtitle {
+  margin: 5px 0 18px;
+  color: #929b96;
+  font-size: 12px;
+}
+.ranking-profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.ranking-profile-stats span {
+  padding: 9px 4px;
+  border-radius: 12px;
+  color: #8a938e;
+  background: #f5faf6;
+  font-size: 11px;
+}
+.ranking-profile-stats strong {
+  display: block;
+  margin-top: 3px;
+  color: #3a433e;
+  font-size: 13px;
+}
+.encouragement-button {
+  display: inline-flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 16px;
+  color: #fff;
+  background: #22c66b;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+.encouragement-button:hover:not(:disabled) {
+  background: #18ae5b;
+  transform: translateY(-1px);
+}
+.encouragement-button:focus-visible {
+  outline: 3px solid #9ff0bd;
+  outline-offset: 3px;
+}
+.encouragement-button.sent,
+.encouragement-button:disabled {
+  color: #7d8982;
+  background: #edf2ee;
+  cursor: default;
+}
+.ranking-profile-hint {
+  margin: 10px 0 0;
+  color: #a2aaa5;
+  font-size: 11px;
 }
 .my-rank-card {
   padding: 20px;
@@ -1408,6 +1695,55 @@ onBeforeUnmount(() => {
   display: block;
   margin-top: 3px;
   color: #444;
+}
+.next-rank-goal {
+  padding: 16px;
+  margin: 16px 0 20px;
+  border: 1px solid #e3f4e8;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f6fff8 0%, #fffdf2 100%);
+}
+.next-rank-goal__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: #829087;
+  font-size: 12px;
+}
+.next-rank-goal__heading strong {
+  color: #1db960;
+  font-size: 14px;
+}
+.next-rank-goal__track {
+  height: 8px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7eee9;
+}
+.next-rank-goal__track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #55e88b 0%, #b7e84e 100%);
+}
+.next-rank-goal__labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 7px;
+  color: #9aa39d;
+  font-size: 10px;
+}
+.next-rank-goal p {
+  padding-top: 11px;
+  margin: 11px 0 0;
+  border-top: 1px solid #e8f1e9;
+  color: #68756d;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
 }
 .chart {
   position: relative;
