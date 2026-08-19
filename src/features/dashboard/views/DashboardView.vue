@@ -67,8 +67,7 @@ const {
   loading: dashboardLoading,
   reload: reloadDashboard,
 } = useDashboard(dashboardOptions)
-const personaEvents = computed(() => dashboardData.value.events)
-const { events: upcomingEvents, addEvent } = useUpcomingEvents(personaEvents)
+const { events: upcomingEvents, addEvent, loadEvents } = useUpcomingEvents()
 const activeVacation = computed(() => {
   const currentDate = new Date()
   const today = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`
@@ -126,6 +125,14 @@ function normalizeMission(mission) {
     completed: isMissionCompleted(mission),
   }
 }
+
+onMounted(async () => {
+  try {
+    await loadEvents()
+  } catch {
+    // 이벤트 목록은 다음 화면 진입 시 다시 조회한다.
+  }
+})
 
 onMounted(async () => {
   try {

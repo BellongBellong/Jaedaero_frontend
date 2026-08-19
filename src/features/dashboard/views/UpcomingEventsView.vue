@@ -6,12 +6,20 @@ import MiniEventCalendar from '@/features/dashboard/components/MiniEventCalendar
 import SelectedEventList from '@/features/dashboard/components/SelectedEventList.vue'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
 import { useMissionStore } from '@/features/missions/stores/mission.store'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 const selectedDate = ref(toDateString(new Date()))
 const showAddModal = ref(false)
 const missionStore = useMissionStore()
-const { events, addEvent, removeEvent } = useUpcomingEvents()
+const { events, addEvent, loadEvents, removeEvent } = useUpcomingEvents()
+
+onMounted(async () => {
+  try {
+    await loadEvents()
+  } catch {
+    window.alert('이벤트 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.')
+  }
+})
 
 function toDateString(date) {
   const year = date.getFullYear()
