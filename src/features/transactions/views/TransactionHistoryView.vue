@@ -278,6 +278,7 @@ onBeforeUnmount(() => {
         v-if="activeTab === 'ACCOUNT'"
         v-model="selectedAccountId"
         :options="accountFilterOptions"
+        :menu-width="180"
         aria-label="조회할 계좌 선택"
       />
       <DropdownMenu
