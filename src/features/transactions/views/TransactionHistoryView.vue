@@ -30,6 +30,7 @@ const activeTab = ref(String(route.query.tab || 'ALL').toUpperCase())
 const transactionFilter = ref(
   filterOptions.some(({ value }) => value === initialType) ? initialType : 'ALL',
 )
+const selectedAccountId = ref(String(route.query.accountId || 'ALL'))
 const usesMockScenario = computed(() => Boolean(route.query.persona || route.query.scenario))
 const loadedTransactions = computed(() =>
   usesMockScenario.value ? transactionResponses : transactionsStore.transactions,
@@ -71,6 +72,27 @@ const investmentAccounts = computed(() => {
 const investmentAccountIds = computed(
   () => new Set(investmentAccounts.value.map((account) => String(account.id ?? account.accountId))),
 )
+const accountFilterOptions = computed(() => {
+  const accounts = usesMockScenario.value
+    ? (dashboard.value.assetSummary.total.accounts ?? [])
+    : connectedAccounts.value
+
+  return [
+    { value: 'ALL', label: '전체' },
+    ...accounts
+      .filter((account) => !isInvestmentAccount(account))
+      .map((account) => ({
+        value: String(account.id ?? account.accountId),
+        label:
+          account.accountName ||
+          account.productName ||
+          account.institutionName ||
+          account.bankName ||
+          account.accountNumberMasked ||
+          '연결 계좌',
+      })),
+  ]
+})
 const isVacationPeriod = computed(() => route.query.period === 'vacation')
 const canLoadMoreHistory = computed(
   () => !isVacationPeriod.value && route.query.period !== 'month' && hasMoreHistory.value,
@@ -88,7 +110,13 @@ const transactions = computed(() => {
     .filter((transaction) => {
       const investment = investmentAccountIds.value.has(String(transaction.accountId))
       if (activeTab.value === 'INVESTMENT') return investment
-      if (activeTab.value === 'ACCOUNT') return !investment
+      if (activeTab.value === 'ACCOUNT') {
+        return (
+          !investment &&
+          (selectedAccountId.value === 'ALL' ||
+            String(transaction.accountId) === selectedAccountId.value)
+        )
+      }
       return true
     })
     .filter(
@@ -247,6 +275,13 @@ onBeforeUnmount(() => {
 
     <section class="transaction-history__card">
       <DropdownMenu
+        v-if="activeTab === 'ACCOUNT'"
+        v-model="selectedAccountId"
+        :options="accountFilterOptions"
+        aria-label="조회할 계좌 선택"
+      />
+      <DropdownMenu
+        v-else
         v-model="transactionFilter"
         :options="filterOptions"
         aria-label="거래내역 필터"
