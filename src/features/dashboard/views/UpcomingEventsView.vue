@@ -5,11 +5,13 @@ import EventTimeline from '@/features/dashboard/components/EventTimeline.vue'
 import MiniEventCalendar from '@/features/dashboard/components/MiniEventCalendar.vue'
 import SelectedEventList from '@/features/dashboard/components/SelectedEventList.vue'
 import { useUpcomingEvents } from '@/features/dashboard/composables/useUpcomingEvents'
+import { useMissionStore } from '@/features/missions/stores/mission.store'
 import { ref } from 'vue'
 
 const selectedDate = ref(toDateString(new Date()))
 const showAddModal = ref(false)
-const { events, addEvent } = useUpcomingEvents()
+const missionStore = useMissionStore()
+const { events, addEvent, removeEvent } = useUpcomingEvents()
 
 function toDateString(date) {
   const year = date.getFullYear()
@@ -27,6 +29,17 @@ async function saveEvent(event) {
     window.alert('휴가 일정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
   }
 }
+
+async function deleteEvent(event) {
+  if (!window.confirm(`'${event.title}' 일정을 삭제할까요?`)) return
+
+  try {
+    await removeEvent(event.id)
+    await missionStore.loadTodayMissions({ force: true })
+  } catch {
+    window.alert('이벤트를 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.')
+  }
+}
 </script>
 
 <template>
@@ -41,6 +54,7 @@ async function saveEvent(event) {
       :events="events"
       :selected-date="selectedDate"
       @add="showAddModal = true"
+      @delete="deleteEvent"
     />
 
     <EventTimeline :events="events" />

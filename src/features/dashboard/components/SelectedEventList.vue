@@ -14,7 +14,7 @@ const props = defineProps({
   },
 })
 
-defineEmits(['add'])
+defineEmits(['add', 'delete'])
 
 const selectedEvents = computed(() =>
   props.events.filter((event) => {
@@ -76,6 +76,13 @@ function urgencyClass(dday) {
         <span class="selected-event-list__dday app-label label--dynamic">
           {{ ddayLabel(event.dday) }}
         </span>
+        <button
+          class="selected-event-list__delete"
+          type="button"
+          @click="$emit('delete', event)"
+        >
+          삭제
+        </button>
       </li>
     </ul>
 
@@ -130,7 +137,7 @@ function urgencyClass(dday) {
   display: grid;
   min-width: 0;
   min-height: 64px;
-  grid-template-columns: 22px minmax(0, 1fr) auto;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 10px;
   padding: 7px 20px;
@@ -177,6 +184,16 @@ function urgencyClass(dday) {
 .selected-event-list__dday {
   --label-background: var(--event-label-background);
   --label-color: var(--event-color);
+}
+
+.selected-event-list__delete {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
 }
 
 .selected-event-list__item--urgent {

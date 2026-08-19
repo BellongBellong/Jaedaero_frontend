@@ -15,3 +15,7 @@ export async function updateLeaveModeBudget(leaveModeId, budgetAmount) {
   const { data } = await apiClient.put(ENDPOINTS.leaveMode.budget(leaveModeId), { budgetAmount })
   return data
 }
+
+export async function deleteLeaveMode(leaveModeId) {
+  await apiClient.delete(ENDPOINTS.leaveMode.remove(leaveModeId))
+}

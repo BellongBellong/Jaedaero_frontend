@@ -1,6 +1,6 @@
 import { computed, isRef, ref, toRaw, unref, watch } from 'vue'
 
-import { startLeaveMode } from '@/features/leave-mode/api/leaveMode.api'
+import { deleteLeaveMode, startLeaveMode } from '@/features/leave-mode/api/leaveMode.api'
 import { setEventLeaveModeSchedules } from '@/features/leave-mode/composables/useLeaveModeSchedule'
 
 const EVENT_STORAGE_KEY = 'jaedaero-upcoming-events'
@@ -114,8 +114,22 @@ export function useUpcomingEvents(initialEvents = []) {
     await setEventLeaveModeSchedules()
   }
 
+  async function removeEvent(eventId) {
+    const event = events.value.find((item) => String(item.id) === String(eventId))
+    if (!event) return
+
+    if (event.leaveModeId) {
+      await deleteLeaveMode(event.leaveModeId)
+    }
+
+    events.value = events.value.filter((item) => String(item.id) !== String(eventId))
+    persistEvents()
+    await setEventLeaveModeSchedules()
+  }
+
   return {
     events: sortedEvents,
     addEvent,
+    removeEvent,
   }
 }
