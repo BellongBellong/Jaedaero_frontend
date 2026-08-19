@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import arrowIcon from '@/assets/icons/arrow.svg'
 import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
@@ -10,9 +10,12 @@ import {
   normalizeBenefitCategory,
   normalizeBenefits,
 } from '@/features/benefits/utils/benefitMapper'
+import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import { getBenefits } from '@/features/reports/api/reports.api'
 
 const route = useRoute()
+const router = useRouter()
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_LEAVE_BENEFIT')
 
 const categoryNames = ['전체', '카드', '교통', '여가', '자기계발', '숙박', '기타']
 const categoryOptions = categoryNames.map((category) => ({ label: category, value: category }))
@@ -55,8 +58,12 @@ function formatPeriod(benefit) {
   return `${formatDate(benefit.validFrom)} ~ ${formatDate(benefit.validTo || benefit.validFrom)}`
 }
 
-function toggleBenefit(id) {
-  expandedId.value = expandedId.value === id ? null : id
+async function toggleBenefit(id) {
+  const isOpening = expandedId.value !== id
+  expandedId.value = isOpening ? id : null
+  if (isOpening) {
+    await completeMissionAfterLoad()
+  }
 }
 
 function showCategory(category) {

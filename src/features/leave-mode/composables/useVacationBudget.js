@@ -2,12 +2,12 @@ import { computed } from 'vue'
 
 import { useLeaveModeStore } from '@/features/leave-mode/stores/leave-mode.store'
 
-export function useVacationBudget(vacation) {
+export function useVacationBudget() {
   const store = useLeaveModeStore()
-  const budget = computed(() => store.budgetFor(vacation.value))
+  const budget = computed(() => store.currentLeaveMode?.budgetAmount ?? null)
 
   function setBudget(amount) {
-    store.setBudget(vacation.value, amount)
+    return store.updateBudget(amount)
   }
 
   return { budget, setBudget }

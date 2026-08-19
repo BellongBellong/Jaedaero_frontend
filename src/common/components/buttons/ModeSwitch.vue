@@ -5,6 +5,7 @@ import switchIcon from '@/assets/icons/reflectIcon.svg'
 
 const props = defineProps({
   modelValue: { type: String, default: 'military' },
+  interactive: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue'])
 
@@ -23,6 +24,7 @@ const currentMode = computed(() =>
 )
 
 function toggleMode() {
+  if (!props.interactive) return
   emit('update:modelValue', props.modelValue === 'military' ? 'vacation' : 'military')
 }
 </script>
@@ -31,6 +33,7 @@ function toggleMode() {
   <button
     class="mode-switch"
     :class="currentMode.className"
+    :disabled="!interactive"
     @click="toggleMode"
   >
     <div class="mode-switch__icon">
@@ -103,6 +106,9 @@ function toggleMode() {
 
 .mode-switch:active {
   transform: scale(0.97);
+}
+.mode-switch:disabled {
+  cursor: default;
 }
 
 .mode-switch.military {

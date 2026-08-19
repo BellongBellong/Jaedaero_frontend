@@ -8,6 +8,7 @@ const missionActionRoutes = {
   VIEW_REBALANCING: 'investment-guide',
   RUN_WHAT_IF_SIMULATION: 'what-if-simulation',
   VIEW_MARKET_REPORT: 'ai-financial-report',
+  VIEW_LEAVE_BENEFIT: 'benefits',
   VIEW_DAILY_REPORT: 'ai-financial-report',
   VIEW_ASSET_OVERVIEW: 'asset-overview',
   VIEW_WHAT_IF: 'what-if-simulation',

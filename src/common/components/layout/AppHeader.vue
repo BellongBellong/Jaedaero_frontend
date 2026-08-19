@@ -18,7 +18,7 @@ defineProps({
 })
 
 const router = useRouter()
-const { mode, setMode, refreshMode } = useLeaveModeSchedule()
+const { mode, refreshMode } = useLeaveModeSchedule()
 let dailyRefreshTimer
 
 function scheduleNextRefresh() {
@@ -59,10 +59,7 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
         alt="제대로"
       >
       <div class="app-header__actions">
-        <ModeSwitch
-          :model-value="mode"
-          @update:model-value="setMode"
-        />
+        <ModeSwitch :model-value="mode" />
         <NotificationButton :mode="mode" />
       </div>
     </template>
