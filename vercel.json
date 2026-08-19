@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://jaedaerobackend-production.up.railway.app/api/:path*"
+      "destination": "https://jaedaero.서버.한국/api/:path*"
     },
     {
       "source": "/(.*)",

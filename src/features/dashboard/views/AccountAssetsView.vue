@@ -8,6 +8,7 @@ import AssetAccountListItem from '@/features/dashboard/components/AssetAccountLi
 import InvestmentAssetChart from '@/features/dashboard/components/InvestmentAssetChart.vue'
 import InvestmentHoldingsList from '@/features/dashboard/components/InvestmentHoldingsList.vue'
 import { useDashboard } from '@/features/dashboard/composables/useDashboard'
+import { isSecuritiesAccount } from '@/features/accounts/composables/institutionMapping'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,11 +34,7 @@ const savingsAccounts = computed(() =>
     ['MILITARY_SAVINGS', 'SAVINGS', 'INSTALLMENT_SAVINGS'].includes(accountType(account)),
   ),
 )
-const investmentAccounts = computed(() =>
-  accounts.value.filter((account) =>
-    ['INVESTMENT', 'SECURITIES', 'SECURITY'].includes(accountType(account)),
-  ),
-)
+const investmentAccounts = computed(() => accounts.value.filter(isSecuritiesAccount))
 const investmentSummary = computed(() => dashboard.value.assetSummary.monthly.investment ?? {})
 
 function sumAccounts(items) {

@@ -37,8 +37,38 @@ import bankBlockIm from '../../../assets/institutions/banks/block/iM.png'
 import {
   accountInstitutionName,
   accountOrganizationCode,
+  isSecuritiesAccount,
   normalizeInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
+
+const securityAssets = import.meta.glob(
+  '@/assets/features/onboarding/institutions/security-*.svg',
+  {
+    eager: true,
+    import: 'default',
+    query: '?url',
+  },
+)
+
+const securityLogoIndexByCode = {
+  '0238': 0,
+  '0243': 1,
+  '0218': 2,
+  '0240': 3,
+  '0247': 4,
+  '0261': 5,
+  '0264': 6,
+  '0266': 7,
+  '0209': 8,
+  '0267': 9,
+  '0269': 10,
+  '0270': 11,
+  '0278': 12,
+  '0279': 13,
+  '0280': 14,
+  '0287': 15,
+  '0225': 16,
+}
 
 const iconsByCode = {
   '0003': bankIbk,
@@ -131,6 +161,15 @@ const blockIconsByName = {
 }
 
 export function bankAccountIcon(account) {
+  if (isSecuritiesAccount(account)) {
+    const logoIndex = securityLogoIndexByCode[accountOrganizationCode(account)] ?? 0
+    const iconPath = Object.keys(securityAssets).find((path) =>
+      path.endsWith(`/security-${logoIndex}.svg`),
+    )
+
+    return securityAssets[iconPath] || bankFallback
+  }
+
   const code = accountOrganizationCode(account)
   if (iconsByCode[code]) return iconsByCode[code]
 
