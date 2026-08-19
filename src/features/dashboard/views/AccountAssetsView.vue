@@ -26,7 +26,7 @@ function accountType(account) {
 
 const checkingAccounts = computed(() =>
   accounts.value.filter((account) =>
-    ['CHECKING', 'SALARY', 'ACCOUNT', 'ASSET'].includes(accountType(account)),
+    ['DEMAND_DEPOSIT', 'CHECKING', 'SALARY', 'ACCOUNT', 'ASSET'].includes(accountType(account)),
   ),
 )
 const savingsAccounts = computed(() =>
