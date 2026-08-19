@@ -1,9 +1,9 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
-import checkboxFalseIcon from '@/assets/icons/Category/CheckboxFalse.svg'
-import checkboxIcon from '@/assets/icons/Category/CheckboxIcon.png'
-import closeIcon from '@/assets/icons/Category/closeIcon.svg'
+import checkboxFalseIcon from '@/assets/icons/CheckboxFalse.svg'
+import checkboxTrueIcon from '@/assets/icons/CheckboxTrue.svg'
+import closeIcon from '@/assets/icons/closeIcon.svg'
 import arrowIcon from '@/assets/icons/arrow.svg'
 
 const props = defineProps({
@@ -121,7 +121,7 @@ onBeforeUnmount(() => {
               >
                 <img
                   class="mission-sheet__check"
-                  :src="mission.completed ? checkboxIcon : checkboxFalseIcon"
+                  :src="mission.completed ? checkboxTrueIcon : checkboxFalseIcon"
                   alt=""
                   aria-hidden="true"
                 >
