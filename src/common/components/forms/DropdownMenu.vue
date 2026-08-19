@@ -17,6 +17,10 @@ const props = defineProps({
     type: String,
     default: '항목 선택',
   },
+  menuWidth: {
+    type: Number,
+    default: 104,
+  },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -32,7 +36,7 @@ function updatePosition() {
   const rect = trigger.value?.getBoundingClientRect()
   if (!rect) return
 
-  const menuWidth = 104
+  const menuWidth = props.menuWidth
   const mobileWidth = Number.parseFloat(
     getComputedStyle(document.documentElement).getPropertyValue('--mobile-width'),
   )
@@ -49,6 +53,7 @@ function updatePosition() {
   menuPosition.value = {
     top: `${rect.top}px`,
     left: `${left}px`,
+    width: `${menuWidth}px`,
   }
 }
 
@@ -197,6 +202,10 @@ onBeforeUnmount(close)
   font-weight: var(--weight-bold);
   line-height: 1.5;
   text-align: left;
+}
+
+.common-dropdown__menu button span {
+  overflow-wrap: anywhere;
 }
 
 .common-dropdown__menu button img {
