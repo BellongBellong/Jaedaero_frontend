@@ -807,39 +807,42 @@ onBeforeUnmount(() => {
           <span>평균<b>{{ rankingSummary.averageMissionCount || 0 }}개</b></span>
           <span>상위 10%<b>{{ rankingSummary.topTenMissionCount || 0 }}개</b></span>
         </div>
-        <div
-          v-if="nearbyRanking.hasNextRank"
-          class="next-rank-goal"
-        >
-          <div class="next-rank-goal__heading">
-            <span>다음 순위까지</span>
-            <strong>{{ nearbyRanking.missionsToNextRank }}개 남았어요</strong>
-          </div>
-          <div class="next-rank-goal__track">
-            <span
-              :style="{
-                width: `${(nearbyRanking.myMissionCount / nearbyRanking.aboveMissionCount) * 100}%`,
-              }"
-            />
-          </div>
-          <div class="next-rank-goal__labels">
-            <span>{{ nearbyRanking.myRank }}위 · {{ nearbyRanking.myMissionCount }}개</span>
-            <span>{{ nearbyRanking.aboveRank }}위 · {{ nearbyRanking.aboveMissionCount }}개</span>
-          </div>
-          <p>
-            오늘 미션 {{ nearbyRanking.todayMissionCount }}개를 완료하면
-            {{ nearbyRanking.projectedRank }}위까지 올라갈 수 있어요.
-          </p>
-        </div>
-        <div
-          v-else-if="nearbyRanking.isFirstPlace"
-          class="next-rank-goal"
-        >
-          <div class="next-rank-goal__heading">
-            <span>현재 순위</span>
-            <strong>현재 1위예요!</strong>
-          </div>
-          <p>지금의 페이스를 유지해 동기 랭킹 1위를 지켜보세요.</p>
+        <div class="next-rank-goal">
+          <template v-if="nearbyRanking.hasNextRank">
+            <div class="next-rank-goal__heading">
+              <span>다음 순위까지</span>
+              <strong>{{ nearbyRanking.missionsToNextRank }}개 남았어요</strong>
+            </div>
+            <div class="next-rank-goal__track">
+              <span
+                :style="{
+                  width: `${(nearbyRanking.myMissionCount / nearbyRanking.aboveMissionCount) * 100}%`,
+                }"
+              />
+            </div>
+            <div class="next-rank-goal__labels">
+              <span>{{ nearbyRanking.myRank }}위 · {{ nearbyRanking.myMissionCount }}개</span>
+              <span>{{ nearbyRanking.aboveRank }}위 · {{ nearbyRanking.aboveMissionCount }}개</span>
+            </div>
+            <p>
+              오늘 미션 {{ nearbyRanking.todayMissionCount }}개를 완료하면
+              {{ nearbyRanking.projectedRank }}위까지 올라갈 수 있어요.
+            </p>
+          </template>
+          <template v-else-if="nearbyRanking.isFirstPlace">
+            <div class="next-rank-goal__heading">
+              <span>현재 순위</span>
+              <strong>현재 1위예요!</strong>
+            </div>
+            <p>지금의 페이스를 유지해 동기 랭킹 1위를 지켜보세요.</p>
+          </template>
+          <template v-else>
+            <div class="next-rank-goal__heading">
+              <span>다음 순위</span>
+              <strong>인접 랭킹을 확인하고 있어요</strong>
+            </div>
+            <p>랭킹 정보가 준비되면 다음 목표를 안내해 드릴게요.</p>
+          </template>
         </div>
         <div class="chart">
           <div
