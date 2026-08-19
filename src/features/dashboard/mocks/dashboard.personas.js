@@ -123,19 +123,7 @@ export const dashboardPersonaMocks = {
       completedMission(203, '오늘의 AI 시장리포트', 'DAILY'),
       completedMission(204, '오늘의 AI 시장리포트', 'DAILY'),
     ],
-    events: [
-      {
-        id: 201,
-        userId: 102,
-        eventType: 'VACATION',
-        title: '8월 정기휴가',
-        startDate: '2026-08-14',
-        endDate: '2026-08-16',
-        expectedExpense: 180000,
-        notificationEnabled: true,
-        autoVacationMode: true,
-      },
-    ],
+    events: [],
     assetSummary: {
       monthly: {
         income: {
@@ -213,48 +201,7 @@ export const dashboardPersonaMocks = {
       completedMission(303, '오늘의 AI 시장리포트', 'DAILY'),
       availableMission(304, '오늘의 AI 시장리포트', 'DAILY'),
     ],
-    events: [
-      {
-        id: 301,
-        userId: 103,
-        eventType: 'PAYDAY',
-        title: '월급날',
-        startDate: '2026-08-10',
-        endDate: '2026-08-10',
-        expectedExpense: 0,
-        notificationEnabled: true,
-      },
-      {
-        id: 302,
-        userId: 103,
-        eventType: 'VACATION',
-        title: '포상휴가',
-        startDate: '2026-08-21',
-        endDate: '2026-08-22',
-        expectedExpense: 120000,
-        notificationEnabled: true,
-      },
-      {
-        id: 303,
-        userId: 103,
-        eventType: 'PROMOTION',
-        title: '병장 진급',
-        startDate: '2026-09-15',
-        endDate: '2026-09-15',
-        expectedExpense: 50000,
-        notificationEnabled: true,
-      },
-      {
-        id: 304,
-        userId: 103,
-        eventType: 'CUSTOM',
-        title: '적금 만기 확인',
-        startDate: '2026-09-28',
-        endDate: '2026-09-28',
-        expectedExpense: 0,
-        notificationEnabled: false,
-      },
-    ],
+    events: [],
     assetSummary: {
       monthly: {
         income: {
@@ -339,29 +286,7 @@ export const dashboardPersonaMocks = {
       completedMission(403, '오늘의 AI 시장리포트', 'DAILY'),
       completedMission(404, '오늘의 AI 시장리포트', 'DAILY'),
     ],
-    events: [
-      {
-        id: 401,
-        userId: 104,
-        eventType: 'VACATION',
-        title: '말출',
-        startDate: '2026-09-10',
-        endDate: '2026-09-25',
-        expectedExpense: 350000,
-        notificationEnabled: true,
-        autoVacationMode: true,
-      },
-      {
-        id: 402,
-        userId: 104,
-        eventType: 'DISCHARGE',
-        title: '전역',
-        startDate: '2026-09-26',
-        endDate: '2026-09-26',
-        expectedExpense: 0,
-        notificationEnabled: true,
-      },
-    ],
+    events: [],
     assetSummary: {
       monthly: {
         income: {

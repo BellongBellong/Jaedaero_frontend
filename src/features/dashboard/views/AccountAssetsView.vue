@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import arrowIcon from '@/assets/icons/arrow.svg'
@@ -7,12 +7,16 @@ import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
 import AssetAccountListItem from '@/features/dashboard/components/AssetAccountListItem.vue'
 import InvestmentAssetChart from '@/features/dashboard/components/InvestmentAssetChart.vue'
 import InvestmentHoldingsList from '@/features/dashboard/components/InvestmentHoldingsList.vue'
+import { getSecuritiesPortfolio } from '@/features/accounts/api/securitiesPortfolio.api'
 import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 import { isSecuritiesAccount } from '@/features/accounts/composables/institutionMapping'
 
 const route = useRoute()
 const router = useRouter()
 const activeTab = ref(route.query.tab === 'investment' ? 'investment' : 'account')
+const securitiesPortfolio = ref([])
+const portfolioLoading = ref(false)
+const portfolioError = ref(false)
 const tabs = [
   { value: 'account', label: '계좌' },
   { value: 'investment', label: '투자' },
@@ -26,7 +30,7 @@ function accountType(account) {
 
 const checkingAccounts = computed(() =>
   accounts.value.filter((account) =>
-    ['CHECKING', 'SALARY', 'ACCOUNT', 'ASSET'].includes(accountType(account)),
+    ['DEMAND_DEPOSIT', 'CHECKING', 'SALARY', 'ACCOUNT', 'ASSET'].includes(accountType(account)),
   ),
 )
 const savingsAccounts = computed(() =>
@@ -35,10 +39,72 @@ const savingsAccounts = computed(() =>
   ),
 )
 const investmentAccounts = computed(() => accounts.value.filter(isSecuritiesAccount))
-const investmentSummary = computed(() => dashboard.value.assetSummary.monthly.investment ?? {})
+const investmentAccountsWithAssets = computed(() =>
+  securitiesPortfolio.value.map((account) => ({
+    ...account,
+    id: account.accountId,
+    accountName: account.productName || account.accountMasked || '증권 계좌',
+    balance: portfolioAmount(account),
+    amount: portfolioAmount(account),
+  })),
+)
+const displayedInvestmentAccounts = computed(() =>
+  securitiesPortfolio.value.length ? investmentAccountsWithAssets.value : investmentAccounts.value,
+)
+const investmentHoldings = computed(() =>
+  securitiesPortfolio.value.flatMap((account) => {
+    const holdings = account.holdings?.length ? account.holdings : account.stockHoldings || []
+    return holdings.map((holding) => ({
+      ...holding,
+      id: `${account.accountId}-${holding.itemCode || holding.itemName}`,
+      name: holding.itemName || '보유 상품',
+      quantityLabel: holding.quantity ? `${holding.quantity}주` : '-',
+      returnRate: Number(holding.earningsRate || 0),
+    }))
+  }),
+)
+const investmentAmount = computed(() => sumAccounts(displayedInvestmentAccounts.value))
+const investmentChangeAmount = computed(() =>
+  investmentHoldings.value.reduce(
+    (total, holding) => total + Number(holding.valuationProfit || 0),
+    0,
+  ),
+)
+const investmentChangeRate = computed(() => {
+  const principal = investmentAmount.value - investmentChangeAmount.value
+  return principal ? (investmentChangeAmount.value / Math.abs(principal)) * 100 : 0
+})
+
+watch(
+  activeTab,
+  async (tab) => {
+    if (tab !== 'investment' || portfolioLoading.value) return
+
+    portfolioLoading.value = true
+    portfolioError.value = false
+    try {
+      securitiesPortfolio.value = await getSecuritiesPortfolio()
+    } catch {
+      securitiesPortfolio.value = []
+      portfolioError.value = true
+    } finally {
+      portfolioLoading.value = false
+    }
+  },
+  { immediate: true },
+)
 
 function sumAccounts(items) {
   return items.reduce((total, account) => total + Number(account.amount ?? account.balance ?? 0), 0)
+}
+
+function portfolioAmount(account) {
+  const holdings = account.holdings?.length ? account.holdings : account.stockHoldings || []
+  const holdingsAmount = holdings.reduce(
+    (total, holding) => total + Number(holding.valuationAmount || 0),
+    0,
+  )
+  return Number(account.depositAmount || 0) + holdingsAmount
 }
 
 function formatWon(value) {
@@ -142,22 +208,28 @@ function openAccount(account) {
       >
         <header>
           <span>투자 자산</span>
-          <strong>{{ formatWon(sumAccounts(investmentAccounts)) }}</strong>
+          <strong>{{ formatWon(investmentAmount) }}</strong>
         </header>
-        <ul v-if="investmentAccounts.length">
+        <p v-if="portfolioLoading">
+          투자 자산을 불러오고 있어요.
+        </p>
+        <ul v-else-if="displayedInvestmentAccounts.length">
           <AssetAccountListItem
-            v-for="account in investmentAccounts"
+            v-for="account in displayedInvestmentAccounts"
             :key="account.id || account.accountId"
             :account="account"
             clickable
             @select="openAccount"
           />
         </ul>
+        <p v-else-if="portfolioError">
+          투자 자산을 불러오지 못했어요. 잠시 후 다시 시도해주세요.
+        </p>
         <p v-else>
           연결된 투자 계좌가 없어요.
         </p>
         <RouterLink
-          v-if="!investmentAccounts.length"
+          v-if="!portfolioLoading && !displayedInvestmentAccounts.length"
           class="account-assets__connect-investment"
           :to="{
             name: 'connect-codef-bank',
@@ -168,20 +240,19 @@ function openAccount(account) {
           증권계좌 연결하기
         </RouterLink>
 
-        <template v-if="investmentAccounts.length">
+        <template v-if="!portfolioLoading && displayedInvestmentAccounts.length">
           <h2 class="account-assets__chart-title">
             투자 현황
           </h2>
           <InvestmentAssetChart
-            :amount="sumAccounts(investmentAccounts)"
-            :change-amount="investmentSummary.changeAmount"
-            :change-rate="investmentSummary.changeRate"
-            :history="investmentSummary.history"
+            :amount="investmentAmount"
+            :change-amount="investmentChangeAmount"
+            :change-rate="investmentChangeRate"
           />
           <h2 class="account-assets__chart-title">
             보유 상품
           </h2>
-          <InvestmentHoldingsList :holdings="investmentSummary.holdings" />
+          <InvestmentHoldingsList :holdings="investmentHoldings" />
         </template>
       </section>
     </template>

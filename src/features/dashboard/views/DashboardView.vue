@@ -25,6 +25,7 @@ import { findMissionRoute } from '@/features/missions/constants/missionActionRou
 import { useMissionStore } from '@/features/missions/stores/mission.store'
 import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
 import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
+import { getBenefits } from '@/features/reports/api/reports.api'
 import { transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import { useVacationBudget } from '@/features/leave-mode/composables/useVacationBudget'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
@@ -43,6 +44,7 @@ const vacationSpentAmount = ref(0)
 const vacationSpendingLoading = ref(false)
 const militaryBenefits = ref([])
 const benefitsLoading = ref(false)
+const useMockServer = import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 const dashboardCharacterImage = ref(armyCharacter)
 const characterImages = {
   ARMY: armyCharacter,
@@ -152,12 +154,20 @@ onMounted(async () => {
 
 watch(
   isVacationMode,
-  (vacationMode) => {
+  async (vacationMode) => {
     if (!vacationMode || militaryBenefits.value.length) return
 
     benefitsLoading.value = true
-    militaryBenefits.value = selectDailyBenefits(normalizeBenefits(benefitExamples), 4)
-    benefitsLoading.value = false
+    try {
+      const benefits = normalizeBenefits(await getBenefits())
+      militaryBenefits.value = selectDailyBenefits(benefits, 4)
+    } catch {
+      militaryBenefits.value = useMockServer
+        ? selectDailyBenefits(normalizeBenefits(benefitExamples), 4)
+        : []
+    } finally {
+      benefitsLoading.value = false
+    }
   },
   { immediate: true },
 )

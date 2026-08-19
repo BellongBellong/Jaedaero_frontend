@@ -176,7 +176,7 @@ function openInvestmentTransactions() {
           v-else
           class="monthly-assets__investment-action"
         >
-          월납입목표
+          목표 {{ formatWon(data.investment.monthlyPaymentTarget) }}
         </span>
       </article>
 

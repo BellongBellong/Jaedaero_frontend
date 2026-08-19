@@ -56,6 +56,9 @@ export const ENDPOINTS = {
   products: {
     recommendations: '/products/recommendations',
   },
+  investments: {
+    securitiesPortfolio: '/investments/securities',
+  },
   benefits: '/benefits',
   recurringInvestmentPlans: {
     me: '/recurring-investment-plans/me',

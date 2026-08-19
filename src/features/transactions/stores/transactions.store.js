@@ -27,7 +27,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
   const error = ref(null)
   let request = null
 
-  async function load(params = {}, { force = false } = {}) {
+  async function load(params = {}, { force = false, append = false } = {}) {
     if (transactions.value.length && !force && !Object.keys(params).length) {
       return transactions.value
     }
@@ -38,7 +38,9 @@ export const useTransactionsStore = defineStore('transactions', () => {
     request = getTransactions(params)
     try {
       const result = await request
-      if (params.accountId) {
+      if (append) {
+        transactions.value = mergeTransactions(transactions.value, result)
+      } else if (params.accountId) {
         transactions.value = mergeTransactions(
           transactions.value.filter(
             (transaction) => String(transaction.accountId) !== String(params.accountId),
@@ -58,15 +60,17 @@ export const useTransactionsStore = defineStore('transactions', () => {
     }
   }
 
-  async function loadWithSecurities(accounts, params = {}) {
-    const regularTransactions = await load(params, { force: true })
+  async function loadWithSecurities(accounts, params = {}, { append = false } = {}) {
+    const regularTransactions = await load(params, { force: true, append })
     const securitiesResults = await Promise.allSettled(
       accounts.map((account) => getSecuritiesTransactions(account.accountId ?? account.id, params)),
     )
     const securitiesTransactions = securitiesResults
       .filter(({ status }) => status === 'fulfilled')
       .flatMap(({ value }) => value)
-    transactions.value = mergeTransactions(regularTransactions, securitiesTransactions)
+    transactions.value = append
+      ? mergeTransactions(transactions.value, securitiesTransactions)
+      : mergeTransactions(regularTransactions, securitiesTransactions)
     return transactions.value
   }
 
