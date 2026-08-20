@@ -37,8 +37,9 @@ function formatSchedule(event) {
 
 function formatDday(dday) {
   const days = Number(dday)
+  if (days < 0) return '종료됨'
   if (days === 0) return 'D-day'
-  return days > 0 ? `D-${days}` : `D+${Math.abs(days)}`
+  return `D-${days}`
 }
 </script>
 

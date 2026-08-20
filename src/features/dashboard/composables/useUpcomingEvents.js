@@ -9,12 +9,16 @@ import { setEventLeaveModeSchedules } from '@/features/leave-mode/composables/us
 
 const EVENT_STORAGE_KEY = 'jaedaero-upcoming-events'
 
-function calculateDday(date) {
+function calculateDday(startDate, endDate) {
   const today = new Date()
-  const target = new Date(`${date}T00:00:00`)
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const start = new Date(`${startDate}T00:00:00`)
+  const end = new Date(`${endDate || startDate}T00:00:00`)
 
-  return Math.ceil((target - todayStart) / 86_400_000)
+  if (todayStart < start) return Math.ceil((start - todayStart) / 86_400_000)
+  if (todayStart > end) return -Math.ceil((todayStart - end) / 86_400_000)
+
+  return 0
 }
 
 function calculateDurationDays(startDate, endDate) {
@@ -109,7 +113,7 @@ export function useUpcomingEvents() {
       .map((event) => ({
         ...event,
         durationDays: calculateDurationDays(event.startDate, event.endDate),
-        dday: calculateDday(event.startDate),
+        dday: calculateDday(event.startDate, event.endDate),
       })),
   )
 
