@@ -12,15 +12,6 @@ const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 /* 화면에 노출할 추천 상품 개수. */
 const RECOMMENDATION_LIMIT = 5
 
-/* 상품명 앞머리가 곧 운용사 브랜드라 이를 제공사로 보여준다. */
-function providerFromName(name) {
-  return (
-    String(name || '')
-      .trim()
-      .split(/\s+/)[0] || 'ETF'
-  )
-}
-
 function returnRateOf(item) {
   const rates = Array.isArray(item?.returns) ? item.returns : []
   const preferred =
@@ -30,56 +21,39 @@ function returnRateOf(item) {
   return preferred?.returnRate ?? null
 }
 
-/* What-if 시뮬레이션 기반 최종 추천 목록을 우선 사용한다. */
-function mapRecommendations(response) {
+/* 투자 성향에 맞는 ETF 중 목표 수익률과 최근 1년 수익률의 차이가 작은 순으로 고른다. */
+function mapRecommendations(response, targetReturnRate) {
   if (Array.isArray(response)) return response
 
   const groups = Array.isArray(response?.groups) ? response.groups : []
-  const detailsByCode = new Map(
-    groups.flatMap((group) => group.items ?? []).map((item) => [item.isuCd, item]),
-  )
-  const personalized = Array.isArray(response?.personalizedRecommendations)
-    ? response.personalizedRecommendations
-    : []
-
-  if (Array.isArray(response?.personalizedRecommendations)) {
-    return personalized.map((item) => {
-      const detail = detailsByCode.get(item.isuCd) ?? {}
-      return {
-        id: item.isuCd,
-        productName: item.name,
-        provider: providerFromName(item.name),
-        expectedReturnRate: returnRateOf(detail),
-        riskLevel: item.riskLevel ?? detail.riskLevel,
-        reason: item.reasons?.[0] ?? '',
-        rateLabel: '최근 1년',
-        badge: null,
-        minDepositLabel: '제한없음',
-        maxDepositLabel: '제한없음',
-      }
-    })
-  }
-
   const preference = response?.investmentPreference === 'RISK' ? 'RISK' : 'SAFE'
-  const matched = groups.filter(
+  const targetRate = Number(response?.expectedReturnRate ?? targetReturnRate)
+  const hasTargetRate = Number.isFinite(targetRate)
+  const matchedGroups = groups.filter(
     (group) => group.assetBucket === preference && group.eligibleForRecommendation !== false,
   )
 
-  return matched
-    .flatMap((group) => group.items ?? [])
+  const candidates = matchedGroups
+    .flatMap((group) =>
+      (group.items ?? [])
+        .filter((item) => item.eligibleForRecommendation !== false)
+        .map((item) => ({ ...item, riskLevel: item.riskLevel ?? group.riskLevel })),
+    )
+    .sort((first, second) => {
+      const firstRate = Number(returnRateOf(first))
+      const secondRate = Number(returnRateOf(second))
+      const firstDifference =
+        Number.isFinite(firstRate) && hasTargetRate ? Math.abs(firstRate - targetRate) : Infinity
+      const secondDifference =
+        Number.isFinite(secondRate) && hasTargetRate ? Math.abs(secondRate - targetRate) : Infinity
+
+      return (
+        firstDifference - secondDifference || String(first.name).localeCompare(String(second.name))
+      )
+    })
     .slice(0, RECOMMENDATION_LIMIT)
-    .map((item) => ({
-      id: item.isuCd,
-      productName: item.name,
-      provider: providerFromName(item.name),
-      expectedReturnRate: returnRateOf(item),
-      riskLevel: item.riskLevel,
-      reason: item.classificationReasons?.[0] ?? '',
-      rateLabel: '최근 1년',
-      badge: null,
-      minDepositLabel: '제한없음',
-      maxDepositLabel: '제한없음',
-    }))
+
+  return mapProductRecommendations(candidates, { limit: RECOMMENDATION_LIMIT })
 }
 
 const route = useRoute()
@@ -89,6 +63,7 @@ const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_D
 const products = ref([])
 const recommendation = ref(null)
 const errorMessage = ref('')
+const loading = ref(true)
 const scenario = ref({
   annualReturnRate: 5,
   investmentPercent: 30,
@@ -139,18 +114,21 @@ onMounted(async () => {
   const simulationId = Number(route.query.simulationId ?? savedScenario?.simulationId)
   if (!Number.isInteger(simulationId) || simulationId <= 0) {
     errorMessage.value = 'What-if 시뮬레이션을 저장한 뒤 추천 상품을 확인해주세요.'
+    loading.value = false
     return
   }
 
   try {
     recommendation.value = await reportsStore.loadProductRecommendations({ simulationId })
-    products.value = mapRecommendations(recommendation.value)
+    products.value = mapRecommendations(recommendation.value, scenario.value.annualReturnRate)
     if (recommendation.value?.expectedReturnRate !== undefined) {
       scenario.value.annualReturnRate = recommendation.value.expectedReturnRate
     }
     await completeMissionAfterLoad()
   } catch {
     errorMessage.value = '추천 상품을 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
+  } finally {
+    loading.value = false
   }
 })
 </script>
@@ -203,6 +181,12 @@ onMounted(async () => {
       role="alert"
     >
       {{ errorMessage }}
+    </p>
+    <p
+      v-else-if="loading"
+      class="product-screen__loading"
+    >
+      조건에 맞는 ETF를 찾고 있어요.
     </p>
     <p
       v-else-if="!recommendedProducts.length"
@@ -427,6 +411,13 @@ onMounted(async () => {
   text-align: center;
 }
 
+.product-screen__loading {
+  margin-top: 40px;
+  color: var(--gray-500);
+  font-size: 12px;
+  text-align: center;
+}
+
 .product-list {
   display: flex;
   flex-direction: column;
@@ -514,6 +505,7 @@ onMounted(async () => {
 
 .product-card__rate strong {
   display: block;
+  color: var(--green-700);
   font-size: 20px;
   line-height: 1.5;
 }
@@ -524,24 +516,12 @@ onMounted(async () => {
   line-height: 1.5;
 }
 
-.product-card--olive .product-card__rate strong {
-  color: var(--olive-500);
-}
-
 .product-card--olive .product-card__rate span {
   color: rgb(86 103 82 / 80%);
 }
 
-.product-card--yellow .product-card__rate strong {
-  color: var(--yellow-400);
-}
-
 .product-card--yellow .product-card__rate span {
   color: rgb(255 229 114 / 80%);
-}
-
-.product-card--green .product-card__rate strong {
-  color: var(--green-500);
 }
 
 .product-card--green .product-card__rate span {
