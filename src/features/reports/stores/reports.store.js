@@ -18,13 +18,14 @@ export const useReportsStore = defineStore('reports', () => {
     error.value = null
     try {
       const response = await getProductRecommendations(simulationId ? { simulationId } : {})
+      const payload = response?.data ?? response?.result ?? response
       /*
         KRX ETF 기준으로 바뀐 응답은 groups 안에 상품이 들어 있어
         기존 배열 추출로는 비어버린다. 원본을 그대로 넘겨 화면에서 매핑한다.
       */
-      productRecommendations.value = Array.isArray(response)
-        ? response
-        : (response?.recommendations ?? response?.content ?? response?.items ?? response ?? [])
+      productRecommendations.value = Array.isArray(payload)
+        ? payload
+        : (payload?.recommendations ?? payload?.content ?? payload?.items ?? payload ?? [])
       recommendationKey.value = cacheKey
       return productRecommendations.value
     } catch (requestError) {
