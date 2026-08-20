@@ -355,25 +355,19 @@ function openVacationTransactions() {
         ref="financialCardAnchor"
         class="dashboard__financial-card-anchor"
       >
+        <FinancialDdayCompactCard
+          v-if="showCompactFinancialCard && !isVacationMode"
+          v-bind="dashboardData.financialDday"
+          :character-image="dashboardCharacterImage"
+          mode="default"
+        />
         <FinancialDdayCard
+          v-else
           v-bind="dashboardData.financialDday"
           :character-image="dashboardCharacterImage"
           :mode="isVacationMode ? 'vacation' : 'default'"
         />
       </div>
-
-      <Transition name="financial-summary">
-        <div
-          v-if="showCompactFinancialCard && !isVacationMode"
-          class="dashboard__financial-summary"
-        >
-          <FinancialDdayCompactCard
-            v-bind="dashboardData.financialDday"
-            :character-image="dashboardCharacterImage"
-            :mode="isVacationMode ? 'vacation' : 'default'"
-          />
-        </div>
-      </Transition>
 
       <TodayMilitaryBenefits
         v-if="isVacationMode"
@@ -468,28 +462,6 @@ function openVacationTransactions() {
 
 .dashboard__financial-card-anchor {
   width: 100%;
-}
-
-.dashboard__financial-summary {
-  position: fixed;
-  top: calc(var(--safe-area-top, 0px) + var(--app-header-height, 76px) + 8px);
-  left: 50%;
-  z-index: 25;
-  width: min(calc(100vw - 40px), 353px);
-  translate: -50% 0;
-}
-
-.financial-summary-enter-active,
-.financial-summary-leave-active {
-  transition:
-    opacity 180ms ease,
-    translate 180ms ease;
-}
-
-.financial-summary-enter-from,
-.financial-summary-leave-to {
-  opacity: 0;
-  translate: -50% -10px;
 }
 
 .dashboard.screen.app-page.dashboard--vacation {
