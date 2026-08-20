@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 
 import reportMascot from '../../../assets/features/ai-coach/coach-character.png'
 import smallMoney from '@/assets/icons/Smallmoney.png'
+import parasolGradient from '@/assets/icons/parasolGradient.png'
 import starGradient from '@/assets/icons/starGradient.png'
 
 const props = defineProps({
@@ -134,8 +135,8 @@ const dateTime = computed(() => {
         aria-hidden="true"
       >
       <img
-        class="daily-report-banner__vacation-star daily-report-banner__vacation-star--large"
-        :src="starGradient"
+        class="daily-report-banner__vacation-parasol"
+        :src="parasolGradient"
         alt=""
         aria-hidden="true"
       >
@@ -351,11 +352,16 @@ const dateTime = computed(() => {
   opacity: 0.82;
 }
 
-.daily-report-banner__vacation-star--large {
-  right: 4px;
-  bottom: -3px;
-  width: 62px;
-  height: 62px;
+.daily-report-banner__vacation-parasol {
+  position: absolute;
+  right: -7px;
+  bottom: -14px;
+  display: block;
+  width: 82px;
+  height: 86px;
+  pointer-events: none;
+  object-fit: contain;
+  opacity: 0.72;
 }
 
 @media (max-width: 360px) {
@@ -367,7 +373,8 @@ const dateTime = computed(() => {
   .daily-report-banner__report-icon,
   .daily-report-banner__glow,
   .daily-report-banner__star,
-  .daily-report-banner__vacation-star {
+  .daily-report-banner__vacation-star,
+  .daily-report-banner__vacation-parasol {
     display: none;
   }
 
