@@ -89,7 +89,7 @@ export function mapAnalysisHistoryPage(response) {
   const histories = Array.isArray(response?.histories) ? response.histories : []
 
   return {
-    records: histories.map(mapAnalysisHistoryItem),
+    records: sortAnalysisRecords(histories.map(mapAnalysisHistoryItem)),
     totalCount: toNumber(response?.totalCount),
     hasNext: Boolean(response?.hasNext),
     latestDate: formatDate(response?.latestAnalyzedAt),
@@ -225,7 +225,16 @@ export function mapAnalysisHistoryRecords({ analyses, simulations, applications 
   ])
 }
 
-/** 최근 기록이 앞에 오도록 정렬한다. */
+/** 적용 중인 AI 소비 분석을 먼저 두고, 같은 우선순위에서는 최근 기록을 앞에 둔다. */
 export function sortAnalysisRecords(records) {
-  return [...records].sort((first, second) => orderKey(second).localeCompare(orderKey(first)))
+  return [...records].sort((first, second) => {
+    const firstIsAppliedAi =
+      first.type === ANALYSIS_RECORD_TYPES.AI_ANALYSIS && Boolean(first.applied)
+    const secondIsAppliedAi =
+      second.type === ANALYSIS_RECORD_TYPES.AI_ANALYSIS && Boolean(second.applied)
+    const appliedOrder = Number(secondIsAppliedAi) - Number(firstIsAppliedAi)
+
+    if (appliedOrder) return appliedOrder
+    return orderKey(second).localeCompare(orderKey(first))
+  })
 }

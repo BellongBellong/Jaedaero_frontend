@@ -8,12 +8,13 @@ import ModeSwitch from '../buttons/ModeSwitch.vue'
 import NotificationButton from '../buttons/NotificationButton.vue'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule.js'
 
-defineProps({
+const props = defineProps({
   title: { type: String, default: '' },
   badge: { type: String, default: '' },
   variant: { type: String, default: 'back' },
   collapsed: { type: Boolean, default: false },
   hideBackWhenCollapsed: { type: Boolean, default: false },
+  backTo: { type: [String, Object], default: null },
 })
 
 const router = useRouter()
@@ -35,6 +36,15 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
+
+function handleBack() {
+  if (props.backTo) {
+    router.push(props.backTo)
+    return
+  }
+
+  router.back()
+}
 </script>
 
 <template>
@@ -69,7 +79,7 @@ onBeforeUnmount(() => window.clearTimeout(dailyRefreshTimer))
         class="app-header__back"
         type="button"
         aria-label="이전 페이지"
-        @click="router.back()"
+        @click="handleBack"
       >
         <img
           :src="backwardIcon"
