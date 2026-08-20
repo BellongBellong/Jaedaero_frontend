@@ -22,7 +22,6 @@ const mainRoutes = [
           bottomNavigation: 'ai-coach',
           headerTitle: 'AI 코치',
           headerVariant: 'title',
-          synchronizedChrome: true,
         },
       },
       {
