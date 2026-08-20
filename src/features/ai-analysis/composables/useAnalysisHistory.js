@@ -1,4 +1,5 @@
 import { computed, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 
 import { ANALYSIS_RECORD_TYPES } from '@/features/ai-analysis/mappers/analysisHistory.mapper'
 import { useAnalysisStore } from '@/features/ai-analysis/stores/analysis.store'
@@ -21,6 +22,7 @@ export const ANALYSIS_HISTORY_TABS = [
 
 export function useAnalysisHistory() {
   const store = useAnalysisStore()
+  const { records, loading, error } = storeToRefs(store)
   const activeTab = ref('ALL')
 
   const filteredRecords = computed(() => store.records)
@@ -42,13 +44,13 @@ export function useAnalysisHistory() {
   watch(activeTab, load, { immediate: true })
 
   return {
-    records: store.records,
+    records,
     filteredRecords,
     summary,
     activeTab,
     tabs: ANALYSIS_HISTORY_TABS,
-    loading: store.loading,
-    error: store.error,
+    loading,
+    error,
     reload: load,
   }
 }
