@@ -148,6 +148,7 @@ function handleContentScroll(event) {
       :variant="route.meta.headerVariant || 'back'"
       :collapsed="isHeaderCollapsed"
       :hidden="isSynchronizedChrome && isChromeHidden"
+      :back-to="route.meta.backTo"
     />
 
     <main
