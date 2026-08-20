@@ -43,12 +43,14 @@ function formatSchedule(event) {
 
 function ddayLabel(dday) {
   const days = Number(dday)
+  if (days < 0) return '종료됨'
   if (days === 0) return 'D-day'
-  return days > 0 ? `D-${days}` : `D+${Math.abs(days)}`
+  return `D-${days}`
 }
 
 function urgencyClass(dday) {
   const days = Number(dday)
+  if (days < 0) return 'selected-event-list__item--past'
   if (days <= 1) return 'selected-event-list__item--urgent'
   if (days <= 7) return 'selected-event-list__item--soon'
   if (days <= 29) return 'selected-event-list__item--planned'
@@ -184,6 +186,11 @@ function urgencyClass(dday) {
 .selected-event-list__item--urgent {
   --event-color: var(--orange-600);
   --event-label-background: var(--orange-50);
+}
+
+.selected-event-list__item--past {
+  --event-color: var(--gray-500);
+  --event-label-background: var(--gray-100);
 }
 
 .selected-event-list__item--soon {

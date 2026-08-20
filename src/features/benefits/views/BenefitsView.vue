@@ -17,7 +17,7 @@ const route = useRoute()
 const router = useRouter()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_LEAVE_BENEFIT')
 
-const categoryNames = ['전체', '카드', '교통', '여가', '자기계발', '숙박', '기타']
+const categoryNames = ['전체', '교통', '여가', '자기계발', '숙박', '기타']
 const categoryOptions = categoryNames.map((category) => ({ label: category, value: category }))
 const benefits = ref([])
 const loading = ref(true)
@@ -25,11 +25,15 @@ const activeCategory = ref('전체')
 const expandedId = ref(null)
 const useMockServer = import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 
-const filteredBenefits = computed(() =>
-  activeCategory.value === '전체'
-    ? benefits.value
-    : benefits.value.filter((benefit) => benefit.category === activeCategory.value),
-)
+const filteredBenefits = computed(() => {
+  const benefitsWithoutCard = benefits.value.filter(
+    (benefit) => normalizeBenefitCategory(benefit.category) !== '카드',
+  )
+
+  return activeCategory.value === '전체'
+    ? benefitsWithoutCard
+    : benefitsWithoutCard.filter((benefit) => benefit.category === activeCategory.value)
+})
 
 const groupedBenefits = computed(() => {
   const groups = new Map()
@@ -86,8 +90,11 @@ async function loadBenefits() {
     (benefit) => String(benefit.id) === String(selectedId),
   )
   if (selectedBenefit) {
-    activeCategory.value = selectedBenefit.category
-    expandedId.value = selectedBenefit.id
+    const selectedCategory = normalizeBenefitCategory(selectedBenefit.category)
+    if (selectedCategory !== '카드') {
+      activeCategory.value = selectedCategory
+      expandedId.value = selectedBenefit.id
+    }
   }
 
   loading.value = false

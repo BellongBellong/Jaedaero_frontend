@@ -68,10 +68,13 @@ features/dashboard/
 
 - `api`: Axios 기반 API 요청과 응답 데이터 반환
 - `components`: 해당 기능에서만 사용하는 UI
-- `composables`: 조회 상태와 화면 로직
-- `stores`: 여러 화면에서 공유하거나 지속해야 하는 상태
-- `views`: Vue Router와 연결되는 페이지
+- `composables`: 조회 상태와 화면 로직 및 API 호출 흐름, 로딩·오류 상태, 계산 및 여러 UI가 공유하는 동작
+- `stores`: 여러 화면에서 공유하거나 장기간 유지해야 하는 전역 상태
+- `views`: Vue Router와 연결되는 페이지 구성
 - `routes.js`: 해당 기능의 라우트 배열
+- `utils`: Vue 상태와 무관한 단순 계산·변환 함수
+- `mappers`: 백엔드 응답을 프론트 화면 데이터로 변환
+
 
 ## 데이터 계약 연결 원칙
 

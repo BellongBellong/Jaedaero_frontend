@@ -5,54 +5,12 @@ import { useRoute, useRouter } from 'vue-router'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import { useReportsStore } from '@/features/reports/stores/reports.store'
+import { mapProductRecommendations } from '@/features/simulations/mappers/productRecommendations.mapper'
 
 const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 
-const PRODUCT_EMOJIS = {
-  '군인공제회 목돈급여': '🏅',
-  'CMA 통장': '💛',
-  '나라사랑카드 CMA': '🏦',
-}
-
-const RATE_TONE_THEMES = {
-  NEUTRAL: 'product-card--olive',
-  YELLOW: 'product-card--yellow',
-  GREEN: 'product-card--green',
-}
-
-const RISK_GRADE_LABELS = {
-  1: '매우낮음',
-  2: '낮음',
-  3: '보통',
-  4: '높음',
-  5: '매우높음',
-}
-
-/* 새 응답의 riskLevel(문자열)을 화면 라벨과 카드 테마에 대응시킨다. */
-const RISK_LEVEL_LABELS = {
-  LOW: '매우낮음',
-  MEDIUM: '보통',
-  HIGH: '높음',
-  VERY_HIGH: '매우높음',
-}
-
-const RISK_LEVEL_THEMES = {
-  LOW: 'product-card--green',
-  MEDIUM: 'product-card--olive',
-  HIGH: 'product-card--yellow',
-}
-
 /* 화면에 노출할 추천 상품 개수. */
 const RECOMMENDATION_LIMIT = 5
-
-/* 상품명 앞머리가 곧 운용사 브랜드라 이를 제공사로 보여준다. */
-function providerFromName(name) {
-  return (
-    String(name || '')
-      .trim()
-      .split(/\s+/)[0] || 'ETF'
-  )
-}
 
 function returnRateOf(item) {
   const rates = Array.isArray(item?.returns) ? item.returns : []
@@ -63,36 +21,39 @@ function returnRateOf(item) {
   return preferred?.returnRate ?? null
 }
 
-/*
-  추천 상품 응답이 KRX ETF 기준으로 바뀌면서 상품 배열이 아니라
-  자산군/위험등급별 그룹 객체로 내려온다. 사용자의 투자성향에 맞는
-  그룹만 골라 화면 모델로 바꾼다. items 는 서버가 시가총액 내림차순으로
-  정렬해 주므로 앞에서부터 잘라 쓴다.
-*/
-function mapRecommendations(response) {
+/* 투자 성향에 맞는 ETF 중 목표 수익률과 최근 1년 수익률의 차이가 작은 순으로 고른다. */
+function mapRecommendations(response, targetReturnRate) {
   if (Array.isArray(response)) return response
 
   const groups = Array.isArray(response?.groups) ? response.groups : []
   const preference = response?.investmentPreference === 'RISK' ? 'RISK' : 'SAFE'
-  const matched = groups.filter(
+  const targetRate = Number(response?.expectedReturnRate ?? targetReturnRate)
+  const hasTargetRate = Number.isFinite(targetRate)
+  const matchedGroups = groups.filter(
     (group) => group.assetBucket === preference && group.eligibleForRecommendation !== false,
   )
 
-  return matched
-    .flatMap((group) => group.items ?? [])
+  const candidates = matchedGroups
+    .flatMap((group) =>
+      (group.items ?? [])
+        .filter((item) => item.eligibleForRecommendation !== false)
+        .map((item) => ({ ...item, riskLevel: item.riskLevel ?? group.riskLevel })),
+    )
+    .sort((first, second) => {
+      const firstRate = Number(returnRateOf(first))
+      const secondRate = Number(returnRateOf(second))
+      const firstDifference =
+        Number.isFinite(firstRate) && hasTargetRate ? Math.abs(firstRate - targetRate) : Infinity
+      const secondDifference =
+        Number.isFinite(secondRate) && hasTargetRate ? Math.abs(secondRate - targetRate) : Infinity
+
+      return (
+        firstDifference - secondDifference || String(first.name).localeCompare(String(second.name))
+      )
+    })
     .slice(0, RECOMMENDATION_LIMIT)
-    .map((item) => ({
-      id: item.isuCd,
-      productName: item.name,
-      provider: providerFromName(item.name),
-      expectedReturnRate: returnRateOf(item),
-      riskLevel: item.riskLevel,
-      reason: item.classificationReasons?.[0] ?? '',
-      rateLabel: '최근 1년',
-      badge: null,
-      minDepositLabel: '제한없음',
-      maxDepositLabel: '제한없음',
-    }))
+
+  return mapProductRecommendations(candidates, { limit: RECOMMENDATION_LIMIT })
 }
 
 const route = useRoute()
@@ -100,7 +61,9 @@ const router = useRouter()
 const reportsStore = useReportsStore()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_DEPOSIT_PRODUCT')
 const products = ref([])
+const recommendation = ref(null)
 const errorMessage = ref('')
+const loading = ref(true)
 const scenario = ref({
   annualReturnRate: 5,
   investmentPercent: 30,
@@ -108,18 +71,15 @@ const scenario = ref({
   generatedAt: new Date().toISOString(),
 })
 
-const recommendedProducts = computed(() =>
-  products.value.map((product) => ({
-    ...product,
-    emoji: PRODUCT_EMOJIS[product.productName] ?? '🏦',
-    themeClass:
-      RISK_LEVEL_THEMES[product.riskLevel] ??
-      RATE_TONE_THEMES[product.rateTone] ??
-      'product-card--olive',
-    rateText: product.expectedReturnRate == null ? '-' : `${product.expectedReturnRate}%`,
-    riskLabel: RISK_LEVEL_LABELS[product.riskLevel] ?? RISK_GRADE_LABELS[product.riskGrade] ?? '-',
-  })),
-)
+const recommendedProducts = computed(() => products.value)
+
+const recommendationCriteria = computed(() => {
+  const allocation = recommendation.value?.recommendedAllocation
+  const targetReturn = recommendation.value?.expectedReturnRate
+  if (!allocation || targetReturn === null || targetReturn === undefined) return ''
+
+  return `What-if 목표 수익률 ${targetReturn}% 기준 · 안전 ${allocation.safePercentage}% / 위험 ${allocation.riskPercentage}%`
+})
 
 // 시뮬레이션에서 계산된 비율은 소수점이 길게 떨어져 소수 첫째 자리까지만 보여준다.
 const investmentPercentLabel = computed(() => {
@@ -143,18 +103,32 @@ const analysisDate = computed(() => {
 })
 
 onMounted(async () => {
+  let savedScenario = null
   try {
-    const savedScenario = JSON.parse(sessionStorage.getItem(SIMULATION_STORAGE_KEY) || 'null')
+    savedScenario = JSON.parse(sessionStorage.getItem(SIMULATION_STORAGE_KEY) || 'null')
     if (savedScenario) scenario.value = { ...scenario.value, ...savedScenario }
   } catch {
     sessionStorage.removeItem(SIMULATION_STORAGE_KEY)
   }
 
+  const simulationId = Number(route.query.simulationId ?? savedScenario?.simulationId)
+  if (!Number.isInteger(simulationId) || simulationId <= 0) {
+    errorMessage.value = 'What-if 시뮬레이션을 저장한 뒤 추천 상품을 확인해주세요.'
+    loading.value = false
+    return
+  }
+
   try {
-    products.value = mapRecommendations(await reportsStore.loadProductRecommendations())
+    recommendation.value = await reportsStore.loadProductRecommendations({ simulationId })
+    products.value = mapRecommendations(recommendation.value, scenario.value.annualReturnRate)
+    if (recommendation.value?.expectedReturnRate !== undefined) {
+      scenario.value.annualReturnRate = recommendation.value.expectedReturnRate
+    }
     await completeMissionAfterLoad()
   } catch {
     errorMessage.value = '추천 상품을 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
+  } finally {
+    loading.value = false
   }
 })
 </script>
@@ -194,6 +168,12 @@ onMounted(async () => {
     <h2 class="product-screen__section-title">
       추천 상품
     </h2>
+    <p
+      v-if="recommendationCriteria"
+      class="product-screen__criteria"
+    >
+      {{ recommendationCriteria }}
+    </p>
 
     <p
       v-if="errorMessage"
@@ -202,9 +182,21 @@ onMounted(async () => {
     >
       {{ errorMessage }}
     </p>
+    <p
+      v-else-if="loading"
+      class="product-screen__loading"
+    >
+      조건에 맞는 ETF를 찾고 있어요.
+    </p>
+    <p
+      v-else-if="!recommendedProducts.length"
+      class="product-screen__error"
+    >
+      현재 조건에 맞는 추천 ETF가 없어요.
+    </p>
 
     <ul
-      v-else
+      v-else-if="recommendedProducts.length"
       class="product-list"
     >
       <li
@@ -404,9 +396,24 @@ onMounted(async () => {
   line-height: 1.5;
 }
 
+.product-screen__criteria {
+  padding: 0 10px;
+  margin: 4px 0 0;
+  color: var(--gray-500);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .product-screen__error {
   margin-top: 40px;
   color: var(--orange-600);
+  font-size: 12px;
+  text-align: center;
+}
+
+.product-screen__loading {
+  margin-top: 40px;
+  color: var(--gray-500);
   font-size: 12px;
   text-align: center;
 }
@@ -498,6 +505,7 @@ onMounted(async () => {
 
 .product-card__rate strong {
   display: block;
+  color: var(--green-700);
   font-size: 20px;
   line-height: 1.5;
 }
@@ -508,24 +516,12 @@ onMounted(async () => {
   line-height: 1.5;
 }
 
-.product-card--olive .product-card__rate strong {
-  color: var(--olive-500);
-}
-
 .product-card--olive .product-card__rate span {
   color: rgb(86 103 82 / 80%);
 }
 
-.product-card--yellow .product-card__rate strong {
-  color: var(--yellow-400);
-}
-
 .product-card--yellow .product-card__rate span {
   color: rgb(255 229 114 / 80%);
-}
-
-.product-card--green .product-card__rate strong {
-  color: var(--green-500);
 }
 
 .product-card--green .product-card__rate span {

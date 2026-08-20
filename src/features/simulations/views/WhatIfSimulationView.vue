@@ -11,6 +11,7 @@ import { getApiErrorMessage } from '@/common/api/errorMessage'
 import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 import { useDashboardStore } from '@/features/dashboard/stores/dashboard.store'
 import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
+import WhatIfSimulationSkeleton from '@/features/simulations/components/WhatIfSimulationSkeleton.vue'
 import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 
@@ -32,6 +33,7 @@ const savingAmount = ref(0)
 const investmentAmount = ref(0)
 const annualReturnRate = ref(5)
 const baselineScenario = ref(null)
+const isInitialLoading = ref(true)
 const isSaving = ref(false)
 const isPreviewing = ref(false)
 const serverResult = ref(null)
@@ -359,8 +361,7 @@ function schedulePreview({ immediate = false } = {}) {
   isPreviewing.value = true
 
   if (immediate) {
-    loadPreview(requestId)
-    return
+    return loadPreview(requestId)
   }
 
   previewTimer = setTimeout(() => {
@@ -423,35 +424,43 @@ function openRecommendations() {
     SIMULATION_STORAGE_KEY,
     JSON.stringify(scenarioSnapshot(serverResult.value?.simulationId)),
   )
-  router.push({ name: 'ai-product-recommendation' })
+  router.push({
+    name: 'ai-product-recommendation',
+    query: { simulationId: serverResult.value?.simulationId },
+  })
 }
 
 onMounted(async () => {
-  const [dashboardResult, profileResult, defaultsResult, simulationsResult] =
-    await Promise.allSettled([
-      dashboardStore.load(),
-      myPageStore.load(),
-      simulationsStore.loadDefaults(),
-      simulationsStore.loadList({ page: 0, size: 1 }),
-    ])
+  try {
+    const [dashboardResult, profileResult, defaultsResult, simulationsResult] =
+      await Promise.allSettled([
+        dashboardStore.load(),
+        myPageStore.load(),
+        simulationsStore.loadDefaults(),
+        simulationsStore.loadList({ page: 0, size: 1 }),
+      ])
 
-  dashboard.value = dashboardResult.status === 'fulfilled' ? dashboardResult.value?.response : null
-  profile.value = profileResult.status === 'fulfilled' ? profileResult.value : myPageStore.profile
+    dashboard.value =
+      dashboardResult.status === 'fulfilled' ? dashboardResult.value?.response : null
+    profile.value = profileResult.status === 'fulfilled' ? profileResult.value : myPageStore.profile
 
-  if (defaultsResult.status === 'fulfilled') {
-    applySimulationDefaults(defaultsResult.value)
-    if (simulationsResult.status === 'fulfilled') {
-      applySavedSimulation(latestSavedSimulation(simulationsResult.value))
+    if (defaultsResult.status === 'fulfilled') {
+      applySimulationDefaults(defaultsResult.value)
+      if (simulationsResult.status === 'fulfilled') {
+        applySavedSimulation(latestSavedSimulation(simulationsResult.value))
+      }
+      // 대시보드가 최신 What-if를 기준으로 내려주는 소비·투자 목표를 우선 적용한다.
+      if (dashboard.value?.goalSource) {
+        spendingAmount.value = floorToAllocationStep(dashboard.value.monthlySpendingGoal)
+        investmentAmount.value = floorToAllocationStep(dashboard.value.monthlyInvestmentGoal)
+      }
+      setBaselineScenario()
+      await schedulePreview({ immediate: true })
+    } else {
+      errorMessage.value = '시뮬레이션에 필요한 정보를 불러오지 못했어요.'
     }
-    // 대시보드가 최신 What-if를 기준으로 내려주는 소비·투자 목표를 우선 적용한다.
-    if (dashboard.value?.goalSource) {
-      spendingAmount.value = floorToAllocationStep(dashboard.value.monthlySpendingGoal)
-      investmentAmount.value = floorToAllocationStep(dashboard.value.monthlyInvestmentGoal)
-    }
-    setBaselineScenario()
-    schedulePreview({ immediate: true })
-  } else {
-    errorMessage.value = '시뮬레이션에 필요한 정보를 불러오지 못했어요.'
+  } finally {
+    isInitialLoading.value = false
   }
 })
 
@@ -463,7 +472,11 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="simulation-screen">
-    <div class="simulation-stack">
+    <WhatIfSimulationSkeleton v-if="isInitialLoading" />
+    <div
+      v-else
+      class="simulation-stack"
+    >
       <section class="discharge-card">
         <div class="discharge-card__forecast">
           <span>재정적 전역일</span>
