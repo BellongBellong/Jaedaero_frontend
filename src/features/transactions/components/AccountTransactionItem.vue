@@ -82,8 +82,8 @@ function formatDate(value) {
 }
 
 .account-transaction__icon img {
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   object-fit: contain;
 }
 

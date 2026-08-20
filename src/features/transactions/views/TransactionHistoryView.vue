@@ -182,7 +182,7 @@ async function loadLiveTransactions() {
   await accountsStore.load({ force: true })
   await transactionsStore.loadWithSecurities(accountsStore.accounts.filter(isInvestmentAccount), {
     ...range,
-    refresh: false,
+    refresh: true,
   })
   oldestRequestedStartDate.value = range.startDate
 }
@@ -278,7 +278,7 @@ onBeforeUnmount(() => {
         v-if="activeTab === 'ACCOUNT'"
         v-model="selectedAccountId"
         :options="accountFilterOptions"
-        :menu-width="180"
+        :menu-width="260"
         aria-label="조회할 계좌 선택"
       />
       <DropdownMenu

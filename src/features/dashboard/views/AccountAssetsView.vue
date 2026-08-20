@@ -1,8 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
-import arrowIcon from '@/assets/icons/arrow.svg'
 import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
 import AssetAccountListItem from '@/features/dashboard/components/AssetAccountListItem.vue'
 import InvestmentAssetChart from '@/features/dashboard/components/InvestmentAssetChart.vue'
@@ -12,7 +11,6 @@ import { useDashboard } from '@/features/dashboard/composables/useDashboard'
 import { isSecuritiesAccount } from '@/features/accounts/composables/institutionMapping'
 
 const route = useRoute()
-const router = useRouter()
 const activeTab = ref(route.query.tab === 'investment' ? 'investment' : 'account')
 const securitiesPortfolio = ref([])
 const portfolioLoading = ref(false)
@@ -110,14 +108,6 @@ function portfolioAmount(account) {
 function formatWon(value) {
   return `${Number(value || 0).toLocaleString('ko-KR')}원`
 }
-
-function openAccount(account) {
-  router.push({
-    name: 'account-transactions',
-    params: { accountId: account.id ?? account.accountId },
-    query: route.query,
-  })
-}
 </script>
 
 <template>
@@ -142,19 +132,10 @@ function openAccount(account) {
     </section>
 
     <template v-else>
-      <button
-        class="account-assets__total"
-        type="button"
-        @click="router.push({ name: 'asset-overview', query: route.query })"
-      >
+      <div class="account-assets__total">
         <span>총 자산</span>
         <strong>{{ formatWon(dashboard.assetSummary.total.totalAsset) }}</strong>
-        <img
-          :src="arrowIcon"
-          alt=""
-          aria-hidden="true"
-        >
-      </button>
+      </div>
 
       <CommonTabs
         v-model="activeTab"
@@ -173,8 +154,6 @@ function openAccount(account) {
               v-for="account in checkingAccounts"
               :key="account.id || account.accountId"
               :account="account"
-              clickable
-              @select="openAccount"
             />
           </ul>
           <p v-else>
@@ -192,8 +171,6 @@ function openAccount(account) {
               v-for="account in savingsAccounts"
               :key="account.id || account.accountId"
               :account="account"
-              clickable
-              @select="openAccount"
             />
           </ul>
           <p v-else>
@@ -218,8 +195,6 @@ function openAccount(account) {
             v-for="account in displayedInvestmentAccounts"
             :key="account.id || account.accountId"
             :account="account"
-            clickable
-            @select="openAccount"
           />
         </ul>
         <p v-else-if="portfolioError">
@@ -292,27 +267,15 @@ function openAccount(account) {
 
 .account-assets__total {
   display: flex;
-  width: fit-content;
   align-items: center;
   gap: 4px;
-  padding: 0;
-  border: 0;
-  background: transparent;
   color: var(--gray-600);
-  cursor: pointer;
-  font-family: var(--font-body);
   font-size: 14px;
 }
 
 .account-assets__total strong {
   color: var(--green-700);
   font-size: 16px;
-}
-
-.account-assets__total img {
-  width: 7px;
-  height: 11px;
-  margin-left: 2px;
 }
 
 .account-assets__section {

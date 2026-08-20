@@ -8,6 +8,16 @@ import { getDashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
 import { mapDashboardResponse } from '@/features/dashboard/mappers/dashboardResponse.mapper'
 import { getTodayMarketReport } from '@/features/market-report/api/marketReport.api'
 import { getTodayMissions } from '@/features/missions/api/missions.api'
+import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
+import { getTransactions } from '@/features/transactions/api/transactions.api'
+
+const TRANSFER_CATEGORIES = new Set(['ASSET', 'ASSET_TRANSFER', 'TRANSFER'])
+const RANK_NAME_MAP = {
+  PRIVATE: '이병',
+  PRIVATE_FIRST_CLASS: '일병',
+  CORPORAL: '상병',
+  SERGEANT: '병장',
+}
 
 function normalizeMissions(response) {
   const value = response?.data ?? response
@@ -46,6 +56,78 @@ function normalizeMissions(response) {
         ['COMPLETED', 'DONE'].includes(String(mission.status || '').toUpperCase()),
     }
   })
+}
+
+function formatDate(value) {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function currentMonthRange(now = new Date()) {
+  const start = new Date(now.getFullYear(), now.getMonth(), 1)
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return { startDate: formatDate(start), endDate: formatDate(end) }
+}
+
+function accountId(account) {
+  return account?.accountId ?? account?.id
+}
+
+function isNaraSarangAccount(account) {
+  const name = [account?.accountName, account?.name, account?.productName, account?.accountNumber]
+    .filter(Boolean)
+    .join(' ')
+  return /나라\s*사랑/.test(name)
+}
+
+function isIncomeTransaction(transaction) {
+  return ['INCOME', 'DEPOSIT'].includes(String(transaction?.transactionType || '').toUpperCase())
+}
+
+function monthlyIncomeFromNaraSarangAccount(profile, accounts, transactions) {
+  const salaryAmount = Number(profile?.monthlySalary ?? profile?.soldierProfile?.monthlySalary ?? 0)
+  const rank = profile?.rank ?? profile?.soldierProfile?.rank
+  const rankName =
+    profile?.rankName ??
+    profile?.soldierProfile?.rankName ??
+    RANK_NAME_MAP[rank] ??
+    rank ??
+    '이번 달'
+  const naraSarangAccount = accounts.find(isNaraSarangAccount)
+
+  if (!naraSarangAccount) {
+    return {
+      amount: salaryAmount,
+      salaryAmount,
+      salaryLabel: `${rankName} 월급`,
+      otherIncomeAmount: 0,
+      hasAdditionalIncome: false,
+      changeRate: 0,
+    }
+  }
+
+  const targetAccountId = String(accountId(naraSarangAccount))
+  const otherIncomeAmount = transactions
+    .filter((transaction) => String(transaction.accountId) === targetAccountId)
+    .filter(isIncomeTransaction)
+    .filter((transaction) => {
+      const category = String(transaction.category || '').toUpperCase()
+      return category !== 'SALARY' && !TRANSFER_CATEGORIES.has(category)
+    })
+    .reduce((total, transaction) => total + Number(transaction.amount || 0), 0)
+  const changeRate =
+    salaryAmount > 0 ? Math.round((otherIncomeAmount / salaryAmount) * 1000) / 10 : 0
+
+  return {
+    amount: salaryAmount + otherIncomeAmount,
+    salaryAmount,
+    salaryLabel: `${rankName} 월급`,
+    otherIncomeAmount,
+    hasAdditionalIncome: otherIncomeAmount > 0,
+    changeRate,
+  }
 }
 
 function emptyDashboardModel() {
@@ -117,14 +199,25 @@ export const useDashboardStore = defineStore('dashboard', () => {
       getAccounts(),
       getTodayMarketReport(),
       getTodayMissions(),
+      getMyPageProfile(),
+      getTransactions(currentMonthRange()),
     ])
 
     try {
-      const [dashboardResult, accountsResult, reportResult, missionsResult] = await request
+      const [
+        dashboardResult,
+        accountsResult,
+        reportResult,
+        missionsResult,
+        profileResult,
+        transactionsResult,
+      ] = await request
       if (dashboardResult.status === 'rejected') throw dashboardResult.reason
 
       const model = mapDashboardResponse(dashboardResult.value, emptyDashboardModel())
       const accounts = accountsResult.status === 'fulfilled' ? accountsResult.value : []
+      const profile = profileResult.status === 'fulfilled' ? profileResult.value : null
+      const transactions = transactionsResult.status === 'fulfilled' ? transactionsResult.value : []
       const report =
         reportResult.status === 'fulfilled'
           ? (reportResult.value?.data ?? reportResult.value)
@@ -142,6 +235,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
         name: account.accountName,
         amount: account.balance,
       }))
+      model.assetSummary.monthly.income = monthlyIncomeFromNaraSarangAccount(
+        profile,
+        accounts,
+        transactions,
+      )
       model.assetSummary.monthly.investment.hasSecuritiesAccount =
         accounts.some(isSecuritiesAccount)
 

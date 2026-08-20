@@ -128,12 +128,6 @@ const mainRoutes = [
         meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '상세 내역' },
       },
       {
-        path: 'transactions/accounts/:accountId',
-        name: 'account-transactions',
-        component: () => import('@/features/transactions/views/AccountTransactionView.vue'),
-        meta: { requiresAuth: true, bottomNavigation: 'home', headerTitle: '계좌 상세' },
-      },
-      {
         path: 'ai-financial-report',
         name: 'ai-financial-report',
         component: () => import('@/features/reports/views/AiFinancialReportView.vue'),

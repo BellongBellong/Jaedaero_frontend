@@ -12,11 +12,82 @@ const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 /* 화면에 노출할 추천 상품 개수. */
 const RECOMMENDATION_LIMIT = 5
 
+/* 상품명 앞머리가 곧 운용사 브랜드라 이를 제공사로 보여준다. */
+function providerFromName(name) {
+  return (
+    String(name || '')
+      .trim()
+      .split(/\s+/)[0] || 'ETF'
+  )
+}
+
+function returnRateOf(item) {
+  const rates = Array.isArray(item?.returns) ? item.returns : []
+  const preferred =
+    rates.find((rate) => rate.period === 'ONE_YEAR' && rate.available) ||
+    rates.find((rate) => rate.available)
+
+  return preferred?.returnRate ?? null
+}
+
+/* What-if 시뮬레이션 기반 최종 추천 목록을 우선 사용한다. */
+function mapRecommendations(response) {
+  if (Array.isArray(response)) return response
+
+  const groups = Array.isArray(response?.groups) ? response.groups : []
+  const detailsByCode = new Map(
+    groups.flatMap((group) => group.items ?? []).map((item) => [item.isuCd, item]),
+  )
+  const personalized = Array.isArray(response?.personalizedRecommendations)
+    ? response.personalizedRecommendations
+    : []
+
+  if (Array.isArray(response?.personalizedRecommendations)) {
+    return personalized.map((item) => {
+      const detail = detailsByCode.get(item.isuCd) ?? {}
+      return {
+        id: item.isuCd,
+        productName: item.name,
+        provider: providerFromName(item.name),
+        expectedReturnRate: returnRateOf(detail),
+        riskLevel: item.riskLevel ?? detail.riskLevel,
+        reason: item.reasons?.[0] ?? '',
+        rateLabel: '최근 1년',
+        badge: null,
+        minDepositLabel: '제한없음',
+        maxDepositLabel: '제한없음',
+      }
+    })
+  }
+
+  const preference = response?.investmentPreference === 'RISK' ? 'RISK' : 'SAFE'
+  const matched = groups.filter(
+    (group) => group.assetBucket === preference && group.eligibleForRecommendation !== false,
+  )
+
+  return matched
+    .flatMap((group) => group.items ?? [])
+    .slice(0, RECOMMENDATION_LIMIT)
+    .map((item) => ({
+      id: item.isuCd,
+      productName: item.name,
+      provider: providerFromName(item.name),
+      expectedReturnRate: returnRateOf(item),
+      riskLevel: item.riskLevel,
+      reason: item.classificationReasons?.[0] ?? '',
+      rateLabel: '최근 1년',
+      badge: null,
+      minDepositLabel: '제한없음',
+      maxDepositLabel: '제한없음',
+    }))
+}
+
 const route = useRoute()
 const router = useRouter()
 const reportsStore = useReportsStore()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_DEPOSIT_PRODUCT')
 const products = ref([])
+const recommendation = ref(null)
 const errorMessage = ref('')
 const scenario = ref({
   annualReturnRate: 5,
@@ -26,6 +97,14 @@ const scenario = ref({
 })
 
 const recommendedProducts = computed(() => products.value)
+
+const recommendationCriteria = computed(() => {
+  const allocation = recommendation.value?.recommendedAllocation
+  const targetReturn = recommendation.value?.expectedReturnRate
+  if (!allocation || targetReturn === null || targetReturn === undefined) return ''
+
+  return `What-if 목표 수익률 ${targetReturn}% 기준 · 안전 ${allocation.safePercentage}% / 위험 ${allocation.riskPercentage}%`
+})
 
 // 시뮬레이션에서 계산된 비율은 소수점이 길게 떨어져 소수 첫째 자리까지만 보여준다.
 const investmentPercentLabel = computed(() => {
@@ -49,17 +128,26 @@ const analysisDate = computed(() => {
 })
 
 onMounted(async () => {
+  let savedScenario = null
   try {
-    const savedScenario = JSON.parse(sessionStorage.getItem(SIMULATION_STORAGE_KEY) || 'null')
+    savedScenario = JSON.parse(sessionStorage.getItem(SIMULATION_STORAGE_KEY) || 'null')
     if (savedScenario) scenario.value = { ...scenario.value, ...savedScenario }
   } catch {
     sessionStorage.removeItem(SIMULATION_STORAGE_KEY)
   }
 
+  const simulationId = Number(route.query.simulationId ?? savedScenario?.simulationId)
+  if (!Number.isInteger(simulationId) || simulationId <= 0) {
+    errorMessage.value = 'What-if 시뮬레이션을 저장한 뒤 추천 상품을 확인해주세요.'
+    return
+  }
+
   try {
-    products.value = mapProductRecommendations(await reportsStore.loadProductRecommendations(), {
-      limit: RECOMMENDATION_LIMIT,
-    })
+    recommendation.value = await reportsStore.loadProductRecommendations({ simulationId })
+    products.value = mapRecommendations(recommendation.value)
+    if (recommendation.value?.expectedReturnRate !== undefined) {
+      scenario.value.annualReturnRate = recommendation.value.expectedReturnRate
+    }
     await completeMissionAfterLoad()
   } catch {
     errorMessage.value = '추천 상품을 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
@@ -102,6 +190,12 @@ onMounted(async () => {
     <h2 class="product-screen__section-title">
       추천 상품
     </h2>
+    <p
+      v-if="recommendationCriteria"
+      class="product-screen__criteria"
+    >
+      {{ recommendationCriteria }}
+    </p>
 
     <p
       v-if="errorMessage"
@@ -110,9 +204,15 @@ onMounted(async () => {
     >
       {{ errorMessage }}
     </p>
+    <p
+      v-else-if="!recommendedProducts.length"
+      class="product-screen__error"
+    >
+      현재 조건에 맞는 추천 ETF가 없어요.
+    </p>
 
     <ul
-      v-else
+      v-else-if="recommendedProducts.length"
       class="product-list"
     >
       <li
@@ -309,6 +409,14 @@ onMounted(async () => {
   margin-top: 12px;
   color: var(--gray-600);
   font-size: 14px;
+  line-height: 1.5;
+}
+
+.product-screen__criteria {
+  padding: 0 10px;
+  margin: 4px 0 0;
+  color: var(--gray-500);
+  font-size: 11px;
   line-height: 1.5;
 }
 
