@@ -9,6 +9,7 @@ import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeave
 
 /* iOS의 소수점 스크롤 노이즈만 제외하고 첫 이동부터 방향을 반영한다. */
 const SCROLL_DIRECTION_EPSILON = 0.5
+const SCROLL_EDGE_EPSILON = 2
 
 const route = useRoute()
 const contentElement = ref(null)
@@ -89,7 +90,10 @@ function handleContentScroll(event) {
     isHeaderCollapsed.value = false
     isNavigationMinimized.value = false
 
-    if (scrollTop <= SCROLL_DIRECTION_EPSILON) {
+    const isAtScrollEdge =
+      scrollTop <= SCROLL_EDGE_EPSILON || scrollTop >= maxScrollTop - SCROLL_EDGE_EPSILON
+
+    if (isAtScrollEdge) {
       isChromeHidden.value = false
     } else if (delta > SCROLL_DIRECTION_EPSILON) {
       isChromeHidden.value = true
