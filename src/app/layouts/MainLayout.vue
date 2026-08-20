@@ -9,13 +9,11 @@ import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeave
 
 /* iOS의 소수점 스크롤 노이즈만 제외하고 첫 이동부터 방향을 반영한다. */
 const SCROLL_DIRECTION_EPSILON = 0.5
-const SCROLL_EDGE_EPSILON = 2
 
 const route = useRoute()
 const contentElement = ref(null)
 const headerElement = ref(null)
 const isHeaderCollapsed = ref(false)
-const isChromeHidden = ref(false)
 /* 접힌 뒤에는 헤더 높이가 0이라 측정할 수 없으므로 펼쳐져 있을 때 값을 기억해 둔다. */
 let expandedHeaderHeight = 0
 const isNavigationMinimized = ref(false)
@@ -23,7 +21,6 @@ const lastScrollTop = ref(0)
 const { mode } = useLeaveModeSchedule()
 
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
-const isSynchronizedChrome = computed(() => Boolean(route.meta.synchronizedChrome))
 const keepHeaderExpanded = computed(
   () =>
     !route.meta.collapseHeaderOnScroll && (route.meta.keepHeaderOnScroll || route.meta.stickyTabs),
@@ -40,7 +37,6 @@ watch(
   () => route.fullPath,
   async () => {
     isHeaderCollapsed.value = false
-    isChromeHidden.value = false
     isNavigationMinimized.value = false
     lastScrollTop.value = 0
     await nextTick()
@@ -86,25 +82,6 @@ function handleContentScroll(event) {
   const scrollTop = Math.max(0, Math.min(event.currentTarget.scrollTop, maxScrollTop))
   const delta = scrollTop - lastScrollTop.value
 
-  if (isSynchronizedChrome.value) {
-    isHeaderCollapsed.value = false
-    isNavigationMinimized.value = false
-
-    const isAtScrollEdge =
-      scrollTop <= SCROLL_EDGE_EPSILON || scrollTop >= maxScrollTop - SCROLL_EDGE_EPSILON
-
-    if (isAtScrollEdge) {
-      isChromeHidden.value = false
-    } else if (delta > SCROLL_DIRECTION_EPSILON) {
-      isChromeHidden.value = true
-    } else if (delta < -SCROLL_DIRECTION_EPSILON) {
-      isChromeHidden.value = false
-    }
-
-    lastScrollTop.value = scrollTop
-    return
-  }
-
   /*
     헤더는 내릴 때 32px, 올릴 때 12px의 여유를 둔다. iOS 관성 스크롤의 작은
     반동으로 닫힘/열림이 반복되지 않으면서도 Chrome과 같은 방향성은 유지한다.
@@ -137,7 +114,6 @@ function handleContentScroll(event) {
       'mobile-frame--investment-guide': route.meta.investmentGuide,
       'mobile-frame--vacation': isVacationDashboard,
       'mobile-frame--fixed-header-tabs': route.meta.keepHeaderOnScroll || route.meta.stickyTabs,
-      'mobile-frame--synchronized-chrome': isSynchronizedChrome,
     }"
   >
     <AppHeader
@@ -147,8 +123,6 @@ function handleContentScroll(event) {
       :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
       :collapsed="isHeaderCollapsed"
-      :hidden="isSynchronizedChrome && isChromeHidden"
-      :back-to="route.meta.backTo"
     />
 
     <main
@@ -170,12 +144,9 @@ function handleContentScroll(event) {
       class="main-layout__bottom"
       :class="{
         'main-layout__bottom--vacation': isVacationDashboard,
-        'main-layout__bottom--hidden': isSynchronizedChrome && isChromeHidden,
       }"
-      :aria-hidden="isSynchronizedChrome && isChromeHidden ? 'true' : undefined"
-      :inert="isSynchronizedChrome && isChromeHidden"
     >
-      <BottomNavigation :minimized="!isSynchronizedChrome && isNavigationMinimized" />
+      <BottomNavigation :minimized="isNavigationMinimized" />
     </div>
   </MobileFrame>
 </template>
@@ -213,20 +184,6 @@ function handleContentScroll(event) {
   pointer-events: none;
   /* 콘텐츠가 글래스 바와 하단 safe area 뒤로 자연스럽게 이어진다. */
   background: transparent;
-  transition:
-    transform var(--chrome-motion-duration, 280ms)
-      var(--chrome-motion-ease, cubic-bezier(0.22, 1, 0.36, 1)),
-    opacity 180ms ease;
-  will-change: transform, opacity;
-}
-
-.main-layout__bottom--hidden {
-  opacity: 0;
-  transform: translate3d(0, calc(100% + var(--safe-area-bottom) + 12px), 0);
-}
-
-.main-layout__bottom--hidden > :deep(.bottom-navigation) {
-  pointer-events: none;
 }
 
 /*
@@ -258,31 +215,6 @@ function handleContentScroll(event) {
   background:
     radial-gradient(circle at 92% 8%, rgb(98 255 156 / 52%) 0, rgb(98 255 156 / 0%) 34%),
     var(--gray-100);
-}
-
-/*
-  AI 코치는 헤더와 하단 바를 하나의 앱 크롬처럼 움직인다.
-  헤더를 문서 흐름에서 분리하고 동일한 높이를 콘텐츠에 항상 예약해 두므로,
-  다시 나타날 때 본문을 아래로 밀지 않는다.
-*/
-:global(.mobile-frame.mobile-frame--synchronized-chrome) {
-  --chrome-motion-duration: 280ms;
-  --chrome-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-:global(.mobile-frame.mobile-frame--synchronized-chrome .app-header) {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  flex: none;
-  background: linear-gradient(180deg, rgb(246 246 246 / 96%) 58%, rgb(246 246 246 / 72%) 100%);
-  backdrop-filter: blur(16px) saturate(120%);
-  -webkit-backdrop-filter: blur(16px) saturate(120%);
-}
-
-.mobile-frame--synchronized-chrome .main-layout__content {
-  padding-top: calc(var(--app-header-height) + var(--safe-area-top));
 }
 
 :global(.mobile-frame.mobile-frame--investment-guide) {
@@ -358,11 +290,5 @@ function handleContentScroll(event) {
 
 .main-layout__bottom--vacation {
   background: transparent;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .main-layout__bottom {
-    transition: none;
-  }
 }
 </style>

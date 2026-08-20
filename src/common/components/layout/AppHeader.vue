@@ -13,7 +13,6 @@ const props = defineProps({
   badge: { type: String, default: '' },
   variant: { type: String, default: 'back' },
   collapsed: { type: Boolean, default: false },
-  hidden: { type: Boolean, default: false },
   hideBackWhenCollapsed: { type: Boolean, default: false },
   backTo: { type: [String, Object], default: null },
 })
@@ -55,12 +54,9 @@ function handleBack() {
       `app-header--${variant}`,
       {
         'app-header--collapsed': collapsed && variant !== 'home',
-        'app-header--hidden': hidden,
         'app-header--hide-collapsed-back': hideBackWhenCollapsed,
       },
     ]"
-    :aria-hidden="hidden ? 'true' : undefined"
-    :inert="hidden"
   >
     <template v-if="variant === 'home'">
       <img
@@ -123,16 +119,7 @@ function handleBack() {
   transition:
     flex-basis 260ms cubic-bezier(0.22, 1, 0.36, 1),
     height 260ms cubic-bezier(0.22, 1, 0.36, 1),
-    padding 260ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform var(--chrome-motion-duration, 280ms)
-      var(--chrome-motion-ease, cubic-bezier(0.22, 1, 0.36, 1)),
-    opacity 180ms ease;
-  will-change: transform, opacity;
-}
-.app-header--hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translate3d(0, -100%, 0);
+    padding 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .app-header--collapsed {
   flex-basis: 0;
