@@ -86,8 +86,10 @@ function isIncomeTransaction(transaction) {
   return ['INCOME', 'DEPOSIT'].includes(String(transaction?.transactionType || '').toUpperCase())
 }
 
-function monthlyIncomeFromNaraSarangAccount(profile, accounts, transactions) {
-  const salaryAmount = Number(profile?.monthlySalary ?? profile?.soldierProfile?.monthlySalary ?? 0)
+function monthlyIncomeFromNaraSarangAccount(profile, accounts, transactions, monthlySalary = 0) {
+  // Dashboard API calculates the current service-stage salary from the military pay policy.
+  // The profile API only provides rank information, so it must not be used as a salary source.
+  const salaryAmount = Number(monthlySalary || 0)
   const rank = profile?.rank ?? profile?.soldierProfile?.rank
   const rankName =
     profile?.rankName ??
@@ -239,6 +241,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
         profile,
         accounts,
         transactions,
+        model.assetSummary.monthly.income.amount,
       )
       model.assetSummary.monthly.investment.hasSecuritiesAccount =
         accounts.some(isSecuritiesAccount)
