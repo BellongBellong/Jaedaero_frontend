@@ -22,31 +22,34 @@ const props = defineProps({
   },
 })
 
+/**
+ * 격려 문구 작성 가이드
+ * - 모바일 배너에서 한 줄 노출을 유지하기 위해 최대 22자 권장
+ * - 너무 긴 문구는 우측 장식 요소와 과도하게 겹칠 수 있음
+ * - 줄바꿈X 한줄 유지 우선
+ */
 const ENCOURAGEMENT_MESSAGES = {
   military: {
     morning: [
-      '좋은 아침이에요! 오늘도 힘차게 시작해봐요.',
+      '좋은 아침이에요! 오늘도 힘차게 시작해요.',
       '오늘 하루도 무사히, 힘차게 보내봐요!',
-      '든든하게 아침 챙기고 오늘도 파이팅이에요!',
+      '아침 든든히 챙기고 오늘도 파이팅!',
     ],
     afternoon: [
       '오전 일과 수고했어요! 오후도 힘내봐요.',
-      '점심은 맛있게 드셨나요? 남은 일과도 파이팅!',
+      '점심 맛있게 드셨나요? 오후도 파이팅!',
       '잠깐 숨 고르고, 오후 일과도 힘내봐요!',
     ],
     evening: [
       '오늘 하루도 정말 수고 많았어요.',
-      '저녁은 맛있게 드셨나요? 편안한 밤 보내요.',
+      '저녁 맛있게 드셨나요? 편안한 밤 보내요.',
       '오늘도 잘 버텨냈어요! 푹 쉬어가요.',
     ],
   },
   vacation: {
-    morning: [
-      '즐거운 휴가의 아침이에요! 오늘을 만끽해봐요.',
-      '휴가의 소중한 하루, 기분 좋게 시작해봐요!',
-    ],
-    afternoon: ['즐거운 휴가 보내고 계신가요?', '휴가 중에도 든든하게 점심 챙겨 드세요!'],
-    evening: ['오늘의 휴가도 즐거우셨나요? 푹 쉬어요.', '소중한 사람들과 편안한 저녁 보내세요.'],
+    morning: ['즐거운 휴가 아침이에요! 오늘을 만끽해요.', '소중한 휴가, 기분 좋게 시작해봐요!'],
+    afternoon: ['즐거운 휴가 보내고 계신가요?', '휴가 중에도 점심 든든히 챙겨 드세요!'],
+    evening: ['오늘 휴가도 즐거우셨나요? 푹 쉬어요.', '소중한 사람들과 편안한 저녁 보내세요.'],
   },
 }
 
@@ -70,6 +73,7 @@ const normalizedDate = computed(() => {
   if (Array.isArray(props.date)) {
     const [year, month, day] = props.date.map(Number)
     if (!year || !month || !day) return ''
+
     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   }
 
@@ -115,6 +119,7 @@ const dateTime = computed(() => {
 
     <div class="daily-report-banner__content">
       <p>{{ encouragementMessage }}</p>
+
       <div class="daily-report-banner__title">
         <strong>오늘의 AI 시장 리포트</strong>
         <time :datetime="dateTime">{{ formattedDate }}</time>
@@ -141,7 +146,9 @@ const dateTime = computed(() => {
       <span
         class="daily-report-banner__star"
         aria-hidden="true"
-      >✦</span>
+      >
+        ✦
+      </span>
     </template>
 
     <span
@@ -186,10 +193,10 @@ const dateTime = computed(() => {
   gap: var(--space-8);
   padding-right: 18px;
   padding-left: 18px;
-  border-color: rgb(255 255 255 / 26%);
+  border-color: rgb(255 255 255 / 28%);
   background: linear-gradient(180deg, #009dff 0%, #65c6d4 100%);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 28%),
+    inset 0 1px 0 rgb(255 255 255 / 30%),
     0 8px 22px rgb(0 157 255 / 16%);
 }
 
@@ -215,14 +222,6 @@ const dateTime = computed(() => {
   transform: scale(0.985);
 }
 
-.daily-report-banner--vacation {
-  border-color: rgb(255 255 255 / 28%);
-  background: linear-gradient(180deg, #009dff 0%, #65c6d4 100%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 30%),
-    0 8px 22px rgb(0 157 255 / 16%);
-}
-
 .daily-report-banner:focus-visible {
   outline: 3px solid var(--green-300);
   outline-offset: 2px;
@@ -239,10 +238,10 @@ const dateTime = computed(() => {
 
 .daily-report-banner__content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   min-width: 0;
-  padding-right: 52px;
+  padding-right: 10px;
   flex-direction: column;
   justify-content: center;
   gap: 3px;
@@ -254,6 +253,9 @@ const dateTime = computed(() => {
   font-size: 12px;
   font-weight: var(--weight-bold);
   line-height: 1.5;
+
+  /* 격려 문구는 배너 높이가 늘어나지 않도록 한 줄 유지 */
+  white-space: nowrap;
 }
 
 .daily-report-banner__title {
