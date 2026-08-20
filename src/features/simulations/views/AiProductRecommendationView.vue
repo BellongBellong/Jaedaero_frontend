@@ -5,42 +5,9 @@ import { useRoute, useRouter } from 'vue-router'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import { useReportsStore } from '@/features/reports/stores/reports.store'
+import { mapProductRecommendations } from '@/features/simulations/mappers/productRecommendations.mapper'
 
 const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
-
-const PRODUCT_EMOJIS = {
-  '군인공제회 목돈급여': '🏅',
-  'CMA 통장': '💛',
-  '나라사랑카드 CMA': '🏦',
-}
-
-const RATE_TONE_THEMES = {
-  NEUTRAL: 'product-card--olive',
-  YELLOW: 'product-card--yellow',
-  GREEN: 'product-card--green',
-}
-
-const RISK_GRADE_LABELS = {
-  1: '매우낮음',
-  2: '낮음',
-  3: '보통',
-  4: '높음',
-  5: '매우높음',
-}
-
-/* 새 응답의 riskLevel(문자열)을 화면 라벨과 카드 테마에 대응시킨다. */
-const RISK_LEVEL_LABELS = {
-  LOW: '매우낮음',
-  MEDIUM: '보통',
-  HIGH: '높음',
-  VERY_HIGH: '매우높음',
-}
-
-const RISK_LEVEL_THEMES = {
-  LOW: 'product-card--green',
-  MEDIUM: 'product-card--olive',
-  HIGH: 'product-card--yellow',
-}
 
 /* 화면에 노출할 추천 상품 개수. */
 const RECOMMENDATION_LIMIT = 5
@@ -129,18 +96,7 @@ const scenario = ref({
   generatedAt: new Date().toISOString(),
 })
 
-const recommendedProducts = computed(() =>
-  products.value.map((product) => ({
-    ...product,
-    emoji: PRODUCT_EMOJIS[product.productName] ?? '🏦',
-    themeClass:
-      RISK_LEVEL_THEMES[product.riskLevel] ??
-      RATE_TONE_THEMES[product.rateTone] ??
-      'product-card--olive',
-    rateText: product.expectedReturnRate == null ? '-' : `${product.expectedReturnRate}%`,
-    riskLabel: RISK_LEVEL_LABELS[product.riskLevel] ?? RISK_GRADE_LABELS[product.riskGrade] ?? '-',
-  })),
-)
+const recommendedProducts = computed(() => products.value)
 
 const recommendationCriteria = computed(() => {
   const allocation = recommendation.value?.recommendedAllocation

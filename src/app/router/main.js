@@ -188,6 +188,7 @@ const mainRoutes = [
           requiresAuth: true,
           bottomNavigation: 'ai-coach',
           headerTitle: '투자상품 추천',
+          backTo: { name: 'ai-coach' },
         },
       },
       {
