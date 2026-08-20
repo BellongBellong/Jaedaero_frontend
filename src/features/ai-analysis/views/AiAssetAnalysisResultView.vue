@@ -102,6 +102,7 @@ async function runAnalysis() {
       ? await analysisStore.loadDetail(analysisId)
       : (await Promise.all([createCurrentWhatIfAnalysis(), delay(MINIMUM_ANALYZING_DURATION)]))[0]
     analysis.value = response
+    applyState.value = response?.isApplied ? 'applied' : 'idle'
     phase.value = 'result'
     void loadRecommendedProducts()
   } catch {
