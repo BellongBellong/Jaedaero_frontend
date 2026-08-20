@@ -62,10 +62,12 @@ async function deleteEvent(event) {
       :events="events"
       :selected-date="selectedDate"
       @add="showAddModal = true"
-      @delete="deleteEvent"
     />
 
-    <EventTimeline :events="events" />
+    <EventTimeline
+      :events="events"
+      @delete="deleteEvent"
+    />
 
     <button
       class="events-page__add"

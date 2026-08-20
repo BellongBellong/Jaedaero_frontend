@@ -36,7 +36,9 @@ function formatSchedule(event) {
 }
 
 function formatDday(dday) {
-  return Number(dday) === 0 ? 'D-day' : `D-${dday}`
+  const days = Number(dday)
+  if (days === 0) return 'D-day'
+  return days > 0 ? `D-${days}` : `D+${Math.abs(days)}`
 }
 </script>
 

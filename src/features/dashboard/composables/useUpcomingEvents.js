@@ -14,7 +14,7 @@ function calculateDday(date) {
   const target = new Date(`${date}T00:00:00`)
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
 
-  return Math.max(0, Math.ceil((target - todayStart) / 86_400_000))
+  return Math.ceil((target - todayStart) / 86_400_000)
 }
 
 function calculateDurationDays(startDate, endDate) {
