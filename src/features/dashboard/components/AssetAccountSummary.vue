@@ -213,21 +213,7 @@ function formatWon(value) {
 }
 
 .asset-account-summary__more {
-  display: flex;
-  align-items: center;
   justify-self: end;
-  gap: 5px;
-  padding: 2px 0;
-  border: 0;
-  background: transparent;
-  color: var(--gray-400);
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.asset-account-summary__more img {
-  width: 7px;
-  height: 11px;
 }
 
 .asset-account-summary__empty {

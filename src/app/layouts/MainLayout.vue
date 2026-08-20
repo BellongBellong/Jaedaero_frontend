@@ -29,6 +29,10 @@ const headerTitle = computed(() => {
   if (route.name === 'transactions' && route.query.period === 'vacation') return '휴가 거래 내역'
   return String(route.meta.headerTitle || '')
 })
+const headerActionTo = computed(() => {
+  if (!route.meta.headerActionRoute) return null
+  return { name: route.meta.headerActionRoute, query: route.query }
+})
 
 watch(
   () => route.fullPath,
@@ -120,6 +124,8 @@ function handleContentScroll(event) {
       :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
       :collapsed="isHeaderCollapsed"
+      :action-label="route.meta.headerActionLabel"
+      :action-to="headerActionTo"
     />
 
     <main
@@ -201,7 +207,20 @@ function handleContentScroll(event) {
 
 /* 투명 iOS 상태바 뒤에서도 대시보드의 브랜드 배경이 끊기지 않게 이어 준다. */
 :global(.mobile-frame.mobile-frame--dashboard) {
-  background: var(--ui-background);
+  background:
+    radial-gradient(
+      ellipse 82% 38% at -8% 104%,
+      color-mix(in srgb, var(--yellow-400) 28%, transparent) 0%,
+      color-mix(in srgb, var(--yellow-400) 10%, transparent) 48%,
+      transparent 76%
+    ),
+    radial-gradient(
+      ellipse 82% 38% at 108% 104%,
+      color-mix(in srgb, var(--green-400) 26%, transparent) 0%,
+      color-mix(in srgb, var(--green-400) 9%, transparent) 48%,
+      transparent 76%
+    ),
+    var(--ui-background);
 }
 
 .main-layout__bottom > :deep(.bottom-navigation) {

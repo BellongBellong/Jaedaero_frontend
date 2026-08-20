@@ -273,11 +273,6 @@ function openInvestmentTransactions() {
   gap: var(--dashboard-card-gap);
 }
 
-.monthly-assets article,
-.monthly-assets button {
-  color: var(--gray-900);
-}
-
 .monthly-assets__income,
 .monthly-assets__tile {
   position: relative;
@@ -290,6 +285,7 @@ function openInvestmentTransactions() {
     0 8px 24px rgb(51 51 51 / 5%);
   backdrop-filter: blur(18px) saturate(125%);
   -webkit-backdrop-filter: blur(18px) saturate(125%);
+  color: var(--gray-900);
 }
 
 .monthly-assets__income::before,

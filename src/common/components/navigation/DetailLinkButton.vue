@@ -62,7 +62,10 @@ defineEmits(['click'])
 }
 
 .detail-link-button.app-label.label--safe img {
-  filter: brightness(0) saturate(100%) invert(57%) sepia(78%) saturate(513%) hue-rotate(90deg)
-    brightness(89%) contrast(92%);
+  filter: var(
+    --detail-link-icon-filter,
+    brightness(0) saturate(100%) invert(57%) sepia(78%) saturate(513%) hue-rotate(90deg)
+      brightness(89%) contrast(92%)
+  );
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import airForceCharacter from '../../../assets/character/airForce.png'
@@ -11,6 +11,7 @@ import DashboardAssetSwitcher from '@/features/dashboard/components/DashboardAss
 import DashboardSkeleton from '@/features/dashboard/components/DashboardSkeleton.vue'
 import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
 import FinancialDdayCard from '@/features/dashboard/components/FinancialDdayCard.vue'
+import FinancialDdayCompactCard from '@/features/dashboard/components/FinancialDdayCompactCard.vue'
 import MissionListSheet from '@/features/dashboard/components/MissionListSheet.vue'
 import TodayMissionCard from '@/features/dashboard/components/TodayMissionCard.vue'
 import TodayMilitaryBenefits from '@/features/dashboard/components/TodayMilitaryBenefits.vue'
@@ -46,6 +47,11 @@ const militaryBenefits = ref([])
 const benefitsLoading = ref(false)
 const useMockServer = import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 const dashboardCharacterImage = ref(armyCharacter)
+const financialCardAnchor = ref(null)
+const showCompactFinancialCard = ref(false)
+let dashboardScrollElement = null
+const COMPACT_CARD_SHOW_PROGRESS = 0.28
+const COMPACT_CARD_HIDE_PROGRESS = 0.2
 const characterImages = {
   ARMY: armyCharacter,
   NAVY: navyCharacter,
@@ -107,6 +113,39 @@ const reportRoute = computed(() => ({
   name: 'ai-financial-report',
   query: marketReportMission.value?.id ? { missionId: marketReportMission.value.id } : {},
 }))
+
+function updateCompactFinancialCard() {
+  if (!dashboardScrollElement || isVacationMode.value) {
+    showCompactFinancialCard.value = false
+    return
+  }
+
+  const maxScroll = dashboardScrollElement.scrollHeight - dashboardScrollElement.clientHeight
+  if (maxScroll <= 0) {
+    showCompactFinancialCard.value = false
+    return
+  }
+
+  const scrollProgress = dashboardScrollElement.scrollTop / maxScroll
+  const threshold = showCompactFinancialCard.value
+    ? COMPACT_CARD_HIDE_PROGRESS
+    : COMPACT_CARD_SHOW_PROGRESS
+
+  showCompactFinancialCard.value = scrollProgress >= threshold
+}
+
+function connectDashboardScroll(element) {
+  dashboardScrollElement?.removeEventListener('scroll', updateCompactFinancialCard)
+  dashboardScrollElement = element?.closest('.main-layout__content') || null
+  dashboardScrollElement?.addEventListener('scroll', updateCompactFinancialCard, { passive: true })
+  updateCompactFinancialCard()
+}
+
+watch(financialCardAnchor, connectDashboardScroll, { flush: 'post' })
+watch(isVacationMode, updateCompactFinancialCard)
+onBeforeUnmount(() => {
+  dashboardScrollElement?.removeEventListener('scroll', updateCompactFinancialCard)
+})
 
 function normalizeMission(mission) {
   const category = String(mission.missionCategory || mission.missionGroup || '').toUpperCase()
@@ -312,17 +351,30 @@ function openVacationTransactions() {
         @view-transactions="openVacationTransactions"
       />
 
+      <div
+        ref="financialCardAnchor"
+        class="dashboard__financial-card-anchor"
+      >
+        <FinancialDdayCompactCard
+          v-if="showCompactFinancialCard && !isVacationMode"
+          v-bind="dashboardData.financialDday"
+          :character-image="dashboardCharacterImage"
+          mode="default"
+        />
+        <FinancialDdayCard
+          v-else
+          v-bind="dashboardData.financialDday"
+          :character-image="dashboardCharacterImage"
+          :mode="isVacationMode ? 'vacation' : 'default'"
+        />
+      </div>
+
       <TodayMilitaryBenefits
         v-if="isVacationMode"
         :benefits="militaryBenefits"
         :loading="benefitsLoading"
         @select="(benefit) => router.push({ name: 'benefits', query: { benefitId: benefit.id } })"
         @view-all="router.push({ name: 'benefits' })"
-      />
-
-      <FinancialDdayCard
-        v-bind="dashboardData.financialDday"
-        :character-image="dashboardCharacterImage"
       />
 
       <div class="dashboard__quick-cards">
@@ -393,14 +445,13 @@ function openVacationTransactions() {
 </template>
 
 <style scoped>
-.dashboard {
+.dashboard.screen.app-page {
   display: flex;
   flex-direction: column;
   width: 100%;
   gap: var(--dashboard-gap);
-  background:
-    radial-gradient(circle at 94% 78%, rgb(98 255 156 / 35%), transparent 36%),
-    radial-gradient(circle at 0% 88%, rgb(255 229 114 / 50%), transparent 42%), var(--ui-background);
+  /* 배경은 콘텐츠 높이가 아닌 고정된 MobileFrame 크기를 기준으로 그린다. */
+  background: transparent;
 }
 
 .dashboard__quick-cards {
@@ -409,7 +460,11 @@ function openVacationTransactions() {
   gap: var(--dashboard-gap);
 }
 
-.dashboard--vacation {
+.dashboard__financial-card-anchor {
+  width: 100%;
+}
+
+.dashboard.screen.app-page.dashboard--vacation {
   background: transparent;
 }
 

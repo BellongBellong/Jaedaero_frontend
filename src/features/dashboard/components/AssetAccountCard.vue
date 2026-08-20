@@ -84,25 +84,10 @@ function formatWon(value) {
 }
 
 .asset-account-card__more {
-  display: flex;
-  width: min(100%, 260px);
-  height: 44px;
-  flex: 0 0 auto;
-  align-self: center;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 22px;
-  background: var(--gray-200);
+  align-self: flex-end;
+  padding: 2px 0;
   color: var(--gray-400);
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: var(--weight-bold);
-  letter-spacing: -0.02em;
-  line-height: 1.5;
+  font-size: 12px;
 }
 
 .asset-account-card__more img {

@@ -15,6 +15,8 @@ const props = defineProps({
   collapsed: { type: Boolean, default: false },
   hideBackWhenCollapsed: { type: Boolean, default: false },
   backTo: { type: [String, Object], default: null },
+  actionLabel: { type: String, default: '' },
+  actionTo: { type: [String, Object], default: null },
 })
 
 const router = useRouter()
@@ -44,6 +46,10 @@ function handleBack() {
   }
 
   router.back()
+}
+
+function handleAction() {
+  if (props.actionTo) router.push(props.actionTo)
 }
 </script>
 
@@ -98,6 +104,14 @@ function handleBack() {
           </span>
         </div>
       </div>
+      <button
+        v-if="actionLabel && actionTo"
+        class="app-header__action"
+        type="button"
+        @click="handleAction"
+      >
+        {{ actionLabel }}
+      </button>
     </template>
   </header>
 </template>
@@ -127,6 +141,11 @@ function handleBack() {
   padding: 0;
 }
 .app-header--collapsed .app-header__title-row {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.app-header--collapsed .app-header__action {
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
@@ -201,6 +220,23 @@ function handleBack() {
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   line-height: var(--leading-normal);
+}
+.app-header__action {
+  margin-left: auto;
+  padding: var(--space-8) 0;
+  border: 0;
+  background: transparent;
+  color: var(--gray-600);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+.app-header__action:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--green-500);
+  outline-offset: 2px;
 }
 h1 {
   color: var(--ui-ext);
