@@ -8,6 +8,8 @@ const props = defineProps({
   },
 })
 
+defineEmits(['delete'])
+
 const sortedEvents = computed(() =>
   [...props.events].sort((first, second) => {
     const ddayDifference = Number(first.dday) - Number(second.dday)
@@ -45,17 +47,20 @@ function formatSchedule(event) {
 
   const durationDays = Math.max(
     1,
-    Math.round((parseDate(endDate) - parseDate(startDate)) / 86_400_000),
+    Math.round((parseDate(endDate) - parseDate(startDate)) / 86_400_000) + 1,
   )
   return `${formatDate(startDate)} ~ ${formatDate(endDate)} (${durationDays}일)`
 }
 
 function ddayLabel(dday) {
-  return Number(dday) === 0 ? 'D-day' : `D-${dday}`
+  const days = Number(dday)
+  if (days === 0) return 'D-day'
+  return days > 0 ? `D-${days}` : `D+${Math.abs(days)}`
 }
 
 function urgencyClass(dday) {
   const days = Number(dday)
+  if (days < 0) return 'event-timeline__item--past'
   if (days <= 1) return 'event-timeline__item--urgent'
   if (days <= 7) return 'event-timeline__item--soon'
   if (days <= 29) return 'event-timeline__item--planned'
@@ -90,6 +95,13 @@ function urgencyClass(dday) {
         <span class="event-timeline__dday app-label label--dynamic">
           {{ ddayLabel(event.dday) }}
         </span>
+        <button
+          class="event-timeline__delete"
+          type="button"
+          @click="$emit('delete', event)"
+        >
+          삭제
+        </button>
       </li>
     </ol>
 
@@ -148,7 +160,7 @@ function urgencyClass(dday) {
   display: grid;
   min-width: 0;
   min-height: 62px;
-  grid-template-columns: 22px minmax(0, 1fr) auto;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
   align-items: start;
   column-gap: 14px;
   padding: 5px 0 8px;
@@ -194,6 +206,21 @@ function urgencyClass(dday) {
 .event-timeline__dday {
   --label-background: var(--timeline-label-background);
   --label-color: var(--timeline-color);
+}
+
+.event-timeline__delete {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.event-timeline__item--past {
+  --timeline-color: var(--gray-500);
+  --timeline-label-background: var(--gray-100);
 }
 
 .event-timeline__item--urgent {

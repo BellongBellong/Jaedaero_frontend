@@ -19,8 +19,8 @@ export const useLeaveModeStore = defineStore('leave-mode', () => {
     }
   }
 
-  function setMode() {
-    return refreshMode()
+  function setMode(nextMode) {
+    mode.value = nextMode === 'vacation' ? 'vacation' : 'military'
   }
 
   function setEventSchedules() {
