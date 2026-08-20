@@ -423,7 +423,10 @@ function openRecommendations() {
     SIMULATION_STORAGE_KEY,
     JSON.stringify(scenarioSnapshot(serverResult.value?.simulationId)),
   )
-  router.push({ name: 'ai-product-recommendation' })
+  router.push({
+    name: 'ai-product-recommendation',
+    query: { simulationId: serverResult.value?.simulationId },
+  })
 }
 
 onMounted(async () => {

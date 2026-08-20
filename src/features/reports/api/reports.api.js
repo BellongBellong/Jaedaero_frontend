@@ -6,8 +6,8 @@ export async function getDischargeReport() {
   return data
 }
 
-export async function getProductRecommendations() {
-  const { data } = await apiClient.get(ENDPOINTS.products.recommendations)
+export async function getProductRecommendations(params = {}) {
+  const { data } = await apiClient.get(ENDPOINTS.products.recommendations, { params })
   return data
 }
 

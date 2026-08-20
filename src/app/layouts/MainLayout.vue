@@ -30,9 +30,6 @@ const keepHeaderExpanded = computed(
 )
 const headerTitle = computed(() => {
   if (route.name === 'transactions' && route.query.period === 'vacation') return '휴가 거래 내역'
-  if (route.name === 'account-transactions' && route.query.headerTitle) {
-    return String(route.query.headerTitle)
-  }
   return String(route.meta.headerTitle || '')
 })
 
