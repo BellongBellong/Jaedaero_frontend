@@ -199,12 +199,12 @@ function handleContentScroll(event) {
   position: absolute;
   z-index: var(--z-navigation, 20);
   right: 0;
-  /* 홈 인디케이터는 피하되, safe area를 컨테이너 높이에 중복 가산하지 않는다. */
-  bottom: max(5px, calc(var(--safe-area-bottom) - 7px));
+  /* safe area는 바깥 오프셋이 아니라 컨테이너 내부 여백으로 처리한다. */
+  bottom: 0;
   left: 0;
-  height: var(--bottom-navigation-area-height);
+  height: calc(var(--bottom-navigation-area-height) + var(--safe-area-bottom));
   padding-top: 8px;
-  padding-bottom: 4px;
+  padding-bottom: var(--safe-area-bottom);
   pointer-events: none;
   /* 콘텐츠가 글래스 바와 하단 safe area 뒤로 자연스럽게 이어진다. */
   background: transparent;
