@@ -1,22 +1,18 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 import arrowRightIcon from '../../../assets/features/ai-analysis/arrowRightIcon.svg'
 import arrowUpIcon from '../../../assets/features/ai-analysis/arrowUpIcon.svg'
 import causeInfoIcon from '../../../assets/features/ai-analysis/causeInfoIcon.svg'
 import analysisGlow from '../../../assets/features/ai-coach/analysis-glow.svg'
 import coachCharacter from '../../../assets/features/ai-coach/coach-character.svg'
-import DetailLinkButton from '@/common/components/navigation/DetailLinkButton.vue'
 import { mapAiAnalysisRequest } from '@/features/ai-analysis/mappers/aiAnalysisRequest.mapper'
 import { useAnalysisStore } from '@/features/ai-analysis/stores/analysis.store'
 import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
-import { useReportsStore } from '@/features/reports/stores/reports.store'
-import { mapProductRecommendations } from '@/features/simulations/mappers/productRecommendations.mapper'
 import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
 
 const MINIMUM_ANALYZING_DURATION = 2600
-const PRODUCT_PREVIEW_LIMIT = 2
 
 const DONUT_RADIUS = 42
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
@@ -56,9 +52,7 @@ const CAUSE_TAGS = {
 }
 
 const route = useRoute()
-const router = useRouter()
 const analysisStore = useAnalysisStore()
-const reportsStore = useReportsStore()
 const simulationsStore = useSimulationsStore()
 const { honorificNickname, loadNickname } = useCurrentUserNickname()
 
@@ -68,9 +62,6 @@ const errorMessage = ref('')
 
 const applyState = ref('idle')
 const applyErrorMessage = ref('')
-const recommendedProducts = ref([])
-const productsLoading = ref(false)
-const productsErrorMessage = ref('')
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -93,8 +84,6 @@ async function runAnalysis() {
   errorMessage.value = ''
   applyState.value = 'idle'
   applyErrorMessage.value = ''
-  recommendedProducts.value = []
-  productsErrorMessage.value = ''
 
   try {
     const analysisId = route.params.analysisId
@@ -104,27 +93,9 @@ async function runAnalysis() {
     analysis.value = response
     applyState.value = response?.isApplied ? 'applied' : 'idle'
     phase.value = 'result'
-    void loadRecommendedProducts()
   } catch {
     errorMessage.value = 'AI 소비 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
     phase.value = 'error'
-  }
-}
-
-async function loadRecommendedProducts() {
-  productsLoading.value = true
-  productsErrorMessage.value = ''
-
-  try {
-    recommendedProducts.value = mapProductRecommendations(
-      await reportsStore.loadProductRecommendations(),
-      { limit: PRODUCT_PREVIEW_LIMIT },
-    )
-  } catch {
-    recommendedProducts.value = []
-    productsErrorMessage.value = '추천 상품을 불러오지 못했어요.'
-  } finally {
-    productsLoading.value = false
   }
 }
 
@@ -691,75 +662,6 @@ async function handleApplyStrategy() {
               {{ applyErrorMessage }}
             </p>
           </article>
-
-          <section
-            class="products"
-            aria-labelledby="recommended-products-title"
-          >
-            <div class="products__head">
-              <div class="section-head">
-                <span
-                  class="head-tile head-tile--star"
-                  aria-hidden="true"
-                >⭐</span>
-                <h3
-                  id="recommended-products-title"
-                  class="section-head__title"
-                >
-                  추천 상품
-                </h3>
-              </div>
-              <DetailLinkButton
-                class="products__more"
-                @click="router.push({ name: 'ai-product-recommendation' })"
-              >
-                자세히 보기
-              </DetailLinkButton>
-            </div>
-
-            <p
-              v-if="productsLoading"
-              class="products__status"
-            >
-              추천 상품을 불러오는 중이에요.
-            </p>
-            <p
-              v-else-if="productsErrorMessage"
-              class="products__status products__status--error"
-              role="alert"
-            >
-              {{ productsErrorMessage }}
-            </p>
-            <div
-              v-else-if="recommendedProducts.length"
-              class="products__grid"
-            >
-              <article
-                v-for="product in recommendedProducts"
-                :key="product.id"
-                class="product-card"
-                :class="product.themeClass"
-              >
-                <span
-                  class="product-card__icon"
-                  aria-hidden="true"
-                >{{ product.emoji }}</span>
-                <strong>{{ product.productName }}</strong>
-                <span class="product-card__tags">
-                  <span
-                    v-for="tag in product.previewTags"
-                    :key="tag"
-                  >{{ tag }}</span>
-                </span>
-              </article>
-            </div>
-            <p
-              v-else
-              class="products__status"
-            >
-              현재 추천할 수 있는 상품이 없어요.
-            </p>
-          </section>
         </div>
       </section>
     </Transition>
@@ -1069,13 +971,6 @@ async function handleApplyStrategy() {
   font-size: 13px;
 }
 
-.head-tile--star {
-  width: 24px;
-  height: 24px;
-  background: #ede9fe;
-  font-size: 13px;
-}
-
 /* 소비 패턴 분석 */
 .pattern-empty {
   padding: var(--space-24) 0;
@@ -1322,7 +1217,7 @@ async function handleApplyStrategy() {
   height: 10px;
 }
 
-/* 섹션 헤더 (예상 효과 · 추천 상품) */
+/* 섹션 헤더 */
 .section-head {
   display: flex;
   align-items: center;
@@ -1456,149 +1351,5 @@ async function handleApplyStrategy() {
   color: var(--status-error);
   font-size: var(--text-xs);
   text-align: center;
-}
-
-/* 추천 상품 */
-.products {
-  display: grid;
-  gap: var(--space-12);
-  padding: var(--space-10) 0;
-}
-
-.products__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.products .section-head__title {
-  font-size: 15px;
-}
-
-.products__more {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-4);
-  color: #7a7a7a;
-  font-size: var(--text-sm);
-}
-
-.products__more img {
-  width: 7px;
-  height: 11px;
-}
-
-.products__status {
-  padding: var(--space-20) var(--space-12);
-  border-radius: var(--radius-lg);
-  background: rgb(255 255 255 / 65%);
-  color: var(--gray-500);
-  font-size: var(--text-xs);
-  text-align: center;
-}
-
-.products__status--error {
-  color: var(--status-error);
-}
-
-.products__grid {
-  display: grid;
-  gap: var(--space-12);
-  grid-template-columns: 1fr 1fr;
-}
-
-.product-card {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: var(--space-16) var(--space-14);
-  border: 1px solid;
-  border-radius: 22px;
-  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 5%));
-}
-
-.product-card--green {
-  border-color: rgb(59 225 120 / 20%);
-  background: #f7fffb;
-}
-
-.product-card--yellow {
-  border-color: rgb(245 158 11 / 18%);
-  background: #fffdf7;
-}
-
-.product-card--olive {
-  border-color: rgb(86 103 82 / 20%);
-  background: #fbfcfa;
-}
-
-.product-card__icon {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  margin-bottom: var(--space-12);
-  place-items: center;
-  border-radius: 13px;
-  background: rgb(255 255 255 / 80%);
-  box-shadow: 0 1px 4px rgb(0 0 0 / 6%);
-  font-size: 20px;
-}
-
-.product-card strong {
-  display: -webkit-box;
-  overflow: hidden;
-  margin-bottom: 6px;
-  color: var(--ui-sub-title);
-  font-size: 13px;
-  font-weight: var(--weight-bold);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  word-break: keep-all;
-}
-
-.product-card__tags {
-  display: grid;
-  width: 100%;
-  gap: 6px;
-}
-
-.product-card__tags span {
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: 9px;
-  font-weight: var(--weight-bold);
-  line-height: 1.5;
-  text-align: center;
-}
-
-.product-card--green .product-card__tags span:first-child {
-  background: rgb(22 163 74 / 8%);
-  color: #16a34a;
-}
-
-.product-card--green .product-card__tags span:nth-child(2) {
-  background: rgb(86 103 82 / 8%);
-  color: var(--olive-500);
-}
-
-.product-card--yellow .product-card__tags span:first-child {
-  background: rgb(245 158 11 / 8%);
-  color: #f59e0b;
-}
-
-.product-card--yellow .product-card__tags span:nth-child(2) {
-  background: rgb(217 119 6 / 8%);
-  color: #d97706;
-}
-
-.product-card--olive .product-card__tags span:first-child {
-  background: rgb(86 103 82 / 8%);
-  color: var(--olive-600);
-}
-
-.product-card--olive .product-card__tags span:nth-child(2) {
-  background: rgb(158 158 158 / 10%);
-  color: var(--gray-600);
 }
 </style>

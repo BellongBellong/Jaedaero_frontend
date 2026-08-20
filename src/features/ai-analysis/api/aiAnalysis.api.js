@@ -2,6 +2,7 @@ import apiClient from '@/common/api/client'
 import { ENDPOINTS } from '@/common/api/endpoints'
 
 const AI_ANALYSIS_TIMEOUT_MS = 90_000
+const AI_STRATEGY_APPLY_TIMEOUT_MS = 90_000
 
 export async function getAnalysisHistories(params = {}) {
   const { data } = await apiClient.get(ENDPOINTS.analysisHistories, { params })
@@ -21,6 +22,8 @@ export async function getAiAnalysis(analysisId) {
 }
 
 export async function applyAiStrategy(analysisId) {
-  const { data } = await apiClient.post(ENDPOINTS.aiAnalyses.apply(analysisId))
+  const { data } = await apiClient.post(ENDPOINTS.aiAnalyses.apply(analysisId), undefined, {
+    timeout: AI_STRATEGY_APPLY_TIMEOUT_MS,
+  })
   return data
 }
