@@ -48,6 +48,15 @@ export const useAnalysisStore = defineStore('analysis', () => {
     return currentAnalysis.value
   }
 
+  async function loadAppliedStatus(analysisId) {
+    const response = await getAnalysisHistories({ type: 'AI', page: 0, size: 100 })
+    const record = mapAnalysisHistoryPage(response).records.find(
+      (item) => String(item.sourceId) === String(analysisId),
+    )
+
+    return record ? record.applied : null
+  }
+
   async function applyStrategy(analysisId) {
     return applyAiStrategy(analysisId)
   }
@@ -69,6 +78,7 @@ export const useAnalysisStore = defineStore('analysis', () => {
     load,
     create,
     loadDetail,
+    loadAppliedStatus,
     applyStrategy,
     reset,
   }
