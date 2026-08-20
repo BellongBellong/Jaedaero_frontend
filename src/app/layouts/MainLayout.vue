@@ -29,6 +29,10 @@ const headerTitle = computed(() => {
   if (route.name === 'transactions' && route.query.period === 'vacation') return '휴가 거래 내역'
   return String(route.meta.headerTitle || '')
 })
+const headerActionTo = computed(() => {
+  if (!route.meta.headerActionRoute) return null
+  return { name: route.meta.headerActionRoute, query: route.query }
+})
 
 watch(
   () => route.fullPath,
@@ -120,6 +124,8 @@ function handleContentScroll(event) {
       :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
       :collapsed="isHeaderCollapsed"
+      :action-label="route.meta.headerActionLabel"
+      :action-to="headerActionTo"
     />
 
     <main
