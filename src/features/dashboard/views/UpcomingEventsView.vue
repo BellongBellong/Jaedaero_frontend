@@ -31,7 +31,6 @@ function toDateString(date) {
 async function saveEvent(event) {
   try {
     await addEvent(event)
-    selectedDate.value = event.startDate
     showAddModal.value = false
   } catch {
     window.alert('휴가 일정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
