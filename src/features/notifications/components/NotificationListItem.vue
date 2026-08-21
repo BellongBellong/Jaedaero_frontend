@@ -23,14 +23,18 @@ const notificationMeta = {
     icon: missionAlarmIcon,
     title: (notification) => {
       const missionName = notification.missionName || notification.missionTitle
-      return missionName ? `오늘의 ${missionName} 미션을 달성했어요!` : '오늘의 미션을 달성했어요!'
+      return missionName
+        ? `오늘의 ${missionName} 미션을 달성했어요!`
+        : notification.title || '오늘의 미션을 달성했어요!'
     },
     description: (notification) => {
       const count =
         notification.completedMissionCount ??
         notification.monthlyCompletedMissionCount ??
         notification.achievedMissionCount
-      return `이번 달 달성 미션 : ${count ?? '~'}개`
+      return count == null
+        ? notification.body || notification.message || '이번 달 달성 미션 : ~개'
+        : `이번 달 달성 미션 : ${count}개`
     },
   },
   MARKET_REPORT_ARRIVED: {
@@ -55,6 +59,7 @@ const notificationMeta = {
   MONTHLY_INVESTMENT_REPORT_ARRIVED: {
     label: '적립식 투자 가이드 도착',
     icon: reportAlarmIcon,
+    description: () => '이번 달의 새 리포트가 도착했어요',
     title: () => '이번 달의 새 리포트가 도착했어요',
     actionLabel: '투자 가이드 보러가기',
   },
@@ -70,13 +75,14 @@ const meta = computed(
 )
 
 const isRead = computed(() => props.notification.read ?? props.notification.isRead ?? false)
-const title = computed(() => props.notification.title || meta.value.title(props.notification))
+const title = computed(() => meta.value.title(props.notification))
 const description = computed(() =>
   meta.value.hideDescription
     ? ''
-    : props.notification.body ||
+    : meta.value.description?.(props.notification) ||
+      props.notification.body ||
       props.notification.message ||
-      meta.value.description?.(props.notification),
+      '',
 )
 const actionLabel = computed(() => {
   const label = props.notification.actionLabel || meta.value.actionLabel
