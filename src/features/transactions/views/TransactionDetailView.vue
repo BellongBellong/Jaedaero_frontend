@@ -4,6 +4,7 @@ import { useTransactionsStore } from '@/features/transactions/stores/transaction
 import { useRoute } from 'vue-router'
 
 import editIcon from '@/assets/icons/pencilIcon.svg'
+import { useToast } from '@/common/composables/useToast'
 import { transactionResponses } from '@/features/dashboard/mocks/dashboard.mock'
 import CategoryChangeSheet from '@/features/transactions/components/CategoryChangeSheet.vue'
 import {
@@ -13,6 +14,7 @@ import {
 
 const route = useRoute()
 const transactionsStore = useTransactionsStore()
+const toast = useToast()
 const usesMockScenario = Boolean(route.query.persona || route.query.scenario)
 const transaction = ref(
   transactionsStore.cached(route.params.transactionId) ??
@@ -81,11 +83,16 @@ const detailRows = computed(() => [
   { label: '거래 후 잔액', value: formatOptionalWon(transaction.value?.balanceAfter) },
 ])
 
-function changeCategory(category) {
+async function changeCategory(category) {
   selectedCategory.value = category
   if (transaction.value) transaction.value.category = category
   categorySheetOpen.value = false
-  transactionsStore.updateCategory(route.params.transactionId, category).catch(() => {})
+  try {
+    await transactionsStore.updateCategory(route.params.transactionId, category)
+    toast.success('거래 카테고리를 변경했어요.')
+  } catch {
+    toast.error('거래 카테고리를 변경하지 못했어요. 잠시 후 다시 시도해주세요.')
+  }
 }
 
 onMounted(async () => {

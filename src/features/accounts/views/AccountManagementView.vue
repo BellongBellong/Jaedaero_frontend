@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 
 import accountIcon from '../../../assets/features/onboarding/icons/account-general.svg'
 import militarySavingsIcon from '../../../assets/features/onboarding/icons/account-military-savings.svg'
+import { useToast } from '@/common/composables/useToast'
 import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import {
   accountConnectionStatus,
@@ -16,6 +17,7 @@ import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 
 const route = useRoute()
 const accountsStore = useAccountsStore()
+const toast = useToast()
 const { accounts, loading } = storeToRefs(accountsStore)
 const loadError = ref('')
 const actionError = ref('')
@@ -120,6 +122,7 @@ async function reconnectAccount(account) {
 
   try {
     await accountsStore.reconnect(account)
+    toast.success('계좌를 다시 연동했어요. 최신 자산 정보를 확인해보세요.')
   } catch {
     reconnectErrorAccountId.value = accountId
     reconnectError.value = '다시 연동하지 못했어요. 잠시 후 다시 시도해 주세요.'
@@ -157,6 +160,7 @@ async function confirmDisconnect() {
   try {
     await accountsStore.disconnect(selectedAccount.value)
     selectedAccount.value = null
+    toast.success('계좌 연결을 해제했어요.')
   } catch {
     actionError.value = '연결을 해제하지 못했어요. 잠시 후 다시 시도해주세요.'
   } finally {

@@ -52,8 +52,9 @@ function accountName(account) {
   border-radius: 20px;
   background: linear-gradient(117.93deg, rgb(255 255 255 / 42%) 0%, rgb(255 255 255 / 14%) 100%);
   box-shadow:
+    inset 0 0 4px rgb(0 0 0 / 8%),
     inset 0 1px 0 rgb(255 255 255 / 65%),
-    inset 0 -1px 0 rgb(255 255 255 / 16%);
+    inset 0 -1px 0 rgb(0 0 0 / 6%);
   backdrop-filter: blur(18px) saturate(125%);
   -webkit-backdrop-filter: blur(18px) saturate(125%);
 }

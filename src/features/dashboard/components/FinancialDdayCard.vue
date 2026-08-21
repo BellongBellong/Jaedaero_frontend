@@ -1,13 +1,20 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import armyCharacter from '../../../assets/character/army.png'
 import starGradient from '@/assets/icons/starGradient.png'
 import DetailLinkButton from '@/common/components/navigation/DetailLinkButton.vue'
 import AssetBubble from './AssetProgressMarker.vue'
+import FinancialDdayCompactCard from './FinancialDdayCompactCard.vue'
 
 const router = useRouter()
+const financialCardElement = ref(null)
+const showCompactCard = ref(false)
+const BOTTOM_SCROLL_EPSILON = 8
+const COMPACT_CARD_HIDE_DISTANCE = 48
+let scrollElement = null
+let scrollFrameId = 0
 
 const props = defineProps({
   financialDday: {
@@ -248,12 +255,79 @@ const formattedAchievementRate = computed(() => {
 
   return rate.toFixed(1).replace(/\.0$/, '')
 })
+
+function updateCompactCard() {
+  if (props.mode !== 'default' || !financialCardElement.value) {
+    showCompactCard.value = false
+    return
+  }
+
+  const containerMaxScroll = scrollElement
+    ? scrollElement.scrollHeight - scrollElement.clientHeight
+    : 0
+  const documentElement = document.scrollingElement || document.documentElement
+  const documentMaxScroll = documentElement.scrollHeight - documentElement.clientHeight
+  const activeScrollTop = containerMaxScroll > 0 ? scrollElement.scrollTop : window.scrollY
+  const maxScroll = containerMaxScroll > 0 ? containerMaxScroll : documentMaxScroll
+
+  if (maxScroll <= 0) {
+    showCompactCard.value = false
+    return
+  }
+
+  const scrollTop = Math.max(0, activeScrollTop)
+  const isAtScrollEnd = scrollTop >= maxScroll - BOTTOM_SCROLL_EPSILON
+  const movedAwayFromScrollEnd = scrollTop < maxScroll - COMPACT_CARD_HIDE_DISTANCE
+
+  if (showCompactCard.value) {
+    if (movedAwayFromScrollEnd) showCompactCard.value = false
+    return
+  }
+
+  showCompactCard.value = isAtScrollEnd
+}
+
+function scheduleCompactCardUpdate() {
+  if (scrollFrameId) return
+
+  scrollFrameId = window.requestAnimationFrame(() => {
+    scrollFrameId = 0
+    updateCompactCard()
+  })
+}
+
+onMounted(() => {
+  scrollElement = financialCardElement.value?.closest('.main-layout__content') || null
+  scrollElement?.addEventListener('scroll', scheduleCompactCardUpdate, { passive: true })
+  window.addEventListener('scroll', scheduleCompactCardUpdate, { passive: true, capture: true })
+  updateCompactCard()
+})
+
+watch(
+  () => props.mode,
+  () => {
+    scheduleCompactCardUpdate()
+  },
+)
+
+onBeforeUnmount(() => {
+  scrollElement?.removeEventListener('scroll', scheduleCompactCardUpdate)
+  window.removeEventListener('scroll', scheduleCompactCardUpdate, true)
+
+  if (scrollFrameId) {
+    window.cancelAnimationFrame(scrollFrameId)
+  }
+})
 </script>
 
 <template>
   <section
-    class="financial-dday-card"
-    :class="`financial-dday-card--${mode}`"
+    ref="financialCardElement"
+    class="financial-dday-card dashboard-card-glass"
+    :class="[
+      `financial-dday-card--${mode}`,
+      { 'financial-dday-card--compact-placeholder': showCompactCard },
+    ]"
   >
     <img
       v-if="mode === 'vacation'"
@@ -372,6 +446,20 @@ const formattedAchievementRate = computed(() => {
       </div>
     </div>
   </section>
+
+  <Teleport to="body">
+    <template v-if="showCompactCard">
+      <FinancialDdayCompactCard
+        class="financial-dday-card__compact"
+        :financial-dday="financialDday"
+        :expected-asset="expectedAsset"
+        :current-asset="currentAsset"
+        :target-amount="targetAmount"
+        :character-image="characterImage"
+        mode="default"
+      />
+    </template>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -387,12 +475,32 @@ const formattedAchievementRate = computed(() => {
   background:
     linear-gradient(145deg, rgb(255 255 255 / 34%), rgb(255 255 255 / 12%)), rgb(255 255 255 / 20%);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 85%),
-    inset 0 -1px 0 rgb(255 255 255 / 24%),
-    0 12px 32px rgb(51 51 51 / 7%);
+    inset 0 0 4px rgb(0 0 0 / 10%),
+    inset 0 1px 0 rgb(255 255 255 / 70%),
+    0 8px 20px rgb(51 51 51 / 4%);
   backdrop-filter: blur(22px) saturate(135%);
   -webkit-backdrop-filter: blur(22px) saturate(135%);
   color: var(--gray-900);
+}
+
+.financial-dday-card--compact-placeholder {
+  box-sizing: border-box;
+  height: 320px;
+  min-height: 320px;
+  padding: 0;
+  visibility: hidden;
+}
+
+:global(.financial-dday-compact.financial-dday-card__compact) {
+  position: fixed;
+  z-index: var(--z-sticky, 200);
+  top: calc(var(--safe-area-top, 0px) + var(--app-header-height, 56px) + 8px);
+  left: 50%;
+  width: min(
+    calc(100vw - (2 * var(--layout-page-padding, 20px))),
+    calc(var(--design-mobile-width, 393px) - (2 * var(--layout-page-padding, 20px)))
+  );
+  transform: translateX(-50%);
 }
 
 .financial-dday-card::before {

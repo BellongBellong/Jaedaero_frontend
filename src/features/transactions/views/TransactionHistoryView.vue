@@ -246,7 +246,7 @@ onMounted(async () => {
       loading.value = false
     }
   }
-  completeMissionAfterLoad()
+  if (!loadError.value) await completeMissionAfterLoad()
   window.addEventListener('scroll', trackUserScroll, true)
   await nextTick()
   observeHistorySentinel()

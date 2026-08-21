@@ -1,3 +1,4 @@
+import { useToast } from '@/common/composables/useToast'
 import { useMissionStore } from '@/features/missions/stores/mission.store'
 
 function getMissionId(missionId) {
@@ -9,12 +10,22 @@ function getMissionId(missionId) {
 
 export function useMissionCompletion(route, router, actionType) {
   const missionStore = useMissionStore()
+  const toast = useToast()
+
+  function showMissionSuccess(completedCount = 1) {
+    toast.success(
+      completedCount > 1
+        ? `${completedCount}개 미션 완료! 오늘도 목표에 한 걸음 더 가까워졌어요.`
+        : '미션 완료! 오늘도 목표에 한 걸음 더 가까워졌어요.',
+    )
+  }
 
   async function completeMissionAfterLoad() {
     const missionId = getMissionId(route.query.missionId)
     if (!missionId) {
       try {
-        await missionStore.completeByActionType(actionType)
+        const completedMissions = await missionStore.completeByActionType(actionType)
+        if (completedMissions.length) showMissionSuccess(completedMissions.length)
       } catch {
         return
       }
@@ -23,6 +34,7 @@ export function useMissionCompletion(route, router, actionType) {
 
     try {
       await missionStore.completeMissionById(missionId)
+      showMissionSuccess()
     } catch (error) {
       // 이미 완료된 미션은 화면 이용 흐름을 막지 않습니다.
       if (error.response?.status !== 409) return

@@ -99,7 +99,6 @@ function changeMonth(offset) {
     visibleDate.value.getMonth() + offset,
     1,
   )
-  emit('select', toDateString(visibleDate.value))
 }
 
 function goToToday() {

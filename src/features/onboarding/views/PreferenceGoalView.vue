@@ -6,11 +6,13 @@ import confirmationEditIcon from '../../../assets/features/onboarding/icons/conf
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { characterAssets, characterAssetsByProfileName } from '@/common/constants/characterAssets'
+import { useToast } from '@/common/composables/useToast'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
 const onboarding = useOnboardingStore()
+const toast = useToast()
 const loading = ref(false)
 const completing = ref(false)
 const showConfirmModal = ref(false)
@@ -134,6 +136,7 @@ async function complete() {
 
   try {
     await onboarding.completeOnboarding()
+    toast.success('준비가 끝났어요! 이제 나만의 자산 관리를 시작해볼까요?')
     await router.replace({ name: 'dashboard' })
   } catch (error) {
     const serverMessage = error.response?.data?.message
