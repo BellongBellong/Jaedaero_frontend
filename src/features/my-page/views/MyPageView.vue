@@ -21,10 +21,12 @@ import {
 } from '@/features/my-page/composables/investmentBadges'
 import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 import ProfileAppearanceSheet from '@/features/onboarding/components/ProfileAppearanceSheet.vue'
+import { useRebalancingStore } from '@/features/rebalancing/stores/rebalancing.store'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const myPageStore = useMyPageStore()
+const rebalancingStore = useRebalancingStore()
 const profile = toRef(myPageStore, 'profile')
 const connectedAccountCount = toRef(myPageStore, 'connectedAccountCount')
 const investmentBadges = toRef(myPageStore, 'investmentBadges')
@@ -144,11 +146,16 @@ async function saveGoalAmount(targetAmount) {
   if (saving.value) return
   saving.value = true
   errorMessage.value = ''
+  let goalSaved = false
   try {
     await myPageStore.saveGoal(targetAmount)
+    goalSaved = true
+    await rebalancingStore.createGuidance()
     activeDialog.value = ''
   } catch {
-    errorMessage.value = '목표 금액을 변경하지 못했어요. 잠시 후 다시 시도해주세요.'
+    errorMessage.value = goalSaved
+      ? '목표 금액은 변경됐지만 새 투자 가이드를 만들지 못했어요. 잠시 후 다시 시도해주세요.'
+      : '목표 금액을 변경하지 못했어요. 잠시 후 다시 시도해주세요.'
   } finally {
     saving.value = false
   }
