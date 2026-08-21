@@ -69,10 +69,15 @@ export const ENDPOINTS = {
     detail: (guidanceId) => `/investment-guidances/${guidanceId}`,
     apply: (guidanceId) => `/investment-guidances/${guidanceId}/apply`,
   },
-  deviceTokens: '/device-tokens',
+  deviceTokens: {
+    register: '/device-tokens',
+    deactivate: (deviceTokenId) => `/device-tokens/${deviceTokenId}`,
+  },
   notifications: {
     list: '/notifications',
+    unreadCount: '/notifications/unread-count',
     read: (notificationId) => `/notifications/${notificationId}/read`,
+    readAll: '/notifications/read-all',
   },
   leaveMode: {
     start: '/leave-mode',

@@ -160,6 +160,13 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout() {
     try {
       if (accessToken.value) {
+        try {
+          const { deactivatePushNotificationsForLogout } =
+            await import('@/features/notifications/services/firebaseMessaging.service')
+          await deactivatePushNotificationsForLogout()
+        } catch {
+          // Push 토큰 정리에 실패해도 서버 로그아웃과 세션 폐기는 계속 진행한다.
+        }
         await authApi.logout()
       }
     } finally {

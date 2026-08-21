@@ -1,6 +1,6 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, toRef } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
 import CommonTabs from '../../../common/components/navigation/CommonTabs.vue'
@@ -24,7 +24,8 @@ import { useMissionStore } from '@/features/missions/stores/mission.store'
 import { isMissionCompleted } from '@/features/missions/utils/missionStatus'
 import { useChallengeStore } from '@/features/challenges/stores/challenge.store'
 
-const activeTab = ref('missions')
+const route = useRoute()
+const activeTab = ref(route.query.tab === 'ranking' ? 'ranking' : 'missions')
 const challengeTabs = [
   { label: '미션', value: 'missions' },
   { label: '랭킹', value: 'ranking' },
@@ -47,6 +48,13 @@ const ENCOURAGEMENT_STORAGE_KEY = 'jaedaero-challenge-encouragements'
 const selectedRankingMember = ref(null)
 const encouragedMemberKeys = ref(loadEncouragedMemberKeys())
 let timerId
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (tab === 'missions' || tab === 'ranking') activeTab.value = tab
+  },
+)
 
 const rankingPodium = {
   1: { crown: rankingCrownGold, image: rankingFirstPodium },

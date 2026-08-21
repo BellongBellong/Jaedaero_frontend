@@ -11,6 +11,7 @@ import logoutIcon from '../../../assets/features/my-page/logout.svg'
 import withdrawIcon from '../../../assets/features/my-page/withdraw.svg'
 import { characterAssets, characterAssetsByProfileName } from '@/common/constants/characterAssets'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
+import { useNotificationStore } from '@/features/notifications/stores/notification.store'
 import GoalAmountModal from '@/features/my-page/components/GoalAmountModal.vue'
 import NotificationSettingsModal from '@/features/my-page/components/NotificationSettingsModal.vue'
 import {
@@ -25,6 +26,7 @@ import { useRebalancingStore } from '@/features/rebalancing/stores/rebalancing.s
 
 const router = useRouter()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 const myPageStore = useMyPageStore()
 const rebalancingStore = useRebalancingStore()
 const profile = toRef(myPageStore, 'profile')
@@ -40,10 +42,10 @@ const errorMessage = ref('')
 const nicknameInput = ref('')
 const nicknameStatus = ref('idle')
 const defaultNotificationSettings = {
-  aiReport: false,
   mission: true,
-  payday: false,
-  leaveMode: true,
+  marketReport: true,
+  ranking: true,
+  investmentGuidance: true,
 }
 const notificationSettings = ref({ ...defaultNotificationSettings })
 const badgeProgresses = computed(() =>
@@ -140,6 +142,22 @@ function closeDialog() {
 function toggleNotification(key) {
   notificationSettings.value[key] = !notificationSettings.value[key]
   localStorage.setItem('jaedaero-notification-settings', JSON.stringify(notificationSettings.value))
+}
+
+async function toggleAllNotifications() {
+  errorMessage.value = ''
+  try {
+    if (notificationStore.pushEnabled) {
+      await notificationStore.disablePush()
+    } else {
+      const result = await notificationStore.enablePush()
+      if (result.status === 'denied') {
+        errorMessage.value = '브라우저 설정에서 알림 권한을 허용해주세요.'
+      }
+    }
+  } catch {
+    errorMessage.value = '알림 설정을 변경하지 못했어요. 잠시 후 다시 시도해주세요.'
+  }
 }
 
 async function saveGoalAmount(targetAmount) {
@@ -241,7 +259,14 @@ onMounted(async () => {
   try {
     const savedSettings = JSON.parse(localStorage.getItem('jaedaero-notification-settings'))
     if (savedSettings && typeof savedSettings === 'object') {
-      notificationSettings.value = { ...defaultNotificationSettings, ...savedSettings }
+      const migratedSettings = { ...savedSettings }
+      if (
+        typeof migratedSettings.marketReport !== 'boolean' &&
+        typeof savedSettings.aiReport === 'boolean'
+      ) {
+        migratedSettings.marketReport = savedSettings.aiReport
+      }
+      notificationSettings.value = { ...defaultNotificationSettings, ...migratedSettings }
     }
   } catch {
     localStorage.removeItem('jaedaero-notification-settings')
@@ -435,8 +460,14 @@ onMounted(async () => {
     <NotificationSettingsModal
       v-if="activeDialog === 'notifications'"
       :settings="notificationSettings"
+      :enabled="notificationStore.pushEnabled"
+      :permission="notificationStore.permission"
+      :supported="notificationStore.pushSupported"
+      :loading="notificationStore.permissionLoading"
+      :error-message="errorMessage"
       @close="closeDialog"
       @toggle="toggleNotification"
+      @toggle-all="toggleAllNotifications"
     />
 
     <Transition name="goal-sheet">
