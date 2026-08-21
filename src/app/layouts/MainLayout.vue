@@ -296,7 +296,7 @@ function handleContentScroll(event) {
 :global(.mobile-frame.mobile-frame--vacation) {
   background:
     radial-gradient(
-      ellipse 125% 68% at 50% 100%,
+      ellipse 165% 82% at 50% 100%,
       rgb(152 204 255 / 100%) 0%,
       rgb(152 204 255 / 58%) 34%,
       rgb(152 204 255 / 20%) 58%,

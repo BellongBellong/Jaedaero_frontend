@@ -100,9 +100,14 @@ const { budget: vacationBudget, setBudget: setVacationBudget } = useVacationBudg
 const allMissions = computed(() =>
   liveMissions.value.length ? liveMissions.value : dashboardData.value.missions,
 )
-const todayMissions = computed(() =>
-  allMissions.value.filter((mission) => ['TODAY', 'RECOMMENDED'].includes(mission.missionGroup)),
-)
+const todayMissions = computed(() => {
+  const regularMissions = allMissions.value.filter((mission) =>
+    ['TODAY', 'RECOMMENDED'].includes(mission.missionGroup),
+  )
+  const eventMissions = allMissions.value.filter((mission) => mission.missionGroup === 'EVENT')
+
+  return [...regularMissions, ...eventMissions].slice(0, 3)
+})
 const marketReportMission = computed(() =>
   allMissions.value.find(
     (mission) =>
