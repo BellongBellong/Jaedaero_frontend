@@ -3,14 +3,21 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 import alarmIcon from '@/assets/icons/alarmIcon.png'
+import alarmIconActiveBlue from '@/assets/icons/alarmIconActiveBlue.png'
+import alarmIconActiveGreen from '@/assets/icons/alarmIconActiveGreen.png'
 import { useNotificationStore } from '@/features/notifications/stores/notification.store'
 
-defineProps({
+const props = defineProps({
   mode: { type: String, default: 'military' },
 })
 
 const router = useRouter()
 const notificationStore = useNotificationStore()
+const hasUnreadNotifications = computed(() => Boolean(notificationStore.unreadCount))
+const notificationIcon = computed(() => {
+  if (!hasUnreadNotifications.value) return alarmIcon
+  return props.mode === 'vacation' ? alarmIconActiveBlue : alarmIconActiveGreen
+})
 const badgeLabel = computed(() =>
   notificationStore.unreadCount > 99 ? '99+' : String(notificationStore.unreadCount),
 )
@@ -25,7 +32,9 @@ const badgeLabel = computed(() =>
     @click="router.push({ name: 'notifications' })"
   >
     <img
-      :src="alarmIcon"
+      class="notification-button__icon"
+      :class="{ 'notification-button__icon--active': hasUnreadNotifications }"
+      :src="notificationIcon"
       alt=""
       aria-hidden="true"
     >
@@ -87,7 +96,14 @@ const badgeLabel = computed(() =>
     linear-gradient(180deg, rgb(190 222 255 / 58%), rgb(230 242 255 / 44%));
 }
 
-.notification-button img {
+.notification-button__icon {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
   opacity: 0.86;
+}
+.notification-button__icon--active {
+  width: 18px;
+  height: auto;
 }
 </style>
