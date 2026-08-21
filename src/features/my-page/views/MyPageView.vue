@@ -3,6 +3,8 @@ import { computed, onMounted, ref, toRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import emptyBadgeState from '@/assets/badges/empty-badge-state.svg'
+import nicknameCheckAvailableIcon from '@/assets/features/onboarding/icons/nickname-check-available.svg'
+import nicknameCheckUnavailableIcon from '@/assets/features/onboarding/icons/nickname-check-unavailable.svg'
 import connectedBankIcon from '../../../assets/features/my-page/connected-bank.svg'
 import detailViewIcon from '../../../assets/features/my-page/detail-view.svg'
 import investmentProfileIcon from '../../../assets/features/my-page/investment-profile.svg'
@@ -529,12 +531,22 @@ onMounted(async () => {
           v-if="nicknameStatus === 'available'"
           class="success"
         >
-          ●&nbsp; 사용 가능한 이름입니다.
+          <img
+            :src="nicknameCheckAvailableIcon"
+            alt=""
+            aria-hidden="true"
+          >
+          사용 가능한 이름입니다.
         </p>
         <p
           v-else-if="nicknameStatus === 'duplicate'"
           class="error"
         >
+          <img
+            :src="nicknameCheckUnavailableIcon"
+            alt=""
+            aria-hidden="true"
+          >
           이미 사용 중인 이름입니다.
         </p>
         <p
@@ -547,7 +559,12 @@ onMounted(async () => {
           v-else
           class="hint"
         >
-          ●&nbsp; 한글, 영문, 숫자 2~12자
+          <img
+            :src="nicknameCheckUnavailableIcon"
+            alt=""
+            aria-hidden="true"
+          >
+          한글, 영문, 숫자 2~12자
         </p>
         <button
           v-if="nicknameStatus === 'available'"
@@ -1307,6 +1324,20 @@ onMounted(async () => {
 }
 .success {
   color: #1fa25c;
+}
+.nickname-dialog .success,
+.nickname-dialog .error,
+.nickname-dialog .hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nickname-dialog .success img,
+.nickname-dialog .error img,
+.nickname-dialog .hint img {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
 }
 .error {
   color: #ff4b4b;
