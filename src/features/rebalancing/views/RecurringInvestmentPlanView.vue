@@ -9,6 +9,8 @@ import { isSecuritiesAccount } from '@/features/accounts/composables/institution
 import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 import { useRebalancingStore } from '@/features/rebalancing/stores/rebalancing.store'
+import { getProductRecommendations } from '@/features/reports/api/reports.api'
+import { selectClosestProductRecommendations } from '@/features/simulations/mappers/productRecommendations.mapper'
 import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
 
 const route = useRoute()
@@ -27,8 +29,8 @@ const contributionAmount = ref(0)
 const maximumMonthlyAmount = ref(0)
 const accounts = computed(() => accountsStore.accounts.filter(isSecuritiesAccount))
 const brokerageAccountId = ref(null)
-const investmentProductCode = ref('069500')
-const investmentProductName = ref('KODEX 200')
+const investmentProductCode = ref('')
+const investmentProductName = ref('')
 const isLoading = ref(true)
 const isSaving = ref(false)
 const confirmOpen = ref(false)
@@ -53,7 +55,8 @@ const canSubmit = computed(
     !validationMessage.value &&
     Number(contributionAmount.value) > 0 &&
     Number(maximumMonthlyAmount.value) > 0 &&
-    brokerageAccountId.value,
+    brokerageAccountId.value &&
+    investmentProductCode.value,
 )
 const selectedAccount = computed(() =>
   accounts.value.find((account) => String(account.id) === String(brokerageAccountId.value)),
@@ -79,10 +82,7 @@ const weekdayOptions = [
   { value: 7, label: '일요일', short: '일' },
 ]
 
-const productOptions = [
-  { code: '069500', name: 'KODEX 200' },
-  { code: '360750', name: 'TIGER 미국S&P500' },
-]
+const productOptions = ref([])
 
 function unwrapSimulations(response) {
   if (Array.isArray(response)) return response
@@ -123,6 +123,18 @@ function storedWhatIfAmount() {
   } catch {
     return 0
   }
+}
+
+function toProductOptions(recommendation) {
+  return selectClosestProductRecommendations(recommendation).map((product) => ({
+    code: String(product.isuCd ?? product.id),
+    name: product.productName,
+  }))
+}
+
+function ensureSelectedProductOption(code, name) {
+  if (!code || productOptions.value.some((product) => String(product.code) === String(code))) return
+  productOptions.value.push({ code: String(code), name: name || '선택한 ETF' })
 }
 
 function formatWon(value) {
@@ -256,6 +268,16 @@ async function loadForm() {
     }
   }
 
+  if (latestSimulationId) {
+    try {
+      productOptions.value = toProductOptions(
+        await getProductRecommendations({ simulationId: latestSimulationId }),
+      )
+    } catch {
+      productOptions.value = []
+    }
+  }
+
   if (accountResult.status === 'fulfilled') {
     /*
       증권 계좌가 없을 때 은행 계좌를 대신 보여주면 선택은 되지만 저장 시
@@ -272,11 +294,14 @@ async function loadForm() {
     contributionAmount.value = Number(plan.contributionAmount || whatIfAmount)
     maximumMonthlyAmount.value = Number(plan.maximumMonthlyAmount || whatIfAmount)
     brokerageAccountId.value = plan.brokerageAccountId || brokerageAccountId.value
-    investmentProductCode.value = plan.investmentProductCode || '069500'
-    investmentProductName.value = plan.investmentProductName || 'KODEX 200'
+    investmentProductCode.value = plan.investmentProductCode || ''
+    investmentProductName.value = plan.investmentProductName || ''
+    ensureSelectedProductOption(investmentProductCode.value, investmentProductName.value)
   } else {
     contributionAmount.value = whatIfAmount
     maximumMonthlyAmount.value = whatIfAmount
+    investmentProductCode.value = productOptions.value[0]?.code || ''
+    investmentProductName.value = productOptions.value[0]?.name || ''
   }
   isLoading.value = false
 }
@@ -285,7 +310,8 @@ onMounted(loadForm)
 
 watch(investmentProductCode, (code) => {
   investmentProductName.value =
-    productOptions.find((product) => product.code === code)?.name || investmentProductName.value
+    productOptions.value.find((product) => product.code === code)?.name ||
+    investmentProductName.value
 })
 </script>
 
@@ -505,7 +531,10 @@ watch(investmentProductCode, (code) => {
         <h3 class="product-title">
           투자 상품
         </h3>
-        <label class="choice-row product-choice">
+        <label
+          v-if="productOptions.length"
+          class="choice-row product-choice"
+        >
           <span class="choice-icon choice-icon--product">📈</span>
           <span class="choice-copy">
             <strong>{{ investmentProductName }}</strong>
@@ -527,6 +556,12 @@ watch(investmentProductCode, (code) => {
             aria-hidden="true"
           >›</span>
         </label>
+        <p
+          v-else
+          class="product-empty"
+        >
+          What-if 시뮬레이션에서 추천 ETF를 받은 뒤 선택할 수 있어요.
+        </p>
         <p class="investment-policy">
           실제 주문 방식과 동의 절차는 증권사 정책을 따릅니다.
         </p>
@@ -975,6 +1010,16 @@ watch(investmentProductCode, (code) => {
 
 .product-choice .choice-copy strong {
   font-weight: 500;
+}
+
+.product-empty {
+  padding: 14px 16px;
+  margin: 10px 0 0;
+  border-radius: 18px;
+  background: #f4f4f4;
+  color: #8c8c8c;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .choice-icon {

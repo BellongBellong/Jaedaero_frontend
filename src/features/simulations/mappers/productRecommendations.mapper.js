@@ -51,6 +51,44 @@ function returnRateOf(item) {
   return preferred?.returnRate ?? null
 }
 
+/**
+ * What-if 목표 수익률과 최근 1년 수익률의 차이가 작은 ETF를 우선 추천한다.
+ * 투자 성향 및 서버의 추천 가능 조건을 모두 만족하는 ETF만 후보로 사용한다.
+ */
+export function selectClosestProductRecommendations(
+  response,
+  { targetReturnRate, limit = 5 } = {},
+) {
+  const payload = response?.data ?? response?.result ?? response
+  const targetRate = Number(payload?.expectedReturnRate ?? targetReturnRate)
+  const hasTargetRate = Number.isFinite(targetRate)
+  const groups = Array.isArray(payload?.groups) ? payload.groups : []
+  const preference = payload?.investmentPreference === 'RISK' ? 'RISK' : 'SAFE'
+  const candidates = groups
+    .filter(
+      (group) => group.assetBucket === preference && group.eligibleForRecommendation !== false,
+    )
+    .flatMap((group) =>
+      (group.items ?? [])
+        .filter((item) => item.eligibleForRecommendation !== false)
+        .map((item) => ({ ...item, riskLevel: item.riskLevel ?? group.riskLevel })),
+    )
+    .sort((first, second) => {
+      const firstRate = Number(returnRateOf(first))
+      const secondRate = Number(returnRateOf(second))
+      const firstDifference =
+        Number.isFinite(firstRate) && hasTargetRate ? Math.abs(firstRate - targetRate) : Infinity
+      const secondDifference =
+        Number.isFinite(secondRate) && hasTargetRate ? Math.abs(secondRate - targetRate) : Infinity
+
+      return (
+        firstDifference - secondDifference || String(first.name).localeCompare(String(second.name))
+      )
+    })
+
+  return mapProductRecommendations(candidates, { limit })
+}
+
 function groupedRecommendations(response) {
   const groups = Array.isArray(response?.groups) ? response.groups : []
   const groupedItems = groups.flatMap((group) =>
