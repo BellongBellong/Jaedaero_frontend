@@ -3,6 +3,7 @@ import { onBeforeUnmount, watch } from 'vue'
 import { RouterView } from 'vue-router'
 
 import router from '@/app/router'
+import InAppNotificationBanner from '@/common/components/feedback/InAppNotificationBanner.vue'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 import { normalizeNotificationDeepLink } from '@/features/notifications/utils/notificationDeepLink'
 import { useNotificationStore } from '@/features/notifications/stores/notification.store'
@@ -35,4 +36,5 @@ onBeforeUnmount(() =>
 
 <template>
   <RouterView />
+  <InAppNotificationBanner />
 </template>
