@@ -206,6 +206,31 @@ function handleContentScroll(event) {
   background: transparent;
 }
 
+.main-layout__bottom::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgb(255 255 255 / 3%) 100%);
+  content: '';
+  -webkit-backdrop-filter: blur(8px) saturate(112%);
+  backdrop-filter: blur(8px) saturate(112%);
+  -webkit-mask: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgb(0 0 0 / 20%) 24%,
+    rgb(0 0 0 / 55%) 48%,
+    #000 100%
+  );
+  mask: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgb(0 0 0 / 20%) 24%,
+    rgb(0 0 0 / 55%) 48%,
+    #000 100%
+  );
+  pointer-events: none;
+}
+
 /*
   AI 분석 로딩 단계는 배경이 화면 전체를 덮어야 한다.
   안쪽 요소 높이를 dvh 로 맞추면 기기별 safe area 계산 차이로 바닥에 흰 여백이
@@ -241,6 +266,7 @@ function handleContentScroll(event) {
 }
 
 .main-layout__bottom > :deep(.bottom-navigation-shell) {
+  z-index: 30;
   pointer-events: auto;
 }
 
