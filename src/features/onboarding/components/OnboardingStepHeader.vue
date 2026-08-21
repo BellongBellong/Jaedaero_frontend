@@ -51,7 +51,7 @@ defineEmits(['back'])
 
 <style scoped>
 .step-header {
-  padding: 22px 6px 0;
+  padding: calc(22px + var(--safe-area-top)) 6px 0;
 }
 .back-button {
   display: grid;

@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
+import nicknameCheckAvailableIcon from '@/assets/features/onboarding/icons/nickname-check-available.svg'
+import nicknameCheckUnavailableIcon from '@/assets/features/onboarding/icons/nickname-check-unavailable.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { characterAssetsByProfileName } from '@/common/constants/characterAssets'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
@@ -195,12 +197,22 @@ async function next() {
         v-else-if="status === 'available'"
         class="success"
       >
+        <img
+          :src="nicknameCheckAvailableIcon"
+          alt=""
+          aria-hidden="true"
+        >
         사용 가능한 이름입니다.
       </p>
       <p
         v-else-if="status === 'duplicate'"
         class="form-error"
       >
+        <img
+          :src="nicknameCheckUnavailableIcon"
+          alt=""
+          aria-hidden="true"
+        >
         이미 사용 중인 이름입니다.
       </p>
       <p
@@ -209,7 +221,14 @@ async function next() {
       >
         {{ errorMessage }}
       </p>
-      <small>한글, 영문, 숫자 2~12자</small>
+      <small>
+        <img
+          :src="nicknameCheckUnavailableIcon"
+          alt=""
+          aria-hidden="true"
+        >
+        한글, 영문, 숫자 2~12자
+      </small>
     </section>
     <PrimaryButton
       variant="green"
@@ -300,9 +319,28 @@ async function next() {
   color: #8f8f8f;
 }
 .nickname-content small {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 10px 4px;
   color: #aaa;
+}
+.nickname-content small img {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+.success,
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.success img,
+.form-error img {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
 }
 .step-page > .primary-button {
   margin-bottom: 4px;

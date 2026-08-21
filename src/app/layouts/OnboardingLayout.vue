@@ -31,6 +31,13 @@ main {
   overscroll-behavior-y: contain;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  background:
+    radial-gradient(circle at 92% 8%, rgb(98 255 156 / 52%) 0, rgb(98 255 156 / 0%) 34%),
+    var(--gray-100);
+}
+
+:global(.onboarding-mobile-frame .step-page) {
+  background: transparent;
 }
 
 :global(.onboarding-mobile-frame::-webkit-scrollbar) {
