@@ -7,12 +7,15 @@ import arrowUpIcon from '../../../assets/features/ai-analysis/arrowUpIcon.svg'
 import causeInfoIcon from '../../../assets/features/ai-analysis/causeInfoIcon.svg'
 import analysisGlow from '../../../assets/features/ai-coach/analysis-glow.svg'
 import coachCharacter from '../../../assets/features/ai-coach/coach-character.svg'
+import { useToast } from '@/common/composables/useToast'
 import { mapAiAnalysisRequest } from '@/features/ai-analysis/mappers/aiAnalysisRequest.mapper'
 import { useAnalysisStore } from '@/features/ai-analysis/stores/analysis.store'
 import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
 import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
 
 const MINIMUM_ANALYZING_DURATION = 2600
+
+const toast = useToast()
 
 const DONUT_RADIUS = 42
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
@@ -305,6 +308,7 @@ async function handleApplyStrategy() {
   try {
     await analysisStore.applyStrategy(analysis.value.analysisId)
     applyState.value = 'applied'
+    toast.success('AI 소비 전략을 적용했어요. 이제 달라진 자산 흐름을 확인해보세요.')
   } catch {
     applyState.value = 'idle'
     applyErrorMessage.value = '전략 적용에 실패했어요. 다시 시도해주세요.'

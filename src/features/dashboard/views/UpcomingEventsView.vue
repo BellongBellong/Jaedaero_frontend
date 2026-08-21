@@ -1,5 +1,6 @@
 <script setup>
 import plusIcon from '@/assets/icons/plusIcon.svg'
+import { useToast } from '@/common/composables/useToast'
 import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
 import EventTimeline from '@/features/dashboard/components/EventTimeline.vue'
 import MiniEventCalendar from '@/features/dashboard/components/MiniEventCalendar.vue'
@@ -11,13 +12,14 @@ import { onMounted, ref } from 'vue'
 const selectedDate = ref(toDateString(new Date()))
 const showAddModal = ref(false)
 const missionStore = useMissionStore()
+const toast = useToast()
 const { events, addEvent, loadEvents, removeEvent } = useUpcomingEvents()
 
 onMounted(async () => {
   try {
     await loadEvents()
   } catch {
-    window.alert('이벤트 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.')
+    toast.error('이벤트 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.')
   }
 })
 
@@ -32,8 +34,9 @@ async function saveEvent(event) {
   try {
     await addEvent(event)
     showAddModal.value = false
+    toast.success('일정이 추가됐어요. 제대 후 목표에 한 걸음 더 가까워졌어요!')
   } catch {
-    window.alert('휴가 일정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    toast.error('휴가 일정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
   }
 }
 
@@ -43,8 +46,9 @@ async function deleteEvent(event) {
   try {
     await removeEvent(event.id)
     await missionStore.loadTodayMissions({ force: true })
+    toast.success('일정을 삭제했어요.')
   } catch {
-    window.alert('이벤트를 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    toast.error('이벤트를 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.')
   }
 }
 </script>
