@@ -59,7 +59,7 @@ function formatDday(value) {
 
 <template>
   <section
-    class="financial-dday-compact"
+    class="financial-dday-compact dashboard-card-glass"
     :class="`financial-dday-compact--${mode}`"
     aria-label="재정적 전역일 요약"
   >
@@ -119,15 +119,19 @@ function formatDday(value) {
   border-radius: var(--dashboard-card-radius, 28px);
   background:
     radial-gradient(circle at 100% 50%, rgb(98 255 156 / 22%), transparent 46%),
-    rgb(255 255 255 / 92%);
-  box-shadow: 0 8px 24px rgb(51 51 51 / 9%);
-  backdrop-filter: blur(16px);
+    rgb(255 255 255 / 30%);
+  box-shadow:
+    inset 0 0 4px rgb(0 0 0 / 10%),
+    inset 0 1px 0 rgb(255 255 255 / 70%),
+    0 6px 16px rgb(51 51 51 / 5%);
+  backdrop-filter: blur(22px) saturate(135%);
+  -webkit-backdrop-filter: blur(22px) saturate(135%);
 }
 
 .financial-dday-compact--vacation {
   background:
     radial-gradient(circle at 100% 50%, rgb(0 157 255 / 18%), transparent 48%),
-    rgb(255 255 255 / 92%);
+    rgb(255 255 255 / 26%);
 }
 
 .financial-dday-compact__dday {

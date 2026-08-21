@@ -93,14 +93,21 @@ async function deleteEvent(event) {
 </template>
 
 <style scoped>
-.events-page {
+.events-page.screen.app-page {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: linear-gradient(180deg, var(--green-100) 0%, var(--ui-background) 42%);
+  background: transparent;
 }
 
 .events-page__add {
+  position: fixed;
+  z-index: calc(var(--z-navigation, 20) - 1);
+  right: max(
+    var(--layout-page-padding),
+    calc((100vw - var(--design-mobile-width)) / 2 + var(--layout-page-padding))
+  );
+  bottom: calc(var(--bottom-navigation-area-height) + var(--safe-area-bottom) + 12px);
   display: flex;
   width: fit-content;
   height: 46px;
@@ -112,13 +119,35 @@ async function deleteEvent(event) {
   border: 0;
   border-radius: var(--radius-full);
   background: var(--green-500);
+  box-shadow: 0 4px 10px rgb(32 58 42 / 10%);
   color: var(--gray-900);
   cursor: pointer;
   font-weight: var(--weight-bold);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.events-page__add:hover {
+  box-shadow: 0 6px 14px rgb(32 58 42 / 13%);
+  transform: translateY(-2px);
+}
+
+.events-page__add:active {
+  box-shadow: 0 3px 8px rgb(32 58 42 / 8%);
+  transform: translateY(0);
 }
 
 .events-page__add img {
   width: 18px;
   height: 18px;
+  filter: brightness(0) saturate(100%);
+}
+
+@media (max-width: 350px) {
+  .events-page__add {
+    right: var(--layout-page-padding);
+    padding-inline: 16px;
+  }
 }
 </style>

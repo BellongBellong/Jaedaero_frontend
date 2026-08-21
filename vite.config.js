@@ -43,8 +43,9 @@ export default defineConfig(() => ({
         globPatterns: ['**/*.{js,css,html}'],
       },
       devOptions: {
-        // 기본 dev 서버에서는 끈다. 확인하려면 npm run build && npm run preview
-        enabled: false,
+        // 로컬에서도 실제 FCM 토큰과 Push 수신 흐름을 검증한다.
+        enabled: true,
+        type: 'module',
       },
     }),
   ],

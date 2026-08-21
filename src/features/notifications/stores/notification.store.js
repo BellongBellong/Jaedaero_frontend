@@ -15,6 +15,9 @@ import {
   unsubscribeFromForegroundMessages,
 } from '@/features/notifications/services/firebaseMessaging.service'
 
+const FOREGROUND_NOTIFICATION_DURATION = 5_000
+const MAX_REMEMBERED_FOREGROUND_NOTIFICATIONS = 100
+
 export const useNotificationStore = defineStore('notification', () => {
   const items = ref([])
   const page = ref(0)
@@ -26,6 +29,10 @@ export const useNotificationStore = defineStore('notification', () => {
   const loadingMore = ref(false)
   const permissionLoading = ref(false)
   const error = ref(null)
+  const foregroundNotification = ref(null)
+  const foregroundNotificationQueue = []
+  const rememberedForegroundNotificationKeys = new Set()
+  let foregroundDismissTimer
   let initialized = false
 
   const pushEnabled = computed(() => permission.value === 'granted')
@@ -63,7 +70,81 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
-  async function handleForegroundMessage() {
+  function rememberForegroundNotification(key) {
+    rememberedForegroundNotificationKeys.add(key)
+
+    if (rememberedForegroundNotificationKeys.size > MAX_REMEMBERED_FOREGROUND_NOTIFICATIONS) {
+      const oldestKey = rememberedForegroundNotificationKeys.values().next().value
+      rememberedForegroundNotificationKeys.delete(oldestKey)
+    }
+  }
+
+  function normalizeForegroundNotification(payload) {
+    const data = payload?.data || {}
+    const notification = payload?.notification || {}
+    const notificationId = data.notificationId || null
+    const key =
+      notificationId || payload?.messageId || `${Date.now()}:${notification.title || data.title}`
+
+    return {
+      key,
+      notificationId,
+      type: data.type || 'GENERAL',
+      title: notification.title || data.title || '새 알림이 도착했어요',
+      body: notification.body || data.body || '',
+      deepLink: data.deepLink || '/notifications',
+    }
+  }
+
+  function scheduleForegroundDismiss() {
+    window.clearTimeout(foregroundDismissTimer)
+    foregroundDismissTimer = window.setTimeout(
+      () => dismissForegroundNotification(),
+      FOREGROUND_NOTIFICATION_DURATION,
+    )
+  }
+
+  function showNextForegroundNotification() {
+    const nextNotification = foregroundNotificationQueue.shift() || null
+    foregroundNotification.value = nextNotification
+
+    if (nextNotification) scheduleForegroundDismiss()
+  }
+
+  function showForegroundNotification(payload) {
+    if (document.visibilityState !== 'visible') return
+
+    const normalized = normalizeForegroundNotification(payload)
+    if (rememberedForegroundNotificationKeys.has(normalized.key)) return
+
+    rememberForegroundNotification(normalized.key)
+
+    if (foregroundNotification.value) {
+      foregroundNotificationQueue.push(normalized)
+      return
+    }
+
+    foregroundNotification.value = normalized
+    scheduleForegroundDismiss()
+  }
+
+  function dismissForegroundNotification(notificationKey) {
+    if (
+      notificationKey &&
+      foregroundNotification.value &&
+      foregroundNotification.value.key !== notificationKey
+    ) {
+      return
+    }
+
+    window.clearTimeout(foregroundDismissTimer)
+    foregroundDismissTimer = undefined
+    foregroundNotification.value = null
+    showNextForegroundNotification()
+  }
+
+  async function handleForegroundMessage(payload) {
+    showForegroundNotification(payload)
     await Promise.allSettled([refreshUnreadCount(), load()])
   }
 
@@ -143,6 +224,19 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
+  async function markForegroundNotificationRead(notificationId) {
+    if (!notificationId) return
+
+    const target = items.value.find((item) => item.notificationId === notificationId)
+    if (target) {
+      await markRead(notificationId)
+      return
+    }
+
+    await readNotification(notificationId)
+    await refreshUnreadCount()
+  }
+
   async function markAllRead() {
     if (!unreadCount.value) return
     const previousItems = items.value.map((item) => ({ ...item }))
@@ -160,6 +254,7 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   function reset() {
+    window.clearTimeout(foregroundDismissTimer)
     unsubscribeFromForegroundMessages()
     navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage)
     document.removeEventListener('visibilitychange', handleVisibilityChange)
@@ -171,6 +266,10 @@ export const useNotificationStore = defineStore('notification', () => {
     unreadCount.value = 0
     permission.value = getPushPermission()
     error.value = null
+    foregroundNotification.value = null
+    foregroundNotificationQueue.splice(0)
+    rememberedForegroundNotificationKeys.clear()
+    foregroundDismissTimer = undefined
   }
 
   return {
@@ -184,6 +283,7 @@ export const useNotificationStore = defineStore('notification', () => {
     loadingMore,
     permissionLoading,
     error,
+    foregroundNotification,
     pushEnabled,
     pushSupported,
     initialize,
@@ -191,7 +291,9 @@ export const useNotificationStore = defineStore('notification', () => {
     refreshUnreadCount,
     enablePush,
     disablePush,
+    dismissForegroundNotification,
     markRead,
+    markForegroundNotificationRead,
     markAllRead,
     reset,
   }

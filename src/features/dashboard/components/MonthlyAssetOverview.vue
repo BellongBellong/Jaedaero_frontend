@@ -280,9 +280,9 @@ function openInvestmentTransactions() {
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 58%);
   box-shadow:
+    inset 0 0 4px rgb(0 0 0 / 8%),
     inset 0 1px 0 rgb(255 255 255 / 76%),
-    inset 0 -1px 0 rgb(255 255 255 / 18%),
-    0 8px 24px rgb(51 51 51 / 5%);
+    inset 0 -1px 0 rgb(0 0 0 / 6%);
   backdrop-filter: blur(18px) saturate(125%);
   -webkit-backdrop-filter: blur(18px) saturate(125%);
   color: var(--gray-900);
@@ -618,7 +618,7 @@ function openInvestmentTransactions() {
 
 .monthly-assets__spending-ring-progress {
   background: conic-gradient(
-    from -90deg,
+    from 0deg,
     rgb(255 211 197 / 80%) 0deg,
     rgb(227 114 85 / 80%) var(--spending-progress),
     transparent var(--spending-progress)
@@ -627,7 +627,7 @@ function openInvestmentTransactions() {
 
 .monthly-assets__spending-ring-over {
   background: conic-gradient(
-    from -90deg,
+    from 0deg,
     rgb(227 114 85 / 90%) 0deg,
     rgb(255 155 122 / 82%) var(--spending-over-progress),
     transparent var(--spending-over-progress)

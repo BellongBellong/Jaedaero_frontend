@@ -131,6 +131,7 @@ function handleContentScroll(event) {
       'mobile-frame--challenge': route.name === 'challenge',
       'mobile-frame--investment-guide': route.meta.investmentGuide,
       'mobile-frame--vacation': isVacationDashboard,
+      'mobile-frame--upcoming-events': route.name === 'upcoming-events',
       'mobile-frame--fixed-header-tabs': route.meta.keepHeaderOnScroll || route.meta.stickyTabs,
     }"
   >
@@ -189,7 +190,8 @@ function handleContentScroll(event) {
 }
 
 .main-layout__content--home {
-  padding-top: calc(var(--app-header-height) + var(--safe-area-top));
+  /* 헤더가 이미 레이아웃 높이를 차지하므로, 콘텐츠와의 간격만 둔다. */
+  padding-top: var(--space-12);
 }
 
 .main-layout__bottom {
@@ -252,16 +254,16 @@ function handleContentScroll(event) {
 :global(.mobile-frame.mobile-frame--dashboard) {
   background:
     radial-gradient(
-      ellipse 82% 38% at -8% 104%,
-      color-mix(in srgb, var(--yellow-400) 28%, transparent) 0%,
-      color-mix(in srgb, var(--yellow-400) 10%, transparent) 48%,
-      transparent 76%
+      ellipse 125% 68% at -8% 104%,
+      color-mix(in srgb, var(--yellow-400) 58%, transparent) 0%,
+      color-mix(in srgb, var(--yellow-400) 28%, transparent) 48%,
+      transparent 86%
     ),
     radial-gradient(
-      ellipse 82% 38% at 108% 104%,
-      color-mix(in srgb, var(--green-400) 26%, transparent) 0%,
-      color-mix(in srgb, var(--green-400) 9%, transparent) 48%,
-      transparent 76%
+      ellipse 125% 68% at 108% 104%,
+      color-mix(in srgb, var(--green-400) 56%, transparent) 0%,
+      color-mix(in srgb, var(--green-400) 26%, transparent) 48%,
+      transparent 86%
     ),
     var(--ui-background);
 }
@@ -269,6 +271,16 @@ function handleContentScroll(event) {
 .main-layout__bottom > :deep(.bottom-navigation-shell) {
   z-index: 30;
   pointer-events: auto;
+}
+
+:global(.mobile-frame.mobile-frame--upcoming-events) {
+  background:
+    radial-gradient(
+      ellipse 112% 70% at 50% -8%,
+      color-mix(in srgb, var(--brand-primary) 46%, transparent) 0%,
+      transparent 74%
+    ),
+    var(--ui-background);
 }
 
 :global(.mobile-frame.mobile-frame--ai-coach) {
@@ -297,13 +309,13 @@ function handleContentScroll(event) {
 :global(.mobile-frame.mobile-frame--vacation) {
   background:
     radial-gradient(
-      ellipse 125% 68% at 50% 100%,
+      ellipse 200% 100% at 50% 100%,
       rgb(152 204 255 / 100%) 0%,
-      rgb(152 204 255 / 58%) 34%,
-      rgb(152 204 255 / 20%) 58%,
-      rgb(152 204 255 / 0%) 76%
+      rgb(152 204 255 / 68%) 36%,
+      rgb(152 204 255 / 30%) 64%,
+      rgb(152 204 255 / 0%) 88%
     ),
-    #f6f6f6;
+    var(--ui-background);
 }
 
 .main-layout__content :deep(.screen) {

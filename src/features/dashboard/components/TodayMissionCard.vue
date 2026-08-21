@@ -1,6 +1,7 @@
 <script setup>
 import checkboxFalseIcon from '@/assets/icons/CheckboxFalse.svg'
-import checkboxTrueIcon from '@/assets/icons/CheckboxTrue.svg'
+import missionCheckIconGreen from '@/assets/icons/MissionCheckIconGreen.svg'
+import DetailLinkButton from '@/common/components/navigation/DetailLinkButton.vue'
 
 defineProps({
   missions: {
@@ -14,11 +15,13 @@ defineEmits(['mission-click', 'show-all'])
 
 <template>
   <section class="today-mission-card">
-    <h2>오늘의 미션</h2>
+    <header class="today-mission-card__header">
+      <h2>오늘의 미션</h2>
+    </header>
 
     <ul v-if="missions.length">
       <li
-        v-for="mission in missions.slice(0, 2)"
+        v-for="mission in missions.slice(0, 3)"
         :key="mission.id"
       >
         <button
@@ -28,7 +31,7 @@ defineEmits(['mission-click', 'show-all'])
           <span class="today-mission-card__mission">
             <img
               class="today-mission-card__check"
-              :src="mission.completed ? checkboxTrueIcon : checkboxFalseIcon"
+              :src="mission.completed ? missionCheckIconGreen : checkboxFalseIcon"
               alt=""
               aria-hidden="true"
             >
@@ -45,13 +48,12 @@ defineEmits(['mission-click', 'show-all'])
       오늘의 미션이 없어요.
     </p>
 
-    <button
+    <DetailLinkButton
       class="today-mission-card__more"
-      type="button"
       @click="$emit('show-all')"
     >
-      전체 보기
-    </button>
+      미션 전체 보기
+    </DetailLinkButton>
   </section>
 </template>
 
@@ -63,7 +65,7 @@ defineEmits(['mission-click', 'show-all'])
   min-height: 0;
   aspect-ratio: 1;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--space-8);
   padding: var(--space-20);
   border-radius: var(--dashboard-card-radius);
@@ -78,30 +80,49 @@ defineEmits(['mission-click', 'show-all'])
   line-height: 1.5;
 }
 
+.today-mission-card__header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
 .today-mission-card ul {
   display: flex;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: 0;
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
 .today-mission-card li {
+  display: flex;
   min-width: 0;
+  flex: 1 1 0;
+  min-height: 0;
+  border-bottom: 1px dashed var(--ui-sub-title-light, #bdbdbd);
+}
+
+.today-mission-card li:last-child {
+  border-bottom-color: transparent;
 }
 
 .today-mission-card li > button {
   display: flex;
   width: 100%;
-  min-height: 32px;
+  height: 100%;
+  min-height: 0;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 5px 10px;
+  padding: 0;
   border: 0;
-  border-radius: 10px;
-  background: var(--white);
+  background: transparent;
   cursor: pointer;
   text-align: left;
 }
@@ -111,13 +132,13 @@ defineEmits(['mission-click', 'show-all'])
   min-width: 0;
   flex: 1;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .today-mission-card__check {
   flex: 0 0 auto;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   object-fit: contain;
 }
 
@@ -134,13 +155,9 @@ defineEmits(['mission-click', 'show-all'])
 
 .today-mission-card__more {
   align-self: center;
-  padding: 2px var(--space-8) 0;
-  border: 0;
-  background: transparent;
+  margin-top: auto;
   color: var(--dashboard-muted-text);
-  cursor: pointer;
   font-size: 11px;
-  line-height: 1.5;
 }
 
 .today-mission-card__empty {

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import airForceCharacter from '../../../assets/character/airForce.png'
@@ -12,7 +12,6 @@ import DashboardAssetSwitcher from '@/features/dashboard/components/DashboardAss
 import DashboardSkeleton from '@/features/dashboard/components/DashboardSkeleton.vue'
 import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
 import FinancialDdayCard from '@/features/dashboard/components/FinancialDdayCard.vue'
-import FinancialDdayCompactCard from '@/features/dashboard/components/FinancialDdayCompactCard.vue'
 import MissionListSheet from '@/features/dashboard/components/MissionListSheet.vue'
 import TodayMissionCard from '@/features/dashboard/components/TodayMissionCard.vue'
 import TodayMilitaryBenefits from '@/features/dashboard/components/TodayMilitaryBenefits.vue'
@@ -108,9 +107,14 @@ const { budget: vacationBudget, setBudget: setVacationBudget } = useVacationBudg
 const allMissions = computed(() =>
   liveMissions.value.length ? liveMissions.value : dashboardData.value.missions,
 )
-const todayMissions = computed(() =>
-  allMissions.value.filter((mission) => ['TODAY', 'RECOMMENDED'].includes(mission.missionGroup)),
-)
+const todayMissions = computed(() => {
+  const regularMissions = allMissions.value.filter((mission) =>
+    ['TODAY', 'RECOMMENDED'].includes(mission.missionGroup),
+  )
+  const eventMissions = allMissions.value.filter((mission) => mission.missionGroup === 'EVENT')
+
+  return [...regularMissions, ...eventMissions].slice(0, 3)
+})
 const marketReportMission = computed(() =>
   allMissions.value.find(
     (mission) =>
@@ -124,39 +128,6 @@ const reportRoute = computed(() => ({
   name: 'ai-financial-report',
   query: marketReportMission.value?.id ? { missionId: marketReportMission.value.id } : {},
 }))
-
-function updateCompactFinancialCard() {
-  if (!dashboardScrollElement || isVacationMode.value) {
-    showCompactFinancialCard.value = false
-    return
-  }
-
-  const maxScroll = dashboardScrollElement.scrollHeight - dashboardScrollElement.clientHeight
-  if (maxScroll <= 0) {
-    showCompactFinancialCard.value = false
-    return
-  }
-
-  const scrollProgress = dashboardScrollElement.scrollTop / maxScroll
-  const threshold = showCompactFinancialCard.value
-    ? COMPACT_CARD_HIDE_PROGRESS
-    : COMPACT_CARD_SHOW_PROGRESS
-
-  showCompactFinancialCard.value = scrollProgress >= threshold
-}
-
-function connectDashboardScroll(element) {
-  dashboardScrollElement?.removeEventListener('scroll', updateCompactFinancialCard)
-  dashboardScrollElement = element?.closest('.main-layout__content') || null
-  dashboardScrollElement?.addEventListener('scroll', updateCompactFinancialCard, { passive: true })
-  updateCompactFinancialCard()
-}
-
-watch(financialCardAnchor, connectDashboardScroll, { flush: 'post' })
-watch(isVacationMode, updateCompactFinancialCard)
-onBeforeUnmount(() => {
-  dashboardScrollElement?.removeEventListener('scroll', updateCompactFinancialCard)
-})
 
 function normalizeMission(mission) {
   const category = String(mission.missionCategory || mission.missionGroup || '').toUpperCase()
@@ -365,23 +336,11 @@ function openVacationTransactions() {
         @view-transactions="openVacationTransactions"
       />
 
-      <div
-        ref="financialCardAnchor"
-        class="dashboard__financial-card-anchor"
-      >
-        <FinancialDdayCompactCard
-          v-if="showCompactFinancialCard && !isVacationMode"
-          v-bind="dashboardData.financialDday"
-          :character-image="dashboardCharacterImage"
-          mode="default"
-        />
-        <FinancialDdayCard
-          v-else
-          v-bind="dashboardData.financialDday"
-          :character-image="dashboardCharacterImage"
-          :mode="isVacationMode ? 'vacation' : 'default'"
-        />
-      </div>
+      <FinancialDdayCard
+        v-bind="dashboardData.financialDday"
+        :character-image="dashboardCharacterImage"
+        :mode="isVacationMode ? 'vacation' : 'default'"
+      />
 
       <TodayMilitaryBenefits
         v-if="isVacationMode"
@@ -391,47 +350,49 @@ function openVacationTransactions() {
         @view-all="router.push({ name: 'benefits' })"
       />
 
-      <div class="dashboard__quick-cards">
-        <UpcomingEventsCard
-          :events="dashboardEvents"
-          :remaining-count="Math.max(0, dashboardEvents.length - 2)"
-          :can-add="true"
-          @add="showEventModal = true"
-          @show-more="router.push({ name: 'upcoming-events' })"
-        />
-        <TodayMissionCard
-          :missions="todayMissions"
-          @mission-click="openMission"
-          @show-all="showMissionSheet = true"
+      <div class="dashboard__after-financial">
+        <div class="dashboard__quick-cards">
+          <UpcomingEventsCard
+            :events="dashboardEvents"
+            :remaining-count="Math.max(0, dashboardEvents.length - 2)"
+            :can-add="true"
+            @add="showEventModal = true"
+            @show-more="router.push({ name: 'upcoming-events' })"
+          />
+          <TodayMissionCard
+            :missions="todayMissions"
+            @mission-click="openMission"
+            @show-all="showMissionSheet = true"
+          />
+        </div>
+
+        <DashboardAssetSwitcher
+          :monthly="dashboardData.assetSummary.monthly"
+          :total-assets="dashboardData.assetSummary.total"
+          @view-report="
+            router.push({ name: 'transactions', query: { ...route.query, period: 'month' } })
+          "
+          @view-income="
+            router.push({
+              name: 'transactions',
+              query: { ...route.query, period: 'month', type: 'INCOME' },
+            })
+          "
+          @view-investment="
+            router.push({
+              name: 'transactions',
+              query: { ...route.query, period: 'month', tab: 'INVESTMENT' },
+            })
+          "
+          @view-spending="
+            router.push({
+              name: 'transactions',
+              query: { ...route.query, period: 'month', type: 'EXPENSE' },
+            })
+          "
+          @view-assets="router.push({ name: 'asset-overview', query: route.query })"
         />
       </div>
-
-      <DashboardAssetSwitcher
-        :monthly="dashboardData.assetSummary.monthly"
-        :total-assets="dashboardData.assetSummary.total"
-        @view-report="
-          router.push({ name: 'transactions', query: { ...route.query, period: 'month' } })
-        "
-        @view-income="
-          router.push({
-            name: 'transactions',
-            query: { ...route.query, period: 'month', type: 'INCOME' },
-          })
-        "
-        @view-investment="
-          router.push({
-            name: 'transactions',
-            query: { ...route.query, period: 'month', tab: 'INVESTMENT' },
-          })
-        "
-        @view-spending="
-          router.push({
-            name: 'transactions',
-            query: { ...route.query, period: 'month', type: 'EXPENSE' },
-          })
-        "
-        @view-assets="router.push({ name: 'asset-overview', query: route.query })"
-      />
     </template>
 
     <EventAddModal
@@ -474,8 +435,14 @@ function openVacationTransactions() {
   gap: var(--dashboard-gap);
 }
 
-.dashboard__financial-card-anchor {
-  width: 100%;
+.dashboard__after-financial {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dashboard-gap);
+}
+
+.dashboard:has(.financial-dday-card--compact-placeholder) .dashboard__after-financial {
+  transform: translateY(-32px);
 }
 
 .dashboard.screen.app-page.dashboard--vacation {
