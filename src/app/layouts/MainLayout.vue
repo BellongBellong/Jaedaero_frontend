@@ -190,7 +190,8 @@ function handleContentScroll(event) {
 }
 
 .main-layout__content--home {
-  padding-top: calc(var(--app-header-height) + var(--safe-area-top));
+  /* 헤더가 이미 레이아웃 높이를 차지하므로, 콘텐츠와의 간격만 둔다. */
+  padding-top: var(--space-12);
 }
 
 .main-layout__bottom {
@@ -253,16 +254,16 @@ function handleContentScroll(event) {
 :global(.mobile-frame.mobile-frame--dashboard) {
   background:
     radial-gradient(
-      ellipse 82% 38% at -8% 104%,
-      color-mix(in srgb, var(--yellow-400) 28%, transparent) 0%,
-      color-mix(in srgb, var(--yellow-400) 10%, transparent) 48%,
-      transparent 76%
+      ellipse 125% 68% at -8% 104%,
+      color-mix(in srgb, var(--yellow-400) 58%, transparent) 0%,
+      color-mix(in srgb, var(--yellow-400) 28%, transparent) 48%,
+      transparent 86%
     ),
     radial-gradient(
-      ellipse 82% 38% at 108% 104%,
-      color-mix(in srgb, var(--green-400) 26%, transparent) 0%,
-      color-mix(in srgb, var(--green-400) 9%, transparent) 48%,
-      transparent 76%
+      ellipse 125% 68% at 108% 104%,
+      color-mix(in srgb, var(--green-400) 56%, transparent) 0%,
+      color-mix(in srgb, var(--green-400) 26%, transparent) 48%,
+      transparent 86%
     ),
     var(--ui-background);
 }
