@@ -44,9 +44,7 @@ const rankingYearMonth = toRef(challengeStore, 'rankingYearMonth')
 const modeMenuOpen = ref(false)
 const errorMessage = ref('')
 const now = ref(new Date())
-const ENCOURAGEMENT_STORAGE_KEY = 'jaedaero-challenge-encouragements'
 const selectedRankingMember = ref(null)
-const encouragedMemberKeys = ref(loadEncouragedMemberKeys())
 let timerId
 
 watch(
@@ -443,28 +441,6 @@ const ranking = computed(() => {
 
 const apiRanking = computed(() => ranking.value)
 
-function loadEncouragedMemberKeys() {
-  try {
-    const savedKeys = JSON.parse(localStorage.getItem(ENCOURAGEMENT_STORAGE_KEY) || '[]')
-    return new Set(Array.isArray(savedKeys) ? savedKeys : [])
-  } catch {
-    return new Set()
-  }
-}
-
-function getRankingMemberKey(member) {
-  return String(member.userId ?? member.memberId ?? member.nickname ?? member.rank)
-}
-
-function hasSentEncouragement(member) {
-  return encouragedMemberKeys.value.has(getRankingMemberKey(member))
-}
-
-function getEncouragementCount(member) {
-  const count = Number(member.encouragementCount ?? member.cheerCount ?? member.likeCount ?? 0)
-  return count + (hasSentEncouragement(member) ? 1 : 0)
-}
-
 function getRankingMemberType(member) {
   const type = normalizeRankingBadgeType(
     member.investmentType ||
@@ -490,16 +466,6 @@ function openRankingMember(member) {
 
 function closeRankingMember() {
   selectedRankingMember.value = null
-}
-
-function sendEncouragement() {
-  const member = selectedRankingMember.value
-  if (!member || isCurrentRankingMember(member) || hasSentEncouragement(member)) return
-
-  const nextKeys = new Set(encouragedMemberKeys.value)
-  nextKeys.add(getRankingMemberKey(member))
-  encouragedMemberKeys.value = nextKeys
-  localStorage.setItem(ENCOURAGEMENT_STORAGE_KEY, JSON.stringify([...nextKeys]))
 }
 
 function getCurrentYearMonth() {
@@ -974,6 +940,21 @@ onBeforeUnmount(() => {
             >
           </div>
 
+          <div
+            v-if="selectedRankingMember.badgeImage"
+            class="ranking-profile-badge"
+          >
+            <img
+              :src="selectedRankingMember.badgeImage"
+              :alt="`${selectedRankingMember.tier} 뱃지`"
+            >
+            <div>
+              <span>획득 뱃지</span>
+              <strong>{{ selectedRankingMember.tier }} ·
+                {{ getRankingMemberType(selectedRankingMember) }}</strong>
+            </div>
+          </div>
+
           <h2 id="ranking-profile-title">
             {{ selectedRankingMember.nickname }}
           </h2>
@@ -989,35 +970,24 @@ onBeforeUnmount(() => {
           <div class="ranking-profile-stats">
             <span>랭킹<strong>{{ selectedRankingMember.rank }}위</strong></span>
             <span>미션<strong>{{ selectedRankingMember.missionCount }}개</strong></span>
-            <span>응원<strong>{{ getEncouragementCount(selectedRankingMember) }}개</strong></span>
           </div>
 
-          <button
-            class="encouragement-button"
-            :class="{ sent: hasSentEncouragement(selectedRankingMember) }"
-            type="button"
-            :disabled="
-              isCurrentRankingMember(selectedRankingMember) ||
-                hasSentEncouragement(selectedRankingMember)
-            "
-            @click="sendEncouragement"
-          >
-            <span aria-hidden="true">👍</span>
-            {{
-              isCurrentRankingMember(selectedRankingMember)
-                ? '내 프로필이에요'
-                : hasSentEncouragement(selectedRankingMember)
-                  ? '응원을 보냈어요'
-                  : '응원 보내기'
-            }}
-          </button>
-          <p class="ranking-profile-hint">
-            {{
-              isCurrentRankingMember(selectedRankingMember)
-                ? '다른 동기에게 응원을 보내보세요.'
-                : '같은 사용자에게 한 번만 응원을 보낼 수 있어요.'
-            }}
-          </p>
+          <div class="ranking-profile-message">
+            <span aria-hidden="true">✦</span>
+            <div>
+              <strong>
+                {{
+                  selectedRankingMember.missionCount
+                    ? '금융 습관을 꾸준히 쌓고 있어요'
+                    : '첫 금융 미션을 기다리고 있어요'
+                }}
+              </strong>
+              <p>
+                {{ selectedRankingMember.missionCount }}개의 미션을 완료하며 챌린지에 참여하고
+                있어요.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </template>
@@ -1672,6 +1642,36 @@ onBeforeUnmount(() => {
   height: 82px;
   object-fit: contain;
 }
+.ranking-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  padding: 7px 12px 7px 7px;
+  margin: 0 auto 14px;
+  border: 1px solid #e4f2e8;
+  border-radius: 999px;
+  color: #849189;
+  background: #f7fcf8;
+  text-align: left;
+}
+.ranking-profile-badge img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+.ranking-profile-badge span,
+.ranking-profile-badge strong {
+  display: block;
+}
+.ranking-profile-badge span {
+  margin-bottom: 2px;
+  font-size: 10px;
+}
+.ranking-profile-badge strong {
+  color: #425047;
+  font-size: 11px;
+}
 .ranking-profile-rank {
   position: absolute;
   right: -7px;
@@ -1695,9 +1695,9 @@ onBeforeUnmount(() => {
 }
 .ranking-profile-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 .ranking-profile-stats span {
   padding: 9px 4px;
@@ -1712,44 +1712,37 @@ onBeforeUnmount(() => {
   color: #3a433e;
   font-size: 13px;
 }
-.encouragement-button {
-  display: inline-flex;
-  width: 100%;
-  min-height: 48px;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 12px 18px;
-  border: 0;
+.ranking-profile-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 13px;
   border-radius: 16px;
+  color: #79877e;
+  background: linear-gradient(135deg, #f4fff7 0%, #fffdf2 100%);
+  text-align: left;
+}
+.ranking-profile-message > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  border-radius: 8px;
   color: #fff;
-  background: #22c66b;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    background 160ms ease,
-    transform 160ms ease;
+  background: #35c875;
+  font-size: 13px;
+  place-items: center;
 }
-.encouragement-button:hover:not(:disabled) {
-  background: #18ae5b;
-  transform: translateY(-1px);
+.ranking-profile-message strong {
+  display: block;
+  color: #405048;
+  font-size: 12px;
+  line-height: 1.4;
 }
-.encouragement-button:focus-visible {
-  outline: 3px solid #9ff0bd;
-  outline-offset: 3px;
-}
-.encouragement-button.sent,
-.encouragement-button:disabled {
-  color: #7d8982;
-  background: #edf2ee;
-  cursor: default;
-}
-.ranking-profile-hint {
-  margin: 10px 0 0;
-  color: #a2aaa5;
+.ranking-profile-message p {
+  margin: 3px 0 0;
   font-size: 11px;
+  line-height: 1.45;
 }
 .my-rank-card {
   padding: 20px;

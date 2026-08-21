@@ -2,6 +2,10 @@
 import { onBeforeUnmount, watch } from 'vue'
 import { RouterView } from 'vue-router'
 
+import BaseToast from '@/common/components/feedback/BaseToast.vue'
+import { useToast } from '@/common/composables/useToast'
+
+const { message, variant, visible } = useToast()
 import router from '@/app/router'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 import { normalizeNotificationDeepLink } from '@/features/notifications/utils/notificationDeepLink'
@@ -35,4 +39,10 @@ onBeforeUnmount(() =>
 
 <template>
   <RouterView />
+
+  <BaseToast
+    :message="message"
+    :variant="variant"
+    :visible="visible"
+  />
 </template>

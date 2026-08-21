@@ -10,6 +10,7 @@ import notificationSettingsIcon from '../../../assets/features/my-page/notificat
 import logoutIcon from '../../../assets/features/my-page/logout.svg'
 import withdrawIcon from '../../../assets/features/my-page/withdraw.svg'
 import { characterAssets, characterAssetsByProfileName } from '@/common/constants/characterAssets'
+import { useToast } from '@/common/composables/useToast'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 import { useNotificationStore } from '@/features/notifications/stores/notification.store'
 import GoalAmountModal from '@/features/my-page/components/GoalAmountModal.vue'
@@ -29,6 +30,7 @@ const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
 const myPageStore = useMyPageStore()
 const rebalancingStore = useRebalancingStore()
+const toast = useToast()
 const profile = toRef(myPageStore, 'profile')
 const connectedAccountCount = toRef(myPageStore, 'connectedAccountCount')
 const investmentBadges = toRef(myPageStore, 'investmentBadges')
@@ -170,6 +172,7 @@ async function saveGoalAmount(targetAmount) {
     goalSaved = true
     await rebalancingStore.createGuidance()
     activeDialog.value = ''
+    toast.success('전역 목표 금액을 저장했어요. 목표에 맞는 투자 가이드도 준비했어요.')
   } catch {
     errorMessage.value = goalSaved
       ? '목표 금액은 변경됐지만 새 투자 가이드를 만들지 못했어요. 잠시 후 다시 시도해주세요.'
@@ -199,6 +202,7 @@ async function saveNickname() {
   try {
     await myPageStore.saveNickname(nicknameInput.value)
     activeDialog.value = ''
+    toast.success('닉네임을 변경했어요.')
   } catch {
     errorMessage.value = '닉네임을 변경하지 못했어요. 잠시 후 다시 시도해주세요.'
   } finally {
@@ -223,6 +227,7 @@ async function saveAppearance(image, color) {
       },
     )
     activeDialog.value = ''
+    toast.success('프로필을 저장했어요.')
   } catch {
     errorMessage.value = '프로필 이미지를 변경하지 못했어요.'
   } finally {
