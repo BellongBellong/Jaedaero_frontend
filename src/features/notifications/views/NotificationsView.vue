@@ -1,21 +1,22 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import accountEmptyMascot from '@/assets/features/onboarding/icons/account-empty-mascot.svg'
+import NotificationListItem from '@/features/notifications/components/NotificationListItem.vue'
 import { normalizeNotificationDeepLink } from '@/features/notifications/utils/notificationDeepLink'
 import { useNotificationStore } from '@/features/notifications/stores/notification.store'
 
 const router = useRouter()
 const notificationStore = useNotificationStore()
-
-const notificationMeta = {
-  MISSION_COMPLETED: { icon: '✓', tone: 'green', label: '미션 달성' },
-  MARKET_REPORT_ARRIVED: { icon: '↗', tone: 'yellow', label: '오늘의 시장 리포트' },
-  RANKING_RISEN: { icon: '★', tone: 'orange', label: '랭킹 상승' },
-  DAILY_MISSION_AVAILABLE: { icon: '!', tone: 'olive', label: '오늘의 미션' },
-  MONTHLY_INVESTMENT_REPORT_ARRIVED: { icon: '₩', tone: 'green', label: '투자 가이드' },
-}
-
+const hasLoaded = ref(false)
+const showEmptyState = computed(
+  () =>
+    hasLoaded.value &&
+    !notificationStore.loading &&
+    !notificationStore.error &&
+    !notificationStore.items.length,
+)
 const permissionMessage = computed(() => {
   if (notificationStore.permission === 'denied') {
     return '브라우저 설정에서 제대로의 알림 권한을 허용해주세요.'
@@ -25,29 +26,6 @@ const permissionMessage = computed(() => {
   }
   return '미션과 시장 리포트가 도착하면 바로 알려드릴게요.'
 })
-
-function metaFor(type) {
-  return notificationMeta[type] || { icon: '•', tone: 'olive', label: '알림' }
-}
-
-function formatCreatedAt(value) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
-
-  const elapsed = Date.now() - date.getTime()
-  const minutes = Math.floor(elapsed / 60_000)
-  if (minutes < 1) return '방금 전'
-  if (minutes < 60) return `${minutes}분 전`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}시간 전`
-
-  return new Intl.DateTimeFormat('ko-KR', {
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
-}
 
 async function enablePush() {
   try {
@@ -71,11 +49,15 @@ async function openNotification(notification) {
 
 onMounted(async () => {
   await Promise.allSettled([notificationStore.load(), notificationStore.refreshUnreadCount()])
+  hasLoaded.value = true
 })
 </script>
 
 <template>
-  <section class="notifications-page screen app-page">
+  <section
+    class="notifications-page screen app-page"
+    :class="{ 'notifications-page--empty': showEmptyState }"
+  >
     <section
       v-if="!notificationStore.pushEnabled"
       class="push-permission-card"
@@ -99,19 +81,6 @@ onMounted(async () => {
         {{ notificationStore.permissionLoading ? '설정 중' : '켜기' }}
       </button>
     </section>
-
-    <div class="notifications-toolbar">
-      <p>
-        <b>{{ notificationStore.unreadCount }}</b>개의 읽지 않은 알림
-      </p>
-      <button
-        type="button"
-        :disabled="!notificationStore.unreadCount"
-        @click="notificationStore.markAllRead"
-      >
-        모두 읽음
-      </button>
-    </div>
 
     <div
       v-if="notificationStore.loading"
@@ -138,54 +107,51 @@ onMounted(async () => {
       </button>
     </div>
 
-    <div
-      v-else-if="!notificationStore.items.length"
-      class="notification-state"
+    <section
+      v-else-if="showEmptyState"
+      class="notification-empty-state"
+      role="status"
+      aria-live="polite"
     >
-      <span aria-hidden="true">♢</span>
-      <strong>아직 도착한 알림이 없어요.</strong>
-      <p>새로운 미션과 리포트 소식을 여기에 모아드릴게요.</p>
-    </div>
-
-    <ul
-      v-else
-      class="notification-list"
-    >
-      <li
-        v-for="notification in notificationStore.items"
-        :key="notification.notificationId"
+      <div
+        class="notification-empty-state__visual"
+        aria-hidden="true"
       >
-        <button
-          type="button"
-          class="notification-item"
-          :class="{ 'notification-item--unread': !notification.read }"
-          @click="openNotification(notification)"
+        <img
+          :src="accountEmptyMascot"
+          alt=""
         >
-          <span
-            class="notification-item__icon"
-            :class="`notification-item__icon--${metaFor(notification.notificationType).tone}`"
-            aria-hidden="true"
-          >{{ metaFor(notification.notificationType).icon }}</span>
-          <span class="notification-item__content">
-            <span class="notification-item__meta">
-              <b>{{ metaFor(notification.notificationType).label }}</b>
-              <time :datetime="notification.createdAt">{{
-                formatCreatedAt(notification.createdAt)
-              }}</time>
-            </span>
-            <strong>{{ notification.title }}</strong>
-            <span v-if="notification.body">{{ notification.body }}</span>
-          </span>
-          <i
-            v-if="!notification.read"
-            aria-label="읽지 않음"
-          />
-        </button>
-      </li>
-    </ul>
+        <div class="notification-empty-state__dots">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+      <div class="notification-empty-state__copy">
+        <strong>아직 온 알림이 없어요</strong>
+        <p>통신 보안..</p>
+      </div>
+    </section>
+
+    <section
+      v-else
+      class="notification-list-section"
+    >
+      <header class="notification-list-section__header">
+        <h2>최근 7일</h2>
+      </header>
+      <ul class="notification-list">
+        <NotificationListItem
+          v-for="notification in notificationStore.items"
+          :key="notification.notificationId"
+          :notification="notification"
+          @open="openNotification"
+        />
+      </ul>
+    </section>
 
     <button
-      v-if="notificationStore.hasNext"
+      v-if="notificationStore.hasNext && !showEmptyState"
       class="load-more-button"
       type="button"
       :disabled="notificationStore.loadingMore"
@@ -201,8 +167,10 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background:
-    radial-gradient(circle at 92% 0%, rgb(98 255 156 / 22%), transparent 34%), var(--ui-background);
+  background: var(--ui-background);
+}
+.notifications-page--empty {
+  background: var(--ui-background);
 }
 
 .push-permission-card {
@@ -216,7 +184,6 @@ onMounted(async () => {
   background: linear-gradient(135deg, var(--green-100), var(--yellow-50));
   box-shadow: var(--shadow-sm);
 }
-
 .push-permission-card__icon {
   display: grid;
   width: 38px;
@@ -227,7 +194,6 @@ onMounted(async () => {
   font-size: 22px;
   place-items: center;
 }
-
 .push-permission-card strong {
   color: var(--gray-900);
   font-size: var(--text-sm);
@@ -238,9 +204,7 @@ onMounted(async () => {
   font-size: var(--text-xs);
   line-height: 1.45;
 }
-.push-permission-card button,
-.load-more-button,
-.notification-state button {
+.push-permission-card button {
   padding: 8px 13px;
   border: 0;
   border-radius: var(--radius-full);
@@ -250,114 +214,32 @@ onMounted(async () => {
   font-weight: var(--weight-bold);
 }
 
-.notifications-toolbar {
+.notification-list-section {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+}
+.notification-list-section__header {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 2px 4px;
+  padding: 0 20px;
 }
-.notifications-toolbar p {
+.notification-list-section__header h2 {
   margin: 0;
-  color: var(--gray-600);
-  font-size: var(--text-xs);
-}
-.notifications-toolbar p b {
-  color: var(--green-700);
-}
-.notifications-toolbar button {
-  padding: 6px;
-  border: 0;
-  background: transparent;
-  color: var(--green-700);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-}
-.notifications-toolbar button:disabled {
-  color: var(--gray-400);
+  color: var(--ui-sub-title, #757575);
+  font-family: var(--body-body-small-bold-font-family, 'Pretendard-Bold', sans-serif);
+  font-size: var(--body-body-small-bold-font-size, 14px);
+  font-weight: var(--body-body-small-bold-font-weight, 700);
+  line-height: var(--body-body-small-bold-line-height, 150%);
 }
 
 .notification-list {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
   padding: 0;
   margin: 0;
   list-style: none;
-}
-.notification-item {
-  position: relative;
-  display: grid;
-  width: 100%;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 12px;
-  padding: 15px;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-xl);
-  background: rgb(255 255 255 / 68%);
-  color: inherit;
-  text-align: left;
-}
-.notification-item--unread {
-  border-color: var(--green-200);
-  background: rgb(243 255 248 / 92%);
-}
-.notification-item__icon {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  border-radius: 14px;
-  font-weight: var(--weight-bold);
-  place-items: center;
-}
-.notification-item__icon--green {
-  background: var(--green-100);
-  color: var(--green-700);
-}
-.notification-item__icon--yellow {
-  background: var(--yellow-100);
-  color: var(--yellow-800);
-}
-.notification-item__icon--orange {
-  background: var(--orange-100);
-  color: var(--orange-700);
-}
-.notification-item__icon--olive {
-  background: var(--olive-100);
-  color: var(--olive-600);
-}
-.notification-item__content {
-  display: grid;
-  min-width: 0;
-  gap: 4px;
-}
-.notification-item__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--gray-500);
-  font-size: 11px;
-}
-.notification-item__meta b {
-  color: var(--green-700);
-}
-.notification-item__content > strong {
-  color: var(--gray-900);
-  font-size: var(--text-sm);
-  line-height: 1.4;
-}
-.notification-item__content > span:last-child {
-  color: var(--gray-600);
-  font-size: var(--text-xs);
-  line-height: 1.5;
-  white-space: pre-line;
-}
-.notification-item > i {
-  width: 7px;
-  height: 7px;
-  margin-top: 4px;
-  border-radius: var(--radius-full);
-  background: var(--green-600);
 }
 
 .notification-state {
@@ -370,6 +252,15 @@ onMounted(async () => {
   color: var(--gray-500);
   text-align: center;
 }
+.notification-state button {
+  padding: 8px 13px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--green-500);
+  color: var(--gray-900);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
 .notification-state > span {
   color: var(--green-500);
   font-size: 38px;
@@ -380,6 +271,68 @@ onMounted(async () => {
 .notification-state p {
   margin: 0;
   font-size: var(--text-xs);
+}
+.notification-empty-state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 25px;
+  align-items: center;
+  align-self: stretch;
+  padding: 100px 0;
+}
+.notification-empty-state__visual {
+  position: relative;
+  flex-shrink: 0;
+  width: 191px;
+  height: 108px;
+  overflow: hidden;
+}
+.notification-empty-state__visual img {
+  position: absolute;
+  top: 28px;
+  left: 44px;
+  width: 54.56px;
+  height: 65.14px;
+}
+.notification-empty-state__dots {
+  position: absolute;
+  top: 23.91px;
+  left: 113px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.notification-empty-state__dots span {
+  flex-shrink: 0;
+  width: 8.18px;
+  height: 8.18px;
+  border-radius: 50%;
+  background: var(--ui-light-gray, #ececec);
+}
+.notification-empty-state__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.notification-empty-state__copy strong {
+  color: var(--gray-400, #bdbdbd);
+  font-family: var(--body-heading-h5-bold-font-family, 'Pretendard-Bold', sans-serif);
+  font-size: var(--body-heading-h5-bold-font-size, 20px);
+  font-weight: var(--body-heading-h5-bold-font-weight, 700);
+  line-height: var(--body-heading-h5-bold-line-height, 150%);
+}
+.notification-empty-state__copy p {
+  margin: 0;
+  color: var(--ui-sub-title, #757575);
+  font-family: var(--body-body-medium-regular-font-family, 'Pretendard-Regular', sans-serif);
+  font-size: var(--body-body-medium-regular-font-size, 16px);
+  font-weight: var(--body-body-medium-regular-font-weight, 400);
+  letter-spacing: var(--body-body-medium-regular-letter-spacing, -0.04em);
+  line-height: var(--body-body-medium-regular-line-height, 150%);
+  text-align: center;
 }
 .notification-skeleton {
   display: grid;
@@ -393,8 +346,15 @@ onMounted(async () => {
   animation: shimmer 1.4s infinite;
 }
 .load-more-button {
+  padding: 8px 13px;
   align-self: center;
   margin-top: 2px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--green-500);
+  color: var(--gray-900);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
 }
 button:disabled {
   cursor: default;

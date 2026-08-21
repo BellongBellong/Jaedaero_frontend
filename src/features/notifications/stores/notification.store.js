@@ -35,6 +35,16 @@ export const useNotificationStore = defineStore('notification', () => {
   let foregroundDismissTimer
   let initialized = false
 
+  function normalizeNotification(notification) {
+    return {
+      ...notification,
+      notificationId: notification.notificationId ?? notification.id,
+      notificationType: notification.notificationType ?? notification.type,
+      read: notification.read ?? notification.isRead ?? false,
+      body: notification.body ?? notification.message ?? '',
+    }
+  }
+
   const pushEnabled = computed(() => permission.value === 'granted')
   const pushSupported = computed(() => permission.value !== 'unsupported')
 
@@ -56,7 +66,10 @@ export const useNotificationStore = defineStore('notification', () => {
     try {
       const targetPage = reset ? 0 : page.value + 1
       const response = await getNotifications({ page: targetPage, size: 20 })
-      const nextItems = Array.isArray(response?.items) ? response.items : []
+      const responseItems = Array.isArray(response)
+        ? response
+        : response?.items || response?.content || []
+      const nextItems = Array.isArray(responseItems) ? responseItems.map(normalizeNotification) : []
       items.value = reset ? nextItems : [...items.value, ...nextItems]
       page.value = Number(response?.page) || targetPage
       hasNext.value = Boolean(response?.hasNext)
