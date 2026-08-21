@@ -1887,7 +1887,7 @@ onBeforeUnmount(() => {
 .chart-labels {
   display: flex;
   justify-content: space-around;
-  margin-top: 6px;
+  margin: 6px 26px 0 54px;
   color: #78849c;
   font-size: 10px;
 }
