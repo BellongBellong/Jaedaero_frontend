@@ -24,6 +24,7 @@ import bankBlockJeju from '../../../assets/institutions/banks/block/Jeju.png'
 import bankBlockJeonbuk from '../../../assets/institutions/banks/block/Jeonbook.png'
 import bankBlockKb from '../../../assets/institutions/banks/block/KB.png'
 import bankBlockGwangju from '../../../assets/institutions/banks/block/KJB.png'
+import bankBlockHana from '../../../assets/institutions/banks/block/Hana.png'
 import bankBlockKbank from '../../../assets/institutions/banks/block/Kbank.png'
 import bankBlockMg from '../../../assets/institutions/banks/block/MG.png'
 import bankBlockNh from '../../../assets/institutions/banks/block/NH.png'
@@ -85,6 +86,7 @@ const iconsByCode = {
   '0039': bankGyeongnam,
   '0045': bankMg,
   '0071': bankPost,
+  '0081': bankHana,
   '0088': bankShinhan,
   '0089': bankKbank,
   '0111': bankNhLocal,
@@ -130,6 +132,7 @@ const blockIconsByCode = {
   '0039': bankBlockGyeongnam,
   '0045': bankBlockMg,
   '0071': bankBlockPost,
+  '0081': bankBlockHana,
   '0088': bankBlockShinhan,
   '0089': bankBlockKbank,
   '0111': bankBlockNhLocal,
@@ -156,6 +159,7 @@ const blockIconsByName = {
   경남: bankBlockGyeongnam,
   새마을금고: bankBlockMg,
   우체국: bankBlockPost,
+  하나: bankBlockHana,
   신한: bankBlockShinhan,
   케이뱅크: bankBlockKbank,
 }
