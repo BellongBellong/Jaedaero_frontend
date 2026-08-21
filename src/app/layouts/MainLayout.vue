@@ -131,6 +131,7 @@ function handleContentScroll(event) {
       'mobile-frame--challenge': route.name === 'challenge',
       'mobile-frame--investment-guide': route.meta.investmentGuide,
       'mobile-frame--vacation': isVacationDashboard,
+      'mobile-frame--upcoming-events': route.name === 'upcoming-events',
       'mobile-frame--fixed-header-tabs': route.meta.keepHeaderOnScroll || route.meta.stickyTabs,
     }"
   >
@@ -271,6 +272,16 @@ function handleContentScroll(event) {
   pointer-events: auto;
 }
 
+:global(.mobile-frame.mobile-frame--upcoming-events) {
+  background:
+    radial-gradient(
+      ellipse 112% 70% at 50% -8%,
+      color-mix(in srgb, var(--brand-primary) 46%, transparent) 0%,
+      transparent 74%
+    ),
+    var(--ui-background);
+}
+
 :global(.mobile-frame.mobile-frame--ai-coach) {
   background:
     radial-gradient(circle at 92% 8%, rgb(98 255 156 / 52%) 0, rgb(98 255 156 / 0%) 34%),
@@ -297,13 +308,13 @@ function handleContentScroll(event) {
 :global(.mobile-frame.mobile-frame--vacation) {
   background:
     radial-gradient(
-      ellipse 165% 82% at 50% 100%,
+      ellipse 200% 100% at 50% 100%,
       rgb(152 204 255 / 100%) 0%,
-      rgb(152 204 255 / 58%) 34%,
-      rgb(152 204 255 / 20%) 58%,
-      rgb(152 204 255 / 0%) 76%
+      rgb(152 204 255 / 68%) 36%,
+      rgb(152 204 255 / 30%) 64%,
+      rgb(152 204 255 / 0%) 88%
     ),
-    #f6f6f6;
+    var(--ui-background);
 }
 
 .main-layout__content :deep(.screen) {

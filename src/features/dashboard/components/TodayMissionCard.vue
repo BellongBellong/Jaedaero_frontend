@@ -103,7 +103,8 @@ defineEmits(['mission-click', 'show-all'])
 .today-mission-card li {
   display: flex;
   min-width: 0;
-  flex: 0 0 calc(100% / 3);
+  flex: 1 1 0;
+  min-height: 0;
   border-bottom: 1px dashed var(--ui-sub-title-light, #bdbdbd);
 }
 
