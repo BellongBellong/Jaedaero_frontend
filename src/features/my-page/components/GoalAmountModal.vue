@@ -129,7 +129,7 @@ watch(
         :disabled="!canSave"
         @click="save"
       >
-        {{ saving ? '\uC800\uC7A5 \uC911' : '\uBCC0\uACBD' }}
+        {{ saving ? '새 가이드 생성 중' : '\uBCC0\uACBD' }}
       </button>
     </section>
   </div>
