@@ -1,6 +1,6 @@
 <script setup>
 import checkboxFalseIcon from '@/assets/icons/CheckboxFalse.svg'
-import checkboxTrueIcon from '@/assets/icons/CheckboxTrue.svg'
+import missionCheckIconGreen from '@/assets/icons/MissionCheckIconGreen.svg'
 
 defineProps({
   missions: {
@@ -14,7 +14,17 @@ defineEmits(['mission-click', 'show-all'])
 
 <template>
   <section class="today-mission-card">
-    <h2>오늘의 미션</h2>
+    <header class="today-mission-card__header">
+      <h2>오늘의 미션</h2>
+
+      <button
+        class="today-mission-card__more"
+        type="button"
+        @click="$emit('show-all')"
+      >
+        미션 전체
+      </button>
+    </header>
 
     <ul v-if="missions.length">
       <li
@@ -28,7 +38,7 @@ defineEmits(['mission-click', 'show-all'])
           <span class="today-mission-card__mission">
             <img
               class="today-mission-card__check"
-              :src="mission.completed ? checkboxTrueIcon : checkboxFalseIcon"
+              :src="mission.completed ? missionCheckIconGreen : checkboxFalseIcon"
               alt=""
               aria-hidden="true"
             >
@@ -44,14 +54,6 @@ defineEmits(['mission-click', 'show-all'])
     >
       오늘의 미션이 없어요.
     </p>
-
-    <button
-      class="today-mission-card__more"
-      type="button"
-      @click="$emit('show-all')"
-    >
-      전체 보기
-    </button>
   </section>
 </template>
 
@@ -78,10 +80,18 @@ defineEmits(['mission-click', 'show-all'])
   line-height: 1.5;
 }
 
+.today-mission-card__header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
 .today-mission-card ul {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: 0;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -89,19 +99,23 @@ defineEmits(['mission-click', 'show-all'])
 
 .today-mission-card li {
   min-width: 0;
+  border-bottom: 1px dashed var(--ui-sub-title-light, #bdbdbd);
+}
+
+.today-mission-card li:last-child {
+  border-bottom-color: transparent;
 }
 
 .today-mission-card li > button {
   display: flex;
   width: 100%;
-  min-height: 32px;
+  min-height: 0;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 5px 10px;
+  padding: 10px 0;
   border: 0;
-  border-radius: 10px;
-  background: var(--white);
+  background: transparent;
   cursor: pointer;
   text-align: left;
 }
@@ -133,14 +147,14 @@ defineEmits(['mission-click', 'show-all'])
 }
 
 .today-mission-card__more {
-  align-self: center;
-  padding: 2px var(--space-8) 0;
+  flex: 0 0 auto;
+  padding: 0 4px;
   border: 0;
   background: transparent;
-  color: var(--dashboard-muted-text);
+  color: #666666;
   cursor: pointer;
   font-size: 11px;
-  line-height: 1.5;
+  line-height: 16.5px;
 }
 
 .today-mission-card__empty {

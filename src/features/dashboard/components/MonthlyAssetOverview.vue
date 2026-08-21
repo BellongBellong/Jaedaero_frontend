@@ -280,9 +280,9 @@ function openInvestmentTransactions() {
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 58%);
   box-shadow:
+    inset 0 0 4px rgb(0 0 0 / 8%),
     inset 0 1px 0 rgb(255 255 255 / 76%),
-    inset 0 -1px 0 rgb(255 255 255 / 18%),
-    0 8px 24px rgb(51 51 51 / 5%);
+    inset 0 -1px 0 rgb(0 0 0 / 6%);
   backdrop-filter: blur(18px) saturate(125%);
   -webkit-backdrop-filter: blur(18px) saturate(125%);
   color: var(--gray-900);
