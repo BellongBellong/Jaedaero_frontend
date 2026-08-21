@@ -16,7 +16,11 @@ function recordTypeLabel(record) {
 function detailRoute(record) {
   return record.type === ANALYSIS_RECORD_TYPES.WHAT_IF
     ? { name: 'what-if-detail', params: { simulationId: record.sourceId ?? record.id } }
-    : { name: 'ai-asset-analysis-result', params: { analysisId: record.sourceId } }
+    : {
+        name: 'ai-asset-analysis-result',
+        params: { analysisId: record.sourceId },
+        query: record.applied ? { applied: 'true' } : undefined,
+      }
 }
 
 function openDetail(record) {

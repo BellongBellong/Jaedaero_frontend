@@ -18,6 +18,7 @@ const errorMessage = ref('')
 const preferenceGrid = ref(null)
 const targetAmountInput = ref(null)
 const targetAmountStep = 100
+const maxMilitarySavingsAmountInTenThousands = 2000
 const preferences = [
   { value: 'SAFE', icon: '🛡️', label: '안정형', caption: '원금 보존 우선' },
   { value: 'BALANCED', icon: '⚖️', label: '균형형', caption: '안전↔성장 사이' },
@@ -50,11 +51,27 @@ const goalTone = computed(() => {
   if (targetAmount <= 2600) return 'gray'
   return 'red'
 })
+const militarySavingsExpectedAmountInTenThousands = computed(() =>
+  Math.min(
+    Math.max(0, Number(onboarding.targetAmountInTenThousands) || 0),
+    maxMilitarySavingsAmountInTenThousands,
+  ),
+)
 const requiredSavingsAmountInTenThousands = computed(() =>
-  Math.max(0, onboarding.targetAmountInTenThousands - 2000),
+  Math.max(
+    0,
+    Number(onboarding.targetAmountInTenThousands) -
+      militarySavingsExpectedAmountInTenThousands.value,
+  ),
 )
 const formattedRequiredSavings = computed(
   () => `${new Intl.NumberFormat('ko-KR').format(requiredSavingsAmountInTenThousands.value)}만 원`,
+)
+const formattedMilitarySavings = computed(
+  () =>
+    `${new Intl.NumberFormat('ko-KR').format(
+      militarySavingsExpectedAmountInTenThousands.value,
+    )}만 원`,
 )
 const canDecreaseTargetAmount = computed(() => Number(onboarding.targetAmountInTenThousands) > 0)
 
@@ -192,7 +209,9 @@ async function complete() {
           class="goal-breakdown"
           :class="goalTone"
         >
-          <span>군적금 수령 예상금액 2,000만 원</span><b>＋</b><span>저축 {{ formattedRequiredSavings }}</span>
+          <span>군적금 수령 예상금액 {{ formattedMilitarySavings }}</span>
+          <b>＋</b>
+          <span>저축 {{ formattedRequiredSavings }}</span>
         </div>
       </div>
       <p

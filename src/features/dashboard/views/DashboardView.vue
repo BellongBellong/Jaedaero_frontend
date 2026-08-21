@@ -72,9 +72,18 @@ const {
   reload: reloadDashboard,
 } = useDashboard(dashboardOptions)
 const { events: upcomingEvents, addEvent, loadEvents } = useUpcomingEvents()
-const activeVacation = computed(() => {
+function getTodayString() {
   const currentDate = new Date()
-  const today = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`
+  return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`
+}
+
+const dashboardEvents = computed(() => {
+  return upcomingEvents.value.filter(
+    (event) => (event.endDate || event.startDate) >= getTodayString(),
+  )
+})
+const activeVacation = computed(() => {
+  const today = getTodayString()
   return (
     upcomingEvents.value.find((event) => {
       if (!(event.eventType === 'VACATION' || event.autoVacationMode)) return false
@@ -373,8 +382,8 @@ function openVacationTransactions() {
 
       <div class="dashboard__quick-cards">
         <UpcomingEventsCard
-          :events="upcomingEvents"
-          :remaining-count="Math.max(0, upcomingEvents.length - 2)"
+          :events="dashboardEvents"
+          :remaining-count="Math.max(0, dashboardEvents.length - 2)"
           :can-add="true"
           @add="showEventModal = true"
           @show-more="router.push({ name: 'upcoming-events' })"

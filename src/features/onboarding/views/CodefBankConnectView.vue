@@ -82,6 +82,7 @@ const bankLogoFilenames = {
   sc: 'SC.svg',
   mg: 'MG.svg',
   kbank: 'Kbank.svg',
+  hana: 'Hana.svg',
 }
 const fallbackBanks = [
   { organizationCode: '0004', displayName: '국민은행', logoKey: 'kb' },
@@ -101,6 +102,7 @@ const fallbackBanks = [
   { organizationCode: '0111', displayName: '지역농협', logoKey: 'nhlocal' },
   { organizationCode: '0045', displayName: '새마을금고', logoKey: 'mg' },
   { organizationCode: '0089', displayName: '케이뱅크', logoKey: 'kbank' },
+  { organizationCode: '0081', displayName: '하나은행', logoKey: 'hana' },
 ]
 const fallbackSecurities = [
   { organizationCode: '0238', displayName: '미래에셋증권', logoIndex: 0 },
@@ -225,6 +227,7 @@ const bankLogoRules = [
   ['SC', 'sc'],
   ['새마을', 'mg'],
   ['케이', 'kbank'],
+  ['하나', 'hana'],
 ]
 const securityLogoNames = [
   '미래에셋',
