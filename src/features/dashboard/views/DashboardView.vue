@@ -50,8 +50,6 @@ const dashboardCharacterImage = ref(armyCharacter)
 const financialCardAnchor = ref(null)
 const showCompactFinancialCard = ref(false)
 let dashboardScrollElement = null
-const COMPACT_CARD_SHOW_PROGRESS = 0.28
-const COMPACT_CARD_HIDE_PROGRESS = 0.2
 const characterImages = {
   ARMY: armyCharacter,
   NAVY: navyCharacter,
@@ -126,12 +124,8 @@ function updateCompactFinancialCard() {
     return
   }
 
-  const scrollProgress = dashboardScrollElement.scrollTop / maxScroll
-  const threshold = showCompactFinancialCard.value
-    ? COMPACT_CARD_HIDE_PROGRESS
-    : COMPACT_CARD_SHOW_PROGRESS
-
-  showCompactFinancialCard.value = scrollProgress >= threshold
+  const isAtScrollEnd = dashboardScrollElement.scrollTop >= maxScroll - 1
+  showCompactFinancialCard.value = isAtScrollEnd
 }
 
 function connectDashboardScroll(element) {
