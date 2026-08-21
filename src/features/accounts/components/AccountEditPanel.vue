@@ -1,11 +1,14 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 
+import { useToast } from '@/common/composables/useToast'
+
 const props = defineProps({
   account: { type: Object, required: true },
 })
 
 const emit = defineEmits(['saved'])
+const toast = useToast()
 
 const accountAlias = ref('')
 const accountPurpose = ref('LIVING')
@@ -78,6 +81,7 @@ function saveAccount() {
   accountAlias.value = preferences.accountAlias
   saved.value = true
   emit('saved', preferences)
+  toast.success('계좌 설정을 저장했어요.')
   window.setTimeout(() => {
     saved.value = false
   }, 1800)

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import glideJet from '../../../assets/features/ai-coach/glide-jet.svg'
+import { useToast } from '@/common/composables/useToast'
 import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 import { useRebalancingStore } from '@/features/rebalancing/stores/rebalancing.store'
 
@@ -10,6 +11,7 @@ const route = useRoute()
 const router = useRouter()
 const myPageStore = useMyPageStore()
 const rebalancingStore = useRebalancingStore()
+const toast = useToast()
 
 const detail = ref(null)
 const profile = ref(null)
@@ -110,6 +112,7 @@ async function keepCurrentPlan() {
     const guidanceId =
       recommendation.value?.guidanceId || recommendation.value?.id || route.params.guidanceId
     await rebalancingStore.applyGuidance(guidanceId)
+    toast.success('투자 계획을 적용했어요. 꾸준한 적립을 시작해보세요.')
     router.push({ name: 'investment-guide' })
   } catch (error) {
     applyError.value =

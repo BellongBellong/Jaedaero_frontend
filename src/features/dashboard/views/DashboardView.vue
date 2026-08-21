@@ -6,6 +6,7 @@ import airForceCharacter from '../../../assets/character/airForce.png'
 import armyCharacter from '../../../assets/character/army.png'
 import marineCharacter from '../../../assets/character/marineCorps.png'
 import navyCharacter from '../../../assets/character/navy.png'
+import { useToast } from '@/common/composables/useToast'
 import DailyReportBanner from '@/features/dashboard/components/DailyReportBanner.vue'
 import DashboardAssetSwitcher from '@/features/dashboard/components/DashboardAssetSwitcher.vue'
 import DashboardSkeleton from '@/features/dashboard/components/DashboardSkeleton.vue'
@@ -50,6 +51,7 @@ const dashboardCharacterImage = ref(armyCharacter)
 const financialCardAnchor = ref(null)
 const showCompactFinancialCard = ref(false)
 let dashboardScrollElement = null
+const toast = useToast()
 const COMPACT_CARD_SHOW_PROGRESS = 0.28
 const COMPACT_CARD_HIDE_PROGRESS = 0.2
 const characterImages = {
@@ -269,8 +271,9 @@ async function saveEvent(event) {
     await addEvent(event)
     await missionStore.loadTodayMissions({ force: true })
     showEventModal.value = false
+    toast.success('일정이 추가됐어요. 제대 후 목표에 한 걸음 더 가까워졌어요!')
   } catch {
-    window.alert('휴가 일정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    toast.error('휴가 일정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
   }
 }
 
@@ -288,8 +291,9 @@ async function saveBudget(amount) {
   try {
     await setVacationBudget(amount)
     showBudgetSheet.value = false
+    toast.success('휴가 예산을 저장했어요. 계획한 만큼 더 여유롭게 다녀와요!')
   } catch {
-    window.alert('휴가 예산을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    toast.error('휴가 예산을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
   }
 }
 
@@ -297,8 +301,9 @@ async function deleteBudget() {
   try {
     await setVacationBudget(null)
     showBudgetSheet.value = false
+    toast.success('휴가 예산을 삭제했어요.')
   } catch {
-    window.alert('휴가 예산을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    toast.error('휴가 예산을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.')
   }
 }
 
