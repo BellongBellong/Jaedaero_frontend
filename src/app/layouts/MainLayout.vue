@@ -9,6 +9,7 @@ import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeave
 
 /* iOS의 소수점 스크롤 노이즈만 제외하고 첫 이동부터 방향을 반영한다. */
 const SCROLL_DIRECTION_EPSILON = 0.5
+const NAVIGATION_TOGGLE_DISTANCE = 12
 
 const route = useRoute()
 const contentElement = ref(null)
@@ -18,6 +19,8 @@ const isHeaderCollapsed = ref(false)
 let expandedHeaderHeight = 0
 const isNavigationMinimized = ref(false)
 const lastScrollTop = ref(0)
+let navigationScrollDirection = 0
+let navigationScrollDistance = 0
 const { mode } = useLeaveModeSchedule()
 
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
@@ -40,6 +43,8 @@ watch(
     isHeaderCollapsed.value = false
     isNavigationMinimized.value = false
     lastScrollTop.value = 0
+    navigationScrollDirection = 0
+    navigationScrollDistance = 0
     await nextTick()
     contentElement.value?.scrollTo({
       left: 0,
@@ -93,13 +98,25 @@ function handleContentScroll(event) {
     isHeaderCollapsed.value = !isHeaderCollapsed.value
   }
 
-  /* 첫 하향 스크롤에서 바로 물러나고, 상향 스크롤에서 바로 복원한다. */
+  /* 짧은 반동 스크롤에는 반응하지 않고, 일정 거리를 누적했을 때만 전환한다. */
   if (scrollTop <= SCROLL_DIRECTION_EPSILON) {
     isNavigationMinimized.value = false
-  } else if (delta > SCROLL_DIRECTION_EPSILON) {
-    isNavigationMinimized.value = true
-  } else if (delta < -SCROLL_DIRECTION_EPSILON) {
-    isNavigationMinimized.value = false
+    navigationScrollDirection = 0
+    navigationScrollDistance = 0
+  } else if (Math.abs(delta) > SCROLL_DIRECTION_EPSILON) {
+    const direction = delta > 0 ? 1 : -1
+
+    if (direction !== navigationScrollDirection) {
+      navigationScrollDirection = direction
+      navigationScrollDistance = 0
+    }
+
+    navigationScrollDistance += Math.abs(delta)
+
+    if (navigationScrollDistance >= NAVIGATION_TOGGLE_DISTANCE) {
+      isNavigationMinimized.value = direction > 0
+      navigationScrollDistance = 0
+    }
   }
 
   lastScrollTop.value = scrollTop
@@ -223,7 +240,7 @@ function handleContentScroll(event) {
     var(--ui-background);
 }
 
-.main-layout__bottom > :deep(.bottom-navigation) {
+.main-layout__bottom > :deep(.bottom-navigation-shell) {
   pointer-events: auto;
 }
 

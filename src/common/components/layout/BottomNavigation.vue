@@ -1,11 +1,14 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-
-import aiCoachIcon from '@/assets/icons/aiCoachIcon.svg'
-import challengeIcon from '@/assets/icons/challengeIcon.svg'
-import homeIcon from '@/assets/icons/homeIcon.svg'
-import myIcon from '@/assets/icons/myIcon.svg'
+import aiCoachIcon from '@/assets/icons/Navigation/aiCoachIcon.svg'
+import aiCoachIconGreen from '@/assets/icons/Navigation/aiCoachIconGreen.svg'
+import challengeIcon from '@/assets/icons/Navigation/challengeIcon.svg'
+import challengeIconGreen from '@/assets/icons/Navigation/challengeIconGreen.svg'
+import homeIcon from '@/assets/icons/Navigation/homeIcon.svg'
+import homeIconGreen from '@/assets/icons/Navigation/homeIconGreen.svg'
+import myIcon from '@/assets/icons/Navigation/myIcon.svg'
+import myIconGreen from '@/assets/icons/Navigation/myIconGreen.svg'
 
 const props = defineProps({
   minimized: { type: Boolean, default: false },
@@ -19,32 +22,71 @@ const isNavigating = ref(false)
 const skipNextClick = ref(false)
 
 const navigationItems = [
-  { id: 'home', label: '홈', icon: homeIcon, to: { name: 'dashboard' } },
-  { id: 'ai-coach', label: 'AI 코치', icon: aiCoachIcon, to: { name: 'ai-coach' } },
-  { id: 'challenge', label: '챌린지', icon: challengeIcon, to: { name: 'challenge' } },
-  { id: 'profile', label: '마이페이지', icon: myIcon, to: { name: 'mypage' } },
+  {
+    id: 'home',
+    label: '홈',
+    icon: homeIcon,
+    activeIcon: homeIconGreen,
+    to: { name: 'dashboard' },
+  },
+  {
+    id: 'ai-coach',
+    label: 'AI 코치',
+    icon: aiCoachIcon,
+    activeIcon: aiCoachIconGreen,
+    to: { name: 'ai-coach' },
+  },
+  {
+    id: 'challenge',
+    label: '챌린지',
+    icon: challengeIcon,
+    activeIcon: challengeIconGreen,
+    to: { name: 'challenge' },
+  },
+  {
+    id: 'profile',
+    label: '마이페이지',
+    icon: myIcon,
+    activeIcon: myIconGreen,
+    to: { name: 'mypage' },
+  },
 ]
 
 const activeTab = computed(() => route.meta.bottomNavigation)
 const activeIndex = computed(() => {
   const index = navigationItems.findIndex((item) => item.id === activeTab.value)
-
   return index === -1 ? 0 : index
 })
+
 const indicatorPosition = computed(() => {
   if (draggedPosition.value !== null) return draggedPosition.value
-
   return 15 + activeIndex.value * 60
 })
+
+/* 라우트 이동으로 메뉴가 바뀌어도 선택 블록이 새 위치까지 애니메이션되게 한다. */
+watch(activeTab, () => {
+  if (!isDragging.value) draggedPosition.value = null
+})
+
+const lensStyle = computed(() => ({
+  position: 'absolute',
+  top: '28px',
+  left: `${indicatorPosition.value + 30}px`,
+  width: '66px',
+  height: '43px',
+  zIndex: 20,
+  transform: 'translate(-50%, -50%) scale(1.02)',
+  pointerEvents: 'none',
+}))
 
 function getIndicatorPosition(event) {
   const navigation = event.currentTarget
   const bounds = navigation.getBoundingClientRect()
-  const position = event.clientX - bounds.left - 30
-  const minimumPosition = 15
-  const maximumPosition = bounds.width - 75
+  const scale = bounds.width / 270
+  const pointerX = (event.clientX - bounds.left) / scale
+  const position = pointerX - 30
 
-  return Math.max(minimumPosition, Math.min(maximumPosition, position))
+  return Math.max(15, Math.min(195, position))
 }
 
 function updateDraggedPosition(event) {
@@ -52,7 +94,6 @@ function updateDraggedPosition(event) {
 }
 
 function startDrag(event) {
-  /* 물러난 상태에서는 탭만 받는다 — 좁아진 바에서 드래그는 오조작이 된다 */
   if (props.minimized) return
 
   event.currentTarget.setPointerCapture(event.pointerId)
@@ -68,7 +109,10 @@ function endDrag(event) {
   if (!isDragging.value) return
 
   updateDraggedPosition(event)
-  const snappedIndex = Math.round((draggedPosition.value - 15) / 60)
+  const snappedIndex = Math.max(
+    0,
+    Math.min(navigationItems.length - 1, Math.round((draggedPosition.value - 15) / 60)),
+  )
   const item = navigationItems[snappedIndex]
 
   isDragging.value = false
@@ -82,7 +126,7 @@ function endDrag(event) {
 
   window.setTimeout(() => {
     draggedPosition.value = null
-  }, 220)
+  }, 420)
 }
 
 function cancelDrag() {
@@ -96,128 +140,312 @@ function onItemClick(item) {
     return
   }
 
+  const targetIndex = navigationItems.findIndex((navigationItem) => navigationItem.id === item.id)
+  if (targetIndex >= 0) draggedPosition.value = 15 + targetIndex * 60
+
   selectTab(item)
 }
 
 function selectTab(item) {
-  if (item.to) return router.push(item.to)
-
+  if (item?.to) return router.push(item.to)
   return undefined
 }
 </script>
 
 <template>
-  <nav
-    class="bottom-navigation glass glass--dark"
-    aria-label="주요 메뉴"
-    :class="{
-      'bottom-navigation--dragging': isDragging,
-      'bottom-navigation--glass-overlay': isDragging || isNavigating,
-      'bottom-navigation--minimized': minimized,
-    }"
-    @pointerdown="startDrag"
-    @pointermove="dragIndicator"
-    @pointerup="endDrag"
-    @pointercancel="cancelDrag"
-  >
-    <span
-      class="navigation-indicator"
-      :style="{ transform: `translateX(${indicatorPosition}px)` }"
+  <div class="bottom-navigation-shell">
+    <div
+      v-if="isDragging"
+      class="navigation-lens"
+      :style="lensStyle"
       aria-hidden="true"
-    />
-    <button
-      v-for="item in navigationItems"
-      :key="item.id"
-      class="navigation-item"
-      type="button"
-      :aria-label="item.label"
-      :aria-current="activeTab === item.id ? 'page' : undefined"
-      @click="onItemClick(item)"
     >
-      <img
-        class="navigation-item__icon"
-        :src="item.icon"
-        alt=""
+      <span class="navigation-lens__surface" />
+    </div>
+
+    <nav
+      class="bottom-navigation glass glass--dark"
+      aria-label="주요 메뉴"
+      :class="{
+        'bottom-navigation--dragging': isDragging,
+        'bottom-navigation--navigating': isNavigating,
+        'bottom-navigation--minimized': minimized,
+      }"
+      @pointerdown="startDrag"
+      @pointermove="dragIndicator"
+      @pointerup="endDrag"
+      @pointercancel="cancelDrag"
+    >
+      <span
+        class="navigation-indicator navigation-indicator__surface"
+        :class="{ 'navigation-indicator--hidden': isDragging }"
+        :style="{ transform: `translate3d(${indicatorPosition - 3}px, 0, 0)` }"
         aria-hidden="true"
+      />
+
+      <button
+        v-for="item in navigationItems"
+        :key="item.id"
+        class="navigation-item"
+        type="button"
+        :aria-label="item.label"
+        :aria-current="activeTab === item.id ? 'page' : undefined"
+        @click="onItemClick(item)"
       >
-    </button>
-  </nav>
+        <img
+          class="navigation-item__icon"
+          :src="activeTab === item.id ? item.activeIcon : item.icon"
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          @dragstart.prevent
+        >
+      </button>
+    </nav>
+  </div>
 </template>
 
 <style scoped>
-/*
-  글래스 재료는 .glass / .glass--dark 유틸이 담당한다 (utilities.css).
-  여기서는 형태와 배치만 다룬다 — 재료 속성을 다시 선언하면
-  스코프 선택자가 유틸을 덮어써서 토큰 단일 소스가 깨진다.
-
-  아이콘 자산이 fill="white" 하드코딩이라 dark appearance를 쓴다.
-*/
-.bottom-navigation {
-  position: relative;
+.bottom-navigation-shell {
+  position: fixed;
   z-index: 10;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  width: 270px;
+  height: 56px;
+  transform: translateX(-50%);
+  transform-origin: bottom center;
+}
+
+.navigation-lens {
+  position: absolute !important;
+  z-index: 20 !important;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: var(--radius-full, 999px);
+  background: rgb(255 255 255 / 7%) !important;
+  box-shadow:
+    0 4px 8px rgb(0 0 0 / 7%),
+    inset 0 3px 7px rgb(255 255 255 / 7%),
+    inset 0 -5px 8px color-mix(in srgb, var(--brand-deep-green) 12%, transparent) !important;
+  -webkit-backdrop-filter: blur(2px) saturate(108%);
+  backdrop-filter: blur(2px) saturate(108%);
+  pointer-events: none !important;
+}
+
+/* 전체 인디케이터에 균일한 배경 blur를 적용한다. */
+.navigation-lens::before {
+  display: none;
+}
+
+.navigation-lens__surface {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 66px;
+  height: 43px;
+  overflow: hidden;
+  border-radius: var(--radius-full, 999px);
+  background:
+    radial-gradient(circle at 25% 12%, rgb(255 255 255 / 11%), transparent 35%),
+    radial-gradient(
+      circle at 78% 92%,
+      color-mix(in srgb, var(--brand-deep-green) 10%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(145deg, rgb(255 255 255 / 10%), transparent 55%);
+  box-shadow:
+    inset 0 2px 6px color-mix(in srgb, var(--brand-deep-green) 18%, transparent),
+    inset 0 -6px 12px color-mix(in srgb, var(--brand-deep-green) 26%, transparent);
+  pointer-events: none;
+}
+
+.navigation-lens__surface::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    112deg,
+    transparent 25%,
+    rgb(255 255 255 / 14%) 44%,
+    rgb(255 255 255 / 4%) 52%,
+    transparent 72%
+  );
+  content: '';
+  pointer-events: none;
+  transform: translateX(-115%);
+  animation: navigation-reflection-sweep 2.4s ease-in-out infinite;
+}
+
+@keyframes navigation-reflection-sweep {
+  0%,
+  35% {
+    transform: translateX(-115%);
+  }
+
+  70%,
+  100% {
+    transform: translateX(115%);
+  }
+}
+
+.bottom-navigation {
+  box-sizing: border-box;
+  position: relative !important;
+  z-index: 4;
+  left: auto !important;
+  bottom: auto !important;
   display: flex;
+  width: 270px;
+  height: 56px;
   align-items: center;
   justify-content: center;
-  width: 270px;
-  height: var(--bottom-navigation-height);
-  padding: 8px 15px;
-  margin: 0 auto;
+  padding: 3px 15px;
   overflow: hidden;
-  border-radius: var(--radius-full);
+  isolation: isolate;
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: var(--radius-full, 999px);
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 17%), rgb(255 255 255 / 5%) 55%), rgb(27 34 31 / 13%);
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 10%),
+    inset 0 1px 0 rgb(255 255 255 / 38%),
+    inset 0 -1px 0 rgb(0 0 0 / 12%),
+    inset 8px 10px 24px rgb(255 255 255 / 4%);
+  -webkit-backdrop-filter: blur(18px) saturate(110%);
+  backdrop-filter: blur(18px) saturate(110%);
   touch-action: none;
+  transform: none !important;
   transform-origin: bottom center;
-  /* Instagram식 liquid glass처럼 상태는 즉시 받되 크기는 느긋하게 따라온다. */
   transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-/*
-  Apple의 tab bar minimize — 스크롤을 내리면 바가 물러나 콘텐츠를 앞세운다.
+.bottom-navigation.glass--dark {
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 17%), rgb(255 255 255 / 5%) 55%), rgb(27 34 31 / 13%) !important;
+}
 
-  개별 치수 대신 transform으로 줄인다. 상하좌우가 정확히 같은 비율로
-  줄고, 인디케이터 위치 계산(15 + index * 60)이 손상되지 않는다.
-  줄어든 동안에는 드래그를 막으므로 스케일된 좌표계를 다룰 일이 없다.
-*/
+.bottom-navigation::before {
+  position: absolute;
+  z-index: 0;
+  top: 1px;
+  right: 12px;
+  left: 12px;
+  height: 48%;
+  border-radius: 999px 999px 55% 55%;
+  background: linear-gradient(180deg, rgb(255 255 255 / 13%), transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.bottom-navigation::after {
+  position: absolute;
+  z-index: 0;
+  inset: 1px;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: inherit;
+  box-shadow: inset 0 -8px 18px rgb(0 0 0 / 4%);
+  content: '';
+  pointer-events: none;
+}
+
 .bottom-navigation--minimized {
-  transform: scale(var(--bottom-navigation-minimized-scale));
+  transform: scale(var(--bottom-navigation-minimized-scale, 0.82)) !important;
 }
 
-/*
-  concentric — 컨테이너가 캡슐이므로 인디케이터도 캡슐로 맞춘다.
-
-  backdrop-filter를 걸지 않는다. 부모가 이미 필터링된 상태라
-  중첩 backdrop-filter는 iOS Safari에서 배경 샘플링이 깨진다.
-  대신 그라데이션 + inset 스페큘러로 렌즈감을 만든다.
-*/
 .navigation-indicator {
   position: absolute;
-  top: 8px;
+  top: 6.5px;
   left: 0;
-  width: 60px;
-  height: 50px;
-  border-radius: var(--radius-full);
-  background: radial-gradient(closest-side, rgb(255 255 255 / 40%) 0%, rgb(59 225 120 / 40%) 100%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 42%),
-    inset 1px 0 0 rgb(255 255 255 / 32%),
-    inset 0 -1px 1px rgb(0 0 0 / 13%),
-    inset -1px 0 1px rgb(0 0 0 / 11%);
-  pointer-events: none;
   z-index: 0;
-  transition: transform 220ms var(--ease-default);
+  width: 66px;
+  height: 43px;
+  overflow: hidden;
+  border-radius: var(--radius-full, 999px);
+  pointer-events: none;
+  transition:
+    transform 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 180ms ease;
+  will-change: transform;
+}
+
+.navigation-indicator--hidden {
+  opacity: 0;
+}
+
+.navigation-indicator__surface {
+  box-sizing: border-box;
+  display: block;
+  width: 66px;
+  height: 43px;
+  border: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 13%), rgb(255 255 255 / 4%)), rgb(125 228 163 / 8%);
+  box-shadow:
+    inset 0 2px 6px color-mix(in srgb, var(--brand-deep-green) 18%, transparent),
+    inset 0 -6px 12px color-mix(in srgb, var(--brand-deep-green) 26%, transparent);
+}
+
+.bottom-navigation--dragging .navigation-indicator::before {
+  position: absolute;
+  inset: -45% -22%;
+  background: linear-gradient(
+    108deg,
+    transparent 34%,
+    rgb(255 255 255 / 35%) 47%,
+    rgb(117 255 205 / 14%) 53%,
+    transparent 65%
+  );
+  content: '';
+  transform: translateX(-34%) rotate(4deg);
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.bottom-navigation--dragging .navigation-indicator::after {
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: inherit;
+  box-shadow: inset 0 8px 10px rgb(255 255 255 / 7%);
+  content: '';
+  pointer-events: none;
 }
 
 .bottom-navigation--dragging .navigation-indicator {
-  transition-duration: 70ms;
+  z-index: 2;
+  /* 현재 DOM에서는 부모의 다크 배경까지 샘플링하지 않도록 필터를 끈다. */
+  background: transparent !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  filter: none;
+  transition-duration: 60ms;
 }
 
-.bottom-navigation--glass-overlay .navigation-indicator {
+/* 평소에는 일반 구슬, 누르고 있을 때만 뒤 배경을 반사하는 렌즈 */
+.bottom-navigation--dragging .navigation-indicator__surface {
+  background: transparent !important;
+}
+
+.bottom-navigation--dragging .navigation-indicator::before {
+  display: none;
+}
+
+.bottom-navigation--dragging .navigation-indicator__surface::before {
+  display: none;
+}
+
+.bottom-navigation--navigating .navigation-indicator {
   z-index: 2;
 }
 
 .navigation-item {
+  position: relative;
+  z-index: 7;
   display: flex;
   flex: 0 0 60px;
   width: 60px;
@@ -227,15 +455,15 @@ function selectTab(item) {
   padding: 0;
   overflow: hidden;
   border: 0;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-full, 999px);
   background: transparent;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 180ms ease;
-  z-index: 1;
 }
 
 .navigation-item:active {
-  transform: scale(0.94);
+  transform: none;
 }
 
 .navigation-item:focus-visible {
@@ -243,31 +471,32 @@ function selectTab(item) {
   outline-offset: -3px;
 }
 
-/* 선택 상태는 불투명도로 구분한다 — 이전에는 구분 자체가 없었다 */
 .navigation-item__icon {
   display: block;
-  flex: 0 0 auto;
-  /* 새 30px viewBox의 균일 여백을 감안해 이전과 같은 실제 도형 크기로 맞춘다. */
   width: 34px;
   height: 34px;
-  margin: 0;
   object-fit: contain;
-  opacity: 0.6;
-  transition: opacity var(--duration-normal) var(--ease-default);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  opacity: 1;
+  filter: none;
+  transition:
+    opacity var(--duration-normal, 200ms) var(--ease-default, ease),
+    transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .navigation-item[aria-current='page'] .navigation-item__icon {
   opacity: 1;
+  transform: scale(1.06);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .bottom-navigation,
+  .navigation-indicator,
   .navigation-item,
   .navigation-item__icon {
-    transition: none;
-  }
-
-  .navigation-indicator {
     transition: none;
   }
 }
