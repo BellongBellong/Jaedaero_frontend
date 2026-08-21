@@ -102,6 +102,7 @@ async function submit() {
           </label>
         </div>
         <PrimaryButton
+          variant="green"
           :disabled="!requiredChecked"
           :loading="loading"
           @click="submit"
@@ -214,12 +215,6 @@ p {
 }
 .primary-button {
   margin-top: auto;
-  background: #e9e9e9;
-  color: #888;
-}
-.primary-button:not(:disabled) {
-  background: #303030;
-  color: #fff;
 }
 .terms-sheet-enter-active,
 .terms-sheet-leave-active {
