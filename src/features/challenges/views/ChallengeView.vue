@@ -186,31 +186,32 @@ const rankingSummary = computed(() => {
       source.topTenPercentThreshold,
   }
 })
-const rankingChart = computed(() => {
-  const values = [
-    Number(rankingSummary.value.averageMissionCount) || 0,
-    Number(rankingSummary.value.missionCount) || 0,
-    Number(rankingSummary.value.topTenMissionCount) || 0,
-  ]
-  const max = Math.max(...values, 1, 50)
+const rankingChartValues = computed(() => [
+  Number(rankingSummary.value.averageMissionCount) || 0,
+  Number(rankingSummary.value.missionCount) || 0,
+  Number(rankingSummary.value.topTenMissionCount) || 0,
+])
+const rankingChartScale = computed(() => {
+  const maxValue = Math.max(...rankingChartValues.value, 1)
+  const step = Math.max(1, Math.ceil(maxValue / 4))
 
-  return values.map((value) => `${Math.max(value ? 12 : 0, (value / max) * 100)}%`)
+  return { max: step * 4, step }
+})
+const rankingChart = computed(() => {
+  const max = rankingChartScale.value.max
+
+  return rankingChartValues.value.map((value) => `${(value / max) * 100}%`)
 })
 const rankingChartMax = computed(() => {
-  const values = [
-    Number(rankingSummary.value.averageMissionCount) || 0,
-    Number(rankingSummary.value.missionCount) || 0,
-    Number(rankingSummary.value.topTenMissionCount) || 0,
-  ]
-  return Math.max(...values, 1, 50)
+  return rankingChartScale.value.max
 })
 const rankingChartTicks = computed(() => {
-  const max = rankingChartMax.value
-  return Array.from({ length: 6 }, (_, index) => Math.round(max - (max / 5) * index))
+  const { max, step } = rankingChartScale.value
+  return Array.from({ length: 5 }, (_, index) => max - step * index)
 })
+const rankingAverageValue = computed(() => Number(rankingSummary.value.averageMissionCount) || 0)
 const rankingAveragePosition = computed(() => {
-  const average = Number(rankingSummary.value.averageMissionCount) || 0
-  return `${(average / rankingChartMax.value) * 100}%`
+  return `${(rankingAverageValue.value / rankingChartMax.value) * 100}%`
 })
 const rankingComparison = computed(() => {
   const mine = Number(rankingSummary.value.missionCount) || 0
@@ -911,13 +912,23 @@ onBeforeUnmount(() => {
             aria-hidden="true"
           />
           <div class="chart-callout">
-            동기 평균대비<br><strong>{{ rankingComparison }}</strong>
+            <span>동기 평균 {{ rankingAverageValue }}개</span>
+            <strong>평균 대비 {{ rankingComparison }}</strong>
           </div>
           <div class="chart-bars">
-            <i :style="{ height: rankingChart[0] }" /><i
-              class="me"
-              :style="{ height: rankingChart[1] }"
-            /><i :style="{ height: rankingChart[2] }" />
+            <div
+              v-for="(bar, index) in rankingChart"
+              :key="index"
+              class="chart-bar"
+              :class="{ 'chart-bar--me': index === 1 }"
+              :style="{ '--bar-height': bar }"
+            >
+              <span class="chart-bar__value">{{ rankingChartValues[index] }}개</span>
+              <i
+                :style="{ height: bar }"
+                aria-hidden="true"
+              />
+            </div>
           </div>
         </div>
         <div class="chart-labels">
@@ -1826,7 +1837,7 @@ onBeforeUnmount(() => {
   height: 165px;
   margin: 42px 0 0 34px;
   border-bottom: 1px solid #dfe4e7;
-  background: repeating-linear-gradient(to top, transparent 0 32px, #e1e5e8 33px);
+  background: repeating-linear-gradient(to top, transparent 0 40px, #e1e5e8 41px);
 }
 .chart-axis {
   position: absolute;
@@ -1863,6 +1874,10 @@ onBeforeUnmount(() => {
   text-align: center;
   transform: translateX(-50%);
 }
+.chart-callout span,
+.chart-callout strong {
+  display: block;
+}
 .chart-callout strong {
   font-size: 12px;
 }
@@ -1876,12 +1891,32 @@ onBeforeUnmount(() => {
   justify-content: space-around;
   height: 100%;
 }
-.chart-bars i {
+.chart-bar {
+  position: relative;
+  width: 40px;
+  height: 100%;
+}
+.chart-bar__value {
+  position: absolute;
+  bottom: calc(var(--bar-height) + 4px);
+  left: 50%;
+  color: #78849c;
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.chart-bar i {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
   width: 40px;
   border-radius: 10px 10px 0 0;
   background: #bbb;
 }
-.chart-bars i.me {
+.chart-bar--me i {
   background: #55ee94;
 }
 .chart-labels {
