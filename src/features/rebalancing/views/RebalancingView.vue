@@ -7,6 +7,8 @@ import allocationIcon from '../../../assets/features/ai-coach/what-if.svg'
 import monthlyInvestmentIcon from '../../../assets/features/ai-coach/monthly-investment-icon.png'
 import planGuideVisual from '../../../assets/features/ai-coach/plan-guide-visual.png'
 import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
+import { getDashboard } from '@/features/dashboard/api/dashboard.api'
+import { getGoal } from '@/features/my-page/api/myPage.api'
 import { useRebalancingStore } from '@/features/rebalancing/stores/rebalancing.store'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import { mapWhatIfDetail } from '@/features/ai-analysis/mappers/whatIfDetail.mapper'
@@ -27,6 +29,8 @@ const guidance = ref(null)
 const latestSimulation = ref(null)
 const activeStep = ref(null)
 const isRefreshing = ref(false)
+const fallbackGoalAmount = ref(0)
+const financialDischargeDate = ref(null)
 
 // 가이드 응답은 recommendation/currentPlan/goalProgress 로 감싸 오거나 평탄하게 올 수 있어 모두 받아준다.
 const recommendation = computed(() => guidance.value?.recommendation || guidance.value || {})
@@ -56,7 +60,8 @@ const expectedAsset = computed(
 )
 
 const goalAmount = computed(
-  () => goalProgress.value?.goalAmount ?? goalProgress.value?.targetAmount ?? 0,
+  () =>
+    goalProgress.value?.goalAmount ?? goalProgress.value?.targetAmount ?? fallbackGoalAmount.value,
 )
 
 const achievementRateLabel = computed(() => {
@@ -64,8 +69,12 @@ const achievementRateLabel = computed(() => {
     goalProgress.value?.achievementRate ??
     goalProgress.value?.goalAchievementRate ??
     goalProgress.value?.expectedAchievementRate
-  if (rate === null || rate === undefined || rate === '') return '-'
-  return `${Number(rate).toFixed(1)}%`
+  if (rate !== null && rate !== undefined && rate !== '') return `${Number(rate).toFixed(1)}%`
+
+  const expected = Number(expectedAsset.value)
+  const goal = Number(goalAmount.value)
+  if (!expected || !goal) return '-'
+  return `${((expected / goal) * 100).toFixed(1)}%`
 })
 
 const remainingInstallmentsLabel = computed(() => {
@@ -73,7 +82,10 @@ const remainingInstallmentsLabel = computed(() => {
     goalProgress.value?.remainingInstallments ??
     recommendation.value?.remainingInstallments ??
     plan.value?.remainingInstallments
-  if (remaining === null || remaining === undefined || remaining === '') return '-'
+  if (remaining === null || remaining === undefined || remaining === '') {
+    const calculated = calculateRemainingInstallments(plan.value, financialDischargeDate.value)
+    return calculated === null ? '-' : `${calculated.toLocaleString('ko-KR')}회`
+  }
   return `${Number(remaining).toLocaleString('ko-KR')}회`
 })
 
@@ -116,6 +128,55 @@ function unwrapSimulations(response) {
   return []
 }
 
+function unwrapPayload(response) {
+  return response?.data ?? response?.result ?? response ?? {}
+}
+
+function parseDateOnly(value) {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return null
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+}
+
+function calculateRemainingInstallments(planValue, dischargeDate) {
+  const discharge = parseDateOnly(dischargeDate)
+  const contributionDay = Number(planValue?.contributionDay)
+  if (!discharge || !contributionDay) return null
+
+  const today = new Date()
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  if (discharge < todayStart) return 0
+
+  if (planValue?.frequency === 'WEEKLY') {
+    const offset = (contributionDay - todayStart.getDay() + 7) % 7
+    const nextContribution = new Date(todayStart)
+    nextContribution.setDate(todayStart.getDate() + offset)
+    if (nextContribution > discharge) return 0
+    return Math.floor((discharge - nextContribution) / (7 * 86_400_000)) + 1
+  }
+
+  let year = todayStart.getFullYear()
+  let month = todayStart.getMonth()
+  let count = 0
+  while (true) {
+    const lastDay = new Date(year, month + 1, 0).getDate()
+    const contribution = new Date(year, month, Math.min(contributionDay, lastDay))
+    if (contribution >= todayStart && contribution <= discharge) count += 1
+    if (
+      contribution > discharge ||
+      (year === discharge.getFullYear() && month === discharge.getMonth())
+    ) {
+      break
+    }
+    month += 1
+    if (month === 12) {
+      month = 0
+      year += 1
+    }
+  }
+  return count
+}
+
 function isMissingResource(reason) {
   return reason?.response?.status === 404
 }
@@ -124,11 +185,14 @@ async function loadGuideStatus() {
   isLoading.value = true
   loadError.value = ''
 
-  const [simulationsResult, planResult, guidanceResult] = await Promise.allSettled([
-    simulationsStore.loadList({ page: 0, size: 1 }),
-    rebalancingStore.loadRecurringPlan(),
-    rebalancingStore.loadRecommendation(),
-  ])
+  const [simulationsResult, planResult, guidanceResult, goalResult, dashboardResult] =
+    await Promise.allSettled([
+      simulationsStore.loadList({ page: 0, size: 1 }),
+      rebalancingStore.loadRecurringPlan(),
+      rebalancingStore.loadRecommendation(),
+      getGoal(),
+      getDashboard(),
+    ])
 
   // 가이드는 아직 생성 전일 수 있으므로 실패해도 화면을 막지 않는다.
   guidance.value = guidanceResult.status === 'fulfilled' ? guidanceResult.value : null
@@ -146,6 +210,14 @@ async function loadGuideStatus() {
     hasRecurringPlan.value = Boolean(planResult.value?.planId ?? planResult.value)
   } else if (!isMissingResource(planResult.reason)) {
     loadError.value = '가이드 설정 정보를 불러오지 못했어요.'
+  }
+
+  if (goalResult.status === 'fulfilled') {
+    fallbackGoalAmount.value = Number(unwrapPayload(goalResult.value)?.targetAmount || 0)
+  }
+  if (dashboardResult.status === 'fulfilled') {
+    financialDischargeDate.value =
+      unwrapPayload(dashboardResult.value)?.financialDischargeDate ?? null
   }
 
   isLoading.value = false

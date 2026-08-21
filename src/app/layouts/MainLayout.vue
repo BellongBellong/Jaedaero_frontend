@@ -141,6 +141,7 @@ function handleContentScroll(event) {
       :badge="route.meta.headerBadge"
       :variant="route.meta.headerVariant || 'back'"
       :collapsed="isHeaderCollapsed"
+      :back-to="route.meta.backTo"
       :action-label="route.meta.headerActionLabel"
       :action-to="headerActionTo"
     />

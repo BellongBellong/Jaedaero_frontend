@@ -36,10 +36,11 @@ const serviceMonthsByMilitaryType = {
   AIR_FORCE: 21,
   MARINE: 18,
 }
-const promotionMonths = {
-  PRIVATE_FIRST_CLASS: 2,
-  CORPORAL: 8,
-  SERGEANT: 14,
+const promotionMonthsByMilitaryType = {
+  ARMY: { PRIVATE_FIRST_CLASS: 2, CORPORAL: 8, SERGEANT: 14 },
+  NAVY: { PRIVATE_FIRST_CLASS: 2, CORPORAL: 8, SERGEANT: 14 },
+  AIR_FORCE: { PRIVATE_FIRST_CLASS: 3, CORPORAL: 9, SERGEANT: 15 },
+  MARINE: { PRIVATE_FIRST_CLASS: 2, CORPORAL: 8, SERGEANT: 14 },
 }
 
 function parseDateOnly(value) {
@@ -71,10 +72,11 @@ function completedMonthsSince(date) {
 
 function rankByEnlistmentDate(value, militaryType) {
   const enlistmentDate = parseDateOnly(value)
-  if (!enlistmentDate) return null
+  const promotionMonths = promotionMonthsByMilitaryType[militaryType]
+  if (!enlistmentDate || !promotionMonths) return null
 
   const serviceMonths = serviceMonthsByMilitaryType[militaryType]
-  const months = Math.min(completedMonthsSince(enlistmentDate), serviceMonths || Infinity)
+  const months = Math.min(completedMonthsSince(enlistmentDate), serviceMonths)
   if (months >= promotionMonths.SERGEANT) return 'SERGEANT'
   if (months >= promotionMonths.CORPORAL) return 'CORPORAL'
   if (months >= promotionMonths.PRIVATE_FIRST_CLASS) return 'PRIVATE_FIRST_CLASS'
@@ -91,8 +93,8 @@ watch(
 )
 
 async function next() {
-  if (!onboarding.form.militaryType || !onboarding.form.rank) {
-    errorMessage.value = '군종과 계급을 선택해 주세요.'
+  if (!onboarding.form.militaryType) {
+    errorMessage.value = '군종을 선택해 주세요.'
     return
   }
   if (!onboarding.form.enlistmentDate) {
@@ -173,6 +175,9 @@ async function next() {
           <span>{{ rank.label }}</span>
         </button>
       </div>
+      <p class="rank-help">
+        군종과 입대일을 기준으로 자동 선택되며, 필요하면 직접 변경할 수 있습니다.
+      </p>
       <h2>입대일</h2>
       <input
         v-model="onboarding.form.enlistmentDate"
@@ -257,6 +262,11 @@ h2:not(:first-child) {
   border-radius: 14px;
   background: #fff;
   color: #555;
+}
+.rank-help {
+  margin: 8px 9px 0;
+  color: #8a8a8a;
+  font-size: 12px;
 }
 .date-input {
   width: calc(100% - 8px);
