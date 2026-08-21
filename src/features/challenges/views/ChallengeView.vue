@@ -257,6 +257,24 @@ const rankingMonthLabel = computed(() => {
   return month ? `${Number(month)}월 랭킹` : '월 랭킹'
 })
 const isCurrentRankingMonth = computed(() => rankingYearMonth.value === getCurrentYearMonth())
+const minimumRankingYearMonth = computed(() => {
+  const year = Number(
+    challenge.value?.enlistmentYear || challenge.value?.enlistmentDate?.slice?.(0, 4),
+  )
+  const month = Number(
+    challenge.value?.enlistmentMonth || challenge.value?.enlistmentDate?.slice?.(5, 7),
+  )
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return ''
+  }
+
+  return `${year}-${String(month).padStart(2, '0')}`
+})
+const isFirstRankingMonth = computed(() => {
+  const minimumMonth = minimumRankingYearMonth.value
+  return Boolean(minimumMonth && rankingYearMonth.value <= minimumMonth)
+})
 
 const enlistmentYear = computed(() => {
   const value =
@@ -504,6 +522,13 @@ async function changeRankingPeriod() {
 
 function selectRankingPeriod(period) {
   challengeStore.setRankingPeriod(period)
+  if (
+    period === 'MONTHLY' &&
+    minimumRankingYearMonth.value &&
+    rankingYearMonth.value < minimumRankingYearMonth.value
+  ) {
+    challengeStore.setRankingYearMonth(minimumRankingYearMonth.value)
+  }
   modeMenuOpen.value = false
   changeRankingPeriod()
 }
@@ -515,6 +540,7 @@ function shiftRankingMonth(offset) {
   const nextDate = new Date(year, month - 1 + offset, 1)
   const nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`
   if (nextYearMonth > getCurrentYearMonth()) return
+  if (minimumRankingYearMonth.value && nextYearMonth < minimumRankingYearMonth.value) return
   challengeStore.setRankingYearMonth(nextYearMonth)
   changeRankingPeriod()
 }
@@ -729,6 +755,7 @@ onBeforeUnmount(() => {
           <button
             type="button"
             aria-label="이전 달"
+            :disabled="isFirstRankingMonth"
             @click="shiftRankingMonth(-1)"
           >
             ‹
