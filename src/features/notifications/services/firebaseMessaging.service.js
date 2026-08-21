@@ -58,6 +58,11 @@ async function getMessagingServiceWorker() {
   if (!('serviceWorker' in navigator)) return null
 
   const scope = new URL(import.meta.env.BASE_URL, window.location.origin).pathname
+  if (import.meta.env.DEV) {
+    // vite-plugin-pwa가 개발용 injectManifest SW를 등록한 뒤 활성화될 때까지 기다린다.
+    return navigator.serviceWorker.ready
+  }
+
   // 기존 generateSW 등록이 남은 기기도 FCM 핸들러가 포함된 SW로 안전하게 갱신한다.
   return navigator.serviceWorker.register(`${import.meta.env.BASE_URL}firebase-messaging-sw.js`, {
     scope,
@@ -105,9 +110,10 @@ export async function enablePushNotifications({ requestPermission = false } = {}
   })
   if (!token) return { status: 'unavailable' }
 
+  // 서버 등록에 실패하더라도 Firebase가 발급한 실제 토큰은 로컬에서 점검할 수 있게 보관한다.
+  setStoredValue(FCM_TOKEN_KEY, token)
   const registered = await registerDeviceToken({ token, platform: detectPlatform() })
   removeStoredValue(PUSH_DISABLED_KEY)
-  setStoredValue(FCM_TOKEN_KEY, token)
   setStoredValue(DEVICE_TOKEN_ID_KEY, registered.deviceTokenId)
 
   return { status: 'granted', token, deviceTokenId: registered.deviceTokenId }

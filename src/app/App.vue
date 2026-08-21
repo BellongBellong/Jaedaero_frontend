@@ -7,6 +7,7 @@ import { useToast } from '@/common/composables/useToast'
 
 const { message, variant, visible } = useToast()
 import router from '@/app/router'
+import InAppNotificationBanner from '@/common/components/feedback/InAppNotificationBanner.vue'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 import { normalizeNotificationDeepLink } from '@/features/notifications/utils/notificationDeepLink'
 import { useNotificationStore } from '@/features/notifications/stores/notification.store'
@@ -39,6 +40,7 @@ onBeforeUnmount(() =>
 
 <template>
   <RouterView />
+  <InAppNotificationBanner />
 
   <BaseToast
     :message="message"
