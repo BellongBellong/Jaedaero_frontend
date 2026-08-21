@@ -1885,11 +1885,12 @@ onBeforeUnmount(() => {
   background: #55ee94;
 }
 .chart-labels {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 6px 26px 0 54px;
   color: #78849c;
   font-size: 10px;
+  text-align: center;
 }
 .chart-legend {
   display: flex;
