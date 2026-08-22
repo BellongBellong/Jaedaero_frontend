@@ -191,7 +191,7 @@ function handleContentScroll(event) {
 
 .main-layout__content--home {
   /* 헤더가 이미 레이아웃 높이를 차지하므로, 콘텐츠와의 간격만 둔다. */
-  padding-top: var(--space-12);
+  padding-top: var(--space-32);
 }
 
 .main-layout__bottom {
