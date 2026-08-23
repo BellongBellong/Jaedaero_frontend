@@ -234,8 +234,8 @@ onBeforeUnmount(unlockBodyScroll)
 
 .bottom-sheet__handle-area {
   display: grid;
-  height: 48px;
-  flex: 0 0 48px;
+  height: 40px;
+  flex: 0 0 40px;
   place-items: center;
   touch-action: none;
   cursor: grab;
@@ -263,13 +263,13 @@ onBeforeUnmount(unlockBodyScroll)
 }
 
 .bottom-sheet__header {
-  padding: 0 24px 24px;
+  padding: 0 24px 20px;
 }
 
 .bottom-sheet__header h2 {
   margin: 0;
   color: var(--ui-text, #333);
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.3;
   word-break: keep-all;
@@ -278,7 +278,7 @@ onBeforeUnmount(unlockBodyScroll)
 .bottom-sheet__header p {
   margin: 8px 0 0;
   color: var(--ui-sub-title, #999);
-  font-size: 20px;
+  font-size: 16px;
   line-height: 1.4;
   word-break: keep-all;
 }
@@ -292,7 +292,7 @@ onBeforeUnmount(unlockBodyScroll)
 
 .bottom-sheet__footer {
   flex: 0 0 auto;
-  padding: 24px 24px calc(24px + var(--safe-area-bottom, 0px));
+  padding: 20px 24px calc(20px + var(--safe-area-bottom, 0px));
 }
 
 .bottom-sheet-enter-active,

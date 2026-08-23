@@ -11,6 +11,7 @@ import selectedCheckIcon from '@/assets/icons/stateCheckIcon.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import BaseTooltip from '@/common/components/feedback/BaseTooltip.vue'
+import BaseBottomSheet from '@/common/components/overlay/BaseBottomSheet.vue'
 import {
   accountConnectionStatus,
   accountInstitutionName,
@@ -44,7 +45,7 @@ const accountsConfirming = ref(false)
 const requiredAccountNoticeId = ref(null)
 const showConnectedSummary = ref(false)
 const connectedInstitutions = ref([])
-const institutionAssets = import.meta.glob('@/assets/features/onboarding/institutions/*.svg', {
+const securitiesAssets = import.meta.glob('@/assets/institutions/Securities/*.{svg,png}', {
   eager: true,
   import: 'default',
   query: '?url',
@@ -55,8 +56,8 @@ const bankAssets = import.meta.glob('@/assets/institutions/banks/*.svg', {
   query: '?url',
 })
 
-const institutionAssetsByFilename = Object.fromEntries(
-  Object.entries(institutionAssets).map(([assetPath, assetUrl]) => [
+const securitiesAssetsByFilename = Object.fromEntries(
+  Object.entries(securitiesAssets).map(([assetPath, assetUrl]) => [
     assetPath.split('/').pop(),
     assetUrl,
   ]),
@@ -105,20 +106,24 @@ const fallbackBanks = [
   { organizationCode: '0081', displayName: '하나은행', logoKey: 'hana' },
 ]
 const fallbackSecurities = [
-  { organizationCode: '0238', displayName: '미래에셋증권', logoIndex: 0 },
-  { organizationCode: '0243', displayName: '한국투자증권', logoIndex: 1 },
-  { organizationCode: '0218', displayName: 'KB증권', logoIndex: 2 },
-  { organizationCode: '0240', displayName: '삼성증권', logoIndex: 3 },
-  { organizationCode: '0247', displayName: 'NH투자증권', logoIndex: 4 },
-  { organizationCode: '0261', displayName: '교보증권', logoIndex: 5 },
-  { organizationCode: '0266', displayName: 'SK증권', logoIndex: 7 },
-  { organizationCode: '0209', displayName: '유안타증권', logoIndex: 8 },
-  { organizationCode: '0267', displayName: '대신증권', logoIndex: 9 },
-  { organizationCode: '0269', displayName: '한화투자증권', logoIndex: 10 },
-  { organizationCode: '0278', displayName: '신한금융투자', logoIndex: 12 },
-  { organizationCode: '0279', displayName: 'DB금융투자', logoIndex: 13 },
-  { organizationCode: '0280', displayName: '유진투자증권', logoIndex: 14 },
-  { organizationCode: '0287', displayName: '메리츠증권', logoIndex: 15 },
+  { organizationCode: '0238', displayName: '미래에셋증권', logoFilename: 'Mirae.svg' },
+  {
+    organizationCode: '0243',
+    displayName: '한국투자증권',
+    logoFilename: 'KoreaInvestment.svg',
+  },
+  { organizationCode: '0218', displayName: 'KB증권', logoFilename: 'KB.svg' },
+  { organizationCode: '0240', displayName: '삼성증권', logoFilename: 'Samsung.svg' },
+  { organizationCode: '0247', displayName: 'NH투자증권', logoFilename: 'NH.svg' },
+  { organizationCode: '0261', displayName: '교보증권', logoFilename: 'Kyobo.svg' },
+  { organizationCode: '0266', displayName: 'SK증권', logoFilename: 'SK.png' },
+  { organizationCode: '0209', displayName: '유안타증권', logoFilename: 'Yuanta.svg' },
+  { organizationCode: '0267', displayName: '대신증권', logoFilename: 'Daesin.svg' },
+  { organizationCode: '0269', displayName: '한화투자증권', logoFilename: 'Hanhwa.svg' },
+  { organizationCode: '0278', displayName: '신한금융투자', logoFilename: 'Shinhan.svg' },
+  { organizationCode: '0279', displayName: 'DB금융투자', logoFilename: 'DB.svg' },
+  { organizationCode: '0280', displayName: '유진투자증권', logoFilename: 'Eugene.svg' },
+  { organizationCode: '0287', displayName: '메리츠증권', logoFilename: 'Meritz.png' },
 ]
 const form = ref({
   businessType: '',
@@ -229,24 +234,24 @@ const bankLogoRules = [
   ['케이', 'kbank'],
   ['하나', 'hana'],
 ]
-const securityLogoNames = [
-  '미래에셋',
-  '한국투자',
-  'KB',
-  '삼성',
-  'NH',
-  '교보',
-  '키움',
-  'SK',
-  '유안타',
-  '대신',
-  '한화',
-  '하나',
-  '신한',
-  'DB',
-  '유진',
-  '메리츠',
-  'IBK',
+const securityLogoRules = [
+  ['미래에셋', 'Mirae.svg'],
+  ['한국투자', 'KoreaInvestment.svg'],
+  ['KB', 'KB.svg'],
+  ['삼성', 'Samsung.svg'],
+  ['NH', 'NH.svg'],
+  ['교보', 'Kyobo.svg'],
+  ['키움', 'Kiwoom.svg'],
+  ['SK', 'SK.png'],
+  ['유안타', 'Yuanta.svg'],
+  ['대신', 'Daesin.svg'],
+  ['한화', 'Hanhwa.svg'],
+  ['하나', 'Hana.svg'],
+  ['신한', 'Shinhan.svg'],
+  ['DB', 'DB.svg'],
+  ['유진', 'Eugene.svg'],
+  ['메리츠', 'Meritz.png'],
+  ['IBK', 'IBK.svg'],
 ]
 
 function institutionLogo(institution, selected, businessType = form.value.businessType) {
@@ -258,12 +263,11 @@ function institutionLogo(institution, selected, businessType = form.value.busine
     return bankAssetsByFilename[bankLogoFilenames[logoKey]]
   }
 
-  const selectedSuffix = selected ? '-selected' : ''
-  const logoIndex =
-    institution.logoIndex ??
-    securityLogoNames.findIndex((name) => institution.displayName.includes(name))
-  const safeIndex = logoIndex >= 0 ? logoIndex : 0
-  return institutionAssetsByFilename[`security-${safeIndex}${selectedSuffix}.svg`]
+  const logoFilename =
+    institution.logoFilename ||
+    securityLogoRules.find(([name]) => institution.displayName.includes(name))?.[1] ||
+    'Mirae.svg'
+  return securitiesAssetsByFilename[logoFilename] || securitiesAssetsByFilename['Mirae.svg']
 }
 
 function connectedInstitutionLogo(connection) {
@@ -909,93 +913,75 @@ onBeforeUnmount(abortAccountRequest)
       }}
     </PrimaryButton>
 
-    <Transition name="institution-sheet">
-      <div
-        v-if="institutionModalOpen"
-        class="institution-backdrop institution-backdrop--selector"
-        @click.self="closeInstitutionModal"
+    <BaseBottomSheet
+      v-model="institutionModalOpen"
+      :title="form.businessType === 'BK' ? '은행 계좌 연동' : '증권 계좌 연동'"
+      :caption="`자산을 연결할 ${form.businessType === 'BK' ? '은행' : '증권사'}을 선택해주세요. 한 번에 하나씩만 가능해요.`"
+      @close="closeInstitutionModal"
+    >
+      <BaseTooltip
+        v-if="form.businessType === 'BK'"
+        class="sheet-tip"
       >
-        <section
-          class="institution-sheet"
-          role="dialog"
-          aria-modal="true"
-          :aria-label="form.businessType === 'BK' ? '은행 선택' : '증권사 선택'"
+        💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.
+      </BaseTooltip>
+      <div class="institution-list">
+        <button
+          v-for="institution in visibleInstitutions"
+          :key="institution.organizationCode"
+          type="button"
+          class="institution-row"
+          :class="{
+            selected: isPendingInstitution(institution),
+            connected: isInstitutionConnected(institution),
+          }"
+          :aria-label="
+            isPendingInstitution(institution)
+              ? `${institution.displayName} 선택됨`
+              : isInstitutionConnected(institution)
+                ? `${institution.displayName} 연결됨`
+                : `${institution.displayName} 선택`
+          "
+          :disabled="isInstitutionConnected(institution)"
+          @click="togglePendingInstitution(institution.organizationCode)"
         >
-          <button
-            type="button"
-            class="sheet-close"
-            aria-label="닫기"
-            @click="closeInstitutionModal"
+          <span class="institution-row__content">
+            <img
+              class="institution-row__logo"
+              :src="institutionLogo(institution, false)"
+              alt=""
+            >
+            <span class="institution-row__name">{{ institution.displayName }}</span>
+          </span>
+          <img
+            v-if="isPendingInstitution(institution)"
+            class="institution-row__check"
+            :src="selectedCheckIcon"
+            alt=""
+            aria-hidden="true"
           >
-            ×
-          </button>
-          <header>
-            <h2>{{ form.businessType === 'BK' ? '은행 계좌 연동' : '증권 계좌 연동' }}</h2>
-            <p>
-              자산을 연결할 {{ form.businessType === 'BK' ? '은행' : '증권사' }}을 선택해주세요.<br>
-              한 번에 하나씩만 가능해요.
-            </p>
-          </header>
-          <BaseTooltip
-            v-if="form.businessType === 'BK'"
-            class="sheet-tip"
-          >
-            💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.
-          </BaseTooltip>
-          <div class="institution-list">
-            <button
-              v-for="institution in visibleInstitutions"
-              :key="institution.organizationCode"
-              type="button"
-              class="institution-row"
-              :class="{
-                selected: isPendingInstitution(institution),
-                connected: isInstitutionConnected(institution),
-              }"
-              :aria-label="
-                isPendingInstitution(institution)
-                  ? `${institution.displayName} 선택됨`
-                  : isInstitutionConnected(institution)
-                    ? `${institution.displayName} 연결됨`
-                    : `${institution.displayName} 선택`
-              "
-              :disabled="isInstitutionConnected(institution)"
-              @click="togglePendingInstitution(institution.organizationCode)"
-            >
-              <span class="institution-row__content">
-                <img
-                  class="institution-row__logo"
-                  :src="institutionLogo(institution, false)"
-                  alt=""
-                >
-                <span class="institution-row__name">{{ institution.displayName }}</span>
-              </span>
-              <img
-                v-if="isPendingInstitution(institution)"
-                class="institution-row__check"
-                :src="selectedCheckIcon"
-                alt=""
-                aria-hidden="true"
-              >
-              <span
-                v-if="isInstitutionConnected(institution)"
-                class="institution-connected-check"
-                aria-hidden="true"
-              >✓</span>
-            </button>
-            <p
-              v-if="loadingInstitutions"
-              class="institution-empty"
-            >
-              금융기관 목록을 불러오는 중이에요.
-            </p>
-            <p
-              v-else-if="!visibleInstitutions.length"
-              class="institution-empty"
-            >
-              선택할 수 있는 금융기관이 없습니다.
-            </p>
-          </div>
+          <span
+            v-if="isInstitutionConnected(institution)"
+            class="institution-connected-check"
+            aria-hidden="true"
+          >✓</span>
+        </button>
+        <p
+          v-if="loadingInstitutions"
+          class="institution-empty"
+        >
+          금융기관 목록을 불러오는 중이에요.
+        </p>
+        <p
+          v-else-if="!visibleInstitutions.length"
+          class="institution-empty"
+        >
+          선택할 수 있는 금융기관이 없습니다.
+        </p>
+      </div>
+
+      <template #footer>
+        <div class="institution-sheet-footer">
           <PrimaryButton
             variant="green"
             :disabled="!pendingInstitution"
@@ -1005,9 +991,9 @@ onBeforeUnmount(abortAccountRequest)
               pendingInstitution ? `${pendingInstitution.displayName} 선택` : '기관을 선택해주세요'
             }}
           </PrimaryButton>
-        </section>
-      </div>
-    </Transition>
+        </div>
+      </template>
+    </BaseBottomSheet>
 
     <Transition name="institution-sheet">
       <div
@@ -1113,91 +1099,70 @@ onBeforeUnmount(abortAccountRequest)
       </div>
     </Transition>
 
-    <Transition name="institution-sheet">
-      <div
-        v-if="accountsModalOpen"
-        class="institution-backdrop accounts-backdrop"
-        @click.self="closeAccountsModal"
-      >
-        <section
-          class="accounts-sheet"
-          role="dialog"
-          aria-modal="true"
-          aria-label="계좌 불러오기"
+    <BaseBottomSheet
+      v-model="accountsModalOpen"
+      title="계좌 불러오기"
+      :caption="`${selectedInstitution?.displayName} 계좌를 ${discoveredAccounts.length}개 발견했어요! 연동할 계좌를 모두 선택해주세요.`"
+      @close="closeAccountsModal"
+    >
+      <div class="accounts-bank-card">
+        <span class="selected-institution-logo">
+          <img
+            v-if="selectedInstitution"
+            :src="institutionLogo(selectedInstitution, false)"
+            alt=""
+          >
+        </span>
+        <span class="selected-institution-copy">
+          <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
+          <b>{{ selectedInstitution?.displayName }}</b>
+        </span>
+      </div>
+
+      <div class="discovered-account-list">
+        <div
+          v-for="(account, index) in discoveredAccounts"
+          :key="accountId(account, index)"
+          class="discovered-account-wrap"
         >
           <button
             type="button"
-            class="sheet-close accounts-sheet-close"
-            aria-label="계좌 불러오기 닫기"
-            @click="closeAccountsModal"
+            class="discovered-account"
+            :class="{ selected: selectedAccountIds.includes(accountId(account, index)) }"
+            @click="toggleAccount(account, index)"
           >
-            ×
-          </button>
-          <header>
-            <h2>계좌 불러오기</h2>
-            <p>
-              {{ selectedInstitution?.displayName }} 계좌를 {{ discoveredAccounts.length }}개
-              발견했어요!<br>
-              연동할 계좌를 모두 선택해주세요.
-            </p>
-          </header>
-
-          <div class="accounts-bank-card">
-            <span class="selected-institution-logo">
-              <img
-                v-if="selectedInstitution"
-                :src="institutionLogo(selectedInstitution, false)"
-                alt=""
-              >
-            </span>
-            <span class="selected-institution-copy">
-              <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
-              <b>{{ selectedInstitution?.displayName }}</b>
-            </span>
-          </div>
-
-          <div class="discovered-account-list">
-            <div
-              v-for="(account, index) in discoveredAccounts"
-              :key="accountId(account, index)"
-              class="discovered-account-wrap"
+            <img
+              :src="accountIcon(account)"
+              alt=""
             >
-              <button
-                type="button"
-                class="discovered-account"
-                :class="{ selected: selectedAccountIds.includes(accountId(account, index)) }"
-                @click="toggleAccount(account, index)"
-              >
-                <img
-                  :src="accountIcon(account)"
-                  alt=""
-                >
-                <span class="discovered-account-copy">
-                  <span>
-                    <b>{{ account.productName || account.accountName || '금융 계좌' }}</b>
-                    <small :class="accountRequirement(account)">
-                      {{
-                        accountRequirement(account) === 'required'
-                          ? '필수'
-                          : accountRequirement(account) === 'recommended'
-                            ? '권장'
-                            : '선택'
-                      }}
-                    </small>
-                  </span>
-                  <em>{{ accountDetail(account) }}</em>
-                </span>
-                <i aria-hidden="true">✓</i>
-              </button>
-              <p
-                v-if="requiredAccountNoticeId === accountId(account, index)"
-                class="required-account-notice"
-              >
-                필수계좌는 선택 취소할 수 없어요.
-              </p>
-            </div>
-          </div>
+            <span class="discovered-account-copy">
+              <span>
+                <b>{{ account.productName || account.accountName || '금융 계좌' }}</b>
+                <small :class="accountRequirement(account)">
+                  {{
+                    accountRequirement(account) === 'required'
+                      ? '필수'
+                      : accountRequirement(account) === 'recommended'
+                        ? '권장'
+                        : '선택'
+                  }}
+                </small>
+              </span>
+              <em>{{ accountDetail(account) }}</em>
+            </span>
+            <i aria-hidden="true">✓</i>
+          </button>
+          <p
+            v-if="requiredAccountNoticeId === accountId(account, index)"
+            class="required-account-notice"
+          >
+            필수계좌는 선택 취소할 수 없어요.
+          </p>
+        </div>
+      </div>
 
+      <template #footer>
+        <div class="accounts-sheet-footer">
           <PrimaryButton
             variant="green"
             :disabled="accountsConfirming || !selectedAccountIds.length"
@@ -1205,9 +1170,9 @@ onBeforeUnmount(abortAccountRequest)
           >
             {{ accountsConfirming ? '계좌 저장 중...' : '선택한 계좌 불러오기' }}
           </PrimaryButton>
-        </section>
-      </div>
-    </Transition>
+        </div>
+      </template>
+    </BaseBottomSheet>
   </main>
 </template>
 
@@ -1635,18 +1600,6 @@ select:focus {
   inset: 0;
 }
 
-.institution-sheet {
-  position: relative;
-  display: flex;
-  width: 100%;
-  height: min(710px, calc(100dvh - 120px));
-  max-height: 710px;
-  flex-direction: column;
-  padding: 64px 20px 10px;
-  border-radius: 50px 50px 0 0;
-  background: #fff;
-}
-
 .sheet-close {
   position: absolute;
   top: 30px;
@@ -1662,25 +1615,10 @@ select:focus {
   line-height: 24px;
 }
 
-.institution-sheet h2 {
-  margin: 0;
-  color: #333;
-  font-family: var(--body-heading-h4-bold-font-family, 'Pretendard-Bold', sans-serif);
-  font-size: var(--body-heading-h4-bold-font-size, 24px);
-  font-weight: var(--body-heading-h4-bold-font-weight, 700);
-  line-height: var(--body-heading-h4-bold-line-height, 150%);
-}
-
-.institution-sheet header p {
-  margin: 2px 0 0;
-  color: #757575;
-  font-family: var(--body-body-medium-regular-font-family, 'Pretendard-Regular', sans-serif);
-  font-size: var(--body-body-medium-regular-font-size, 16px);
-  line-height: var(--body-body-medium-regular-line-height, 150%);
-}
-
 .sheet-tip {
-  margin: 20px auto 25px;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 20px;
 }
 
 .institution-list {
@@ -1807,68 +1745,33 @@ select:focus {
   text-align: center;
 }
 
-.institution-sheet > .primary-button {
+.institution-sheet-footer {
   width: 100%;
-  flex: 0 0 56px;
-  margin: 10px 0 0;
+}
+
+.institution-sheet-footer :deep(.primary-button) {
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
   background: #62ff9c;
   color: #173522;
   font-size: 13px;
 }
 
-@media (max-height: 760px) {
-  .institution-sheet {
-    height: calc(100dvh - 72px);
-    padding-top: 58px;
-  }
+.institution-sheet-footer :deep(.primary-button:disabled) {
+  background: #ececec;
+  color: #bdbdbd;
+}
 
+@media (max-height: 760px) {
   .institution-list {
     height: auto;
     flex-basis: 280px;
   }
 
   .sheet-tip {
-    margin: 12px auto 16px;
+    margin: 0 0 20px;
   }
-}
-
-.institution-sheet > .primary-button:disabled {
-  background: #ececec;
-  color: #bdbdbd;
-}
-
-.accounts-sheet {
-  position: relative;
-  display: flex;
-  width: 100%;
-  align-self: stretch;
-  height: min(710px, calc(100dvh - 120px));
-  max-height: 710px;
-  flex-direction: column;
-  padding: 64px 20px 10px;
-  box-sizing: border-box;
-  border-radius: 50px 50px 0 0;
-  background: #fff;
-}
-
-.accounts-sheet-close {
-  top: 30px;
-  right: 20px;
-  z-index: 1;
-}
-
-.accounts-sheet > header {
-  padding-right: 0;
-}
-
-.accounts-backdrop {
-  display: flex;
-  align-items: stretch;
-  flex-direction: column;
-  justify-content: flex-end;
-  box-sizing: border-box;
-  position: absolute;
-  inset: 0;
 }
 
 .account-status-backdrop {
@@ -2003,27 +1906,13 @@ select:focus {
   font-weight: 700;
 }
 
-.accounts-sheet h2 {
-  margin: 0;
-  color: #333;
-  font-size: 24px;
-  line-height: 36px;
-}
-
-.accounts-sheet header > p {
-  margin: 4px 0 0;
-  color: #757575;
-  font-size: 14px;
-  line-height: 21px;
-}
-
 .accounts-bank-card {
   display: flex;
   min-height: 88px;
   align-items: center;
   gap: 14px;
   padding: 20px;
-  margin-top: 18px;
+  margin-top: 0;
   border-radius: 28px;
   background: #fafafa;
 }
@@ -2031,7 +1920,7 @@ select:focus {
 .discovered-account-list {
   min-height: 0;
   flex: 1;
-  margin-top: 18px;
+  margin-top: 20px;
   overflow-y: auto;
 }
 
@@ -2129,16 +2018,20 @@ select:focus {
   text-align: center;
 }
 
-.accounts-sheet > .primary-button {
+.accounts-sheet-footer {
   width: 100%;
-  flex: 0 0 56px;
-  margin: 10px 0 0;
+}
+
+.accounts-sheet-footer :deep(.primary-button) {
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
   background: #62ff9c;
   color: #173522;
   font-size: 14px;
 }
 
-.accounts-sheet > .primary-button:disabled {
+.accounts-sheet-footer :deep(.primary-button:disabled) {
   background: #ececec;
   color: #bdbdbd;
 }
@@ -2150,21 +2043,9 @@ select:focus {
 
 .institution-sheet-enter-active .institution-sheet,
 .institution-sheet-leave-active .institution-sheet,
-.institution-sheet-enter-active .accounts-sheet,
-.institution-sheet-leave-active .accounts-sheet {
-  transition: transform 0.26s ease;
-}
-
 .institution-sheet-enter-from,
 .institution-sheet-leave-to {
   background: transparent;
-}
-
-.institution-sheet-enter-from .institution-sheet,
-.institution-sheet-leave-to .institution-sheet,
-.institution-sheet-enter-from .accounts-sheet,
-.institution-sheet-leave-to .accounts-sheet {
-  transform: translateY(100%);
 }
 
 @media (max-height: 760px) {
