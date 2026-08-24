@@ -187,18 +187,9 @@ onMounted(async () => {
   }
 })
 
-onMounted(async () => {
-  try {
-    await missionStore.loadTodayMissions()
-  } catch {
-    missionStore.reset()
-  }
-})
-
-onMounted(async () => {
-  try {
-    await myPageStore.load()
-    const profile = myPageStore.profile
+watch(
+  () => myPageStore.profile,
+  (profile) => {
     const profileCode = String(profile?.profileImage || 'ARMY')
       .replace(/^profile-/i, '')
       .replace(/^character-/i, '')
@@ -207,10 +198,9 @@ onMounted(async () => {
       .toUpperCase()
 
     dashboardCharacterImage.value = characterImages[profileCode] || armyCharacter
-  } catch {
-    dashboardCharacterImage.value = armyCharacter
-  }
-})
+  },
+  { immediate: true },
+)
 
 watch(
   isVacationMode,

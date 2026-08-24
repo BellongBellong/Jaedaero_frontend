@@ -108,7 +108,8 @@
 - 거래내역 투자 탭은 `GET /api/v1/accounts`의 `accountType=SECURITIES` 또는
   `businessType=ST` 계좌를 기준으로 `GET /api/v1/transactions/securities/{accountId}`를
   조회합니다. 응답의 `DEPOSIT`은 입금, `WITHDRAW`는 출금으로 표시합니다.
-- 거래내역 페이지 끝까지 스크롤하면 계좌 목록과 증권 거래 API에 `refresh=true`를 전달해
+- 거래내역 페이지에 진입하면 저장된 거래내역을 조회하며 CODEF 동기화는 요청하지 않습니다.
+  헤더의 `동기화` 버튼을 누르면 계좌 목록과 증권 거래 API에 `refresh=true`를 전달해
   CODEF 최신 자산 동기화를 요청하고, 완료된 결과로 목록을 다시 그립니다.
 - 카드 헤더는 `AccountTitleHeader.vue`를 공통으로 사용합니다.
 - 은행 아이콘은 `institutionMapping.js`에서 정규화한 기관 코드·이름을

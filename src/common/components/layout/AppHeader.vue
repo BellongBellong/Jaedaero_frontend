@@ -18,7 +18,11 @@ const props = defineProps({
   backTo: { type: [String, Object], default: null },
   actionLabel: { type: String, default: '' },
   actionTo: { type: [String, Object], default: null },
+  secondaryActionLabel: { type: String, default: '' },
+  secondaryActionDisabled: { type: Boolean, default: false },
 })
+
+const emit = defineEmits(['secondary-action'])
 
 const router = useRouter()
 const { mode, refreshMode, setMode } = useLeaveModeSchedule()
@@ -105,6 +109,15 @@ function handleAction() {
           </span>
         </div>
       </div>
+      <button
+        v-if="secondaryActionLabel"
+        class="app-header__action"
+        type="button"
+        :disabled="secondaryActionDisabled"
+        @click="emit('secondary-action')"
+      >
+        {{ secondaryActionDisabled ? '동기화 중...' : secondaryActionLabel }}
+      </button>
       <button
         v-if="actionLabel && actionTo"
         class="app-header__action"
@@ -234,10 +247,17 @@ function handleAction() {
   cursor: pointer;
   transition: opacity 120ms ease;
 }
+.app-header__action + .app-header__action {
+  margin-left: var(--space-12);
+}
 .app-header__action:focus-visible {
   border-radius: var(--radius-sm);
   outline: 2px solid var(--green-500);
   outline-offset: 2px;
+}
+.app-header__action:disabled {
+  color: var(--gray-400);
+  cursor: wait;
 }
 h1 {
   color: var(--ui-ext);

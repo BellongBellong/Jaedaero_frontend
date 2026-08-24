@@ -1,14 +1,14 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import { getAccounts } from '@/features/accounts/api/accounts.api'
 import { isSecuritiesAccount } from '@/features/accounts/composables/institutionMapping'
+import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 import { getDashboard } from '@/features/dashboard/api/dashboard.api'
 import { getDashboardMock } from '@/features/dashboard/mocks/dashboard.mock'
 import { mapDashboardResponse } from '@/features/dashboard/mappers/dashboardResponse.mapper'
 import { getTodayMarketReport } from '@/features/market-report/api/marketReport.api'
-import { getTodayMissions } from '@/features/missions/api/missions.api'
-import { getMyPageProfile } from '@/features/my-page/api/myPage.api'
+import { useMissionStore } from '@/features/missions/stores/mission.store'
+import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 import { getTransactions } from '@/features/transactions/api/transactions.api'
 
 const TRANSFER_CATEGORIES = new Set(['ASSET', 'ASSET_TRANSFER', 'TRANSFER'])
@@ -195,13 +195,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
     if (request) return request
 
+    const accountsStore = useAccountsStore()
+    const missionStore = useMissionStore()
+    const myPageStore = useMyPageStore()
     loading.value = true
     request = Promise.allSettled([
       getDashboard(),
-      getAccounts(),
+      accountsStore.load(),
       getTodayMarketReport(),
-      getTodayMissions(),
-      getMyPageProfile(),
+      missionStore.loadTodayMissions(),
+      myPageStore.load(),
       getTransactions(currentMonthRange()),
     ])
 

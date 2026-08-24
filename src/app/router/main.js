@@ -83,6 +83,7 @@ const mainRoutes = [
           requiresAuth: true,
           bottomNavigation: 'home',
           headerTitle: '거래 내역',
+          headerSecondaryActionLabel: '동기화',
           headerActionLabel: '자산현황',
           headerActionRoute: 'asset-overview',
           stickyTabs: true,
