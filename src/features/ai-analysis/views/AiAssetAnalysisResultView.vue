@@ -1,21 +1,21 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import arrowRightIcon from '../../../assets/features/ai-analysis/arrowRightIcon.svg'
 import arrowUpIcon from '../../../assets/features/ai-analysis/arrowUpIcon.svg'
 import causeInfoIcon from '../../../assets/features/ai-analysis/causeInfoIcon.svg'
 import analysisGlow from '../../../assets/features/ai-coach/analysis-glow.svg'
 import coachCharacter from '../../../assets/features/ai-coach/coach-character.svg'
-import { useToast } from '@/common/composables/useToast'
+import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
+import { useSnackbar } from '@/common/composables/useSnackbar'
 import { mapAiAnalysisRequest } from '@/features/ai-analysis/mappers/aiAnalysisRequest.mapper'
 import { useAnalysisStore } from '@/features/ai-analysis/stores/analysis.store'
+import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import { useCurrentUserNickname } from '@/features/my-page/composables/useCurrentUserNickname'
 import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
 
 const MINIMUM_ANALYZING_DURATION = 2600
-
-const toast = useToast()
 
 const DONUT_RADIUS = 42
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
@@ -55,8 +55,11 @@ const CAUSE_TAGS = {
 }
 
 const route = useRoute()
+const router = useRouter()
 const analysisStore = useAnalysisStore()
 const simulationsStore = useSimulationsStore()
+const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'VIEW_AI_ANALYSIS')
+const snackbar = useSnackbar()
 const { honorificNickname, loadNickname } = useCurrentUserNickname()
 
 const phase = ref('analyzing')
@@ -96,6 +99,7 @@ async function runAnalysis() {
     analysis.value = response
     applyState.value = response?.isApplied ? 'applied' : 'idle'
     phase.value = 'result'
+    await completeMissionAfterLoad()
   } catch {
     errorMessage.value = 'AI 소비 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
     phase.value = 'error'
@@ -308,7 +312,12 @@ async function handleApplyStrategy() {
   try {
     await analysisStore.applyStrategy(analysis.value.analysisId)
     applyState.value = 'applied'
-    toast.success('AI 소비 전략을 적용했어요. 이제 달라진 자산 흐름을 확인해보세요.')
+    snackbar.show({
+      title: 'AI 분석 기록이 저장되었어요',
+      iconSrc: aiRecommendationBot,
+      actionLabel: '기록 보러가기',
+      onAction: () => router.push({ name: 'analysis-history' }),
+    })
   } catch {
     applyState.value = 'idle'
     applyErrorMessage.value = '전략 적용에 실패했어요. 다시 시도해주세요.'
@@ -884,7 +893,8 @@ async function handleApplyStrategy() {
   display: flex;
   flex-direction: column;
   gap: var(--space-10);
-  padding: var(--space-4) var(--layout-page-padding) var(--space-40);
+  padding: var(--space-4) var(--layout-page-padding)
+    calc(var(--page-bottom-navigation-space) + var(--space-40));
 }
 
 .fallback-guide {

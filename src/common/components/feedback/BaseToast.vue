@@ -1,10 +1,14 @@
 <script setup>
 import { computed } from 'vue'
 
+import missionAlarmIcon from '@/assets/features/notification/missionAlarmIcon.png'
+import toastSuccessCheckIcon from '@/assets/icons/toast-success-check.png'
+
 const props = defineProps({
   visible: { type: Boolean, default: false },
   message: { type: String, default: '' },
   variant: { type: String, default: 'success' },
+  placement: { type: String, default: 'top' },
 })
 
 const icon = computed(() => ({ success: '✓', error: '!', info: 'i' })[props.variant] || '✓')
@@ -15,15 +19,26 @@ const icon = computed(() => ({ success: '✓', error: '!', info: 'i' })[props.va
     <div
       v-if="visible"
       class="base-toast"
-      :class="`base-toast--${variant}`"
+      :class="[`base-toast--${variant}`, `base-toast--${placement}`]"
       role="status"
       aria-live="polite"
     >
       <span
         class="base-toast__icon"
+        :class="{ 'base-toast__icon--mission': variant === 'mission' }"
         aria-hidden="true"
       >
-        {{ icon }}
+        <img
+          v-if="variant === 'mission'"
+          :src="missionAlarmIcon"
+          alt=""
+        >
+        <img
+          v-else-if="variant === 'success'"
+          :src="toastSuccessCheckIcon"
+          alt=""
+        >
+        <span v-else>{{ icon }}</span>
       </span>
       <span class="base-toast__message">{{ message }}</span>
     </div>
@@ -34,23 +49,22 @@ const icon = computed(() => ({ success: '✓', error: '!', info: 'i' })[props.va
 .base-toast {
   position: fixed;
   z-index: var(--z-toast);
-  top: calc(var(--safe-area-top) + 16px);
+  top: calc(var(--safe-area-top) + 22px);
   left: 50%;
   display: flex;
   align-items: center;
-  width: min(calc(100vw - 48px), 300px);
-  min-height: 44px;
-  padding: 9px 12px 9px 10px;
+  width: min(calc(100vw - 44px), 354px);
+  min-height: 54px;
+  box-sizing: border-box;
+  padding: 10px 18px;
   overflow: hidden;
-  border: 1px solid var(--green-200);
-  border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, var(--white) 0%, var(--green-50) 100%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 90%),
-    var(--shadow-lg);
-  color: var(--olive-800);
+  border: 1px solid rgb(255 255 255 / 4%);
+  border-radius: 14px;
+  background: rgb(51 51 51 / 88%);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 22%);
+  color: #fff;
   font-size: 13px;
-  font-weight: var(--weight-semibold);
+  font-weight: 700;
   line-height: 1.4;
   pointer-events: none;
   transform: translateX(-50%);
@@ -70,16 +84,33 @@ const icon = computed(() => ({ success: '✓', error: '!', info: 'i' })[props.va
 
 .base-toast__icon {
   display: inline-grid;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   flex: 0 0 auto;
-  margin-right: 8px;
+  margin-right: 10px;
   border-radius: 50%;
-  background: var(--green-700);
-  color: var(--white);
-  font-size: 13px;
+  background: #62ff9c;
+  color: #333;
+  font-size: 11px;
   font-weight: 800;
   place-items: center;
+}
+
+.base-toast--bottom {
+  top: auto;
+  bottom: calc(var(--bottom-navigation-area-height) + var(--safe-area-bottom) + 16px);
+}
+
+.base-toast__icon img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.base-toast__icon--mission {
+  overflow: hidden;
+  border-radius: 0;
+  background: transparent;
 }
 
 .base-toast--error .base-toast__icon {
@@ -92,6 +123,7 @@ const icon = computed(() => ({ success: '✓', error: '!', info: 'i' })[props.va
 
 .base-toast__message {
   min-width: 0;
+  color: #fff;
 }
 
 .base-toast-enter-active,

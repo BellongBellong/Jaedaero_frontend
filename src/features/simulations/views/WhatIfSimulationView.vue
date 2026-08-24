@@ -10,6 +10,7 @@ import returnRateIconBackground from '@/assets/simulations/return-rate-icon-bg.s
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
 import { useDashboardStore } from '@/features/dashboard/stores/dashboard.store'
+import { useLeaveModeStore } from '@/features/leave-mode/stores/leave-mode.store'
 import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 import WhatIfSimulationSkeleton from '@/features/simulations/components/WhatIfSimulationSkeleton.vue'
 import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
@@ -22,6 +23,7 @@ const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 const route = useRoute()
 const router = useRouter()
 const dashboardStore = useDashboardStore()
+const leaveModeStore = useLeaveModeStore()
 const myPageStore = useMyPageStore()
 const simulationsStore = useSimulationsStore()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'RUN_WHAT_IF_SIMULATION')
@@ -142,13 +144,24 @@ const result = computed(() => ({
   investmentAnnualRate: Number(
     serverResult.value?.expectedEffect?.investmentAnnualReturnRate ?? annualReturnRate.value,
   ),
-  expectedAsset: Number(serverResult.value?.expectedAsset ?? 0),
+  expectedAsset: Number(
+    serverResult.value?.expectedAsset ?? serverResult.value?.projectedAssetAtDischarge ?? 0,
+  ),
 }))
 const hasSimulationResult = computed(() =>
-  Boolean(serverResult.value && Number.isFinite(Number(serverResult.value?.expectedAsset))),
+  Boolean(
+    serverResult.value &&
+    Number.isFinite(
+      Number(serverResult.value?.expectedAsset ?? serverResult.value?.projectedAssetAtDischarge),
+    ),
+  ),
 )
 const hasSavedSimulation = computed(() =>
-  Boolean(!isPreviewing.value && serverResult.value?.isSaved && serverResult.value?.simulationId),
+  Boolean(
+    !isPreviewing.value &&
+    serverResult.value?.isSaved &&
+    (serverResult.value?.simulationId ?? serverResult.value?.id),
+  ),
 )
 const hasScenarioChanges = computed(() => {
   const baseline = baselineScenario.value
@@ -321,6 +334,7 @@ function setBaselineScenario() {
 
 function simulationPayload(isSaved) {
   return {
+    scenarioName: 'AI 추천 자산 계획',
     monthlySpendingAmount: spendingAmount.value,
     monthlySavingAmount: savingAmount.value,
     monthlyInvestmentAmount: investmentAmount.value,
@@ -406,7 +420,7 @@ async function saveSimulation() {
     await completeMissionAfterLoad()
     sessionStorage.setItem(
       SIMULATION_STORAGE_KEY,
-      JSON.stringify(scenarioSnapshot(response?.simulationId ?? null)),
+      JSON.stringify(scenarioSnapshot(response?.simulationId ?? response?.id ?? null)),
     )
     savedMessage.value = '시뮬레이션을 적용했어요.'
   } catch (error) {
@@ -420,13 +434,12 @@ async function saveSimulation() {
 }
 
 function openRecommendations() {
-  sessionStorage.setItem(
-    SIMULATION_STORAGE_KEY,
-    JSON.stringify(scenarioSnapshot(serverResult.value?.simulationId)),
-  )
+  const simulationId = serverResult.value?.simulationId ?? serverResult.value?.id
+
+  sessionStorage.setItem(SIMULATION_STORAGE_KEY, JSON.stringify(scenarioSnapshot(simulationId)))
   router.push({
     name: 'ai-product-recommendation',
-    query: { simulationId: serverResult.value?.simulationId },
+    query: { simulationId },
   })
 }
 
@@ -439,6 +452,8 @@ onMounted(async () => {
         simulationsStore.loadDefaults(),
         simulationsStore.loadList({ page: 0, size: 1 }),
       ])
+
+    await leaveModeStore.refreshMode()
 
     dashboard.value =
       dashboardResult.status === 'fulfilled' ? dashboardResult.value?.response : null
@@ -672,6 +687,23 @@ onBeforeUnmount(() => {
         >
           {{ savedMessage }}
         </p>
+        <DetailLinkButton
+          v-if="savedMessage || hasSavedSimulation"
+          class="recommendation-button recommendation-button--floating"
+          @click="openRecommendations"
+        >
+          <span class="recommendation-button__icon">
+            <img
+              :src="aiRecommendationBot"
+              alt=""
+              aria-hidden="true"
+            >
+          </span>
+          <span>
+            <small>연 {{ annualReturnRate }}% 수익 맞춤 상품을 추천해드릴게요!</small>
+            <strong>AI 추천 상품 보기</strong>
+          </span>
+        </DetailLinkButton>
         <p
           v-if="previewErrorMessage || errorMessage"
           class="result-message"
@@ -680,24 +712,6 @@ onBeforeUnmount(() => {
           {{ previewErrorMessage || errorMessage }}
         </p>
       </section>
-
-      <DetailLinkButton
-        v-if="hasSavedSimulation"
-        class="recommendation-button"
-        @click="openRecommendations"
-      >
-        <span class="recommendation-button__icon">
-          <img
-            :src="aiRecommendationBot"
-            alt=""
-            aria-hidden="true"
-          >
-        </span>
-        <span>
-          <small>연 {{ annualReturnRate }}% 수익 맞춤 상품을 추천해드릴게요!</small>
-          <strong>AI 추천 상품 보기</strong>
-        </span>
-      </DetailLinkButton>
     </div>
   </section>
 </template>
@@ -1187,6 +1201,16 @@ onBeforeUnmount(() => {
   color: var(--gray-900);
   text-align: left;
   cursor: pointer;
+}
+
+.recommendation-button--floating.detail-link-button {
+  position: fixed;
+  z-index: var(--z-toast);
+  bottom: calc(var(--bottom-navigation-area-height) + var(--safe-area-bottom) + 12px);
+  left: 50%;
+  width: min(calc(100vw - 32px), 360px);
+  margin: 0;
+  transform: translateX(-50%);
 }
 
 /*

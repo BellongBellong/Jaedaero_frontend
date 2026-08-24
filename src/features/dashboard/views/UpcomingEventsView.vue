@@ -34,7 +34,7 @@ async function saveEvent(event) {
   try {
     await addEvent(event)
     showAddModal.value = false
-    toast.success('일정이 추가됐어요. 제대 후 목표에 한 걸음 더 가까워졌어요!')
+    toast.success('일정이 추가되었어요')
   } catch {
     toast.error('휴가 일정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
   }
