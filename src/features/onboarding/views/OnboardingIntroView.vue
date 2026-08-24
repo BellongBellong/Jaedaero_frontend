@@ -3,17 +3,16 @@ import { useRouter } from 'vue-router'
 
 import introMascot from '../../../assets/features/onboarding/intro/intro-mascot.png'
 import BaseButton from '@/common/components/buttons/BaseButton.vue'
-import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
+import OnboardingStepIntro from '@/common/components/layout/OnboardingStepIntro.vue'
 
 const router = useRouter()
 </script>
 
 <template>
   <main class="intro screen">
-    <OnboardingStepHeader
+    <OnboardingStepIntro
       title="제대로가 처음이신가요?"
       :show-progress="false"
-      :show-back="false"
     />
     <img
       class="intro-mascot"
@@ -53,14 +52,14 @@ const router = useRouter()
       rgb(239 249 171 / 26%) 43%,
       rgb(246 246 246 / 0%) 78%
     ),
-    #f6f6f6;
+    var(--ui-background);
 }
 h2 {
   position: absolute;
   z-index: 2;
   margin: 0;
-  color: #333;
-  font-family: '감탄로드감탄체', sans-serif;
+  color: var(--ui-text);
+  font-family: var(--font-display);
   font-size: 23px;
   font-weight: 400;
   line-height: 1.48;
@@ -83,7 +82,7 @@ h2 {
   width: 100%;
   text-align: center;
 }
-.intro :deep(.step-header) {
+.intro :deep(.onboarding-step-intro) {
   position: absolute;
   top: 162px;
   right: 0;
@@ -91,9 +90,9 @@ h2 {
   padding: 0;
   text-align: center;
 }
-.intro :deep(.step-header h1) {
-  color: #333;
-  font-family: '감탄로드감탄체', sans-serif;
+.intro :deep(.onboarding-step-intro h1) {
+  color: var(--ui-text);
+  font-family: var(--font-display);
   font-size: 23px;
   font-weight: 400;
   line-height: 1.48;
@@ -108,9 +107,9 @@ h2 {
   bottom: 40px;
   left: 24px;
   width: auto;
-  background: #62ff9c;
-  color: #333;
-  font-size: 18px;
+  background: var(--green-500);
+  color: var(--ui-text);
+  font-size: var(--text-lg);
   font-weight: 700;
 }
 </style>

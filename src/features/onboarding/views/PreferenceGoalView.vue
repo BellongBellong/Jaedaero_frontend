@@ -7,7 +7,7 @@ import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { characterAssets, characterAssetsByProfileName } from '@/common/constants/characterAssets'
 import { useToast } from '@/common/composables/useToast'
-import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
+import OnboardingStepIntro from '@/common/components/layout/OnboardingStepIntro.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
@@ -151,11 +151,10 @@ async function complete() {
 
 <template>
   <main class="step-page screen">
-    <OnboardingStepHeader
+    <OnboardingStepIntro
       :step="4"
       title="투자 성향 설정"
       description="전역 자산을 운용하고 싶은&#10;본인의 투자 성향을 설정해 주세요"
-      @back="router.back()"
     />
     <section class="preference-content">
       <div
@@ -349,7 +348,7 @@ async function complete() {
 .preference-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: var(--space-10);
 }
 .preference-grid button {
   appearance: none;
@@ -358,16 +357,16 @@ async function complete() {
   place-items: center;
   border: 1px solid transparent;
   border-radius: 12px;
-  background: #fff;
-  color: #333;
+  background: var(--white);
+  color: var(--ui-text);
   font: inherit;
 }
 .preference-grid button.selected {
-  border-color: #2be77b;
-  background: #caffdf;
+  border-color: var(--green-600);
+  background: var(--green-200);
 }
 .preference-grid strong {
-  color: #333;
+  color: var(--ui-text);
   font-size: 13px;
 }
 .preference-grid small {
@@ -390,34 +389,34 @@ async function complete() {
 }
 h2 {
   margin: 27px 0 12px 10px;
-  color: #566752;
+  color: var(--olive-500);
   font-size: 15px;
 }
 .step-page > .preference-next-button {
-  margin-top: 16px;
+  margin-top: var(--space-16);
 }
 .goal-card {
   padding: 23px 10px;
   border-radius: 26px;
-  background: #fff;
+  background: var(--white);
   text-align: center;
 }
 .goal-card > p {
   margin: 0 0 13px;
-  color: #666;
-  font-size: 14px;
+  color: var(--ui-text-secondary);
+  font-size: var(--text-sm);
   line-height: 1.55;
 }
 .goal-card label {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
 }
 .goal-amount-control {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: var(--space-16);
 }
 .goal-amount-button {
   display: grid;
@@ -427,21 +426,21 @@ h2 {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: #effff5;
-  color: #20ba5c;
-  font-size: 24px;
+  background: var(--green-50);
+  color: var(--green-700);
+  font-size: var(--text-h4);
   line-height: 1;
 }
 .goal-amount-button:disabled {
-  background: #f0f0f0;
-  color: #aaa;
+  background: var(--gray-100);
+  color: var(--gray-500);
   cursor: not-allowed;
 }
 .goal-card input {
   width: 85px;
   padding: 7px 4px;
   border: 0;
-  border-bottom: 2px solid #3aed87;
+  border-bottom: 2px solid var(--green-600);
   outline: none;
   font-size: 17px;
   font-weight: 700;
@@ -457,13 +456,13 @@ h2 {
   appearance: none;
 }
 .goal-card input.green {
-  border-bottom-color: #3aed87;
+  border-bottom-color: var(--green-600);
 }
 .goal-card input.gray {
-  border-bottom-color: #aebbaa;
+  border-bottom-color: var(--olive-300);
 }
 .goal-card input.red {
-  border-bottom-color: #ff8a72;
+  border-bottom-color: var(--orange-500);
 }
 .goal-warning {
   display: flex;
@@ -471,7 +470,7 @@ h2 {
   justify-content: center;
   gap: 5px;
   margin: 14px 0 0;
-  color: #ff765c;
+  color: var(--orange-500);
   font-size: 11px;
 }
 .goal-warning span {
@@ -480,8 +479,8 @@ h2 {
   height: 12px;
   place-items: center;
   border-radius: 50%;
-  background: #ff765c;
-  color: #fff;
+  background: var(--orange-500);
+  color: var(--white);
   font-size: 9px;
   font-weight: 800;
 }
@@ -490,25 +489,25 @@ h2 {
   align-items: center;
   justify-content: center;
   gap: 9px;
-  margin-top: 16px;
+  margin-top: var(--space-16);
 }
 .goal-breakdown span {
   padding: 6px 8px;
   border-radius: 13px;
-  background: #effff5;
-  color: #1dc767;
+  background: var(--green-50);
+  color: var(--green-700);
   font-size: 10px;
 }
 .goal-breakdown.gray span {
-  background: #eef1ed;
-  color: #7d8e7c;
+  background: var(--olive-50);
+  color: var(--olive-400);
 }
 .goal-breakdown.red span {
-  background: #fff4f1;
-  color: #ff765c;
+  background: var(--orange-50);
+  color: var(--orange-500);
 }
 .goal-breakdown b {
-  color: #aaa;
+  color: var(--gray-500);
 }
 .confirm-backdrop {
   position: fixed;
@@ -523,7 +522,7 @@ h2 {
   width: min(calc(100% - 44px), 353px);
   padding: 62px 14px 39px;
   border-radius: 30px;
-  background: #fff;
+  background: var(--white);
   box-shadow: 0 18px 50px rgb(0 0 0 / 18%);
 }
 .confirm-close {
@@ -533,8 +532,8 @@ h2 {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #333;
-  color: #555;
+  color: var(--ui-text);
+  color: var(--gray-800);
   font-size: 29px;
   line-height: 1;
 }
@@ -546,7 +545,7 @@ h2 {
   overflow: hidden;
   place-items: center;
   border-radius: 50%;
-  background: #edf1ec;
+  background: var(--olive-100);
 }
 .confirm-avatar img {
   width: 60px;
@@ -555,17 +554,17 @@ h2 {
 }
 .confirm-nickname {
   margin: 0 0 8px;
-  color: #566752;
+  color: var(--olive-500);
   font-family: var(--font-display, '감탄로드감탄체'), sans-serif;
-  font-size: 18px;
+  font-size: var(--text-lg);
   font-weight: 400;
   letter-spacing: -0.02em;
   text-align: center;
 }
 .confirm-modal h2 {
   margin: 0 0 33px;
-  color: #6d6d6d;
-  font-size: 18px;
+  color: var(--gray-600);
+  font-size: var(--text-lg);
   line-height: 27px;
   text-align: center;
 }
@@ -584,8 +583,8 @@ h2 {
 }
 .summary-column h3 {
   margin: 0;
-  color: #728a70;
-  color: #758d77;
+  color: var(--olive-400);
+  color: var(--olive-400);
   font-size: 11px;
   font-weight: 800;
   text-align: center;
@@ -601,30 +600,30 @@ h2 {
   padding: 13px 7px 10px;
   border: 0;
   border-radius: 16px;
-  background: #fff;
-  color: #333;
+  background: var(--white);
+  color: var(--ui-text);
   font: inherit;
   text-align: center;
   cursor: pointer;
 }
 .confirm-summary .summary-item:focus-visible {
-  outline: 2px solid #3be178;
+  outline: 2px solid var(--green-600);
   outline-offset: 2px;
 }
 .summary-icon {
-  margin-bottom: 4px;
-  font-size: 14px;
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
 }
 .confirm-summary strong {
-  color: #555;
+  color: var(--gray-800);
   font-size: 15px;
 }
 .confirm-summary em {
   padding: 5px 8px;
   margin-top: 6px;
   border-radius: 18px;
-  background: #effff5;
-  color: #28d67a;
+  background: var(--green-50);
+  color: var(--green-600);
   font-size: 10px;
   font-style: normal;
   white-space: nowrap;
@@ -640,15 +639,15 @@ h2 {
 .confirm-summary .summary-amount {
   padding: 9px 8px;
   border-radius: 13px;
-  background: #fffdf4;
-  color: #f2bd32;
-  font-size: 14px;
+  background: var(--yellow-50);
+  color: var(--yellow-600);
+  font-size: var(--text-sm);
   white-space: nowrap;
 }
 .confirm-modal .confirm-submit-button {
   min-height: 54px;
-  background: #59f494;
-  color: #15552e;
+  background: var(--green-400);
+  color: var(--olive-800);
   font-size: 15px;
   font-weight: 700;
 }

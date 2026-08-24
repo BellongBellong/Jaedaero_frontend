@@ -22,7 +22,7 @@ import {
   normalizeInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
 import { bankAccountBlockIcon } from '@/features/accounts/composables/bankAccountIconMapping'
-import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
+import OnboardingStepIntro from '@/common/components/layout/OnboardingStepIntro.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 
@@ -669,7 +669,7 @@ onBeforeUnmount(abortAccountRequest)
 
 <template>
   <main class="codef-connect screen">
-    <OnboardingStepHeader
+    <OnboardingStepIntro
       :step="1"
       :show-progress="!isAdditionalConnection"
       :title="isSecuritiesOnly ? '증권계좌 연결' : '금융 연결'"
@@ -680,7 +680,6 @@ onBeforeUnmount(abortAccountRequest)
             : '군인 계좌가 있는 은행을 연결해주세요.'
           : `연결할 ${isSecuritiesOnly ? '증권사' : '금융기관'}의 인터넷뱅킹 정보를 입력해주세요.`
       "
-      @back="router.back()"
     />
 
     <section
@@ -1187,23 +1186,7 @@ onBeforeUnmount(abortAccountRequest)
   min-height: 100dvh;
   flex-direction: column;
   padding: 0 16px 40px 20px;
-  background: #fafafa;
-}
-
-.codef-connect :deep(.step-header) {
-  padding: 22px 10px 0;
-}
-
-.codef-connect :deep(.back-button) {
-  margin-bottom: 54px;
-}
-
-.codef-connect :deep(.step-header--without-progress .back-button) {
-  margin-bottom: 24px;
-}
-
-.codef-connect :deep(.step-header__progress) {
-  margin-bottom: 8px;
+  background: var(--ui-background);
 }
 
 .step-content {
@@ -1222,7 +1205,7 @@ onBeforeUnmount(abortAccountRequest)
   position: relative;
   overflow: hidden;
   border-radius: 18px;
-  background: #ececec;
+  background: var(--ui-light-gray);
 }
 
 .connection-skeleton > span::after,
@@ -1243,21 +1226,21 @@ onBeforeUnmount(abortAccountRequest)
 .connection-skeleton__types {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-14);
 }
 
 .connection-skeleton__card {
   width: 100%;
   height: 76px;
-  border: 1px solid #e6e9e7;
-  background: #fff;
+  border: 1px solid var(--ui-border);
+  background: var(--white);
 }
 
 .connection-skeleton__button {
   width: 100%;
   height: 56px;
   margin-top: auto;
-  border-radius: 28px;
+  border-radius: var(--radius-xl);
 }
 
 @keyframes connection-skeleton-shimmer {
@@ -1273,9 +1256,9 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .institution-type legend {
-  margin-bottom: 10px;
-  color: #7c8e77;
-  font-size: 16px;
+  margin-bottom: var(--space-10);
+  color: var(--olive-400);
+  font-size: var(--text-md);
   font-weight: 700;
   line-height: 24px;
 }
@@ -1283,7 +1266,7 @@ onBeforeUnmount(abortAccountRequest)
 .type-buttons {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-14);
 }
 
 .type-buttons button {
@@ -1295,13 +1278,13 @@ onBeforeUnmount(abortAccountRequest)
   align-items: center;
   justify-content: flex-start;
   padding: 14px 18px;
-  border: 1px solid #e6e9e7;
-  border-radius: 20px;
-  background: #fff;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-lg);
+  background: var(--white);
   box-shadow: 0 2px 8px rgb(31 41 55 / 5%);
-  color: #333;
+  color: var(--ui-text);
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 700;
   text-align: left;
   transition:
@@ -1311,9 +1294,9 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .type-buttons button.selected {
-  border-color: #62ff9c;
-  background: #effff5;
-  color: #20ba5c;
+  border-color: var(--green-500);
+  background: var(--green-50);
+  color: var(--green-700);
   box-shadow: 0 4px 12px rgb(59 225 120 / 12%);
 }
 
@@ -1336,19 +1319,19 @@ onBeforeUnmount(abortAccountRequest)
   gap: 3px;
   padding: 16px;
   margin-bottom: 18px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: rgb(236 236 236 / 35%);
 }
 
 .securities-connection-state strong {
   color: var(--gray-700);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
 .securities-connection-state span {
   color: var(--gray-500);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.5;
 }
 
@@ -1361,8 +1344,8 @@ onBeforeUnmount(abortAccountRequest)
 
 .connected-summary h2 {
   margin: 0 8px 1px;
-  color: #6d906e;
-  font-size: 14px;
+  color: var(--olive-400);
+  font-size: var(--text-sm);
   line-height: 24px;
 }
 
@@ -1370,10 +1353,10 @@ onBeforeUnmount(abortAccountRequest)
   display: flex;
   min-height: 70px;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
   padding: 11px 16px;
   border-radius: 24px;
-  background: #fff;
+  background: var(--white);
 }
 
 .connected-card-icon {
@@ -1383,7 +1366,7 @@ onBeforeUnmount(abortAccountRequest)
   flex: 0 0 42px;
   place-items: center;
   border-radius: 13px;
-  background: #f5f5f7;
+  background: var(--gray-100);
   overflow: hidden;
 }
 
@@ -1402,19 +1385,19 @@ onBeforeUnmount(abortAccountRequest)
 .connected-card-copy > span {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
 }
 
 .connected-card-copy b {
-  color: #333;
-  font-size: 14px;
+  color: var(--ui-text);
+  font-size: var(--text-sm);
 }
 
 .connected-card-copy small {
   padding: 2px 7px;
-  border-radius: 20px;
-  background: #e4fff0;
-  color: #22c55e;
+  border-radius: var(--radius-lg);
+  background: var(--green-100);
+  color: var(--green-700);
   font-size: 9px;
   font-weight: 700;
 }
@@ -1422,7 +1405,7 @@ onBeforeUnmount(abortAccountRequest)
 .connected-card-copy em {
   overflow: hidden;
   max-width: 210px;
-  color: #9c9c9c;
+  color: var(--gray-500);
   font-size: 10px;
   font-style: normal;
   text-overflow: ellipsis;
@@ -1431,8 +1414,8 @@ onBeforeUnmount(abortAccountRequest)
 
 .connected-card-check {
   margin-left: auto;
-  color: #56f497;
-  font-size: 18px;
+  color: var(--green-400);
+  font-size: var(--text-lg);
   font-weight: 700;
 }
 
@@ -1443,24 +1426,24 @@ onBeforeUnmount(abortAccountRequest)
 .summary-actions {
   display: grid;
   grid-template-columns: 0.68fr 1.55fr;
-  gap: 12px;
+  gap: var(--space-12);
   margin: 0 4px;
 }
 
 .summary-actions button {
   min-height: 56px;
   border: 0;
-  border-radius: 28px;
-  background: #ececec;
-  color: #999;
+  border-radius: var(--radius-xl);
+  background: var(--ui-light-gray);
+  color: var(--gray-500);
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 700;
 }
 
 .summary-actions button:last-child {
-  background: #62ff9c;
-  color: #173522;
+  background: var(--green-500);
+  color: var(--olive-800);
 }
 
 .account-fields {
@@ -1470,14 +1453,14 @@ onBeforeUnmount(abortAccountRequest)
 
 .selected-institution-field {
   display: grid;
-  gap: 10px;
+  gap: var(--space-10);
 }
 
 .selected-institution-field > strong,
 .account-fields > label {
   padding-inline: 10px;
-  color: #7c8e77;
-  font-size: 16px;
+  color: var(--olive-400);
+  font-size: var(--text-md);
   font-weight: 700;
   line-height: 24px;
 }
@@ -1487,12 +1470,12 @@ onBeforeUnmount(abortAccountRequest)
   width: 100%;
   min-height: 88px;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-14);
   padding: 20px;
   border: 0;
-  border-radius: 28px;
-  background: #fff;
-  color: #333;
+  border-radius: var(--radius-xl);
+  background: var(--white);
+  color: var(--ui-text);
   cursor: pointer;
   text-align: left;
 }
@@ -1503,8 +1486,8 @@ onBeforeUnmount(abortAccountRequest)
   height: 48px;
   flex: 0 0 48px;
   place-items: center;
-  border-radius: 14px;
-  background: #f5f5f7;
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
   overflow: hidden;
 }
 
@@ -1520,14 +1503,14 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .selected-institution-copy small {
-  color: #bdbdbd;
-  font-size: 12px;
+  color: var(--gray-400);
+  font-size: var(--text-xs);
   line-height: 18px;
 }
 
 .selected-institution-copy b {
-  color: #333;
-  font-size: 16px;
+  color: var(--ui-text);
+  font-size: var(--text-md);
   line-height: 24px;
 }
 
@@ -1539,9 +1522,9 @@ onBeforeUnmount(abortAccountRequest)
 
 label {
   display: grid;
-  gap: 8px;
-  color: #4b4b4b;
-  font-size: 14px;
+  gap: var(--space-8);
+  color: var(--gray-800);
+  font-size: var(--text-sm);
   font-weight: 700;
 }
 
@@ -1552,7 +1535,7 @@ label {
 }
 
 label small {
-  color: #999;
+  color: var(--gray-500);
   font-size: 11px;
   font-weight: 400;
 }
@@ -1562,24 +1545,24 @@ select {
   width: 100%;
   height: 52px;
   padding: 0 14px;
-  border: 1px solid #e1e1e1;
+  border: 1px solid var(--ui-border);
   border-radius: 12px;
   outline: 0;
-  background: #fff;
-  color: #333;
+  background: var(--white);
+  color: var(--ui-text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 400;
 }
 
 input:focus,
 select:focus {
-  border-color: #43d981;
+  border-color: var(--green-600);
 }
 
 .form-error {
   margin: 2px 0 0;
-  color: #ef5350;
+  color: var(--orange-700);
   font-size: 13px;
 }
 
@@ -1590,8 +1573,8 @@ select:focus {
 }
 
 .connect-submit-button:disabled {
-  background: #ececec;
-  color: #bdbdbd;
+  background: var(--ui-light-gray);
+  color: var(--gray-400);
 }
 
 .institution-backdrop {
@@ -1613,7 +1596,7 @@ select:focus {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #555;
+  color: var(--gray-800);
   cursor: pointer;
   font-size: 28px;
   line-height: 24px;
@@ -1732,11 +1715,11 @@ select:focus {
   width: 21px;
   height: 21px;
   place-items: center;
-  border: 2px solid #fff;
+  border: 2px solid var(--white);
   border-radius: 50%;
-  background: #56f497;
-  color: #fff;
-  font-size: 12px;
+  background: var(--green-400);
+  color: var(--white);
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 
@@ -1744,7 +1727,7 @@ select:focus {
   grid-column: 1 / -1;
   padding: 50px 10px;
   margin: 0;
-  color: #999;
+  color: var(--gray-500);
   font-size: 13px;
   text-align: center;
 }
@@ -1757,14 +1740,14 @@ select:focus {
   width: 100%;
   min-height: 56px;
   margin: 0;
-  background: #62ff9c;
-  color: #173522;
+  background: var(--green-500);
+  color: var(--olive-800);
   font-size: 13px;
 }
 
 .institution-sheet-footer :deep(.primary-button:disabled) {
-  background: #ececec;
-  color: #bdbdbd;
+  background: var(--ui-light-gray);
+  color: var(--gray-400);
 }
 
 @media (max-height: 760px) {
@@ -1789,7 +1772,7 @@ select:focus {
   position: relative;
   width: 100%;
   border-radius: 30px;
-  background: #fff;
+  background: var(--white);
 }
 
 .loading-sheet {
@@ -1804,8 +1787,8 @@ select:focus {
   width: 48px;
   height: 48px;
   margin: 0 auto 31px;
-  border: 8px solid #ededed;
-  border-right-color: #58f49a;
+  border: 8px solid var(--gray-200);
+  border-right-color: var(--green-400);
   border-radius: 50%;
   animation: loading-spin 0.85s linear infinite;
 }
@@ -1816,26 +1799,26 @@ select:focus {
 
 .loading-copy h2 {
   margin: 0;
-  color: #333;
+  color: var(--ui-text);
   font-size: 20px;
   line-height: 30px;
 }
 
 .loading-copy p {
   margin: 4px 0 25px;
-  color: #999;
-  font-size: 12px;
+  color: var(--gray-500);
+  font-size: var(--text-xs);
 }
 
 .loading-bank-card {
   display: flex;
   min-height: 88px;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
   padding: 16px 20px;
-  border: 1px solid #ddffeb;
-  border-radius: 28px;
-  background: #fff;
+  border: 1px solid var(--green-100);
+  border-radius: var(--radius-xl);
+  background: var(--white);
   box-shadow: 0 0 12px rgb(88 244 154 / 18%);
 }
 
@@ -1856,20 +1839,20 @@ select:focus {
 
 .empty-sheet > header h2 {
   margin: 0;
-  color: #333;
-  font-size: 24px;
+  color: var(--ui-text);
+  font-size: var(--text-h4);
 }
 
 .empty-sheet > header p {
   margin: 4px 0 26px;
-  color: #777;
-  font-size: 14px;
+  color: var(--gray-600);
+  font-size: var(--text-sm);
 }
 
 .empty-bank-summary {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-14);
 }
 
 .empty-account-content {
@@ -1888,14 +1871,14 @@ select:focus {
 
 .empty-account-content h3 {
   margin: 0 0 12px;
-  color: #c4c4c4;
+  color: var(--gray-400);
   font-size: 22px;
 }
 
 .empty-account-content p {
   margin: 0 0 27px;
-  color: #888;
-  font-size: 14px;
+  color: var(--gray-600);
+  font-size: var(--text-sm);
   line-height: 23px;
 }
 
@@ -1903,10 +1886,10 @@ select:focus {
   width: 257px;
   min-height: 56px;
   border: 0;
-  border-radius: 28px;
-  background: #ececec;
-  color: #c5c5c5;
-  font-size: 16px;
+  border-radius: var(--radius-xl);
+  background: var(--ui-light-gray);
+  color: var(--gray-400);
+  font-size: var(--text-md);
   font-weight: 700;
 }
 
@@ -1914,22 +1897,22 @@ select:focus {
   display: flex;
   min-height: 88px;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-14);
   padding: 20px;
   margin-top: 0;
-  border-radius: 28px;
-  background: #fafafa;
+  border-radius: var(--radius-xl);
+  background: var(--ui-background);
 }
 
 .discovered-account-list {
   min-height: 0;
   flex: 1;
-  margin-top: 20px;
+  margin-top: var(--space-20);
   overflow-y: auto;
 }
 
 .discovered-account-wrap + .discovered-account-wrap {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--gray-100);
 }
 
 .discovered-account {
@@ -1937,11 +1920,11 @@ select:focus {
   width: 100%;
   min-height: 82px;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
   padding: 14px 20px;
   border: 0;
   background: transparent;
-  color: #333;
+  color: var(--ui-text);
   cursor: pointer;
   text-align: left;
 }
@@ -1961,7 +1944,7 @@ select:focus {
 .discovered-account-copy > span {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
 }
 
 .discovered-account-copy b {
@@ -1973,21 +1956,21 @@ select:focus {
 
 .discovered-account-copy small {
   padding: 2px 8px;
-  border-radius: 20px;
-  background: #ececec;
-  color: #757575;
+  border-radius: var(--radius-lg);
+  background: var(--ui-light-gray);
+  color: var(--gray-600);
   font-size: 10px;
   font-weight: 700;
 }
 
 .discovered-account-copy small.required,
 .discovered-account-copy small.recommended {
-  background: #e4fff0;
-  color: #22c55e;
+  background: var(--green-100);
+  color: var(--green-700);
 }
 
 .discovered-account-copy em {
-  color: #999;
+  color: var(--gray-500);
   font-size: 11px;
   font-style: normal;
 }
@@ -1999,25 +1982,25 @@ select:focus {
   flex: 0 0 22px;
   margin-left: auto;
   place-items: center;
-  border: 1.5px solid #ddd;
+  border: 1.5px solid var(--gray-300);
   border-radius: 50%;
   color: transparent;
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-style: normal;
 }
 
 .discovered-account.selected > i {
-  border-color: #3be178;
-  background: #3be178;
-  color: #fff;
+  border-color: var(--green-600);
+  background: var(--green-600);
+  color: var(--white);
 }
 
 .required-account-notice {
   padding: 8px 12px;
   margin: -5px 0 8px;
   border-radius: 8px;
-  background: #fff3f3;
-  color: #e65e5e;
+  background: var(--orange-50);
+  color: var(--orange-600);
   font-size: 11px;
   text-align: center;
 }
@@ -2030,14 +2013,14 @@ select:focus {
   width: 100%;
   min-height: 56px;
   margin: 0;
-  background: #62ff9c;
-  color: #173522;
-  font-size: 14px;
+  background: var(--green-500);
+  color: var(--olive-800);
+  font-size: var(--text-sm);
 }
 
 .accounts-sheet-footer :deep(.primary-button:disabled) {
-  background: #ececec;
-  color: #bdbdbd;
+  background: var(--ui-light-gray);
+  color: var(--gray-400);
 }
 
 .institution-sheet-enter-active,
@@ -2053,16 +2036,8 @@ select:focus {
 }
 
 @media (max-height: 760px) {
-  .codef-connect :deep(.back-button) {
-    margin-bottom: 26px;
-  }
-
-  .codef-connect :deep(.step-header) {
-    padding-top: 22px;
-  }
-
   .account-fields {
-    gap: 10px;
+    gap: var(--space-10);
   }
 
   input,

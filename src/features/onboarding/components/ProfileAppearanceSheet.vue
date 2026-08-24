@@ -97,7 +97,7 @@ const colors = ['#E5FFF4', '#AEBBAA', '#FFF0B8', '#FFB39F', '#F7F7F7', '#333333'
   width: min(100%, 383px);
   padding: 31px 26px 29px;
   border-radius: 30px;
-  background: #fff;
+  background: var(--white);
 }
 .close-button {
   position: absolute;
@@ -106,7 +106,7 @@ const colors = ['#E5FFF4', '#AEBBAA', '#FFF0B8', '#FFB39F', '#F7F7F7', '#333333'
   padding: 0;
   border: 0;
   background: transparent;
-  color: #444;
+  color: var(--gray-800);
   font-size: 34px;
   line-height: 1;
 }
@@ -117,8 +117,8 @@ h2 {
 }
 h3 {
   margin: 0 0 14px;
-  color: #6f886e;
-  font-size: 12px;
+  color: var(--olive-400);
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 .current-profile {
@@ -149,11 +149,11 @@ h3 {
   place-items: center;
   border: 1px dashed transparent;
   border-radius: 50%;
-  background: #f5f5f5;
+  background: var(--gray-100);
 }
 .profile-options button.selected,
 .color-options button.selected {
-  border: 1px solid #37e982;
+  border: 1px solid var(--green-600);
 }
 .profile-options button.selected {
   border-style: dashed;
@@ -175,9 +175,9 @@ h3 {
   margin-top: -2px;
   border: 0;
   border-radius: 29px;
-  background: #58f49a;
-  color: #222;
-  font-size: 16px;
+  background: var(--green-400);
+  color: var(--gray-900);
+  font-size: var(--text-md);
   font-weight: 700;
 }
 .save-button:disabled {

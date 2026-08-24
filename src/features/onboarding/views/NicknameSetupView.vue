@@ -4,10 +4,11 @@ import { useRouter } from 'vue-router'
 
 import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import nicknameCheckAvailableIcon from '@/assets/features/onboarding/icons/nickname-check-available-Green.svg'
+import nicknameCheckRuleMatchedIcon from '@/assets/features/onboarding/icons/nickname-check-available.svg'
 import nicknameCheckUnavailableIcon from '@/assets/features/onboarding/icons/nickname-check-unavailable.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { characterAssetsByProfileName } from '@/common/constants/characterAssets'
-import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
+import OnboardingStepIntro from '@/common/components/layout/OnboardingStepIntro.vue'
 import ProfileAppearanceSheet from '@/features/onboarding/components/ProfileAppearanceSheet.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
@@ -40,6 +41,11 @@ const profileSourceCodes = {
   '#333333': 'BLACK',
 }
 const validNickname = computed(() => /^[가-힣a-zA-Z0-9]{2,12}$/.test(nickname.value))
+const nicknameRuleIcon = computed(() =>
+  !isComposing.value && validNickname.value
+    ? nicknameCheckRuleMatchedIcon
+    : nicknameCheckUnavailableIcon,
+)
 const showNicknameError = computed(
   () =>
     !isComposing.value &&
@@ -141,11 +147,10 @@ async function next() {
 
 <template>
   <main class="step-page screen">
-    <OnboardingStepHeader
+    <OnboardingStepIntro
       :step="2"
       title="닉네임 설정"
       description="어떻게 불러 드릴까요?"
-      @back="router.back()"
     />
     <section class="nickname-content">
       <button
@@ -224,7 +229,7 @@ async function next() {
       </p>
       <small>
         <img
-          :src="nicknameCheckUnavailableIcon"
+          :src="nicknameRuleIcon"
           alt=""
           aria-hidden="true"
         >
@@ -265,7 +270,7 @@ async function next() {
   height: 82px;
   place-items: center;
   margin: 0 auto 32px;
-  border: 1px dashed #38ea85;
+  border: 1px dashed var(--green-600);
   border-radius: 50%;
 }
 .profile-picker img {
@@ -282,8 +287,8 @@ async function next() {
   height: 25px;
   place-items: center;
   border-radius: 50%;
-  background: #2de77c;
-  color: #fff;
+  background: var(--green-600);
+  color: var(--white);
 }
 .profile-picker__change-icon svg {
   width: 15px;
@@ -296,18 +301,18 @@ async function next() {
 }
 .nickname-row {
   display: flex;
-  gap: 10px;
+  gap: var(--space-10);
 }
 .nickname-row input {
   min-width: 0;
   flex: 1;
   padding: 0 20px;
-  border: 1px solid #e4e4e4;
+  border: 1px solid var(--gray-300);
   border-radius: 15px;
   outline: none;
 }
 .nickname-row input:focus {
-  border-color: #32e77e;
+  border-color: var(--green-600);
 }
 .nickname-row button {
   width: 110px;
@@ -319,15 +324,15 @@ async function next() {
   font-weight: 700;
 }
 .nickname-row button:disabled {
-  background: #ededed;
-  color: #8f8f8f;
+  background: var(--gray-200);
+  color: var(--gray-600);
 }
 .nickname-content small {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-4);
   margin: 10px 4px;
-  color: #aaa;
+  color: var(--gray-500);
 }
 .nickname-content small img {
   width: 14px;
@@ -338,7 +343,7 @@ async function next() {
 .form-error {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-4);
 }
 .success img,
 .form-error img {
@@ -347,7 +352,7 @@ async function next() {
   flex: 0 0 14px;
 }
 .step-page > .nickname-next-button {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-4);
 }
 .success {
   margin: 10px 4px 0;

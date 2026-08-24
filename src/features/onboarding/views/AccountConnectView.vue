@@ -6,7 +6,7 @@ import militarySavingsIcon from '../../../assets/features/onboarding/icons/milit
 import personalAssetsIcon from '../../../assets/features/onboarding/icons/personal-assets.svg'
 import salaryAccountIcon from '../../../assets/features/onboarding/icons/salary-account.svg'
 import BaseButton from '@/common/components/buttons/BaseButton.vue'
-import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
+import OnboardingStepIntro from '@/common/components/layout/OnboardingStepIntro.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const route = useRoute()
@@ -40,11 +40,10 @@ function connect() {
 
 <template>
   <main class="account-connect screen">
-    <OnboardingStepHeader
+    <OnboardingStepIntro
       :step="1"
       title="금융 연결"
       description="제대로를 이용하려면 은행 계정을 연동해야 해요."
-      @back="router.back()"
     />
 
     <section class="connect-options">
@@ -120,25 +119,13 @@ function connect() {
   min-height: 100dvh;
   flex-direction: column;
   padding: 0 16px 30px 24px;
-  background: #fafafa;
-}
-
-.account-connect :deep(.step-header) {
-  padding: 22px 10px 0;
-}
-
-.account-connect :deep(.back-button) {
-  margin-bottom: 54px;
-}
-
-.account-connect :deep(.step-header__progress) {
-  margin-bottom: 8px;
+  background: var(--ui-background);
 }
 
 .connect-options {
   display: grid;
-  gap: 10px;
-  margin-top: 32px;
+  gap: var(--space-10);
+  margin-top: var(--space-32);
 }
 
 .connect-card {
@@ -148,8 +135,8 @@ function connect() {
   align-items: center;
   padding: 20px 10px;
   border: 2px solid transparent;
-  border-radius: 28px;
-  background: #fff;
+  border-radius: var(--radius-xl);
+  background: var(--white);
   color: inherit;
   cursor: pointer;
   transition:
@@ -158,41 +145,41 @@ function connect() {
 }
 
 .connect-card.selected {
-  border-color: #62ff9c;
+  border-color: var(--green-500);
   box-shadow: 0 4px 14px rgb(59 225 120 / 12%);
 }
 
 .card-heading {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-10);
 }
 
 .card-heading strong {
-  color: #566752;
-  font-size: 16px;
+  color: var(--olive-500);
+  font-size: var(--text-md);
   line-height: 24px;
 }
 
 .card-heading small {
   padding: 2px 10px;
-  border-radius: 20px;
-  background: #ececec;
-  color: #757575;
-  font-size: 12px;
+  border-radius: var(--radius-lg);
+  background: var(--ui-light-gray);
+  color: var(--gray-600);
+  font-size: var(--text-xs);
   font-weight: 700;
   line-height: 18px;
 }
 
 .card-heading small.required {
-  background: #e4fff0;
-  color: #22c55e;
+  background: var(--green-100);
+  color: var(--green-700);
 }
 
 .card-description {
   margin-top: 6px;
-  color: #666;
-  font-size: 12px;
+  color: var(--ui-text-secondary);
+  font-size: var(--text-xs);
   line-height: 16px;
 }
 
@@ -200,7 +187,7 @@ function connect() {
   display: flex;
   justify-content: center;
   gap: 30px;
-  margin-top: 10px;
+  margin-top: var(--space-10);
 }
 
 .asset-option,
@@ -208,9 +195,9 @@ function connect() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  color: #757575;
-  font-size: 12px;
+  gap: var(--space-10);
+  color: var(--gray-600);
+  font-size: var(--text-xs);
   line-height: 16px;
 }
 
@@ -225,7 +212,7 @@ function connect() {
 }
 
 .personal-asset {
-  margin-top: 10px;
+  margin-top: var(--space-10);
 }
 
 .account-connect-button {
@@ -234,17 +221,13 @@ function connect() {
 }
 
 .account-connect-button:disabled {
-  background: #ececec;
-  color: #bdbdbd;
+  background: var(--ui-light-gray);
+  color: var(--gray-400);
 }
 
 @media (max-height: 760px) {
-  .account-connect :deep(.back-button) {
-    margin-bottom: 26px;
-  }
-
   .connect-options {
-    margin-top: 20px;
+    margin-top: var(--space-20);
   }
 
   .connect-card {

@@ -1,15 +1,25 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 
 // import HomeIndicator from '@/common/components/HomeIndicator.vue'
 // import MobileStatusBar from '@/common/components/MobileStatusBar.vue'
+import AppHeader from '../../common/components/layout/AppHeader.vue'
 import MobileFrame from '../../common/components/layout/MobileFrame.vue'
+
+const route = useRoute()
 </script>
 
 <template>
   <div class="onboarding-layout">
     <!-- <MobileStatusBar /> -->
     <MobileFrame class="onboarding-mobile-frame">
+      <AppHeader
+        v-if="route.name !== 'onboarding-intro'"
+        class="onboarding-app-header"
+        title=""
+        variant="back"
+        :show-back="true"
+      />
       <main>
         <RouterView />
       </main>
@@ -22,25 +32,41 @@ import MobileFrame from '../../common/components/layout/MobileFrame.vue'
 main {
   flex: 1;
 }
+
+:deep(.onboarding-app-header) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
+:deep(.onboarding-app-header .app-header__title-row) {
+  display: none;
+}
 </style>
 
 <style scoped>
 :deep(.onboarding-mobile-frame) {
+  position: relative;
+  overflow: hidden;
+  background: var(--gray-100);
+}
+
+:global(.onboarding-mobile-frame > main) {
+  height: 100%;
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  background:
-    radial-gradient(circle at 92% 8%, rgb(98 255 156 / 52%) 0, rgb(98 255 156 / 0%) 34%),
-    var(--gray-100);
 }
 
 :global(.onboarding-mobile-frame .step-page) {
   background: transparent;
 }
 
-:global(.onboarding-mobile-frame::-webkit-scrollbar) {
+:global(.onboarding-mobile-frame > main::-webkit-scrollbar) {
   display: none;
 }
 </style>

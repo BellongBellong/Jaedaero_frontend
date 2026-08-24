@@ -6,7 +6,7 @@ import calendarIcon from '@/assets/icons/CalenderIcon.svg'
 import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import MiniEventCalendar from '@/features/dashboard/components/MiniEventCalendar.vue'
-import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
+import OnboardingStepIntro from '@/common/components/layout/OnboardingStepIntro.vue'
 import RankInsignia from '@/features/onboarding/components/RankInsignia.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
@@ -212,11 +212,10 @@ async function next() {
 
 <template>
   <main class="step-page screen">
-    <OnboardingStepHeader
+    <OnboardingStepIntro
       :step="3"
       title="군 정보 입력"
       description="전역 예정일과 자산 분석에 사용됩니다"
-      @back="router.back()"
     />
     <section
       ref="militaryContentRef"
@@ -314,7 +313,7 @@ async function next() {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-top: 20px;
+  padding-top: var(--space-20);
   padding-bottom: calc(56px + 40px + var(--safe-area-bottom, 0px));
   scroll-behavior: smooth;
 }
@@ -326,7 +325,7 @@ async function next() {
   max-height: 100dvh;
   overflow: hidden;
 }
-.step-page > .step-header,
+.step-page > .onboarding-step-intro,
 .step-page > .military-next-button {
   flex: 0 0 auto;
 }
@@ -341,16 +340,16 @@ async function next() {
 }
 h2 {
   margin: 0 0 12px 9px;
-  color: #566752;
+  color: var(--olive-500);
   font-size: 15px;
 }
 h2:not(:first-child) {
-  margin-top: 24px;
+  margin-top: var(--space-24);
 }
 .military-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: var(--space-10);
 }
 .military-grid button {
   appearance: none;
@@ -360,10 +359,10 @@ h2:not(:first-child) {
   flex-direction: column;
   align-items: center;
   justify-self: center;
-  gap: 4px;
+  gap: var(--space-4);
   padding: 10px 15px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--white, #fff);
   color: var(--gray-700, #616161);
 }
@@ -379,15 +378,15 @@ h2:not(:first-child) {
 }
 .military-grid button.selected,
 .rank-grid button.selected {
-  border-color: #2ce77c;
-  background: #caffdf;
+  border-color: var(--green-600);
+  background: var(--green-200);
 }
 .military-duration {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 2px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: var(--olive-50, #f6f7f5);
   color: var(--olive-300, #aebba7);
   font-family: var(--body-label-small-font-family, 'Pretendard', sans-serif);
@@ -402,7 +401,7 @@ h2:not(:first-child) {
 .rank-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: var(--space-8);
 }
 .rank-grid button {
   display: flex;
@@ -410,7 +409,7 @@ h2:not(:first-child) {
   flex: 1;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: var(--space-4);
   padding: 10px 20px;
   overflow: hidden;
   border: 1px solid transparent;
@@ -431,16 +430,16 @@ h2:not(:first-child) {
 }
 .rank-help {
   margin: 8px 9px 0;
-  color: #8a8a8a;
-  font-size: 12px;
+  color: var(--gray-600);
+  font-size: var(--text-xs);
 }
 .enlistment-date-section {
-  margin-top: 24px;
+  margin-top: var(--space-24);
 }
 .date-picker {
   position: relative;
   width: calc(100% - 8px);
-  margin-left: 4px;
+  margin-left: var(--space-4);
 }
 .date-input {
   position: relative;
@@ -452,10 +451,10 @@ h2:not(:first-child) {
   padding: 0 52px 0 16px;
   border: 0;
   border-radius: 18px;
-  background: #fff;
-  color: #555;
+  background: var(--white);
+  color: var(--gray-800);
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 700;
   text-align: left;
 }
@@ -475,7 +474,7 @@ h2:not(:first-child) {
   position: relative;
   z-index: 10;
   width: 100%;
-  margin-top: 8px;
+  margin-top: var(--space-8);
 }
 .date-picker-calendar :deep(.mini-event-calendar) {
   border: 1px solid var(--gray-100, #f1f1f1);
