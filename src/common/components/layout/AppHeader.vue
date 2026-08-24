@@ -12,6 +12,7 @@ const props = defineProps({
   title: { type: String, default: '' },
   badge: { type: String, default: '' },
   variant: { type: String, default: 'back' },
+  showBack: { type: Boolean, default: true },
   collapsed: { type: Boolean, default: false },
   hideBackWhenCollapsed: { type: Boolean, default: false },
   backTo: { type: [String, Object], default: null },
@@ -81,7 +82,7 @@ function handleAction() {
     </template>
     <template v-else>
       <button
-        v-if="variant === 'back'"
+        v-if="variant === 'back' && showBack"
         class="app-header__back"
         type="button"
         aria-label="이전 페이지"
@@ -248,6 +249,18 @@ h1 {
 
 /* iPhone PWA의 상단 safe area에서는 배경을 흐리는 유리 효과를 쓰지 않는다. */
 @media (display-mode: standalone) {
+  .app-header__back {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Safari와 홈 화면 PWA 모두에서 상단 safe area가 본문을 비치지 않게 한다. */
+@supports (-webkit-touch-callout: none) {
+  .app-header {
+    background: var(--ui-background);
+  }
+
   .app-header__back {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;

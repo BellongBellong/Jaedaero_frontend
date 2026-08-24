@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-import armyCharacter from '../../../assets/character/army.png'
-import starGradient from '@/assets/icons/starGradient.png'
+import armyCharacter from '../../../assets/character/army.webp'
+import starGradient from '@/assets/icons/starGradient.webp'
 import DetailLinkButton from '@/common/components/navigation/DetailLinkButton.vue'
 import AssetBubble from './AssetProgressMarker.vue'
 

@@ -10,7 +10,10 @@ import detailViewIcon from '../../../assets/features/my-page/detail-view.svg'
 import selectedCheckIcon from '@/assets/icons/stateCheckIcon.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
+import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import BaseTooltip from '@/common/components/feedback/BaseTooltip.vue'
+import BaseBottomSheet from '@/common/components/overlay/BaseBottomSheet.vue'
+import BaseDialog from '@/common/components/overlay/BaseDialog.vue'
 import {
   accountConnectionStatus,
   accountInstitutionName,
@@ -19,8 +22,8 @@ import {
   normalizeOrganizationCode,
   normalizeInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
-import { bankAccountBlockIcon } from '@/features/accounts/composables/bankAccountIconMapping'
-import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
+import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
+import OnboardingStepIntro from '@/common/components/layout/OnboardingStepIntro.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 
@@ -44,7 +47,7 @@ const accountsConfirming = ref(false)
 const requiredAccountNoticeId = ref(null)
 const showConnectedSummary = ref(false)
 const connectedInstitutions = ref([])
-const institutionAssets = import.meta.glob('@/assets/features/onboarding/institutions/*.svg', {
+const securitiesAssets = import.meta.glob('@/assets/institutions/Securities/*.{svg,png}', {
   eager: true,
   import: 'default',
   query: '?url',
@@ -55,8 +58,8 @@ const bankAssets = import.meta.glob('@/assets/institutions/banks/*.svg', {
   query: '?url',
 })
 
-const institutionAssetsByFilename = Object.fromEntries(
-  Object.entries(institutionAssets).map(([assetPath, assetUrl]) => [
+const securitiesAssetsByFilename = Object.fromEntries(
+  Object.entries(securitiesAssets).map(([assetPath, assetUrl]) => [
     assetPath.split('/').pop(),
     assetUrl,
   ]),
@@ -105,20 +108,24 @@ const fallbackBanks = [
   { organizationCode: '0081', displayName: '하나은행', logoKey: 'hana' },
 ]
 const fallbackSecurities = [
-  { organizationCode: '0238', displayName: '미래에셋증권', logoIndex: 0 },
-  { organizationCode: '0243', displayName: '한국투자증권', logoIndex: 1 },
-  { organizationCode: '0218', displayName: 'KB증권', logoIndex: 2 },
-  { organizationCode: '0240', displayName: '삼성증권', logoIndex: 3 },
-  { organizationCode: '0247', displayName: 'NH투자증권', logoIndex: 4 },
-  { organizationCode: '0261', displayName: '교보증권', logoIndex: 5 },
-  { organizationCode: '0266', displayName: 'SK증권', logoIndex: 7 },
-  { organizationCode: '0209', displayName: '유안타증권', logoIndex: 8 },
-  { organizationCode: '0267', displayName: '대신증권', logoIndex: 9 },
-  { organizationCode: '0269', displayName: '한화투자증권', logoIndex: 10 },
-  { organizationCode: '0278', displayName: '신한금융투자', logoIndex: 12 },
-  { organizationCode: '0279', displayName: 'DB금융투자', logoIndex: 13 },
-  { organizationCode: '0280', displayName: '유진투자증권', logoIndex: 14 },
-  { organizationCode: '0287', displayName: '메리츠증권', logoIndex: 15 },
+  { organizationCode: '0238', displayName: '미래에셋증권', logoFilename: 'Mirae.svg' },
+  {
+    organizationCode: '0243',
+    displayName: '한국투자증권',
+    logoFilename: 'KoreaInvestment.svg',
+  },
+  { organizationCode: '0218', displayName: 'KB증권', logoFilename: 'KB.svg' },
+  { organizationCode: '0240', displayName: '삼성증권', logoFilename: 'Samsung.svg' },
+  { organizationCode: '0247', displayName: 'NH투자증권', logoFilename: 'NH.svg' },
+  { organizationCode: '0261', displayName: '교보증권', logoFilename: 'Kyobo.svg' },
+  { organizationCode: '0266', displayName: 'SK증권', logoFilename: 'SK.png' },
+  { organizationCode: '0209', displayName: '유안타증권', logoFilename: 'Yuanta.svg' },
+  { organizationCode: '0267', displayName: '대신증권', logoFilename: 'Daesin.svg' },
+  { organizationCode: '0269', displayName: '한화투자증권', logoFilename: 'Hanhwa.svg' },
+  { organizationCode: '0278', displayName: '신한금융투자', logoFilename: 'Shinhan.svg' },
+  { organizationCode: '0279', displayName: 'DB금융투자', logoFilename: 'DB.svg' },
+  { organizationCode: '0280', displayName: '유진투자증권', logoFilename: 'Eugene.svg' },
+  { organizationCode: '0287', displayName: '메리츠증권', logoFilename: 'Meritz.png' },
 ]
 const form = ref({
   businessType: '',
@@ -229,24 +236,24 @@ const bankLogoRules = [
   ['케이', 'kbank'],
   ['하나', 'hana'],
 ]
-const securityLogoNames = [
-  '미래에셋',
-  '한국투자',
-  'KB',
-  '삼성',
-  'NH',
-  '교보',
-  '키움',
-  'SK',
-  '유안타',
-  '대신',
-  '한화',
-  '하나',
-  '신한',
-  'DB',
-  '유진',
-  '메리츠',
-  'IBK',
+const securityLogoRules = [
+  ['미래에셋', 'Mirae.svg'],
+  ['한국투자', 'KoreaInvestment.svg'],
+  ['KB', 'KB.svg'],
+  ['삼성', 'Samsung.svg'],
+  ['NH', 'NH.svg'],
+  ['교보', 'Kyobo.svg'],
+  ['키움', 'Kiwoom.svg'],
+  ['SK', 'SK.png'],
+  ['유안타', 'Yuanta.svg'],
+  ['대신', 'Daesin.svg'],
+  ['한화', 'Hanhwa.svg'],
+  ['하나', 'Hana.svg'],
+  ['신한', 'Shinhan.svg'],
+  ['DB', 'DB.svg'],
+  ['유진', 'Eugene.svg'],
+  ['메리츠', 'Meritz.png'],
+  ['IBK', 'IBK.svg'],
 ]
 
 function institutionLogo(institution, selected, businessType = form.value.businessType) {
@@ -258,12 +265,11 @@ function institutionLogo(institution, selected, businessType = form.value.busine
     return bankAssetsByFilename[bankLogoFilenames[logoKey]]
   }
 
-  const selectedSuffix = selected ? '-selected' : ''
-  const logoIndex =
-    institution.logoIndex ??
-    securityLogoNames.findIndex((name) => institution.displayName.includes(name))
-  const safeIndex = logoIndex >= 0 ? logoIndex : 0
-  return institutionAssetsByFilename[`security-${safeIndex}${selectedSuffix}.svg`]
+  const logoFilename =
+    institution.logoFilename ||
+    securityLogoRules.find(([name]) => institution.displayName.includes(name))?.[1] ||
+    'Mirae.svg'
+  return securitiesAssetsByFilename[logoFilename] || securitiesAssetsByFilename['Mirae.svg']
 }
 
 function connectedInstitutionLogo(connection) {
@@ -271,7 +277,7 @@ function connectedInstitutionLogo(connection) {
     return institutionLogo(connection.institution, false, connection.businessType)
   }
 
-  return bankAccountBlockIcon(connection.accounts[0])
+  return bankAccountIcon(connection.accounts[0])
 }
 
 function isInstitutionConnected(institution) {
@@ -664,7 +670,7 @@ onBeforeUnmount(abortAccountRequest)
 
 <template>
   <main class="codef-connect screen">
-    <OnboardingStepHeader
+    <OnboardingStepIntro
       :step="1"
       :show-progress="!isAdditionalConnection"
       :title="isSecuritiesOnly ? '증권계좌 연결' : '금융 연결'"
@@ -675,7 +681,6 @@ onBeforeUnmount(abortAccountRequest)
             : '군인 계좌가 있는 은행을 연결해주세요.'
           : `연결할 ${isSecuritiesOnly ? '증권사' : '금융기관'}의 인터넷뱅킹 정보를 입력해주세요.`
       "
-      @back="router.back()"
     />
 
     <section
@@ -894,10 +899,13 @@ onBeforeUnmount(abortAccountRequest)
       </button>
     </div>
 
-    <PrimaryButton
+    <BaseButton
       v-if="!loadingInstitutions && !showConnectedSummary"
-      variant="green"
-      :disabled="loading"
+      class="connect-submit-button"
+      variant="primary"
+      size="lg"
+      block
+      :loading="loading"
       @click="submit"
     >
       {{
@@ -907,95 +915,77 @@ onBeforeUnmount(abortAccountRequest)
             ? `${form.businessType === 'BK' ? '은행' : '증권'} 계좌 불러오기`
             : '계좌 연결하기'
       }}
-    </PrimaryButton>
+    </BaseButton>
 
-    <Transition name="institution-sheet">
-      <div
-        v-if="institutionModalOpen"
-        class="institution-backdrop institution-backdrop--selector"
-        @click.self="closeInstitutionModal"
+    <BaseBottomSheet
+      v-model="institutionModalOpen"
+      :title="form.businessType === 'BK' ? '은행 계좌 연동' : '증권 계좌 연동'"
+      :caption="`자산을 연결할 ${form.businessType === 'BK' ? '은행' : '증권사'}을 선택해주세요. 한 번에 하나씩만 가능해요.`"
+      @close="closeInstitutionModal"
+    >
+      <BaseTooltip
+        v-if="form.businessType === 'BK'"
+        class="sheet-tip"
       >
-        <section
-          class="institution-sheet"
-          role="dialog"
-          aria-modal="true"
-          :aria-label="form.businessType === 'BK' ? '은행 선택' : '증권사 선택'"
+        💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.
+      </BaseTooltip>
+      <div class="institution-list">
+        <button
+          v-for="institution in visibleInstitutions"
+          :key="institution.organizationCode"
+          type="button"
+          class="institution-row"
+          :class="{
+            selected: isPendingInstitution(institution),
+            connected: isInstitutionConnected(institution),
+          }"
+          :aria-label="
+            isPendingInstitution(institution)
+              ? `${institution.displayName} 선택됨`
+              : isInstitutionConnected(institution)
+                ? `${institution.displayName} 연결됨`
+                : `${institution.displayName} 선택`
+          "
+          :disabled="isInstitutionConnected(institution)"
+          @click="togglePendingInstitution(institution.organizationCode)"
         >
-          <button
-            type="button"
-            class="sheet-close"
-            aria-label="닫기"
-            @click="closeInstitutionModal"
+          <span class="institution-row__content">
+            <img
+              class="institution-row__logo"
+              :src="institutionLogo(institution, false)"
+              alt=""
+            >
+            <span class="institution-row__name">{{ institution.displayName }}</span>
+          </span>
+          <img
+            v-if="isPendingInstitution(institution)"
+            class="institution-row__check"
+            :src="selectedCheckIcon"
+            alt=""
+            aria-hidden="true"
           >
-            ×
-          </button>
-          <header>
-            <h2>{{ form.businessType === 'BK' ? '은행 계좌 연동' : '증권 계좌 연동' }}</h2>
-            <p>
-              자산을 연결할 {{ form.businessType === 'BK' ? '은행' : '증권사' }}을 선택해주세요.<br>
-              한 번에 하나씩만 가능해요.
-            </p>
-          </header>
-          <BaseTooltip
-            v-if="form.businessType === 'BK'"
-            class="sheet-tip"
-          >
-            💡 군적금 및 나라사랑통장이 있는 은행은 필수 연동해주세요.
-          </BaseTooltip>
-          <div class="institution-list">
-            <button
-              v-for="institution in visibleInstitutions"
-              :key="institution.organizationCode"
-              type="button"
-              class="institution-row"
-              :class="{
-                selected: isPendingInstitution(institution),
-                connected: isInstitutionConnected(institution),
-              }"
-              :aria-label="
-                isPendingInstitution(institution)
-                  ? `${institution.displayName} 선택됨`
-                  : isInstitutionConnected(institution)
-                    ? `${institution.displayName} 연결됨`
-                    : `${institution.displayName} 선택`
-              "
-              :disabled="isInstitutionConnected(institution)"
-              @click="togglePendingInstitution(institution.organizationCode)"
-            >
-              <span class="institution-row__content">
-                <img
-                  class="institution-row__logo"
-                  :src="institutionLogo(institution, false)"
-                  alt=""
-                >
-                <span class="institution-row__name">{{ institution.displayName }}</span>
-              </span>
-              <img
-                v-if="isPendingInstitution(institution)"
-                class="institution-row__check"
-                :src="selectedCheckIcon"
-                alt=""
-                aria-hidden="true"
-              >
-              <span
-                v-if="isInstitutionConnected(institution)"
-                class="institution-connected-check"
-                aria-hidden="true"
-              >✓</span>
-            </button>
-            <p
-              v-if="loadingInstitutions"
-              class="institution-empty"
-            >
-              금융기관 목록을 불러오는 중이에요.
-            </p>
-            <p
-              v-else-if="!visibleInstitutions.length"
-              class="institution-empty"
-            >
-              선택할 수 있는 금융기관이 없습니다.
-            </p>
-          </div>
+          <span
+            v-if="isInstitutionConnected(institution)"
+            class="institution-connected-check"
+            aria-hidden="true"
+          >✓</span>
+        </button>
+        <p
+          v-if="loadingInstitutions"
+          class="institution-empty"
+        >
+          금융기관 목록을 불러오는 중이에요.
+        </p>
+        <p
+          v-else-if="!visibleInstitutions.length"
+          class="institution-empty"
+        >
+          선택할 수 있는 금융기관이 없습니다.
+        </p>
+      </div>
+
+      <template #footer>
+        <div class="institution-sheet-footer">
           <PrimaryButton
             variant="green"
             :disabled="!pendingInstitution"
@@ -1005,9 +995,9 @@ onBeforeUnmount(abortAccountRequest)
               pendingInstitution ? `${pendingInstitution.displayName} 선택` : '기관을 선택해주세요'
             }}
           </PrimaryButton>
-        </section>
-      </div>
-    </Transition>
+        </div>
+      </template>
+    </BaseBottomSheet>
 
     <Transition name="institution-sheet">
       <div
@@ -1050,154 +1040,117 @@ onBeforeUnmount(abortAccountRequest)
       </div>
     </Transition>
 
-    <Transition name="institution-sheet">
-      <div
-        v-if="accountsEmptyModalOpen"
-        class="institution-backdrop account-status-backdrop"
-      >
-        <section
-          class="account-status-sheet empty-sheet"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="empty-account-title"
+    <BaseDialog
+      v-model="accountsEmptyModalOpen"
+      class="empty-account-dialog"
+      @close="retryAccountConnection"
+    >
+      <div class="empty-bank-summary">
+        <span class="selected-institution-logo">
+          <img
+            v-if="selectedInstitution"
+            :src="institutionLogo(selectedInstitution, false)"
+            alt=""
+          >
+        </span>
+        <span class="selected-institution-copy">
+          <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
+          <b>{{ selectedInstitution?.displayName }}</b>
+        </span>
+        <span
+          class="loading-check"
+          aria-hidden="true"
+        >✓</span>
+      </div>
+      <div class="empty-account-content">
+        <img
+          :src="accountEmptyMascot"
+          alt=""
+        >
+        <h3>앗, 계좌가 발견되지 않았어요</h3>
+        <p>
+          은행 정보를 다시 확인해보거나<br>
+          다른 은행으로 연동해보세요
+        </p>
+      </div>
+
+      <template #actions>
+        <BaseButton
+          variant="primary"
+          size="lg"
+          block
+          class="empty-account-retry"
+          @click="retryAccountConnection"
+        >
+          다시 연결하러가기
+        </BaseButton>
+      </template>
+    </BaseDialog>
+
+    <BaseBottomSheet
+      v-model="accountsModalOpen"
+      title="계좌 불러오기"
+      :caption="`${selectedInstitution?.displayName} 계좌를 ${discoveredAccounts.length}개 발견했어요! 연동할 계좌를 모두 선택해주세요.`"
+      @close="closeAccountsModal"
+    >
+      <div class="accounts-bank-card">
+        <span class="selected-institution-logo">
+          <img
+            v-if="selectedInstitution"
+            :src="institutionLogo(selectedInstitution, false)"
+            alt=""
+          >
+        </span>
+        <span class="selected-institution-copy">
+          <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
+          <b>{{ selectedInstitution?.displayName }}</b>
+        </span>
+      </div>
+
+      <div class="discovered-account-list">
+        <div
+          v-for="(account, index) in discoveredAccounts"
+          :key="accountId(account, index)"
+          class="discovered-account-wrap"
         >
           <button
             type="button"
-            class="sheet-close"
-            aria-label="계좌 불러오기 닫기"
-            @click="retryAccountConnection"
+            class="discovered-account"
+            :class="{ selected: selectedAccountIds.includes(accountId(account, index)) }"
+            @click="toggleAccount(account, index)"
           >
-            ×
-          </button>
-          <header>
-            <h2 id="empty-account-title">
-              계좌 불러오기
-            </h2>
-            <p>연동할 계좌를 모두 선택해주세요</p>
-          </header>
-          <div class="empty-bank-summary">
-            <span class="selected-institution-logo">
-              <img
-                v-if="selectedInstitution"
-                :src="institutionLogo(selectedInstitution, false)"
-                alt=""
-              >
-            </span>
-            <span class="selected-institution-copy">
-              <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
-              <b>{{ selectedInstitution?.displayName }}</b>
-            </span>
-            <span
-              class="loading-check"
-              aria-hidden="true"
-            >✓</span>
-          </div>
-          <div class="empty-account-content">
             <img
-              :src="accountEmptyMascot"
+              :src="accountIcon(account)"
               alt=""
             >
-            <h3>앗, 계좌가 발견되지 않았어요</h3>
-            <p>
-              은행 정보를 다시 확인해보거나<br>
-              다른 은행으로 연동해보세요
-            </p>
-            <button
-              type="button"
-              @click="retryAccountConnection"
-            >
-              다시 연결하러가기
-            </button>
-          </div>
-        </section>
-      </div>
-    </Transition>
-
-    <Transition name="institution-sheet">
-      <div
-        v-if="accountsModalOpen"
-        class="institution-backdrop accounts-backdrop"
-        @click.self="closeAccountsModal"
-      >
-        <section
-          class="accounts-sheet"
-          role="dialog"
-          aria-modal="true"
-          aria-label="계좌 불러오기"
-        >
-          <button
-            type="button"
-            class="sheet-close accounts-sheet-close"
-            aria-label="계좌 불러오기 닫기"
-            @click="closeAccountsModal"
-          >
-            ×
+            <span class="discovered-account-copy">
+              <span>
+                <b>{{ account.productName || account.accountName || '금융 계좌' }}</b>
+                <small :class="accountRequirement(account)">
+                  {{
+                    accountRequirement(account) === 'required'
+                      ? '필수'
+                      : accountRequirement(account) === 'recommended'
+                        ? '권장'
+                        : '선택'
+                  }}
+                </small>
+              </span>
+              <em>{{ accountDetail(account) }}</em>
+            </span>
+            <i aria-hidden="true">✓</i>
           </button>
-          <header>
-            <h2>계좌 불러오기</h2>
-            <p>
-              {{ selectedInstitution?.displayName }} 계좌를 {{ discoveredAccounts.length }}개
-              발견했어요!<br>
-              연동할 계좌를 모두 선택해주세요.
-            </p>
-          </header>
+          <p
+            v-if="requiredAccountNoticeId === accountId(account, index)"
+            class="required-account-notice"
+          >
+            필수계좌는 선택 취소할 수 없어요.
+          </p>
+        </div>
+      </div>
 
-          <div class="accounts-bank-card">
-            <span class="selected-institution-logo">
-              <img
-                v-if="selectedInstitution"
-                :src="institutionLogo(selectedInstitution, false)"
-                alt=""
-              >
-            </span>
-            <span class="selected-institution-copy">
-              <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
-              <b>{{ selectedInstitution?.displayName }}</b>
-            </span>
-          </div>
-
-          <div class="discovered-account-list">
-            <div
-              v-for="(account, index) in discoveredAccounts"
-              :key="accountId(account, index)"
-              class="discovered-account-wrap"
-            >
-              <button
-                type="button"
-                class="discovered-account"
-                :class="{ selected: selectedAccountIds.includes(accountId(account, index)) }"
-                @click="toggleAccount(account, index)"
-              >
-                <img
-                  :src="accountIcon(account)"
-                  alt=""
-                >
-                <span class="discovered-account-copy">
-                  <span>
-                    <b>{{ account.productName || account.accountName || '금융 계좌' }}</b>
-                    <small :class="accountRequirement(account)">
-                      {{
-                        accountRequirement(account) === 'required'
-                          ? '필수'
-                          : accountRequirement(account) === 'recommended'
-                            ? '권장'
-                            : '선택'
-                      }}
-                    </small>
-                  </span>
-                  <em>{{ accountDetail(account) }}</em>
-                </span>
-                <i aria-hidden="true">✓</i>
-              </button>
-              <p
-                v-if="requiredAccountNoticeId === accountId(account, index)"
-                class="required-account-notice"
-              >
-                필수계좌는 선택 취소할 수 없어요.
-              </p>
-            </div>
-          </div>
-
+      <template #footer>
+        <div class="accounts-sheet-footer">
           <PrimaryButton
             variant="green"
             :disabled="accountsConfirming || !selectedAccountIds.length"
@@ -1205,9 +1158,9 @@ onBeforeUnmount(abortAccountRequest)
           >
             {{ accountsConfirming ? '계좌 저장 중...' : '선택한 계좌 불러오기' }}
           </PrimaryButton>
-        </section>
-      </div>
-    </Transition>
+        </div>
+      </template>
+    </BaseBottomSheet>
   </main>
 </template>
 
@@ -1218,23 +1171,7 @@ onBeforeUnmount(abortAccountRequest)
   min-height: 100dvh;
   flex-direction: column;
   padding: 0 16px 40px 20px;
-  background: #fafafa;
-}
-
-.codef-connect :deep(.step-header) {
-  padding: 22px 10px 0;
-}
-
-.codef-connect :deep(.back-button) {
-  margin-bottom: 54px;
-}
-
-.codef-connect :deep(.step-header--without-progress .back-button) {
-  margin-bottom: 24px;
-}
-
-.codef-connect :deep(.step-header__progress) {
-  margin-bottom: 8px;
+  background: var(--ui-background);
 }
 
 .step-content {
@@ -1253,7 +1190,7 @@ onBeforeUnmount(abortAccountRequest)
   position: relative;
   overflow: hidden;
   border-radius: 18px;
-  background: #ececec;
+  background: var(--ui-light-gray);
 }
 
 .connection-skeleton > span::after,
@@ -1274,21 +1211,21 @@ onBeforeUnmount(abortAccountRequest)
 .connection-skeleton__types {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-14);
 }
 
 .connection-skeleton__card {
   width: 100%;
   height: 76px;
-  border: 1px solid #e6e9e7;
-  background: #fff;
+  border: 1px solid var(--ui-border);
+  background: var(--white);
 }
 
 .connection-skeleton__button {
   width: 100%;
   height: 56px;
   margin-top: auto;
-  border-radius: 28px;
+  border-radius: var(--radius-xl);
 }
 
 @keyframes connection-skeleton-shimmer {
@@ -1304,9 +1241,9 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .institution-type legend {
-  margin-bottom: 10px;
-  color: #7c8e77;
-  font-size: 16px;
+  margin-bottom: var(--space-10);
+  color: var(--olive-400);
+  font-size: var(--text-md);
   font-weight: 700;
   line-height: 24px;
 }
@@ -1314,7 +1251,7 @@ onBeforeUnmount(abortAccountRequest)
 .type-buttons {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-14);
 }
 
 .type-buttons button {
@@ -1326,13 +1263,13 @@ onBeforeUnmount(abortAccountRequest)
   align-items: center;
   justify-content: flex-start;
   padding: 14px 18px;
-  border: 1px solid #e6e9e7;
-  border-radius: 20px;
-  background: #fff;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-lg);
+  background: var(--white);
   box-shadow: 0 2px 8px rgb(31 41 55 / 5%);
-  color: #333;
+  color: var(--ui-text);
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 700;
   text-align: left;
   transition:
@@ -1342,9 +1279,9 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .type-buttons button.selected {
-  border-color: #62ff9c;
-  background: #effff5;
-  color: #20ba5c;
+  border-color: var(--green-500);
+  background: var(--green-50);
+  color: var(--green-700);
   box-shadow: 0 4px 12px rgb(59 225 120 / 12%);
 }
 
@@ -1367,19 +1304,19 @@ onBeforeUnmount(abortAccountRequest)
   gap: 3px;
   padding: 16px;
   margin-bottom: 18px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: rgb(236 236 236 / 35%);
 }
 
 .securities-connection-state strong {
   color: var(--gray-700);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
 .securities-connection-state span {
   color: var(--gray-500);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.5;
 }
 
@@ -1392,8 +1329,8 @@ onBeforeUnmount(abortAccountRequest)
 
 .connected-summary h2 {
   margin: 0 8px 1px;
-  color: #6d906e;
-  font-size: 14px;
+  color: var(--olive-400);
+  font-size: var(--text-sm);
   line-height: 24px;
 }
 
@@ -1401,10 +1338,10 @@ onBeforeUnmount(abortAccountRequest)
   display: flex;
   min-height: 70px;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
   padding: 11px 16px;
   border-radius: 24px;
-  background: #fff;
+  background: var(--white);
 }
 
 .connected-card-icon {
@@ -1414,14 +1351,14 @@ onBeforeUnmount(abortAccountRequest)
   flex: 0 0 42px;
   place-items: center;
   border-radius: 13px;
-  background: #f5f5f7;
+  background: var(--gray-100);
   overflow: hidden;
 }
 
 .connected-card-icon img {
-  width: 42px;
-  height: 42px;
-  transform: scale(1.32);
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 
 .connected-card-copy {
@@ -1433,19 +1370,19 @@ onBeforeUnmount(abortAccountRequest)
 .connected-card-copy > span {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
 }
 
 .connected-card-copy b {
-  color: #333;
-  font-size: 14px;
+  color: var(--ui-text);
+  font-size: var(--text-sm);
 }
 
 .connected-card-copy small {
   padding: 2px 7px;
-  border-radius: 20px;
-  background: #e4fff0;
-  color: #22c55e;
+  border-radius: var(--radius-lg);
+  background: var(--green-100);
+  color: var(--green-700);
   font-size: 9px;
   font-weight: 700;
 }
@@ -1453,7 +1390,7 @@ onBeforeUnmount(abortAccountRequest)
 .connected-card-copy em {
   overflow: hidden;
   max-width: 210px;
-  color: #9c9c9c;
+  color: var(--gray-500);
   font-size: 10px;
   font-style: normal;
   text-overflow: ellipsis;
@@ -1462,8 +1399,8 @@ onBeforeUnmount(abortAccountRequest)
 
 .connected-card-check {
   margin-left: auto;
-  color: #56f497;
-  font-size: 18px;
+  color: var(--green-400);
+  font-size: var(--text-lg);
   font-weight: 700;
 }
 
@@ -1474,24 +1411,24 @@ onBeforeUnmount(abortAccountRequest)
 .summary-actions {
   display: grid;
   grid-template-columns: 0.68fr 1.55fr;
-  gap: 12px;
+  gap: var(--space-12);
   margin: 0 4px;
 }
 
 .summary-actions button {
   min-height: 56px;
   border: 0;
-  border-radius: 28px;
-  background: #ececec;
-  color: #999;
+  border-radius: var(--radius-xl);
+  background: var(--ui-light-gray);
+  color: var(--gray-500);
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 700;
 }
 
 .summary-actions button:last-child {
-  background: #62ff9c;
-  color: #173522;
+  background: var(--green-500);
+  color: var(--olive-800);
 }
 
 .account-fields {
@@ -1501,14 +1438,14 @@ onBeforeUnmount(abortAccountRequest)
 
 .selected-institution-field {
   display: grid;
-  gap: 10px;
+  gap: var(--space-10);
 }
 
 .selected-institution-field > strong,
 .account-fields > label {
   padding-inline: 10px;
-  color: #7c8e77;
-  font-size: 16px;
+  color: var(--olive-400);
+  font-size: var(--text-md);
   font-weight: 700;
   line-height: 24px;
 }
@@ -1518,12 +1455,12 @@ onBeforeUnmount(abortAccountRequest)
   width: 100%;
   min-height: 88px;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-14);
   padding: 20px;
   border: 0;
-  border-radius: 28px;
-  background: #fff;
-  color: #333;
+  border-radius: var(--radius-xl);
+  background: var(--white);
+  color: var(--ui-text);
   cursor: pointer;
   text-align: left;
 }
@@ -1534,8 +1471,8 @@ onBeforeUnmount(abortAccountRequest)
   height: 48px;
   flex: 0 0 48px;
   place-items: center;
-  border-radius: 14px;
-  background: #f5f5f7;
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
   overflow: hidden;
 }
 
@@ -1551,14 +1488,14 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .selected-institution-copy small {
-  color: #bdbdbd;
-  font-size: 12px;
+  color: var(--gray-400);
+  font-size: var(--text-xs);
   line-height: 18px;
 }
 
 .selected-institution-copy b {
-  color: #333;
-  font-size: 16px;
+  color: var(--ui-text);
+  font-size: var(--text-md);
   line-height: 24px;
 }
 
@@ -1570,9 +1507,9 @@ onBeforeUnmount(abortAccountRequest)
 
 label {
   display: grid;
-  gap: 8px;
-  color: #4b4b4b;
-  font-size: 14px;
+  gap: var(--space-8);
+  color: var(--gray-800);
+  font-size: var(--text-sm);
   font-weight: 700;
 }
 
@@ -1583,7 +1520,7 @@ label {
 }
 
 label small {
-  color: #999;
+  color: var(--gray-500);
   font-size: 11px;
   font-weight: 400;
 }
@@ -1593,36 +1530,36 @@ select {
   width: 100%;
   height: 52px;
   padding: 0 14px;
-  border: 1px solid #e1e1e1;
+  border: 1px solid var(--ui-border);
   border-radius: 12px;
   outline: 0;
-  background: #fff;
-  color: #333;
+  background: var(--white);
+  color: var(--ui-text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 400;
 }
 
 input:focus,
 select:focus {
-  border-color: #43d981;
+  border-color: var(--green-600);
 }
 
 .form-error {
   margin: 2px 0 0;
-  color: #ef5350;
+  color: var(--orange-700);
   font-size: 13px;
 }
 
-.primary-button {
+.connect-submit-button {
   width: calc(100% - 8px);
   min-height: 56px;
   margin: 0 4px;
 }
 
-.primary-button:disabled {
-  background: #ececec;
-  color: #bdbdbd;
+.connect-submit-button:disabled {
+  background: var(--ui-light-gray);
+  color: var(--gray-400);
 }
 
 .institution-backdrop {
@@ -1635,52 +1572,10 @@ select:focus {
   inset: 0;
 }
 
-.institution-sheet {
-  position: relative;
-  display: flex;
-  width: 100%;
-  height: min(710px, calc(100dvh - 120px));
-  max-height: 710px;
-  flex-direction: column;
-  padding: 64px 20px 10px;
-  border-radius: 50px 50px 0 0;
-  background: #fff;
-}
-
-.sheet-close {
-  position: absolute;
-  top: 30px;
-  right: 20px;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #555;
-  cursor: pointer;
-  font-size: 28px;
-  line-height: 24px;
-}
-
-.institution-sheet h2 {
-  margin: 0;
-  color: #333;
-  font-family: var(--body-heading-h4-bold-font-family, 'Pretendard-Bold', sans-serif);
-  font-size: var(--body-heading-h4-bold-font-size, 24px);
-  font-weight: var(--body-heading-h4-bold-font-weight, 700);
-  line-height: var(--body-heading-h4-bold-line-height, 150%);
-}
-
-.institution-sheet header p {
-  margin: 2px 0 0;
-  color: #757575;
-  font-family: var(--body-body-medium-regular-font-family, 'Pretendard-Regular', sans-serif);
-  font-size: var(--body-body-medium-regular-font-size, 16px);
-  line-height: var(--body-body-medium-regular-line-height, 150%);
-}
-
 .sheet-tip {
-  margin: 20px auto 25px;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 20px;
 }
 
 .institution-list {
@@ -1749,8 +1644,8 @@ select:focus {
 
 .institution-row .institution-row__logo {
   display: block;
-  width: 38px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
 }
 
@@ -1790,11 +1685,11 @@ select:focus {
   width: 21px;
   height: 21px;
   place-items: center;
-  border: 2px solid #fff;
+  border: 2px solid var(--white);
   border-radius: 50%;
-  background: #56f497;
-  color: #fff;
-  font-size: 12px;
+  background: var(--green-400);
+  color: var(--white);
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 
@@ -1802,73 +1697,38 @@ select:focus {
   grid-column: 1 / -1;
   padding: 50px 10px;
   margin: 0;
-  color: #999;
+  color: var(--gray-500);
   font-size: 13px;
   text-align: center;
 }
 
-.institution-sheet > .primary-button {
+.institution-sheet-footer {
   width: 100%;
-  flex: 0 0 56px;
-  margin: 10px 0 0;
-  background: #62ff9c;
-  color: #173522;
+}
+
+.institution-sheet-footer :deep(.primary-button) {
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  background: var(--green-500);
+  color: var(--olive-800);
   font-size: 13px;
 }
 
-@media (max-height: 760px) {
-  .institution-sheet {
-    height: calc(100dvh - 72px);
-    padding-top: 58px;
-  }
+.institution-sheet-footer :deep(.primary-button:disabled) {
+  background: var(--ui-light-gray);
+  color: var(--gray-400);
+}
 
+@media (max-height: 760px) {
   .institution-list {
     height: auto;
     flex-basis: 280px;
   }
 
   .sheet-tip {
-    margin: 12px auto 16px;
+    margin: 0 0 20px;
   }
-}
-
-.institution-sheet > .primary-button:disabled {
-  background: #ececec;
-  color: #bdbdbd;
-}
-
-.accounts-sheet {
-  position: relative;
-  display: flex;
-  width: 100%;
-  align-self: stretch;
-  height: min(710px, calc(100dvh - 120px));
-  max-height: 710px;
-  flex-direction: column;
-  padding: 64px 20px 10px;
-  box-sizing: border-box;
-  border-radius: 50px 50px 0 0;
-  background: #fff;
-}
-
-.accounts-sheet-close {
-  top: 30px;
-  right: 20px;
-  z-index: 1;
-}
-
-.accounts-sheet > header {
-  padding-right: 0;
-}
-
-.accounts-backdrop {
-  display: flex;
-  align-items: stretch;
-  flex-direction: column;
-  justify-content: flex-end;
-  box-sizing: border-box;
-  position: absolute;
-  inset: 0;
 }
 
 .account-status-backdrop {
@@ -1882,7 +1742,7 @@ select:focus {
   position: relative;
   width: 100%;
   border-radius: 30px;
-  background: #fff;
+  background: var(--white);
 }
 
 .loading-sheet {
@@ -1897,8 +1757,8 @@ select:focus {
   width: 48px;
   height: 48px;
   margin: 0 auto 31px;
-  border: 8px solid #ededed;
-  border-right-color: #58f49a;
+  border: 8px solid var(--gray-200);
+  border-right-color: var(--green-400);
   border-radius: 50%;
   animation: loading-spin 0.85s linear infinite;
 }
@@ -1909,26 +1769,26 @@ select:focus {
 
 .loading-copy h2 {
   margin: 0;
-  color: #333;
+  color: var(--ui-text);
   font-size: 20px;
   line-height: 30px;
 }
 
 .loading-copy p {
   margin: 4px 0 25px;
-  color: #999;
-  font-size: 12px;
+  color: var(--gray-500);
+  font-size: var(--text-xs);
 }
 
 .loading-bank-card {
   display: flex;
   min-height: 88px;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
   padding: 16px 20px;
-  border: 1px solid #ddffeb;
-  border-radius: 28px;
-  background: #fff;
+  border: 1px solid var(--green-100);
+  border-radius: var(--radius-xl);
+  background: var(--white);
   box-shadow: 0 0 12px rgb(88 244 154 / 18%);
 }
 
@@ -1942,27 +1802,22 @@ select:focus {
   }
 }
 
-.empty-sheet {
+:global(.empty-account-dialog) {
   min-height: 695px;
-  padding: 66px 30px 30px;
 }
 
-.empty-sheet > header h2 {
-  margin: 0;
-  color: #333;
-  font-size: 24px;
+:global(.empty-account-dialog .base-dialog__content) {
+  padding-inline: 30px;
 }
 
-.empty-sheet > header p {
-  margin: 4px 0 26px;
-  color: #777;
-  font-size: 14px;
+:global(.empty-account-dialog .base-dialog__footer) {
+  padding: 20px 30px 30px;
 }
 
 .empty-bank-summary {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-14);
 }
 
 .empty-account-content {
@@ -1981,62 +1836,44 @@ select:focus {
 
 .empty-account-content h3 {
   margin: 0 0 12px;
-  color: #c4c4c4;
+  color: var(--gray-400);
   font-size: 22px;
 }
 
 .empty-account-content p {
   margin: 0 0 27px;
-  color: #888;
-  font-size: 14px;
+  color: var(--gray-600);
+  font-size: var(--text-sm);
   line-height: 23px;
 }
 
-.empty-account-content button {
-  width: 257px;
-  min-height: 56px;
-  border: 0;
-  border-radius: 28px;
-  background: #ececec;
-  color: #c5c5c5;
-  font-size: 16px;
+.empty-account-retry {
+  background: var(--ui-light-gray);
+  color: var(--gray-400);
+  font-size: var(--text-md);
   font-weight: 700;
-}
-
-.accounts-sheet h2 {
-  margin: 0;
-  color: #333;
-  font-size: 24px;
-  line-height: 36px;
-}
-
-.accounts-sheet header > p {
-  margin: 4px 0 0;
-  color: #757575;
-  font-size: 14px;
-  line-height: 21px;
 }
 
 .accounts-bank-card {
   display: flex;
   min-height: 88px;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-14);
   padding: 20px;
-  margin-top: 18px;
-  border-radius: 28px;
-  background: #fafafa;
+  margin-top: 0;
+  border-radius: var(--radius-xl);
+  background: var(--ui-background);
 }
 
 .discovered-account-list {
   min-height: 0;
   flex: 1;
-  margin-top: 18px;
+  margin-top: var(--space-20);
   overflow-y: auto;
 }
 
 .discovered-account-wrap + .discovered-account-wrap {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--gray-100);
 }
 
 .discovered-account {
@@ -2044,11 +1881,11 @@ select:focus {
   width: 100%;
   min-height: 82px;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
   padding: 14px 20px;
   border: 0;
   background: transparent;
-  color: #333;
+  color: var(--ui-text);
   cursor: pointer;
   text-align: left;
 }
@@ -2068,7 +1905,7 @@ select:focus {
 .discovered-account-copy > span {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
 }
 
 .discovered-account-copy b {
@@ -2080,21 +1917,21 @@ select:focus {
 
 .discovered-account-copy small {
   padding: 2px 8px;
-  border-radius: 20px;
-  background: #ececec;
-  color: #757575;
+  border-radius: var(--radius-lg);
+  background: var(--ui-light-gray);
+  color: var(--gray-600);
   font-size: 10px;
   font-weight: 700;
 }
 
 .discovered-account-copy small.required,
 .discovered-account-copy small.recommended {
-  background: #e4fff0;
-  color: #22c55e;
+  background: var(--green-100);
+  color: var(--green-700);
 }
 
 .discovered-account-copy em {
-  color: #999;
+  color: var(--gray-500);
   font-size: 11px;
   font-style: normal;
 }
@@ -2106,41 +1943,45 @@ select:focus {
   flex: 0 0 22px;
   margin-left: auto;
   place-items: center;
-  border: 1.5px solid #ddd;
+  border: 1.5px solid var(--gray-300);
   border-radius: 50%;
   color: transparent;
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-style: normal;
 }
 
 .discovered-account.selected > i {
-  border-color: #3be178;
-  background: #3be178;
-  color: #fff;
+  border-color: var(--green-600);
+  background: var(--green-600);
+  color: var(--white);
 }
 
 .required-account-notice {
   padding: 8px 12px;
   margin: -5px 0 8px;
   border-radius: 8px;
-  background: #fff3f3;
-  color: #e65e5e;
+  background: var(--orange-50);
+  color: var(--orange-600);
   font-size: 11px;
   text-align: center;
 }
 
-.accounts-sheet > .primary-button {
+.accounts-sheet-footer {
   width: 100%;
-  flex: 0 0 56px;
-  margin: 10px 0 0;
-  background: #62ff9c;
-  color: #173522;
-  font-size: 14px;
 }
 
-.accounts-sheet > .primary-button:disabled {
-  background: #ececec;
-  color: #bdbdbd;
+.accounts-sheet-footer :deep(.primary-button) {
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  background: var(--green-500);
+  color: var(--olive-800);
+  font-size: var(--text-sm);
+}
+
+.accounts-sheet-footer :deep(.primary-button:disabled) {
+  background: var(--ui-light-gray);
+  color: var(--gray-400);
 }
 
 .institution-sheet-enter-active,
@@ -2150,34 +1991,14 @@ select:focus {
 
 .institution-sheet-enter-active .institution-sheet,
 .institution-sheet-leave-active .institution-sheet,
-.institution-sheet-enter-active .accounts-sheet,
-.institution-sheet-leave-active .accounts-sheet {
-  transition: transform 0.26s ease;
-}
-
 .institution-sheet-enter-from,
 .institution-sheet-leave-to {
   background: transparent;
 }
 
-.institution-sheet-enter-from .institution-sheet,
-.institution-sheet-leave-to .institution-sheet,
-.institution-sheet-enter-from .accounts-sheet,
-.institution-sheet-leave-to .accounts-sheet {
-  transform: translateY(100%);
-}
-
 @media (max-height: 760px) {
-  .codef-connect :deep(.back-button) {
-    margin-bottom: 26px;
-  }
-
-  .codef-connect :deep(.step-header) {
-    padding-top: 22px;
-  }
-
   .account-fields {
-    gap: 10px;
+    gap: var(--space-10);
   }
 
   input,

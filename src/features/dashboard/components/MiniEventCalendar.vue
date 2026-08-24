@@ -13,6 +13,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  maxDate: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['select'])
@@ -32,7 +36,7 @@ const caption = computed(() => {
   const year = visibleDate.value.getFullYear()
   const month = visibleDate.value.getMonth() + 1
 
-  return year === currentYear ? `${month}월` : `${year}년 ${month}월`
+  return `${year}년 ${month}월`
 })
 
 const eventDates = computed(() => {
@@ -74,6 +78,7 @@ const calendarDays = computed(() => {
         value,
         weekday: new Date(year, month, day).getDay(),
         hasEvent: eventDates.value.has(value),
+        isDisabled: Boolean(props.maxDate && value > props.maxDate),
       }
     }),
   ]
@@ -107,6 +112,7 @@ function goToToday() {
 }
 
 function selectDate(value) {
+  if (props.maxDate && value > props.maxDate) return
   emit('select', value)
 }
 </script>
@@ -182,9 +188,11 @@ function selectDate(value) {
           :class="{
             'mini-event-calendar__day--today': day.value === todayValue,
             'mini-event-calendar__day--selected': props.selectedDate === day.value,
+            'mini-event-calendar__day--disabled': day.isDisabled,
             'mini-event-calendar__sunday': day.weekday === 0,
             'mini-event-calendar__saturday': day.weekday === 6,
           }"
+          :disabled="day.isDisabled"
           @click="selectDate(day.value)"
         >
           <span>{{ day.day }}</span>
@@ -307,6 +315,13 @@ function selectDate(value) {
 .mini-event-calendar__day--selected {
   outline: none;
   background: var(--green-100) !important;
+}
+
+.mini-event-calendar__days > button:disabled {
+  background: transparent;
+  color: var(--gray-300);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .mini-event-calendar__days > button > span {

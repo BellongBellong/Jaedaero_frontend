@@ -3,11 +3,12 @@ import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import confirmationEditIcon from '../../../assets/features/onboarding/icons/confirmation-edit.svg'
-import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
+import BaseButton from '@/common/components/buttons/BaseButton.vue'
+import BaseDialog from '@/common/components/overlay/BaseDialog.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { characterAssets, characterAssetsByProfileName } from '@/common/constants/characterAssets'
 import { useToast } from '@/common/composables/useToast'
-import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
+import OnboardingStepIntro from '@/common/components/layout/OnboardingStepIntro.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
 const router = useRouter()
@@ -151,11 +152,10 @@ async function complete() {
 
 <template>
   <main class="step-page screen">
-    <OnboardingStepHeader
+    <OnboardingStepIntro
       :step="4"
       title="투자 성향 설정"
       description="전역 자산을 운용하고 싶은&#10;본인의 투자 성향을 설정해 주세요"
-      @back="router.back()"
     />
     <section class="preference-content">
       <div
@@ -166,7 +166,10 @@ async function complete() {
           v-for="item in preferences"
           :key="item.value"
           type="button"
-          :class="{ selected: onboarding.form.investmentPreference === item.value }"
+          :class="[
+            `preference-card--${item.value.toLowerCase()}`,
+            { selected: onboarding.form.investmentPreference === item.value },
+          ]"
           @click="onboarding.form.investmentPreference = item.value"
         >
           <span>{{ item.icon }}</span><strong>{{ item.label }}</strong><small>{{ item.caption }}</small>
@@ -190,6 +193,7 @@ async function complete() {
             v-model.number="onboarding.targetAmountInTenThousands"
             :class="goalTone"
             type="number"
+            inputmode="numeric"
             min="0"
             step="100"
           ><span>만 원</span></label>
@@ -224,110 +228,101 @@ async function complete() {
         {{ errorMessage }}
       </p>
     </section>
-    <PrimaryButton
-      variant="green"
+    <BaseButton
+      class="preference-next-button"
+      variant="primary"
+      size="lg"
+      block
       :loading="loading"
       @click="next"
     >
       다음으로
-    </PrimaryButton>
+    </BaseButton>
 
-    <Teleport to="body">
-      <Transition name="modal">
-        <div
-          v-if="showConfirmModal"
-          class="confirm-backdrop"
-          role="presentation"
-          @click.self="closeModal"
+    <BaseDialog
+      v-model="showConfirmModal"
+      class="confirm-dialog"
+      :close-on-backdrop="!completing"
+      :close-on-escape="!completing"
+      :show-close="!completing"
+      @close="closeModal"
+    >
+      <div
+        class="confirm-avatar"
+        :style="{ background: onboarding.form.profileBackgroundColor }"
+      >
+        <img
+          :src="selectedProfileImage"
+          alt=""
         >
-          <section
-            class="confirm-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirm-title"
+      </div>
+      <p
+        v-if="onboarding.form.nickname"
+        class="confirm-nickname"
+      >
+        {{ onboarding.form.nickname }}님
+      </p>
+      <h2 class="confirm-title">
+        이대로 진행할까요?
+      </h2>
+
+      <div class="confirm-summary">
+        <div class="summary-column">
+          <h3>선택한 투자 유형</h3>
+          <button
+            type="button"
+            class="summary-item"
+            aria-label="투자 유형 수정"
+            @click="editPreference"
           >
-            <button
-              class="confirm-close"
-              aria-label="확인 창 닫기"
-              @click="closeModal"
+            <img
+              class="summary-pencil"
+              :src="confirmationEditIcon"
+              alt=""
             >
-              ×
-            </button>
-
-            <div
-              class="confirm-avatar"
-              :style="{ background: onboarding.form.profileBackgroundColor }"
-            >
-              <img
-                :src="selectedProfileImage"
-                alt=""
-              >
-            </div>
-            <p
-              v-if="onboarding.form.nickname"
-              class="confirm-nickname"
-            >
-              {{ onboarding.form.nickname }}님
-            </p>
-            <h2 id="confirm-title">
-              이대로 진행할까요?
-            </h2>
-
-            <div class="confirm-summary">
-              <div class="summary-column">
-                <h3>선택한 투자 유형</h3>
-                <button
-                  type="button"
-                  class="summary-item"
-                  aria-label="투자 유형 수정"
-                  @click="editPreference"
-                >
-                  <img
-                    class="summary-pencil"
-                    :src="confirmationEditIcon"
-                    alt=""
-                  >
-                  <span class="summary-icon">{{ selectedPreference.icon }}</span>
-                  <strong>{{ selectedPreference.label }}</strong>
-                  <em>{{ selectedPreference.caption }}</em>
-                </button>
-              </div>
-              <div class="summary-column">
-                <h3>목표 전역 자산</h3>
-                <button
-                  type="button"
-                  class="summary-item"
-                  aria-label="목표 전역 자산 수정"
-                  @click="editTargetAmount"
-                >
-                  <img
-                    class="summary-pencil"
-                    :src="confirmationEditIcon"
-                    alt=""
-                  >
-                  <strong class="summary-amount">{{ formattedAmount }}</strong>
-                </button>
-              </div>
-            </div>
-
-            <p
-              v-if="errorMessage"
-              class="form-error confirm-error"
-            >
-              {{ errorMessage }}
-            </p>
-
-            <PrimaryButton
-              variant="green"
-              :loading="completing"
-              @click="complete"
-            >
-              네, 시작할래요
-            </PrimaryButton>
-          </section>
+            <span class="summary-icon">{{ selectedPreference.icon }}</span>
+            <strong>{{ selectedPreference.label }}</strong>
+            <em>{{ selectedPreference.caption }}</em>
+          </button>
         </div>
-      </Transition>
-    </Teleport>
+        <div class="summary-column">
+          <h3>목표 전역 자산</h3>
+          <button
+            type="button"
+            class="summary-item"
+            aria-label="목표 전역 자산 수정"
+            @click="editTargetAmount"
+          >
+            <img
+              class="summary-pencil"
+              :src="confirmationEditIcon"
+              alt=""
+            >
+            <strong class="summary-amount">{{ formattedAmount }}</strong>
+          </button>
+        </div>
+      </div>
+
+      <p
+        v-if="errorMessage"
+        class="form-error confirm-error"
+      >
+        {{ errorMessage }}
+      </p>
+
+      <template #actions>
+        <BaseButton
+          class="confirm-submit-button"
+          variant="primary"
+          size="lg"
+          block
+          :loading="completing"
+          @click="complete"
+        >
+          네, 시작할래요
+        </BaseButton>
+      </template>
+    </BaseDialog>
   </main>
 </template>
 
@@ -339,7 +334,7 @@ async function complete() {
 .preference-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: var(--space-10);
 }
 .preference-grid button {
   appearance: none;
@@ -348,56 +343,66 @@ async function complete() {
   place-items: center;
   border: 1px solid transparent;
   border-radius: 12px;
-  background: #fff;
-  color: #333;
+  background: var(--white);
+  color: var(--ui-text);
   font: inherit;
 }
 .preference-grid button.selected {
-  border-color: #2be77b;
-  background: #caffdf;
+  border-color: var(--green-600);
+  background: var(--green-200);
 }
 .preference-grid strong {
-  color: #333;
+  color: var(--ui-text);
   font-size: 13px;
 }
 .preference-grid small {
   padding: 4px 8px;
   border-radius: 12px;
-  background: #f6f7f6;
-  color: #757575;
   font-size: 10px;
   white-space: nowrap;
 }
+.preference-card--safe small {
+  background: var(--green-50, #f3fff8);
+  color: var(--green-700, #20ba5c);
+}
+.preference-card--balanced small {
+  background: var(--olive-50, #f6f7f5);
+  color: var(--olive-300, #aebba7);
+}
+.preference-card--aggressive small {
+  background: var(--orange-50, #fff7f3);
+  color: var(--orange-600, #e37255);
+}
 h2 {
   margin: 27px 0 12px 10px;
-  color: #566752;
+  color: var(--olive-500);
   font-size: 15px;
 }
-.step-page > .primary-button {
-  margin-top: 16px;
+.step-page > .preference-next-button {
+  margin-top: var(--space-16);
 }
 .goal-card {
   padding: 23px 10px;
   border-radius: 26px;
-  background: #fff;
+  background: var(--white);
   text-align: center;
 }
 .goal-card > p {
   margin: 0 0 13px;
-  color: #666;
-  font-size: 14px;
+  color: var(--ui-text-secondary);
+  font-size: var(--text-sm);
   line-height: 1.55;
 }
 .goal-card label {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
 }
 .goal-amount-control {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: var(--space-16);
 }
 .goal-amount-button {
   display: grid;
@@ -407,34 +412,43 @@ h2 {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: #effff5;
-  color: #20ba5c;
-  font-size: 24px;
+  background: var(--green-50);
+  color: var(--green-700);
+  font-size: var(--text-h4);
   line-height: 1;
 }
 .goal-amount-button:disabled {
-  background: #f0f0f0;
-  color: #aaa;
+  background: var(--gray-100);
+  color: var(--gray-500);
   cursor: not-allowed;
 }
 .goal-card input {
   width: 85px;
   padding: 7px 4px;
   border: 0;
-  border-bottom: 2px solid #3aed87;
+  border-bottom: 2px solid var(--green-600);
   outline: none;
   font-size: 17px;
   font-weight: 700;
   text-align: center;
 }
+.goal-card input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.goal-card input[type='number']::-webkit-inner-spin-button,
+.goal-card input[type='number']::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
 .goal-card input.green {
-  border-bottom-color: #3aed87;
+  border-bottom-color: var(--green-600);
 }
 .goal-card input.gray {
-  border-bottom-color: #aebbaa;
+  border-bottom-color: var(--olive-300);
 }
 .goal-card input.red {
-  border-bottom-color: #ff8a72;
+  border-bottom-color: var(--orange-500);
 }
 .goal-warning {
   display: flex;
@@ -442,7 +456,7 @@ h2 {
   justify-content: center;
   gap: 5px;
   margin: 14px 0 0;
-  color: #ff765c;
+  color: var(--orange-500);
   font-size: 11px;
 }
 .goal-warning span {
@@ -451,8 +465,8 @@ h2 {
   height: 12px;
   place-items: center;
   border-radius: 50%;
-  background: #ff765c;
-  color: #fff;
+  background: var(--orange-500);
+  color: var(--white);
   font-size: 9px;
   font-weight: 800;
 }
@@ -461,54 +475,34 @@ h2 {
   align-items: center;
   justify-content: center;
   gap: 9px;
-  margin-top: 16px;
+  margin-top: var(--space-16);
 }
 .goal-breakdown span {
   padding: 6px 8px;
   border-radius: 13px;
-  background: #effff5;
-  color: #1dc767;
+  background: var(--green-50);
+  color: var(--green-700);
   font-size: 10px;
 }
 .goal-breakdown.gray span {
-  background: #eef1ed;
-  color: #7d8e7c;
+  background: var(--olive-50);
+  color: var(--olive-400);
 }
 .goal-breakdown.red span {
-  background: #fff4f1;
-  color: #ff765c;
+  background: var(--orange-50);
+  color: var(--orange-500);
 }
 .goal-breakdown b {
-  color: #aaa;
+  color: var(--gray-500);
 }
-.confirm-backdrop {
-  position: fixed;
-  z-index: 100;
-  display: grid;
-  background: rgb(0 0 0 / 58%);
-  inset: 0;
-  place-items: center;
+:global(.confirm-dialog .base-dialog__content) {
+  padding: 18px 14px 0;
 }
-.confirm-modal {
-  position: relative;
-  width: min(calc(100% - 44px), 353px);
-  padding: 62px 14px 39px;
-  border-radius: 30px;
-  background: #fff;
-  box-shadow: 0 18px 50px rgb(0 0 0 / 18%);
+
+:global(.confirm-dialog .base-dialog__footer) {
+  padding: 0 14px 19px;
 }
-.confirm-close {
-  position: absolute;
-  top: 28px;
-  right: 29px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #333;
-  color: #555;
-  font-size: 29px;
-  line-height: 1;
-}
+
 .confirm-avatar {
   display: grid;
   width: 76px;
@@ -517,7 +511,7 @@ h2 {
   overflow: hidden;
   place-items: center;
   border-radius: 50%;
-  background: #edf1ec;
+  background: var(--olive-100);
 }
 .confirm-avatar img {
   width: 60px;
@@ -526,17 +520,17 @@ h2 {
 }
 .confirm-nickname {
   margin: 0 0 8px;
-  color: #566752;
+  color: var(--olive-500);
   font-family: var(--font-display, '감탄로드감탄체'), sans-serif;
-  font-size: 18px;
+  font-size: var(--text-lg);
   font-weight: 400;
   letter-spacing: -0.02em;
   text-align: center;
 }
-.confirm-modal h2 {
+.confirm-title {
   margin: 0 0 33px;
-  color: #6d6d6d;
-  font-size: 18px;
+  color: var(--gray-600);
+  font-size: var(--text-lg);
   line-height: 27px;
   text-align: center;
 }
@@ -547,7 +541,7 @@ h2 {
   padding: 21px 18px 20px;
   margin-bottom: 60px;
   border-radius: 26px;
-  background: linear-gradient(135deg, #d5f7e3 0%, #f6f7d9 100%);
+  background: var(--ui-background, #f6f7f6);
 }
 .summary-column {
   display: grid;
@@ -555,8 +549,8 @@ h2 {
 }
 .summary-column h3 {
   margin: 0;
-  color: #728a70;
-  color: #758d77;
+  color: var(--olive-400);
+  color: var(--olive-400);
   font-size: 11px;
   font-weight: 800;
   text-align: center;
@@ -572,30 +566,30 @@ h2 {
   padding: 13px 7px 10px;
   border: 0;
   border-radius: 16px;
-  background: #fff;
-  color: #333;
+  background: var(--white);
+  color: var(--ui-text);
   font: inherit;
   text-align: center;
   cursor: pointer;
 }
 .confirm-summary .summary-item:focus-visible {
-  outline: 2px solid #3be178;
+  outline: 2px solid var(--green-600);
   outline-offset: 2px;
 }
 .summary-icon {
-  margin-bottom: 4px;
-  font-size: 14px;
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
 }
 .confirm-summary strong {
-  color: #555;
+  color: var(--gray-800);
   font-size: 15px;
 }
 .confirm-summary em {
   padding: 5px 8px;
   margin-top: 6px;
   border-radius: 18px;
-  background: #effff5;
-  color: #28d67a;
+  background: var(--green-50);
+  color: var(--green-600);
   font-size: 10px;
   font-style: normal;
   white-space: nowrap;
@@ -611,32 +605,16 @@ h2 {
 .confirm-summary .summary-amount {
   padding: 9px 8px;
   border-radius: 13px;
-  background: #fffdf4;
-  color: #f2bd32;
-  font-size: 14px;
+  background: var(--yellow-50);
+  color: var(--yellow-600);
+  font-size: var(--text-sm);
   white-space: nowrap;
 }
-.confirm-modal .primary-button {
+:global(.confirm-dialog .confirm-submit-button) {
   min-height: 54px;
-  background: #59f494;
-  color: #15552e;
+  background: var(--green-400);
+  color: var(--olive-800);
   font-size: 15px;
   font-weight: 700;
-}
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.18s ease;
-}
-.modal-enter-active .confirm-modal,
-.modal-leave-active .confirm-modal {
-  transition: transform 0.18s ease;
-}
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-.modal-enter-from .confirm-modal,
-.modal-leave-to .confirm-modal {
-  transform: translateY(12px) scale(0.98);
 }
 </style>
