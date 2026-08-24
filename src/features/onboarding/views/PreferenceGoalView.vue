@@ -166,7 +166,10 @@ async function complete() {
           v-for="item in preferences"
           :key="item.value"
           type="button"
-          :class="{ selected: onboarding.form.investmentPreference === item.value }"
+          :class="[
+            `preference-card--${item.value.toLowerCase()}`,
+            { selected: onboarding.form.investmentPreference === item.value },
+          ]"
           @click="onboarding.form.investmentPreference = item.value"
         >
           <span>{{ item.icon }}</span><strong>{{ item.label }}</strong><small>{{ item.caption }}</small>
@@ -190,6 +193,7 @@ async function complete() {
             v-model.number="onboarding.targetAmountInTenThousands"
             :class="goalTone"
             type="number"
+            inputmode="numeric"
             min="0"
             step="100"
           ><span>만 원</span></label>
@@ -369,10 +373,20 @@ async function complete() {
 .preference-grid small {
   padding: 4px 8px;
   border-radius: 12px;
-  background: #f6f7f6;
-  color: #757575;
   font-size: 10px;
   white-space: nowrap;
+}
+.preference-card--safe small {
+  background: var(--green-50, #f3fff8);
+  color: var(--green-700, #20ba5c);
+}
+.preference-card--balanced small {
+  background: var(--olive-50, #f6f7f5);
+  color: var(--olive-300, #aebba7);
+}
+.preference-card--aggressive small {
+  background: var(--orange-50, #fff7f3);
+  color: var(--orange-600, #e37255);
 }
 h2 {
   margin: 27px 0 12px 10px;
@@ -432,6 +446,15 @@ h2 {
   font-size: 17px;
   font-weight: 700;
   text-align: center;
+}
+.goal-card input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.goal-card input[type='number']::-webkit-inner-spin-button,
+.goal-card input[type='number']::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
 }
 .goal-card input.green {
   border-bottom-color: #3aed87;

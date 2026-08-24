@@ -73,7 +73,7 @@ defineEmits(['back'])
 }
 .step-header__progress {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 10px;
   margin-bottom: 8px;
 }

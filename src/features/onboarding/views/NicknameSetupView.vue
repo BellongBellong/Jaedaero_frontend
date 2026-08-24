@@ -224,7 +224,7 @@ async function next() {
       </p>
       <small>
         <img
-          :src="validNickname ? nicknameCheckAvailableIcon : nicknameCheckUnavailableIcon"
+          :src="nicknameCheckUnavailableIcon"
           alt=""
           aria-hidden="true"
         >
