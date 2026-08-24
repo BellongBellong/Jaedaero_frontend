@@ -18,13 +18,13 @@ const route = useRoute()
 const router = useRouter()
 const draggedPosition = ref(null)
 const isDragging = ref(false)
+const isLensAnimating = ref(false)
 const isNavigating = ref(false)
 const skipNextClick = ref(false)
+const indicatorTransitionDuration = ref(380)
 const NAVIGATION_WIDTH = 294
 const NAVIGATION_ITEM_WIDTH = 66
 const NAVIGATION_HORIZONTAL_PADDING = 15
-const NAVIGATION_INDICATOR_WIDTH = 72
-const NAVIGATION_INDICATOR_HEIGHT = 46
 
 const navigationItems = [
   {
@@ -70,19 +70,11 @@ const indicatorPosition = computed(() => {
 
 /* 라우트 이동으로 메뉴가 바뀌어도 선택 블록이 새 위치까지 애니메이션되게 한다. */
 watch(activeTab, () => {
-  if (!isDragging.value) draggedPosition.value = null
+  if (!isDragging.value && !isLensAnimating.value) draggedPosition.value = null
 })
-
-const lensStyle = computed(() => ({
-  position: 'absolute',
-  top: '30px',
-  left: `${indicatorPosition.value + NAVIGATION_ITEM_WIDTH / 2}px`,
-  width: `${NAVIGATION_INDICATOR_WIDTH}px`,
-  height: `${NAVIGATION_INDICATOR_HEIGHT}px`,
-  zIndex: 20,
-  transform: 'translate(-50%, -50%) scale(1.02)',
-  pointerEvents: 'none',
-}))
+function getTransitionDuration(fromIndex, toIndex) {
+  return 260 + Math.abs(toIndex - fromIndex) * 180
+}
 
 function getIndicatorPosition(event) {
   const navigation = event.currentTarget
@@ -123,9 +115,15 @@ function endDrag(event) {
       Math.round((draggedPosition.value - NAVIGATION_HORIZONTAL_PADDING) / NAVIGATION_ITEM_WIDTH),
     ),
   )
+  const currentIndex = Math.round(
+    (draggedPosition.value - NAVIGATION_HORIZONTAL_PADDING) / NAVIGATION_ITEM_WIDTH,
+  )
+
+  indicatorTransitionDuration.value = getTransitionDuration(currentIndex, snappedIndex)
   const item = navigationItems[snappedIndex]
 
   isDragging.value = false
+  isLensAnimating.value = true
   draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + snappedIndex * NAVIGATION_ITEM_WIDTH
   skipNextClick.value = true
   isNavigating.value = true
@@ -135,8 +133,9 @@ function endDrag(event) {
   })
 
   window.setTimeout(() => {
+    isLensAnimating.value = false
     draggedPosition.value = null
-  }, 420)
+  }, indicatorTransitionDuration.value)
 }
 
 function cancelDrag() {
@@ -151,10 +150,29 @@ function onItemClick(item) {
   }
 
   const targetIndex = navigationItems.findIndex((navigationItem) => navigationItem.id === item.id)
-  if (targetIndex >= 0)
-    draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + targetIndex * NAVIGATION_ITEM_WIDTH
+  if (targetIndex < 0 || targetIndex === activeIndex.value) return
 
-  selectTab(item)
+  // 탭 사이가 멀수록 이동 시간을 늘려 중간 탭을 지나는 흐름이 보이게 한다.
+  indicatorTransitionDuration.value = getTransitionDuration(activeIndex.value, targetIndex)
+  draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + activeIndex.value * NAVIGATION_ITEM_WIDTH
+  isLensAnimating.value = true
+  isNavigating.value = true
+
+  // 첫 프레임에 시작 위치를 그린 뒤 다음 프레임에 이동해야 Safari가
+  // 시작·종료 상태를 하나의 렌더링으로 합치지 않고 슬라이딩을 재생한다.
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + targetIndex * NAVIGATION_ITEM_WIDTH
+      Promise.resolve(selectTab(item)).finally(() => {
+        isNavigating.value = false
+      })
+
+      window.setTimeout(() => {
+        isLensAnimating.value = false
+        draggedPosition.value = null
+      }, indicatorTransitionDuration.value)
+    })
+  })
 }
 
 function selectTab(item) {
@@ -165,15 +183,6 @@ function selectTab(item) {
 
 <template>
   <div class="bottom-navigation-shell">
-    <div
-      v-if="isDragging"
-      class="navigation-lens"
-      :style="lensStyle"
-      aria-hidden="true"
-    >
-      <span class="navigation-lens__surface" />
-    </div>
-
     <nav
       class="bottom-navigation glass glass--dark"
       aria-label="주요 메뉴"
@@ -189,8 +198,10 @@ function selectTab(item) {
     >
       <span
         class="navigation-indicator navigation-indicator__surface"
-        :class="{ 'navigation-indicator--hidden': isDragging }"
-        :style="{ transform: `translate3d(${indicatorPosition - 3}px, 0, 0)` }"
+        :style="{
+          transform: `translate3d(${indicatorPosition - 3}px, 0, 0)`,
+          transitionDuration: indicatorTransitionDuration + `ms`,
+        }"
         aria-hidden="true"
       />
 
@@ -221,7 +232,7 @@ function selectTab(item) {
   position: fixed;
   z-index: 10;
   left: 50%;
-  bottom: calc(16px + var(--safe-area-bottom, env(safe-area-inset-bottom)));
+  bottom: calc(16px + var(--safe-area-bottom));
   width: 294px;
   height: 60px;
   transform: translateX(-50%);
@@ -242,6 +253,7 @@ function selectTab(item) {
   -webkit-backdrop-filter: blur(2px) saturate(108%);
   backdrop-filter: blur(2px) saturate(108%);
   pointer-events: none !important;
+  transition: left 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* 전체 인디케이터에 균일한 배경 blur를 적용한다. */
@@ -341,13 +353,6 @@ function selectTab(item) {
 
 /* iPhone PWA에서 유리 효과가 화면 하단을 과도하게 흐리지 않게 한다. */
 @media (display-mode: standalone) {
-  .bottom-navigation,
-  .bottom-navigation.glass--dark {
-    background: rgb(27 34 31 / 94%) !important;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-
   .navigation-lens {
     background: rgb(255 255 255 / 12%) !important;
     -webkit-backdrop-filter: none;
@@ -394,7 +399,7 @@ function selectTab(item) {
   border-radius: var(--radius-full, 999px);
   pointer-events: none;
   transition:
-    transform 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 380ms cubic-bezier(0.16, 1, 0.3, 1),
     filter 180ms ease;
   will-change: transform;
 }

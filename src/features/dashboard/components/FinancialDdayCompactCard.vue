@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 
-import armyCharacter from '@/assets/character/army.png'
+import armyCharacter from '@/assets/character/army.webp'
 import AssetProgressMarker from '@/features/dashboard/components/AssetProgressMarker.vue'
 
 const props = defineProps({

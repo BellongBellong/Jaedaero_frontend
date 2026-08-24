@@ -7,13 +7,30 @@ import {
   readAllNotifications,
   readNotification,
 } from '@/features/notifications/api/notifications.api'
-import {
-  disablePushNotifications,
-  enablePushNotifications,
-  getPushPermission,
-  subscribeToForegroundMessages,
-  unsubscribeFromForegroundMessages,
-} from '@/features/notifications/services/firebaseMessaging.service'
+const PUSH_DISABLED_KEY = 'jaedaero-push-disabled'
+
+let firebaseMessagingServicePromise
+
+function getFirebaseMessagingService() {
+  firebaseMessagingServicePromise ??=
+    import('@/features/notifications/services/firebaseMessaging.service')
+  return firebaseMessagingServicePromise
+}
+
+function getPushPermission() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return 'unsupported'
+  try {
+    if (
+      Notification.permission === 'granted' &&
+      localStorage.getItem(PUSH_DISABLED_KEY) === 'true'
+    ) {
+      return 'disabled'
+    }
+  } catch {
+    // 저장소에 접근할 수 없으면 브라우저 권한을 그대로 사용한다.
+  }
+  return Notification.permission
+}
 
 const FOREGROUND_NOTIFICATION_DURATION = 5_000
 const MAX_REMEMBERED_FOREGROUND_NOTIFICATIONS = 100
@@ -175,6 +192,7 @@ export const useNotificationStore = defineStore('notification', () => {
     permission.value = getPushPermission()
 
     if (!initialized) {
+      const { subscribeToForegroundMessages } = await getFirebaseMessagingService()
       await subscribeToForegroundMessages(handleForegroundMessage)
       navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage)
       document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -183,6 +201,7 @@ export const useNotificationStore = defineStore('notification', () => {
 
     if (permission.value === 'granted') {
       try {
+        const { enablePushNotifications } = await getFirebaseMessagingService()
         const result = await enablePushNotifications()
         permission.value = result.status
       } catch (pushError) {
@@ -197,6 +216,7 @@ export const useNotificationStore = defineStore('notification', () => {
     permissionLoading.value = true
     error.value = null
     try {
+      const { enablePushNotifications } = await getFirebaseMessagingService()
       const result = await enablePushNotifications({ requestPermission: true })
       permission.value = result.status
       return result
@@ -212,6 +232,7 @@ export const useNotificationStore = defineStore('notification', () => {
     permissionLoading.value = true
     error.value = null
     try {
+      const { disablePushNotifications } = await getFirebaseMessagingService()
       await disablePushNotifications()
       permission.value = getPushPermission() === 'granted' ? 'disabled' : getPushPermission()
     } catch (disableError) {
@@ -268,7 +289,9 @@ export const useNotificationStore = defineStore('notification', () => {
 
   function reset() {
     window.clearTimeout(foregroundDismissTimer)
-    unsubscribeFromForegroundMessages()
+    void getFirebaseMessagingService().then(({ unsubscribeFromForegroundMessages }) => {
+      unsubscribeFromForegroundMessages()
+    })
     navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage)
     document.removeEventListener('visibilitychange', handleVisibilityChange)
     initialized = false
