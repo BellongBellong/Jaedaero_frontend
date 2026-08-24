@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
+import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.webp'
 import { useMissionCompletion } from '@/features/missions/composables/useMissionCompletion'
 import { useReportsStore } from '@/features/reports/stores/reports.store'
 import { mapProductRecommendations } from '@/features/simulations/mappers/productRecommendations.mapper'

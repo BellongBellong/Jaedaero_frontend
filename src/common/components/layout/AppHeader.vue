@@ -254,6 +254,18 @@ h1 {
   }
 }
 
+/* Safari와 홈 화면 PWA 모두에서 상단 safe area가 본문을 비치지 않게 한다. */
+@supports (-webkit-touch-callout: none) {
+  .app-header {
+    background: var(--ui-background);
+  }
+
+  .app-header__back {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .app-header {
     transition: none;

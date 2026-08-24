@@ -2,10 +2,10 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import reportMascot from '../../../assets/features/ai-coach/coach-character.png'
+import reportMascot from '../../../assets/features/ai-coach/coach-character.webp'
 import smallMoney from '@/assets/icons/Smallmoney.png'
 import parasolGradient from '@/assets/icons/parasolGradient.png'
-import starGradient from '@/assets/icons/starGradient.png'
+import starGradient from '@/assets/icons/starGradient.webp'
 
 const props = defineProps({
   date: {
