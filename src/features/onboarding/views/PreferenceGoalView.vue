@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 
 import confirmationEditIcon from '../../../assets/features/onboarding/icons/confirmation-edit.svg'
 import BaseButton from '@/common/components/buttons/BaseButton.vue'
+import BaseDialog from '@/common/components/overlay/BaseDialog.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { characterAssets, characterAssetsByProfileName } from '@/common/constants/characterAssets'
 import { useToast } from '@/common/composables/useToast'
@@ -238,105 +239,90 @@ async function complete() {
       다음으로
     </BaseButton>
 
-    <Teleport to="body">
-      <Transition name="modal">
-        <div
-          v-if="showConfirmModal"
-          class="confirm-backdrop"
-          role="presentation"
-          @click.self="closeModal"
+    <BaseDialog
+      v-model="showConfirmModal"
+      class="confirm-dialog"
+      :close-on-backdrop="!completing"
+      :close-on-escape="!completing"
+      :show-close="!completing"
+      @close="closeModal"
+    >
+      <div
+        class="confirm-avatar"
+        :style="{ background: onboarding.form.profileBackgroundColor }"
+      >
+        <img
+          :src="selectedProfileImage"
+          alt=""
         >
-          <section
-            class="confirm-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirm-title"
+      </div>
+      <p
+        v-if="onboarding.form.nickname"
+        class="confirm-nickname"
+      >
+        {{ onboarding.form.nickname }}님
+      </p>
+      <h2 class="confirm-title">
+        이대로 진행할까요?
+      </h2>
+
+      <div class="confirm-summary">
+        <div class="summary-column">
+          <h3>선택한 투자 유형</h3>
+          <button
+            type="button"
+            class="summary-item"
+            aria-label="투자 유형 수정"
+            @click="editPreference"
           >
-            <button
-              class="confirm-close"
-              aria-label="확인 창 닫기"
-              @click="closeModal"
+            <img
+              class="summary-pencil"
+              :src="confirmationEditIcon"
+              alt=""
             >
-              ×
-            </button>
-
-            <div
-              class="confirm-avatar"
-              :style="{ background: onboarding.form.profileBackgroundColor }"
-            >
-              <img
-                :src="selectedProfileImage"
-                alt=""
-              >
-            </div>
-            <p
-              v-if="onboarding.form.nickname"
-              class="confirm-nickname"
-            >
-              {{ onboarding.form.nickname }}님
-            </p>
-            <h2 id="confirm-title">
-              이대로 진행할까요?
-            </h2>
-
-            <div class="confirm-summary">
-              <div class="summary-column">
-                <h3>선택한 투자 유형</h3>
-                <button
-                  type="button"
-                  class="summary-item"
-                  aria-label="투자 유형 수정"
-                  @click="editPreference"
-                >
-                  <img
-                    class="summary-pencil"
-                    :src="confirmationEditIcon"
-                    alt=""
-                  >
-                  <span class="summary-icon">{{ selectedPreference.icon }}</span>
-                  <strong>{{ selectedPreference.label }}</strong>
-                  <em>{{ selectedPreference.caption }}</em>
-                </button>
-              </div>
-              <div class="summary-column">
-                <h3>목표 전역 자산</h3>
-                <button
-                  type="button"
-                  class="summary-item"
-                  aria-label="목표 전역 자산 수정"
-                  @click="editTargetAmount"
-                >
-                  <img
-                    class="summary-pencil"
-                    :src="confirmationEditIcon"
-                    alt=""
-                  >
-                  <strong class="summary-amount">{{ formattedAmount }}</strong>
-                </button>
-              </div>
-            </div>
-
-            <p
-              v-if="errorMessage"
-              class="form-error confirm-error"
-            >
-              {{ errorMessage }}
-            </p>
-
-            <BaseButton
-              class="confirm-submit-button"
-              variant="primary"
-              size="lg"
-              block
-              :loading="completing"
-              @click="complete"
-            >
-              네, 시작할래요
-            </BaseButton>
-          </section>
+            <span class="summary-icon">{{ selectedPreference.icon }}</span>
+            <strong>{{ selectedPreference.label }}</strong>
+            <em>{{ selectedPreference.caption }}</em>
+          </button>
         </div>
-      </Transition>
-    </Teleport>
+        <div class="summary-column">
+          <h3>목표 전역 자산</h3>
+          <button
+            type="button"
+            class="summary-item"
+            aria-label="목표 전역 자산 수정"
+            @click="editTargetAmount"
+          >
+            <img
+              class="summary-pencil"
+              :src="confirmationEditIcon"
+              alt=""
+            >
+            <strong class="summary-amount">{{ formattedAmount }}</strong>
+          </button>
+        </div>
+      </div>
+
+      <p
+        v-if="errorMessage"
+        class="form-error confirm-error"
+      >
+        {{ errorMessage }}
+      </p>
+
+      <template #actions>
+        <BaseButton
+          class="confirm-submit-button"
+          variant="primary"
+          size="lg"
+          block
+          :loading="completing"
+          @click="complete"
+        >
+          네, 시작할래요
+        </BaseButton>
+      </template>
+    </BaseDialog>
   </main>
 </template>
 
@@ -509,34 +495,14 @@ h2 {
 .goal-breakdown b {
   color: var(--gray-500);
 }
-.confirm-backdrop {
-  position: fixed;
-  z-index: 100;
-  display: grid;
-  background: rgb(0 0 0 / 58%);
-  inset: 0;
-  place-items: center;
+:global(.confirm-dialog .base-dialog__content) {
+  padding: 18px 14px 0;
 }
-.confirm-modal {
-  position: relative;
-  width: min(calc(100% - 44px), 353px);
-  padding: 62px 14px 39px;
-  border-radius: 30px;
-  background: var(--white);
-  box-shadow: 0 18px 50px rgb(0 0 0 / 18%);
+
+:global(.confirm-dialog .base-dialog__footer) {
+  padding: 0 14px 19px;
 }
-.confirm-close {
-  position: absolute;
-  top: 28px;
-  right: 29px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ui-text);
-  color: var(--gray-800);
-  font-size: 29px;
-  line-height: 1;
-}
+
 .confirm-avatar {
   display: grid;
   width: 76px;
@@ -561,7 +527,7 @@ h2 {
   letter-spacing: -0.02em;
   text-align: center;
 }
-.confirm-modal h2 {
+.confirm-title {
   margin: 0 0 33px;
   color: var(--gray-600);
   font-size: var(--text-lg);
@@ -644,27 +610,11 @@ h2 {
   font-size: var(--text-sm);
   white-space: nowrap;
 }
-.confirm-modal .confirm-submit-button {
+:global(.confirm-dialog .confirm-submit-button) {
   min-height: 54px;
   background: var(--green-400);
   color: var(--olive-800);
   font-size: 15px;
   font-weight: 700;
-}
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.18s ease;
-}
-.modal-enter-active .confirm-modal,
-.modal-leave-active .confirm-modal {
-  transition: transform 0.18s ease;
-}
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-.modal-enter-from .confirm-modal,
-.modal-leave-to .confirm-modal {
-  transform: translateY(12px) scale(0.98);
 }
 </style>

@@ -13,6 +13,7 @@ import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
 import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import BaseTooltip from '@/common/components/feedback/BaseTooltip.vue'
 import BaseBottomSheet from '@/common/components/overlay/BaseBottomSheet.vue'
+import BaseDialog from '@/common/components/overlay/BaseDialog.vue'
 import {
   accountConnectionStatus,
   accountInstitutionName,
@@ -21,7 +22,7 @@ import {
   normalizeOrganizationCode,
   normalizeInstitutionName,
 } from '@/features/accounts/composables/institutionMapping'
-import { bankAccountBlockIcon } from '@/features/accounts/composables/bankAccountIconMapping'
+import { bankAccountIcon } from '@/features/accounts/composables/bankAccountIconMapping'
 import OnboardingStepIntro from '@/common/components/layout/OnboardingStepIntro.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
@@ -276,7 +277,7 @@ function connectedInstitutionLogo(connection) {
     return institutionLogo(connection.institution, false, connection.businessType)
   }
 
-  return bankAccountBlockIcon(connection.accounts[0])
+  return bankAccountIcon(connection.accounts[0])
 }
 
 function isInstitutionConnected(institution) {
@@ -1039,68 +1040,52 @@ onBeforeUnmount(abortAccountRequest)
       </div>
     </Transition>
 
-    <Transition name="institution-sheet">
-      <div
-        v-if="accountsEmptyModalOpen"
-        class="institution-backdrop account-status-backdrop"
-      >
-        <section
-          class="account-status-sheet empty-sheet"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="empty-account-title"
-        >
-          <button
-            type="button"
-            class="sheet-close"
-            aria-label="계좌 불러오기 닫기"
-            @click="retryAccountConnection"
+    <BaseDialog
+      v-model="accountsEmptyModalOpen"
+      class="empty-account-dialog"
+      @close="retryAccountConnection"
+    >
+      <div class="empty-bank-summary">
+        <span class="selected-institution-logo">
+          <img
+            v-if="selectedInstitution"
+            :src="institutionLogo(selectedInstitution, false)"
+            alt=""
           >
-            ×
-          </button>
-          <header>
-            <h2 id="empty-account-title">
-              계좌 불러오기
-            </h2>
-            <p>연동할 계좌를 모두 선택해주세요</p>
-          </header>
-          <div class="empty-bank-summary">
-            <span class="selected-institution-logo">
-              <img
-                v-if="selectedInstitution"
-                :src="institutionLogo(selectedInstitution, false)"
-                alt=""
-              >
-            </span>
-            <span class="selected-institution-copy">
-              <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
-              <b>{{ selectedInstitution?.displayName }}</b>
-            </span>
-            <span
-              class="loading-check"
-              aria-hidden="true"
-            >✓</span>
-          </div>
-          <div class="empty-account-content">
-            <img
-              :src="accountEmptyMascot"
-              alt=""
-            >
-            <h3>앗, 계좌가 발견되지 않았어요</h3>
-            <p>
-              은행 정보를 다시 확인해보거나<br>
-              다른 은행으로 연동해보세요
-            </p>
-            <button
-              type="button"
-              @click="retryAccountConnection"
-            >
-              다시 연결하러가기
-            </button>
-          </div>
-        </section>
+        </span>
+        <span class="selected-institution-copy">
+          <small>선택한 {{ form.businessType === 'BK' ? '은행' : '증권사' }}</small>
+          <b>{{ selectedInstitution?.displayName }}</b>
+        </span>
+        <span
+          class="loading-check"
+          aria-hidden="true"
+        >✓</span>
       </div>
-    </Transition>
+      <div class="empty-account-content">
+        <img
+          :src="accountEmptyMascot"
+          alt=""
+        >
+        <h3>앗, 계좌가 발견되지 않았어요</h3>
+        <p>
+          은행 정보를 다시 확인해보거나<br>
+          다른 은행으로 연동해보세요
+        </p>
+      </div>
+
+      <template #actions>
+        <BaseButton
+          variant="primary"
+          size="lg"
+          block
+          class="empty-account-retry"
+          @click="retryAccountConnection"
+        >
+          다시 연결하러가기
+        </BaseButton>
+      </template>
+    </BaseDialog>
 
     <BaseBottomSheet
       v-model="accountsModalOpen"
@@ -1371,9 +1356,9 @@ onBeforeUnmount(abortAccountRequest)
 }
 
 .connected-card-icon img {
-  width: 42px;
-  height: 42px;
-  transform: scale(1.32);
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 
 .connected-card-copy {
@@ -1587,21 +1572,6 @@ select:focus {
   inset: 0;
 }
 
-.sheet-close {
-  position: absolute;
-  top: 30px;
-  right: 20px;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--gray-800);
-  cursor: pointer;
-  font-size: 28px;
-  line-height: 24px;
-}
-
 .sheet-tip {
   width: 100%;
   max-width: none;
@@ -1674,8 +1644,8 @@ select:focus {
 
 .institution-row .institution-row__logo {
   display: block;
-  width: 38px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
 }
 
@@ -1832,21 +1802,16 @@ select:focus {
   }
 }
 
-.empty-sheet {
+:global(.empty-account-dialog) {
   min-height: 695px;
-  padding: 66px 30px 30px;
 }
 
-.empty-sheet > header h2 {
-  margin: 0;
-  color: var(--ui-text);
-  font-size: var(--text-h4);
+:global(.empty-account-dialog .base-dialog__content) {
+  padding-inline: 30px;
 }
 
-.empty-sheet > header p {
-  margin: 4px 0 26px;
-  color: var(--gray-600);
-  font-size: var(--text-sm);
+:global(.empty-account-dialog .base-dialog__footer) {
+  padding: 20px 30px 30px;
 }
 
 .empty-bank-summary {
@@ -1882,11 +1847,7 @@ select:focus {
   line-height: 23px;
 }
 
-.empty-account-content button {
-  width: 257px;
-  min-height: 56px;
-  border: 0;
-  border-radius: var(--radius-xl);
+.empty-account-retry {
   background: var(--ui-light-gray);
   color: var(--gray-400);
   font-size: var(--text-md);

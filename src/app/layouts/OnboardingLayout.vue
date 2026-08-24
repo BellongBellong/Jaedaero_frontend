@@ -49,7 +49,7 @@ main {
 :deep(.onboarding-mobile-frame) {
   position: relative;
   overflow: hidden;
-  background: var(--gray-100);
+  background: var(--ui-background);
 }
 
 :global(.onboarding-mobile-frame > main) {
@@ -63,7 +63,7 @@ main {
 }
 
 :global(.onboarding-mobile-frame .step-page) {
-  background: transparent;
+  background: var(--ui-background);
 }
 
 :global(.onboarding-mobile-frame > main::-webkit-scrollbar) {

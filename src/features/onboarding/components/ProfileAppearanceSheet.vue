@@ -1,7 +1,9 @@
 <script setup>
 import { ref } from 'vue'
 
+import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import { characterProfileOptions } from '@/common/constants/characterAssets'
+import BaseDialog from '@/common/components/overlay/BaseDialog.vue'
 
 const props = defineProps({
   image: { type: String, required: true },
@@ -16,101 +18,74 @@ const colors = ['#E5FFF4', '#AEBBAA', '#FFF0B8', '#FFB39F', '#F7F7F7', '#333333'
 </script>
 
 <template>
-  <div
-    class="sheet-backdrop"
-    @click.self="emit('close')"
+  <BaseDialog
+    :model-value="true"
+    class="profile-dialog"
+    @close="emit('close')"
   >
-    <section
-      class="profile-sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="profile-title"
+    <h2 class="profile-title">
+      프로필 이미지 변경
+    </h2>
+    <div
+      class="current-profile"
+      :style="{ background: selectedColor }"
     >
-      <button
-        class="close-button"
-        type="button"
-        aria-label="프로필 이미지 변경 닫기"
-        @click="emit('close')"
+      <img
+        :src="profiles.find(([name]) => name === selectedImage)?.[1]"
+        alt="선택된 캐릭터"
       >
-        &times;
-      </button>
-      <h2 id="profile-title">
-        프로필 이미지 변경
-      </h2>
-      <div
-        class="current-profile"
-        :style="{ background: selectedColor }"
+    </div>
+    <h3>캐릭터 선택</h3>
+    <div class="profile-options">
+      <button
+        v-for="[name, source] in profiles"
+        :key="name"
+        type="button"
+        :class="{ selected: selectedImage === name }"
+        @click="selectedImage = name"
       >
         <img
-          :src="profiles.find(([name]) => name === selectedImage)?.[1]"
-          alt="선택된 캐릭터"
+          :src="source"
+          alt=""
         >
-      </div>
-      <h3>캐릭터 선택</h3>
-      <div class="profile-options">
-        <button
-          v-for="[name, source] in profiles"
-          :key="name"
-          :class="{ selected: selectedImage === name }"
-          @click="selectedImage = name"
-        >
-          <img
-            :src="source"
-            alt=""
-          >
-        </button>
-      </div>
-      <h3>배경색 선택</h3>
-      <div class="color-options">
-        <button
-          v-for="color in colors"
-          :key="color"
-          :class="{ selected: selectedColor === color }"
-          :style="{ background: color }"
-          @click="selectedColor = color"
-        />
-      </div>
+      </button>
+    </div>
+    <h3>배경색 선택</h3>
+    <div class="color-options">
       <button
-        class="save-button"
+        v-for="color in colors"
+        :key="color"
         type="button"
+        :class="{ selected: selectedColor === color }"
+        :style="{ background: color }"
+        :aria-label="`${color} 배경색`"
+        @click="selectedColor = color"
+      />
+    </div>
+
+    <template #actions>
+      <BaseButton
+        block
         :disabled="saving"
         @click="emit('save', selectedImage, selectedColor)"
       >
         {{ saving ? '저장 중...' : '변경하기' }}
-      </button>
-    </section>
-  </div>
+      </BaseButton>
+    </template>
+  </BaseDialog>
 </template>
 
 <style scoped>
-.sheet-backdrop {
-  position: fixed;
-  z-index: 20;
-  inset: 0;
-  display: grid;
-  padding: 16px;
-  background: rgb(0 0 0 / 48%);
-  place-items: center;
+:global(.profile-dialog .base-dialog__header) {
+  align-items: center;
 }
-.profile-sheet {
-  position: relative;
-  width: min(100%, 383px);
-  padding: 31px 26px 29px;
-  border-radius: 30px;
-  background: var(--white);
+:global(.profile-dialog .base-dialog__content) {
+  padding-inline: 26px;
 }
-.close-button {
-  position: absolute;
-  top: 29px;
-  right: 28px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--gray-800);
-  font-size: 34px;
-  line-height: 1;
+:global(.profile-dialog .base-dialog__footer) {
+  padding: 0 26px 9px;
 }
-h2 {
+.profile-title {
   margin: 0 0 31px;
   font-size: 20px;
   text-align: center;
@@ -169,21 +144,4 @@ h3 {
   border: 1px solid transparent;
   border-radius: 50%;
 }
-.save-button {
-  width: 100%;
-  min-height: 57px;
-  margin-top: -2px;
-  border: 0;
-  border-radius: 29px;
-  background: var(--green-400);
-  color: var(--gray-900);
-  font-size: var(--text-md);
-  font-weight: 700;
-}
-.save-button:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
 </style>
-type="button" :aria-label="`${name.replace('profile-', '').replace('.png', '')} 캐릭터`"
-type="button" :aria-label="`${color} 배경색`"
