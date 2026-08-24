@@ -18,6 +18,7 @@ const route = useRoute()
 const router = useRouter()
 const draggedPosition = ref(null)
 const isDragging = ref(false)
+const isLensAnimating = ref(false)
 const isNavigating = ref(false)
 const skipNextClick = ref(false)
 const NAVIGATION_WIDTH = 294
@@ -70,7 +71,7 @@ const indicatorPosition = computed(() => {
 
 /* 라우트 이동으로 메뉴가 바뀌어도 선택 블록이 새 위치까지 애니메이션되게 한다. */
 watch(activeTab, () => {
-  if (!isDragging.value) draggedPosition.value = null
+  if (!isDragging.value && !isLensAnimating.value) draggedPosition.value = null
 })
 
 const lensStyle = computed(() => ({
@@ -126,6 +127,7 @@ function endDrag(event) {
   const item = navigationItems[snappedIndex]
 
   isDragging.value = false
+  isLensAnimating.value = true
   draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + snappedIndex * NAVIGATION_ITEM_WIDTH
   skipNextClick.value = true
   isNavigating.value = true
@@ -135,8 +137,9 @@ function endDrag(event) {
   })
 
   window.setTimeout(() => {
+    isLensAnimating.value = false
     draggedPosition.value = null
-  }, 420)
+  }, 520)
 }
 
 function cancelDrag() {
@@ -151,10 +154,24 @@ function onItemClick(item) {
   }
 
   const targetIndex = navigationItems.findIndex((navigationItem) => navigationItem.id === item.id)
-  if (targetIndex >= 0)
-    draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + targetIndex * NAVIGATION_ITEM_WIDTH
+  if (targetIndex < 0 || targetIndex === activeIndex.value) return
 
-  selectTab(item)
+  // 기존 선택 위치에서 새 탭까지 물방울 렌즈가 이동한 뒤 라우트를 전환한다.
+  draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + activeIndex.value * NAVIGATION_ITEM_WIDTH
+  isLensAnimating.value = true
+  isNavigating.value = true
+
+  window.requestAnimationFrame(() => {
+    draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + targetIndex * NAVIGATION_ITEM_WIDTH
+    Promise.resolve(selectTab(item)).finally(() => {
+      isNavigating.value = false
+    })
+  })
+
+  window.setTimeout(() => {
+    isLensAnimating.value = false
+    draggedPosition.value = null
+  }, 520)
 }
 
 function selectTab(item) {
@@ -166,7 +183,7 @@ function selectTab(item) {
 <template>
   <div class="bottom-navigation-shell">
     <div
-      v-if="isDragging"
+      v-if="isDragging || isLensAnimating"
       class="navigation-lens"
       :style="lensStyle"
       aria-hidden="true"
@@ -189,7 +206,7 @@ function selectTab(item) {
     >
       <span
         class="navigation-indicator navigation-indicator__surface"
-        :class="{ 'navigation-indicator--hidden': isDragging }"
+        :class="{ 'navigation-indicator--hidden': isDragging || isLensAnimating }"
         :style="{ transform: `translate3d(${indicatorPosition - 3}px, 0, 0)` }"
         aria-hidden="true"
       />
@@ -220,11 +237,12 @@ function selectTab(item) {
 .bottom-navigation-shell {
   position: fixed;
   z-index: 10;
-  left: 50%;
+  right: var(--safe-area-right);
   bottom: calc(16px + var(--safe-area-bottom));
+  left: var(--safe-area-left);
   width: 270px;
   height: 56px;
-  transform: translateX(-50%);
+  margin-inline: auto;
   transform-origin: bottom center;
 }
 
@@ -242,6 +260,7 @@ function selectTab(item) {
   -webkit-backdrop-filter: blur(2px) saturate(108%);
   backdrop-filter: blur(2px) saturate(108%);
   pointer-events: none !important;
+  transition: left 520ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* 전체 인디케이터에 균일한 배경 blur를 적용한다. */
