@@ -9,7 +9,6 @@ import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.webp
 import returnRateIconBackground from '@/assets/simulations/return-rate-icon-bg.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
-import { useSnackbar } from '@/common/composables/useSnackbar'
 import { useDashboardStore } from '@/features/dashboard/stores/dashboard.store'
 import { useLeaveModeStore } from '@/features/leave-mode/stores/leave-mode.store'
 import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
@@ -28,7 +27,6 @@ const leaveModeStore = useLeaveModeStore()
 const myPageStore = useMyPageStore()
 const simulationsStore = useSimulationsStore()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'RUN_WHAT_IF_SIMULATION')
-const snackbar = useSnackbar()
 const dashboard = ref(null)
 const profile = ref(null)
 const simulationDefaults = ref(null)
@@ -424,19 +422,6 @@ async function saveSimulation() {
       SIMULATION_STORAGE_KEY,
       JSON.stringify(scenarioSnapshot(response?.simulationId ?? response?.id ?? null)),
     )
-    const simulationId = response?.simulationId ?? response?.id
-    snackbar.show({
-      title: 'What-if 시뮬레이션',
-      message: '기록이 저장되었어요',
-      iconSrc: aiRecommendationBot,
-      actionLabel: '기록 보러가기',
-      placement: 'top',
-      onAction: () =>
-        router.push({
-          name: simulationId ? 'what-if-detail' : 'analysis-history',
-          ...(simulationId ? { params: { simulationId } } : {}),
-        }),
-    })
     savedMessage.value = '시뮬레이션을 적용했어요.'
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
@@ -449,13 +434,12 @@ async function saveSimulation() {
 }
 
 function openRecommendations() {
-  sessionStorage.setItem(
-    SIMULATION_STORAGE_KEY,
-    JSON.stringify(scenarioSnapshot(serverResult.value?.simulationId)),
-  )
+  const simulationId = serverResult.value?.simulationId ?? serverResult.value?.id
+
+  sessionStorage.setItem(SIMULATION_STORAGE_KEY, JSON.stringify(scenarioSnapshot(simulationId)))
   router.push({
     name: 'ai-product-recommendation',
-    query: { simulationId: serverResult.value?.simulationId },
+    query: { simulationId },
   })
 }
 
@@ -703,6 +687,23 @@ onBeforeUnmount(() => {
         >
           {{ savedMessage }}
         </p>
+        <DetailLinkButton
+          v-if="savedMessage || hasSavedSimulation"
+          class="recommendation-button recommendation-button--floating"
+          @click="openRecommendations"
+        >
+          <span class="recommendation-button__icon">
+            <img
+              :src="aiRecommendationBot"
+              alt=""
+              aria-hidden="true"
+            >
+          </span>
+          <span>
+            <small>연 {{ annualReturnRate }}% 수익 맞춤 상품을 추천해드릴게요!</small>
+            <strong>AI 추천 상품 보기</strong>
+          </span>
+        </DetailLinkButton>
         <p
           v-if="previewErrorMessage || errorMessage"
           class="result-message"
@@ -711,24 +712,6 @@ onBeforeUnmount(() => {
           {{ previewErrorMessage || errorMessage }}
         </p>
       </section>
-
-      <DetailLinkButton
-        v-if="hasSavedSimulation"
-        class="recommendation-button"
-        @click="openRecommendations"
-      >
-        <span class="recommendation-button__icon">
-          <img
-            :src="aiRecommendationBot"
-            alt=""
-            aria-hidden="true"
-          >
-        </span>
-        <span>
-          <small>연 {{ annualReturnRate }}% 수익 맞춤 상품을 추천해드릴게요!</small>
-          <strong>AI 추천 상품 보기</strong>
-        </span>
-      </DetailLinkButton>
     </div>
   </section>
 </template>
@@ -1218,6 +1201,16 @@ onBeforeUnmount(() => {
   color: var(--gray-900);
   text-align: left;
   cursor: pointer;
+}
+
+.recommendation-button--floating.detail-link-button {
+  position: fixed;
+  z-index: var(--z-toast);
+  bottom: calc(var(--bottom-navigation-area-height) + var(--safe-area-bottom) + 12px);
+  left: 50%;
+  width: min(calc(100vw - 32px), 360px);
+  margin: 0;
+  transform: translateX(-50%);
 }
 
 /*

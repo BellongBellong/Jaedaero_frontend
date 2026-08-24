@@ -893,7 +893,8 @@ async function handleApplyStrategy() {
   display: flex;
   flex-direction: column;
   gap: var(--space-10);
-  padding: var(--space-4) var(--layout-page-padding) var(--space-40);
+  padding: var(--space-4) var(--layout-page-padding)
+    calc(var(--page-bottom-navigation-space) + var(--space-40));
 }
 
 .fallback-guide {
