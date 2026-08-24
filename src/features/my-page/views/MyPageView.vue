@@ -1295,6 +1295,7 @@ onMounted(async () => {
   border: 1px solid #ddd;
   border-radius: 15px;
   outline: none;
+  font-family: '감탄로드감탄체', sans-serif;
 }
 .nickname-row input:focus {
   border-color: #35e780;

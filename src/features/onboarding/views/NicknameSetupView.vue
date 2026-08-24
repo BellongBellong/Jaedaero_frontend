@@ -310,6 +310,7 @@ async function next() {
   border: 1px solid var(--gray-300);
   border-radius: 15px;
   outline: none;
+  font-family: '감탄로드감탄체', sans-serif;
 }
 .nickname-row input:focus {
   border-color: var(--green-600);
