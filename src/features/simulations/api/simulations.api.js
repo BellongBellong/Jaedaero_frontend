@@ -2,7 +2,8 @@ import apiClient from '@/common/api/client'
 import { ENDPOINTS } from '@/common/api/endpoints'
 
 function unwrapApiData(data) {
-  return data?.data ?? data
+  const value = data?.data ?? data?.result ?? data
+  return value && value !== data && value?.data ? unwrapApiData(value) : value
 }
 
 export async function getSimulationDefaults() {

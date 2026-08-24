@@ -34,15 +34,37 @@ export const useSimulationsStore = defineStore('simulations', () => {
     const result = await getSimulations(params)
     simulations.value = Array.isArray(result)
       ? result
-      : result?.content || result?.simulations || result?.items || []
+      : result?.content ||
+        result?.simulations ||
+        result?.items ||
+        result?.results ||
+        result?.data ||
+        []
     return result
   }
 
   async function run(payload) {
     const result = await runSimulation(payload)
-    currentResult.value = result
-    if (payload.isSaved) simulations.value = [result, ...simulations.value]
-    return result
+    const normalizedResult =
+      result && typeof result === 'object'
+        ? {
+            ...result,
+            simulationId: result.simulationId ?? result.id,
+            expectedAsset: result.expectedAsset ?? result.projectedAssetAtDischarge,
+            ...(payload.isSaved ? { isSaved: true } : {}),
+          }
+        : result
+    currentResult.value = normalizedResult
+    if (payload.isSaved && normalizedResult) {
+      const resultId = normalizedResult.simulationId ?? normalizedResult.id
+      simulations.value = [
+        normalizedResult,
+        ...simulations.value.filter(
+          (simulation) => String(simulation?.simulationId ?? simulation?.id) !== String(resultId),
+        ),
+      ]
+    }
+    return normalizedResult
   }
 
   function detail(simulationId) {
