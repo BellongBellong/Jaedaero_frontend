@@ -96,6 +96,13 @@ const badgeLabel = computed(() =>
     linear-gradient(180deg, rgb(190 222 255 / 58%), rgb(230 242 255 / 44%));
 }
 
+@media (display-mode: standalone) {
+  .notification-button {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 .notification-button__icon {
   width: 38px;
   height: 38px;

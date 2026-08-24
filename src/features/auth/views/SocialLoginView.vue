@@ -89,9 +89,14 @@ async function handleLogin(provider) {
 .login {
   position: relative;
   display: flex;
-  height: auto;
-  min-height: 100dvh;
+  height: calc(100dvh + var(--safe-area-bottom));
+  min-height: 0;
+  max-height: calc(100dvh + var(--safe-area-bottom));
   flex-direction: column;
+  margin-bottom: calc(0px - var(--safe-area-bottom));
+  overflow: hidden;
+  overscroll-behavior-y: none;
+  touch-action: pan-x;
   padding-bottom: calc(24px + var(--safe-area-bottom));
   background: linear-gradient(
     to top,
@@ -102,6 +107,32 @@ async function handleLogin(provider) {
     #f6f6f6 100%
   );
 }
+
+/* 로그인 컨테이너 바깥과 iPhone safe area도 같은 그라데이션으로 이어 준다. */
+:global(html:has(.login)),
+:global(body:has(.login)),
+:global(#app:has(.login)) {
+  min-height: 100%;
+  background: linear-gradient(
+    to top,
+    #c4c4c4 0%,
+    #d8d8d8 20%,
+    #ebebeb 37%,
+    #f6f6f6 59%,
+    #f6f6f6 100%
+  );
+}
+
+:global(html:has(.login)),
+:global(body:has(.login)) {
+  scrollbar-width: none;
+}
+
+:global(html:has(.login)::-webkit-scrollbar),
+:global(body:has(.login)::-webkit-scrollbar) {
+  display: none;
+}
+
 .login__content {
   position: relative;
   flex: 1 1 auto;
