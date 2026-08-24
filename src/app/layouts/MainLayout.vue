@@ -5,7 +5,9 @@ import { RouterView, useRoute } from 'vue-router'
 import AppHeader from '../../common/components/layout/AppHeader.vue'
 import BottomNavigation from '../../common/components/layout/BottomNavigation.vue'
 import MobileFrame from '../../common/components/layout/MobileFrame.vue'
+import { useToast } from '@/common/composables/useToast'
 import { useLeaveModeSchedule } from '@/features/leave-mode/composables/useLeaveModeSchedule'
+import { useTransactionsStore } from '@/features/transactions/stores/transactions.store'
 
 /* iOS의 소수점 스크롤 노이즈만 제외하고 첫 이동부터 방향을 반영한다. */
 const SCROLL_DIRECTION_EPSILON = 0.5
@@ -23,6 +25,8 @@ let lastMaxScrollTop = 0
 let navigationScrollDirection = 0
 let navigationScrollDistance = 0
 const { mode } = useLeaveModeSchedule()
+const transactionsStore = useTransactionsStore()
+const toast = useToast()
 
 const isVacationDashboard = computed(() => mode.value === 'vacation' && route.name === 'dashboard')
 const keepHeaderExpanded = computed(
@@ -37,6 +41,21 @@ const headerActionTo = computed(() => {
   if (!route.meta.headerActionRoute) return null
   return { name: route.meta.headerActionRoute, query: route.query }
 })
+const headerSecondaryActionLabel = computed(() => route.meta.headerSecondaryActionLabel || '')
+const headerSecondaryActionDisabled = computed(
+  () => route.name === 'transactions' && transactionsStore.syncing,
+)
+
+async function handleHeaderSecondaryAction() {
+  if (route.name !== 'transactions') return
+
+  try {
+    await transactionsStore.sync(route.query)
+    toast.success('최신 거래내역으로 동기화했어요.')
+  } catch {
+    toast.error('동기화하지 못했어요. 잠시 후 다시 시도해 주세요.')
+  }
+}
 
 watch(
   () => route.fullPath,
@@ -154,6 +173,9 @@ function handleContentScroll(event) {
       :back-to="route.meta.backTo"
       :action-label="route.meta.headerActionLabel"
       :action-to="headerActionTo"
+      :secondary-action-label="headerSecondaryActionLabel"
+      :secondary-action-disabled="headerSecondaryActionDisabled"
+      @secondary-action="handleHeaderSecondaryAction"
     />
 
     <main

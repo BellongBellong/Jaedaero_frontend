@@ -18,7 +18,11 @@ const props = defineProps({
   backTo: { type: [String, Object], default: null },
   actionLabel: { type: String, default: '' },
   actionTo: { type: [String, Object], default: null },
+  secondaryActionLabel: { type: String, default: '' },
+  secondaryActionDisabled: { type: Boolean, default: false },
 })
+
+const emit = defineEmits(['secondary-action'])
 
 const router = useRouter()
 const { mode, refreshMode, setMode } = useLeaveModeSchedule()
@@ -105,6 +109,28 @@ function handleAction() {
           </span>
         </div>
       </div>
+      <button
+        v-if="secondaryActionLabel"
+        class="app-header__action"
+        type="button"
+        :disabled="secondaryActionDisabled"
+        :aria-label="secondaryActionDisabled ? '동기화 중' : secondaryActionLabel"
+        :title="secondaryActionDisabled ? '동기화 중' : secondaryActionLabel"
+        @click="emit('secondary-action')"
+      >
+        <svg
+          class="app-header__action-icon"
+          :class="{ 'app-header__action-icon--spinning': secondaryActionDisabled }"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path d="M20 11a8 8 0 0 0-14.9-3L3 10" />
+          <path d="M3 4v6h6" />
+          <path d="M4 13a8 8 0 0 0 14.9 3L21 14" />
+          <path d="M21 20v-6h-6" />
+        </svg>
+      </button>
       <button
         v-if="actionLabel && actionTo"
         class="app-header__action"
@@ -223,7 +249,10 @@ function handleAction() {
   line-height: var(--leading-normal);
 }
 .app-header__action {
+  display: inline-flex;
   margin-left: auto;
+  align-items: center;
+  gap: 4px;
   padding: var(--space-8) 0;
   border: 0;
   background: transparent;
@@ -234,10 +263,39 @@ function handleAction() {
   cursor: pointer;
   transition: opacity 120ms ease;
 }
+.app-header__action-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+.app-header__action-icon--spinning {
+  animation: app-header-refresh-spin 900ms linear infinite;
+}
+.app-header__action + .app-header__action {
+  margin-left: var(--space-12);
+}
 .app-header__action:focus-visible {
   border-radius: var(--radius-sm);
   outline: 2px solid var(--green-500);
   outline-offset: 2px;
+}
+.app-header__action:disabled {
+  color: var(--gray-400);
+  cursor: wait;
+}
+@keyframes app-header-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-header__action-icon--spinning {
+    animation: none;
+  }
 }
 h1 {
   color: var(--ui-ext);

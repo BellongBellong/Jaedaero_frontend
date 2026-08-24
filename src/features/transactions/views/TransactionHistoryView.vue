@@ -148,10 +148,9 @@ function openTransaction(transaction) {
 
 function monthRange() {
   const now = new Date()
-  const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
   const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
   return {
-    startDate,
+    startDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`,
     endDate: `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`,
   }
 }
@@ -182,7 +181,7 @@ async function loadLiveTransactions() {
   await accountsStore.load({ force: true })
   await transactionsStore.loadWithSecurities(accountsStore.accounts.filter(isInvestmentAccount), {
     ...range,
-    refresh: true,
+    refresh: false,
   })
   oldestRequestedStartDate.value = range.startDate
 }

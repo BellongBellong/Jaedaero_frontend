@@ -22,43 +22,57 @@ export const useMyPageStore = defineStore('my-page', () => {
   const pageLoading = ref(true)
   const badgesLoading = ref(true)
   const error = ref(null)
+  let pageRequest = null
 
   async function load() {
-    pageLoading.value = true
-    badgesLoading.value = true
-    error.value = null
+    if (pageRequest) return pageRequest
+
+    const request = (async () => {
+      pageLoading.value = true
+      badgesLoading.value = true
+      error.value = null
+
+      try {
+        const [profileResult, accountsResult, goalResult, badgesResult] = await Promise.allSettled([
+          getMyPageProfile(),
+          accountsStore.load(),
+          getGoal(),
+          getInvestmentBadges(),
+        ])
+
+        if (profileResult.status === 'fulfilled') profile.value = profileResult.value
+        if (accountsResult.status === 'fulfilled') {
+          connectedAccountCount.value = new Set(
+            accountsResult.value.map(
+              (account) => account.organizationCode || account.institutionName,
+            ),
+          ).size
+        }
+        if (goalResult.status === 'fulfilled') {
+          goalAmount.value = goalResult.value?.targetAmount || 0
+        }
+        if (badgesResult.status === 'fulfilled') {
+          investmentBadges.value = Array.isArray(badgesResult.value)
+            ? badgesResult.value
+            : badgesResult.value?.badges || []
+        }
+
+        const failedResult = [profileResult, accountsResult, goalResult, badgesResult].find(
+          (result) => result.status === 'rejected',
+        )
+        if (failedResult) error.value = failedResult.reason
+        return profile.value
+      } finally {
+        badgesLoading.value = false
+        pageLoading.value = false
+      }
+    })()
+    pageRequest = request
 
     try {
-      const [profileResult, accountsResult, goalResult, badgesResult] = await Promise.allSettled([
-        getMyPageProfile(),
-        accountsStore.load(),
-        getGoal(),
-        getInvestmentBadges(),
-      ])
-
-      if (profileResult.status === 'fulfilled') profile.value = profileResult.value
-      if (accountsResult.status === 'fulfilled') {
-        connectedAccountCount.value = new Set(
-          accountsResult.value.map(
-            (account) => account.organizationCode || account.institutionName,
-          ),
-        ).size
-      }
-      if (goalResult.status === 'fulfilled') goalAmount.value = goalResult.value?.targetAmount || 0
-      if (badgesResult.status === 'fulfilled') {
-        investmentBadges.value = Array.isArray(badgesResult.value)
-          ? badgesResult.value
-          : badgesResult.value?.badges || []
-      }
-
-      const failedResult = [profileResult, accountsResult, goalResult, badgesResult].find(
-        (result) => result.status === 'rejected',
-      )
-      if (failedResult) error.value = failedResult.reason
-      return profile.value
+      return await request
     } finally {
-      badgesLoading.value = false
-      pageLoading.value = false
+      if (pageRequest === request) pageRequest = null
     }
   }
 
@@ -94,6 +108,7 @@ export const useMyPageStore = defineStore('my-page', () => {
     pageLoading.value = true
     badgesLoading.value = true
     error.value = null
+    pageRequest = null
   }
 
   return {
