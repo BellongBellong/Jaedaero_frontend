@@ -139,7 +139,7 @@ function endDrag(event) {
   window.setTimeout(() => {
     isLensAnimating.value = false
     draggedPosition.value = null
-  }, 520)
+  }, 300)
 }
 
 function cancelDrag() {
@@ -171,7 +171,7 @@ function onItemClick(item) {
   window.setTimeout(() => {
     isLensAnimating.value = false
     draggedPosition.value = null
-  }, 520)
+  }, 300)
 }
 
 function selectTab(item) {
@@ -260,7 +260,7 @@ function selectTab(item) {
   -webkit-backdrop-filter: blur(2px) saturate(108%);
   backdrop-filter: blur(2px) saturate(108%);
   pointer-events: none !important;
-  transition: left 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: left 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* 전체 인디케이터에 균일한 배경 blur를 적용한다. */
