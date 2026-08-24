@@ -363,13 +363,6 @@ function selectTab(item) {
 
 /* iPhone PWA에서 유리 효과가 화면 하단을 과도하게 흐리지 않게 한다. */
 @media (display-mode: standalone) {
-  .bottom-navigation,
-  .bottom-navigation.glass--dark {
-    background: rgb(27 34 31 / 94%) !important;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-
   .navigation-lens {
     background: rgb(255 255 255 / 12%) !important;
     -webkit-backdrop-filter: none;
