@@ -237,12 +237,11 @@ function selectTab(item) {
 .bottom-navigation-shell {
   position: fixed;
   z-index: 10;
-  right: var(--safe-area-right);
+  left: 50%;
   bottom: calc(16px + var(--safe-area-bottom));
-  left: var(--safe-area-left);
-  width: 270px;
-  height: 56px;
-  margin-inline: auto;
+  width: 294px;
+  height: 60px;
+  transform: translateX(-50%);
   transform-origin: bottom center;
 }
 
