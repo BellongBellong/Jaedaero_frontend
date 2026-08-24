@@ -98,18 +98,18 @@ const emit = defineEmits(['activate', 'dismiss'])
 }
 
 .base-snackbar--badge .base-snackbar__content {
-  grid-template-columns: 60px minmax(0, 1fr);
+  grid-template-columns: 52px minmax(0, 1fr);
   gap: 12px;
 }
 
 .base-snackbar--badge .base-snackbar__icon {
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
 }
 
 .base-snackbar--badge .base-snackbar__icon img {
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
 }
 
 .base-snackbar--badge .base-snackbar__copy {
