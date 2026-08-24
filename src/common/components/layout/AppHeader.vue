@@ -12,6 +12,7 @@ const props = defineProps({
   title: { type: String, default: '' },
   badge: { type: String, default: '' },
   variant: { type: String, default: 'back' },
+  showBack: { type: Boolean, default: true },
   collapsed: { type: Boolean, default: false },
   hideBackWhenCollapsed: { type: Boolean, default: false },
   backTo: { type: [String, Object], default: null },
@@ -81,7 +82,7 @@ function handleAction() {
     </template>
     <template v-else>
       <button
-        v-if="variant === 'back'"
+        v-if="variant === 'back' && showBack"
         class="app-header__back"
         type="button"
         aria-label="이전 페이지"
