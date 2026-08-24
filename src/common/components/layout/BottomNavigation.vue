@@ -20,6 +20,11 @@ const draggedPosition = ref(null)
 const isDragging = ref(false)
 const isNavigating = ref(false)
 const skipNextClick = ref(false)
+const NAVIGATION_WIDTH = 294
+const NAVIGATION_ITEM_WIDTH = 66
+const NAVIGATION_HORIZONTAL_PADDING = 15
+const NAVIGATION_INDICATOR_WIDTH = 72
+const NAVIGATION_INDICATOR_HEIGHT = 46
 
 const navigationItems = [
   {
@@ -60,7 +65,7 @@ const activeIndex = computed(() => {
 
 const indicatorPosition = computed(() => {
   if (draggedPosition.value !== null) return draggedPosition.value
-  return 15 + activeIndex.value * 60
+  return NAVIGATION_HORIZONTAL_PADDING + activeIndex.value * NAVIGATION_ITEM_WIDTH
 })
 
 /* 라우트 이동으로 메뉴가 바뀌어도 선택 블록이 새 위치까지 애니메이션되게 한다. */
@@ -70,10 +75,10 @@ watch(activeTab, () => {
 
 const lensStyle = computed(() => ({
   position: 'absolute',
-  top: '28px',
-  left: `${indicatorPosition.value + 30}px`,
-  width: '66px',
-  height: '43px',
+  top: '30px',
+  left: `${indicatorPosition.value + NAVIGATION_ITEM_WIDTH / 2}px`,
+  width: `${NAVIGATION_INDICATOR_WIDTH}px`,
+  height: `${NAVIGATION_INDICATOR_HEIGHT}px`,
   zIndex: 20,
   transform: 'translate(-50%, -50%) scale(1.02)',
   pointerEvents: 'none',
@@ -82,11 +87,13 @@ const lensStyle = computed(() => ({
 function getIndicatorPosition(event) {
   const navigation = event.currentTarget
   const bounds = navigation.getBoundingClientRect()
-  const scale = bounds.width / 270
+  const scale = bounds.width / NAVIGATION_WIDTH
   const pointerX = (event.clientX - bounds.left) / scale
-  const position = pointerX - 30
+  const position = pointerX - NAVIGATION_ITEM_WIDTH / 2
+  const lastItemPosition =
+    NAVIGATION_HORIZONTAL_PADDING + (navigationItems.length - 1) * NAVIGATION_ITEM_WIDTH
 
-  return Math.max(15, Math.min(195, position))
+  return Math.max(NAVIGATION_HORIZONTAL_PADDING, Math.min(lastItemPosition, position))
 }
 
 function updateDraggedPosition(event) {
@@ -111,12 +118,15 @@ function endDrag(event) {
   updateDraggedPosition(event)
   const snappedIndex = Math.max(
     0,
-    Math.min(navigationItems.length - 1, Math.round((draggedPosition.value - 15) / 60)),
+    Math.min(
+      navigationItems.length - 1,
+      Math.round((draggedPosition.value - NAVIGATION_HORIZONTAL_PADDING) / NAVIGATION_ITEM_WIDTH),
+    ),
   )
   const item = navigationItems[snappedIndex]
 
   isDragging.value = false
-  draggedPosition.value = 15 + snappedIndex * 60
+  draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + snappedIndex * NAVIGATION_ITEM_WIDTH
   skipNextClick.value = true
   isNavigating.value = true
 
@@ -141,7 +151,8 @@ function onItemClick(item) {
   }
 
   const targetIndex = navigationItems.findIndex((navigationItem) => navigationItem.id === item.id)
-  if (targetIndex >= 0) draggedPosition.value = 15 + targetIndex * 60
+  if (targetIndex >= 0)
+    draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + targetIndex * NAVIGATION_ITEM_WIDTH
 
   selectTab(item)
 }
@@ -242,8 +253,8 @@ function selectTab(item) {
   position: relative;
   z-index: 1;
   display: block;
-  width: 66px;
-  height: 43px;
+  width: 72px;
+  height: 46px;
   overflow: hidden;
   border-radius: var(--radius-full, 999px);
   background:
@@ -297,8 +308,8 @@ function selectTab(item) {
   left: auto !important;
   bottom: auto !important;
   display: flex;
-  width: 270px;
-  height: 56px;
+  width: 294px;
+  height: 60px;
   align-items: center;
   justify-content: center;
   padding: 3px 15px;
@@ -328,6 +339,22 @@ function selectTab(item) {
     linear-gradient(135deg, rgb(255 255 255 / 17%), rgb(255 255 255 / 5%) 55%), rgb(27 34 31 / 13%) !important;
 }
 
+/* iPhone PWA에서 유리 효과가 화면 하단을 과도하게 흐리지 않게 한다. */
+@media (display-mode: standalone) {
+  .bottom-navigation,
+  .bottom-navigation.glass--dark {
+    background: rgb(27 34 31 / 94%) !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .navigation-lens {
+    background: rgb(255 255 255 / 12%) !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 .bottom-navigation::before {
   position: absolute;
   z-index: 0;
@@ -353,16 +380,16 @@ function selectTab(item) {
 }
 
 .bottom-navigation--minimized {
-  transform: scale(var(--bottom-navigation-minimized-scale, 0.82)) !important;
+  transform: scale(var(--bottom-navigation-minimized-scale, 0.9)) !important;
 }
 
 .navigation-indicator {
   position: absolute;
-  top: 6.5px;
+  top: 7px;
   left: 0;
   z-index: 0;
-  width: 66px;
-  height: 43px;
+  width: 72px;
+  height: 46px;
   overflow: hidden;
   border-radius: var(--radius-full, 999px);
   pointer-events: none;
@@ -379,8 +406,8 @@ function selectTab(item) {
 .navigation-indicator__surface {
   box-sizing: border-box;
   display: block;
-  width: 66px;
-  height: 43px;
+  width: 72px;
+  height: 46px;
   border: 0;
   border-radius: inherit;
   background:
@@ -447,9 +474,9 @@ function selectTab(item) {
   position: relative;
   z-index: 7;
   display: flex;
-  flex: 0 0 60px;
-  width: 60px;
-  height: 50px;
+  flex: 0 0 66px;
+  width: 66px;
+  height: 54px;
   align-items: center;
   justify-content: center;
   padding: 0;
@@ -473,8 +500,8 @@ function selectTab(item) {
 
 .navigation-item__icon {
   display: block;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   pointer-events: none;
   user-select: none;

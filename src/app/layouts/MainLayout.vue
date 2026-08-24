@@ -19,6 +19,7 @@ const isHeaderCollapsed = ref(false)
 let expandedHeaderHeight = 0
 const isNavigationMinimized = ref(false)
 const lastScrollTop = ref(0)
+let lastMaxScrollTop = 0
 let navigationScrollDirection = 0
 let navigationScrollDistance = 0
 const { mode } = useLeaveModeSchedule()
@@ -43,6 +44,7 @@ watch(
     isHeaderCollapsed.value = false
     isNavigationMinimized.value = false
     lastScrollTop.value = 0
+    lastMaxScrollTop = 0
     navigationScrollDirection = 0
     navigationScrollDistance = 0
     await nextTick()
@@ -105,21 +107,28 @@ function handleContentScroll(event) {
     navigationScrollDistance = 0
   } else if (Math.abs(delta) > SCROLL_DIRECTION_EPSILON) {
     const direction = delta > 0 ? 1 : -1
+    const isAtScrollEnd = scrollTop >= maxScrollTop - SCROLL_DIRECTION_EPSILON
+    const wasAtScrollEnd = lastScrollTop.value >= lastMaxScrollTop - SCROLL_DIRECTION_EPSILON
 
-    if (direction !== navigationScrollDirection) {
-      navigationScrollDirection = direction
-      navigationScrollDistance = 0
-    }
+    // 헤더 접힘으로 본문 높이가 바뀌면 끝 위치가 자동 보정되어 역방향 delta가
+    // 생긴다. 전후 모두 끝에 머문 경우만 무시하고, 실제 위로 스크롤은 반영한다.
+    if (!(direction < 0 && isAtScrollEnd && wasAtScrollEnd)) {
+      if (direction !== navigationScrollDirection) {
+        navigationScrollDirection = direction
+        navigationScrollDistance = 0
+      }
 
-    navigationScrollDistance += Math.abs(delta)
+      navigationScrollDistance += Math.abs(delta)
 
-    if (navigationScrollDistance >= NAVIGATION_TOGGLE_DISTANCE) {
-      isNavigationMinimized.value = direction > 0
-      navigationScrollDistance = 0
+      if (navigationScrollDistance >= NAVIGATION_TOGGLE_DISTANCE) {
+        isNavigationMinimized.value = direction > 0
+        navigationScrollDistance = 0
+      }
     }
   }
 
   lastScrollTop.value = scrollTop
+  lastMaxScrollTop = maxScrollTop
 }
 </script>
 
@@ -232,6 +241,18 @@ function handleContentScroll(event) {
     #000 100%
   );
   pointer-events: none;
+}
+
+/* iPhone 홈 화면 PWA에서는 backdrop-filter가 고정 레이어 뒤의 콘텐츠까지
+   흐리게 합성될 수 있어, 하단 안전영역을 투명한 레이어로 유지한다. */
+@media (display-mode: standalone) {
+  .main-layout__bottom::before {
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    -webkit-mask: none;
+    mask: none;
+  }
 }
 
 /*
