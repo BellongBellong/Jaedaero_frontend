@@ -5,6 +5,7 @@ const title = ref('')
 const message = ref('')
 const iconSrc = ref('')
 const actionLabel = ref('')
+const variant = ref('default')
 const placement = ref('top')
 const action = shallowRef(null)
 let hideTimer = null
@@ -24,6 +25,7 @@ function dismiss() {
   message.value = ''
   iconSrc.value = ''
   actionLabel.value = ''
+  variant.value = 'default'
   placement.value = 'top'
   action.value = null
 
@@ -36,6 +38,7 @@ function present(options) {
   message.value = options.message || ''
   iconSrc.value = options.iconSrc || ''
   actionLabel.value = options.actionLabel || ''
+  variant.value = options.variant || 'default'
   placement.value = options.placement === 'bottom' ? 'bottom' : 'top'
   action.value = typeof options.onAction === 'function' ? options.onAction : null
   visible.value = true
@@ -70,6 +73,7 @@ export function useSnackbar() {
     message: readonly(message),
     iconSrc: readonly(iconSrc),
     actionLabel: readonly(actionLabel),
+    variant: readonly(variant),
     placement: readonly(placement),
     show,
     activate,

@@ -14,6 +14,7 @@ const {
   message: snackbarMessage,
   placement: snackbarPlacement,
   title: snackbarTitle,
+  variant: snackbarVariant,
   visible: snackbarVisible,
   activate: activateSnackbar,
   dismiss: dismissSnackbar,
@@ -66,6 +67,7 @@ onBeforeUnmount(() =>
     :message="snackbarMessage"
     :placement="snackbarPlacement"
     :title="snackbarTitle"
+    :variant="snackbarVariant"
     :visible="snackbarVisible"
     @activate="activateSnackbar"
     @dismiss="dismissSnackbar"

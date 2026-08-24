@@ -2,6 +2,7 @@ import { useToast } from '@/common/composables/useToast'
 import aggressiveDiamond from '@/assets/badges/aggressive/diamond.png'
 import { useSnackbar } from '@/common/composables/useSnackbar'
 import { useMissionStore } from '@/features/missions/stores/mission.store'
+import { BADGE_LEVELS, getBadgeImage } from '@/features/my-page/composables/investmentBadges'
 
 const BADGE_MISSION_THRESHOLDS = new Set([1, 10, 50, 100, 300])
 
@@ -44,7 +45,12 @@ function badgeCopy(response) {
   const grade = String(
     badge.badgeGrade || badge.grade || badge.level || status.grade || '',
   ).toUpperCase()
-  const typeLabel = type === 'AGGRESSIVE' ? '공격형' : type === 'SAFE' ? '안정형' : '새로운'
+  const typeLabel =
+    {
+      SAFE: '안정형',
+      BALANCED: '균형형',
+      AGGRESSIVE: '공격형',
+    }[type] || '새로운'
   const gradeLabel =
     {
       BRONZE: '브론즈',
@@ -54,10 +60,14 @@ function badgeCopy(response) {
       DIAMOND: '다이아몬드',
     }[grade] || '뱃지'
 
+  const gradeKey =
+    BADGE_LEVELS.find(({ key, level }) => key === grade || String(level) === grade)?.key || grade
+  const imageType = type === 'BALANCED' ? 'SAFE' : type
+
   return {
     title: `${typeLabel} ${gradeLabel}`,
     message: '뱃지를 획득했어요',
-    iconSrc: type === 'AGGRESSIVE' && grade === 'DIAMOND' ? aggressiveDiamond : '',
+    iconSrc: getBadgeImage(imageType, gradeKey) || aggressiveDiamond,
   }
 }
 
@@ -80,6 +90,7 @@ export function useMissionCompletion(route, router, actionType) {
 
     snackbar.show({
       ...badgeCopy(response),
+      variant: 'badge',
       placement: 'bottom',
       actionLabel: '뱃지 현황 보러가기',
       onAction: () => router.push({ name: 'badge-history' }),

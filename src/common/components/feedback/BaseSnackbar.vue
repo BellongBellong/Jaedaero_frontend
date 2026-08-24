@@ -6,6 +6,7 @@ defineProps({
   iconSrc: { type: String, default: '' },
   actionLabel: { type: String, default: '' },
   placement: { type: String, default: 'top' },
+  variant: { type: String, default: 'default' },
 })
 
 const emit = defineEmits(['activate', 'dismiss'])
@@ -20,7 +21,7 @@ const emit = defineEmits(['activate', 'dismiss'])
       <aside
         v-if="visible"
         class="base-snackbar"
-        :class="`base-snackbar--${placement}`"
+        :class="[`base-snackbar--${placement}`, `base-snackbar--${variant}`]"
         role="status"
         aria-live="polite"
       >
@@ -87,6 +88,38 @@ const emit = defineEmits(['activate', 'dismiss'])
 .base-snackbar--bottom {
   top: auto;
   bottom: calc(var(--bottom-navigation-area-height) + var(--safe-area-bottom) + 16px);
+}
+
+.base-snackbar--badge {
+  width: min(calc(100vw - 24px), 410px);
+  min-height: 96px;
+  padding: 14px 16px 14px 18px;
+  border-radius: 22px;
+}
+
+.base-snackbar--badge .base-snackbar__content {
+  grid-template-columns: 60px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.base-snackbar--badge .base-snackbar__icon {
+  width: 60px;
+  height: 60px;
+}
+
+.base-snackbar--badge .base-snackbar__icon img {
+  width: 60px;
+  height: 60px;
+}
+
+.base-snackbar--badge .base-snackbar__copy {
+  gap: 0;
+}
+
+.base-snackbar--badge .base-snackbar__copy strong,
+.base-snackbar--badge .base-snackbar__copy span {
+  font-size: 17px;
+  line-height: 1.45;
 }
 
 .base-snackbar__content {
