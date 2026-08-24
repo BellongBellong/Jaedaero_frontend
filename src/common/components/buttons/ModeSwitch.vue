@@ -111,6 +111,13 @@ function toggleMode() {
   cursor: default;
 }
 
+@media (display-mode: standalone) {
+  .mode-switch {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 .mode-switch.military {
   background:
     linear-gradient(180deg, rgb(255 255 255 / 38%), rgb(255 255 255 / 8%)),
