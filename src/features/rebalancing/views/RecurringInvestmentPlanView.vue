@@ -6,6 +6,7 @@ import calendarIcon from '@/assets/icons/CalenderIcon.svg'
 import monthlyInvestmentIcon from '@/assets/rebalancing-monthly-account-icon.png'
 import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.webp'
 import { useToast } from '@/common/composables/useToast'
+import { useSnackbar } from '@/common/composables/useSnackbar'
 import { isSecuritiesAccount } from '@/features/accounts/composables/institutionMapping'
 import { useAccountsStore } from '@/features/accounts/stores/accounts.store'
 import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
@@ -21,6 +22,7 @@ const myPageStore = useMyPageStore()
 const rebalancingStore = useRebalancingStore()
 const simulationsStore = useSimulationsStore()
 const toast = useToast()
+const snackbar = useSnackbar()
 
 const frequency = ref('MONTHLY')
 const contributionDay = ref(10)
@@ -232,6 +234,13 @@ async function submitPlan() {
     try {
       const guidance = await rebalancingStore.createGuidance()
       sessionStorage.setItem('latestInvestmentGuidance', JSON.stringify(guidance || {}))
+      snackbar.show({
+        title: `${new Date().getMonth() + 1}월 적립식 투자 리포트가`,
+        message: '생성되었어요',
+        placement: 'bottom',
+        actionLabel: '보러가기',
+        onAction: () => router.push({ name: 'investment-guide' }),
+      })
     } catch {
       sessionStorage.removeItem('latestInvestmentGuidance')
     }

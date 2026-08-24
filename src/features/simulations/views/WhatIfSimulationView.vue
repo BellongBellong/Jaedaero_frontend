@@ -9,7 +9,9 @@ import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.webp
 import returnRateIconBackground from '@/assets/simulations/return-rate-icon-bg.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import DetailLinkButton from '../../../common/components/navigation/DetailLinkButton.vue'
+import { useSnackbar } from '@/common/composables/useSnackbar'
 import { useDashboardStore } from '@/features/dashboard/stores/dashboard.store'
+import { useLeaveModeStore } from '@/features/leave-mode/stores/leave-mode.store'
 import { useMyPageStore } from '@/features/my-page/stores/my-page.store'
 import WhatIfSimulationSkeleton from '@/features/simulations/components/WhatIfSimulationSkeleton.vue'
 import { useSimulationsStore } from '@/features/simulations/stores/simulations.store'
@@ -22,9 +24,11 @@ const SIMULATION_STORAGE_KEY = 'jaedaero-latest-simulation'
 const route = useRoute()
 const router = useRouter()
 const dashboardStore = useDashboardStore()
+const leaveModeStore = useLeaveModeStore()
 const myPageStore = useMyPageStore()
 const simulationsStore = useSimulationsStore()
 const { completeMissionAfterLoad } = useMissionCompletion(route, router, 'RUN_WHAT_IF_SIMULATION')
+const snackbar = useSnackbar()
 const dashboard = ref(null)
 const profile = ref(null)
 const simulationDefaults = ref(null)
@@ -142,13 +146,24 @@ const result = computed(() => ({
   investmentAnnualRate: Number(
     serverResult.value?.expectedEffect?.investmentAnnualReturnRate ?? annualReturnRate.value,
   ),
-  expectedAsset: Number(serverResult.value?.expectedAsset ?? 0),
+  expectedAsset: Number(
+    serverResult.value?.expectedAsset ?? serverResult.value?.projectedAssetAtDischarge ?? 0,
+  ),
 }))
 const hasSimulationResult = computed(() =>
-  Boolean(serverResult.value && Number.isFinite(Number(serverResult.value?.expectedAsset))),
+  Boolean(
+    serverResult.value &&
+    Number.isFinite(
+      Number(serverResult.value?.expectedAsset ?? serverResult.value?.projectedAssetAtDischarge),
+    ),
+  ),
 )
 const hasSavedSimulation = computed(() =>
-  Boolean(!isPreviewing.value && serverResult.value?.isSaved && serverResult.value?.simulationId),
+  Boolean(
+    !isPreviewing.value &&
+    serverResult.value?.isSaved &&
+    (serverResult.value?.simulationId ?? serverResult.value?.id),
+  ),
 )
 const hasScenarioChanges = computed(() => {
   const baseline = baselineScenario.value
@@ -321,6 +336,7 @@ function setBaselineScenario() {
 
 function simulationPayload(isSaved) {
   return {
+    scenarioName: 'AI 추천 자산 계획',
     monthlySpendingAmount: spendingAmount.value,
     monthlySavingAmount: savingAmount.value,
     monthlyInvestmentAmount: investmentAmount.value,
@@ -406,8 +422,21 @@ async function saveSimulation() {
     await completeMissionAfterLoad()
     sessionStorage.setItem(
       SIMULATION_STORAGE_KEY,
-      JSON.stringify(scenarioSnapshot(response?.simulationId ?? null)),
+      JSON.stringify(scenarioSnapshot(response?.simulationId ?? response?.id ?? null)),
     )
+    const simulationId = response?.simulationId ?? response?.id
+    snackbar.show({
+      title: 'What-if 시뮬레이션',
+      message: '기록이 저장되었어요',
+      iconSrc: aiRecommendationBot,
+      actionLabel: '기록 보러가기',
+      placement: 'top',
+      onAction: () =>
+        router.push({
+          name: simulationId ? 'what-if-detail' : 'analysis-history',
+          ...(simulationId ? { params: { simulationId } } : {}),
+        }),
+    })
     savedMessage.value = '시뮬레이션을 적용했어요.'
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
@@ -439,6 +468,8 @@ onMounted(async () => {
         simulationsStore.loadDefaults(),
         simulationsStore.loadList({ page: 0, size: 1 }),
       ])
+
+    await leaveModeStore.refreshMode()
 
     dashboard.value =
       dashboardResult.status === 'fulfilled' ? dashboardResult.value?.response : null

@@ -204,7 +204,7 @@ async function saveNickname() {
   try {
     await myPageStore.saveNickname(nicknameInput.value)
     activeDialog.value = ''
-    toast.success('닉네임을 변경했어요.')
+    toast.show('닉네임을 변경했어요.', { variant: 'success', placement: 'bottom' })
   } catch {
     errorMessage.value = '닉네임을 변경하지 못했어요. 잠시 후 다시 시도해주세요.'
   } finally {
@@ -229,7 +229,7 @@ async function saveAppearance(image, color) {
       },
     )
     activeDialog.value = ''
-    toast.success('프로필을 저장했어요.')
+    toast.show('프로필 이미지가 변경되었어요.', { variant: 'success', placement: 'bottom' })
   } catch {
     errorMessage.value = '프로필 이미지를 변경하지 못했어요.'
   } finally {

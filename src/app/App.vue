@@ -4,8 +4,20 @@ import { RouterView } from 'vue-router'
 
 import BaseToast from '@/common/components/feedback/BaseToast.vue'
 import { useToast } from '@/common/composables/useToast'
+import BaseSnackbar from '@/common/components/feedback/BaseSnackbar.vue'
+import { useSnackbar } from '@/common/composables/useSnackbar'
 
-const { message, variant, visible } = useToast()
+const { message, placement: toastPlacement, variant, visible } = useToast()
+const {
+  actionLabel: snackbarActionLabel,
+  iconSrc: snackbarIconSrc,
+  message: snackbarMessage,
+  placement: snackbarPlacement,
+  title: snackbarTitle,
+  visible: snackbarVisible,
+  activate: activateSnackbar,
+  dismiss: dismissSnackbar,
+} = useSnackbar()
 import router from '@/app/router'
 import InAppNotificationBanner from '@/common/components/feedback/InAppNotificationBanner.vue'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
@@ -44,7 +56,18 @@ onBeforeUnmount(() =>
 
   <BaseToast
     :message="message"
+    :placement="toastPlacement"
     :variant="variant"
     :visible="visible"
+  />
+  <BaseSnackbar
+    :action-label="snackbarActionLabel"
+    :icon-src="snackbarIconSrc"
+    :message="snackbarMessage"
+    :placement="snackbarPlacement"
+    :title="snackbarTitle"
+    :visible="snackbarVisible"
+    @activate="activateSnackbar"
+    @dismiss="dismissSnackbar"
   />
 </template>

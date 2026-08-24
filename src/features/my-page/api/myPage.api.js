@@ -28,7 +28,7 @@ export async function updateProfileAppearance(payload) {
 
 export async function getGoal() {
   const { data } = await apiClient.get(ENDPOINTS.goals)
-  return data
+  return data?.data ?? data?.result ?? data
 }
 
 export async function updateGoal(targetAmount) {

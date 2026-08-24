@@ -13,7 +13,10 @@ export async function getLeaveModes() {
 
 export async function getCurrentLeaveMode() {
   const response = await apiClient.get(ENDPOINTS.leaveMode.current)
-  return response.status === 204 ? null : response.data
+  if (response.status === 204) return null
+
+  const data = response.data
+  return data?.data ?? data?.result ?? data
 }
 
 export async function updateLeaveModeBudget(leaveModeId, budgetAmount) {
