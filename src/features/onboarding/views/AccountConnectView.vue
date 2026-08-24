@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import militarySavingsIcon from '../../../assets/features/onboarding/icons/military-savings.svg'
 import personalAssetsIcon from '../../../assets/features/onboarding/icons/personal-assets.svg'
 import salaryAccountIcon from '../../../assets/features/onboarding/icons/salary-account.svg'
-import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
+import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import { useOnboardingStore } from '@/features/onboarding/stores/onboarding.store'
 
@@ -101,13 +101,16 @@ function connect() {
       </button>
     </section>
 
-    <PrimaryButton
-      variant="green"
+    <BaseButton
+      class="account-connect-button"
+      variant="primary"
+      size="lg"
+      block
       :disabled="!canConnect"
       @click="connect"
     >
       연동 하러 가기
-    </PrimaryButton>
+    </BaseButton>
   </main>
 </template>
 
@@ -225,12 +228,12 @@ function connect() {
   margin-top: 10px;
 }
 
-.primary-button {
+.account-connect-button {
   min-height: 58px;
   margin-top: auto;
 }
 
-.primary-button:disabled {
+.account-connect-button:disabled {
   background: #ececec;
   color: #bdbdbd;
 }

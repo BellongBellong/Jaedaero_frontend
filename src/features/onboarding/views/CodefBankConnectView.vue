@@ -10,6 +10,7 @@ import detailViewIcon from '../../../assets/features/my-page/detail-view.svg'
 import selectedCheckIcon from '@/assets/icons/stateCheckIcon.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
+import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import BaseTooltip from '@/common/components/feedback/BaseTooltip.vue'
 import BaseBottomSheet from '@/common/components/overlay/BaseBottomSheet.vue'
 import {
@@ -898,10 +899,13 @@ onBeforeUnmount(abortAccountRequest)
       </button>
     </div>
 
-    <PrimaryButton
+    <BaseButton
       v-if="!loadingInstitutions && !showConnectedSummary"
-      variant="green"
-      :disabled="loading"
+      class="connect-submit-button"
+      variant="primary"
+      size="lg"
+      block
+      :loading="loading"
       @click="submit"
     >
       {{
@@ -911,7 +915,7 @@ onBeforeUnmount(abortAccountRequest)
             ? `${form.businessType === 'BK' ? '은행' : '증권'} 계좌 불러오기`
             : '계좌 연결하기'
       }}
-    </PrimaryButton>
+    </BaseButton>
 
     <BaseBottomSheet
       v-model="institutionModalOpen"
@@ -1579,13 +1583,13 @@ select:focus {
   font-size: 13px;
 }
 
-.primary-button {
+.connect-submit-button {
   width: calc(100% - 8px);
   min-height: 56px;
   margin: 0 4px;
 }
 
-.primary-button:disabled {
+.connect-submit-button:disabled {
   background: #ececec;
   color: #bdbdbd;
 }

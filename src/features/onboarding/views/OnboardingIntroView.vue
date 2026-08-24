@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router'
 
 import introMascot from '../../../assets/features/onboarding/intro/intro-mascot.png'
-import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
+import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 
 const router = useRouter()
@@ -21,12 +21,15 @@ const router = useRouter()
       alt=""
     >
     <h2>제대로를 이용하기 위한<br>몇가지 절차가 필요해요</h2>
-    <PrimaryButton
-      variant="green"
+    <BaseButton
+      class="intro-button"
+      variant="primary"
+      size="lg"
+      block
       @click="router.push({ name: 'connect-accounts' })"
     >
       시작하기
-    </PrimaryButton>
+    </BaseButton>
   </main>
 </template>
 
@@ -98,7 +101,7 @@ h2 {
   text-rendering: geometricPrecision;
   -webkit-font-smoothing: antialiased;
 }
-.primary-button {
+.intro-button {
   position: absolute;
   z-index: 3;
   right: 24px;

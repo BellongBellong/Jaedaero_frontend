@@ -36,6 +36,11 @@
     --font-body: "Pretendard-Regular", "Pretendard", sans-serif;
 
     /* Figma body typography */
+    --body-body-large-bold-font-family: "Pretendard-Bold", "Pretendard", sans-serif;
+    --body-body-large-bold-font-size: 18px;
+    --body-body-large-bold-line-height: 150%;
+    --body-body-large-bold-letter-spacing: -0.04em;
+    --body-body-large-bold-font-weight: 700;
     --body-body-small-bold-font-family: "Pretendard-Bold", "Pretendard", sans-serif;
     --body-body-small-bold-font-size: 14px;
     --body-body-small-bold-line-height: 150%;

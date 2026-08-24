@@ -26,6 +26,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  actionLayout: {
+    type: String,
+    default: 'primary-wide',
+    validator: (value) => ['equal', 'primary-wide'].includes(value),
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'close'])
@@ -191,10 +196,17 @@ onBeforeUnmount(unlockBodyScroll)
           </div>
 
           <footer
-            v-if="$slots.footer"
+            v-if="$slots.footer || $slots.actions"
             class="bottom-sheet__footer"
           >
             <slot name="footer" />
+            <div
+              v-if="$slots.actions"
+              class="bottom-sheet__actions"
+              :class="`bottom-sheet__actions--${actionLayout}`"
+            >
+              <slot name="actions" />
+            </div>
           </footer>
         </section>
       </div>
@@ -293,6 +305,26 @@ onBeforeUnmount(unlockBodyScroll)
 .bottom-sheet__footer {
   flex: 0 0 auto;
   padding: 20px 24px calc(20px + var(--safe-area-bottom, 0px));
+}
+
+.bottom-sheet__actions {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-12, 12px);
+}
+
+.bottom-sheet__actions > * {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.bottom-sheet__actions--primary-wide > :first-child:not(:only-child) {
+  flex: 0 0 36%;
+}
+
+.bottom-sheet__actions :deep(.base-button) {
+  width: 100%;
+  margin: 0;
 }
 
 .bottom-sheet-enter-active,

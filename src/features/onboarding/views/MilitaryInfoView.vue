@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
+import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import OnboardingStepHeader from '@/features/onboarding/components/OnboardingStepHeader.vue'
 import RankInsignia from '@/features/onboarding/components/RankInsignia.vue'
@@ -191,13 +191,16 @@ async function next() {
         {{ errorMessage }}
       </p>
     </section>
-    <PrimaryButton
-      variant="green"
+    <BaseButton
+      class="military-next-button"
+      variant="primary"
+      size="lg"
+      block
       :loading="loading"
       @click="next"
     >
       다음으로
-    </PrimaryButton>
+    </BaseButton>
   </main>
 </template>
 

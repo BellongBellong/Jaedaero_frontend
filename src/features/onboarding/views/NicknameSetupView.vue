@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
-import nicknameCheckAvailableIcon from '@/assets/features/onboarding/icons/nickname-check-available.svg'
+import BaseButton from '@/common/components/buttons/BaseButton.vue'
+import nicknameCheckAvailableIcon from '@/assets/features/onboarding/icons/nickname-check-available-Green.svg'
 import nicknameCheckUnavailableIcon from '@/assets/features/onboarding/icons/nickname-check-unavailable.svg'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { characterAssetsByProfileName } from '@/common/constants/characterAssets'
@@ -181,6 +181,7 @@ async function next() {
           @input="handleNicknameInput"
         >
         <button
+          type="button"
           :disabled="status === 'checking'"
           @click="validateNickname"
         >
@@ -223,21 +224,24 @@ async function next() {
       </p>
       <small>
         <img
-          :src="nicknameCheckUnavailableIcon"
+          :src="validNickname ? nicknameCheckAvailableIcon : nicknameCheckUnavailableIcon"
           alt=""
           aria-hidden="true"
         >
         한글, 영문, 숫자 2~12자
       </small>
     </section>
-    <PrimaryButton
-      variant="green"
+    <BaseButton
+      class="nickname-next-button"
+      variant="primary"
+      size="lg"
+      block
       :disabled="status !== 'available'"
       :loading="loading"
       @click="next"
     >
       다음으로
-    </PrimaryButton>
+    </BaseButton>
     <ProfileAppearanceSheet
       v-if="showProfileSheet"
       :image="onboarding.form.profileImage"
@@ -342,12 +346,12 @@ async function next() {
   height: 14px;
   flex: 0 0 14px;
 }
-.step-page > .primary-button {
+.step-page > .nickname-next-button {
   margin-bottom: 4px;
 }
 .success {
   margin: 10px 4px 0;
-  color: #20cc6c;
+  color: var(--green-800, #169145);
   font-size: 13px;
 }
 </style>

@@ -3,7 +3,7 @@ import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import confirmationEditIcon from '../../../assets/features/onboarding/icons/confirmation-edit.svg'
-import PrimaryButton from '../../../common/components/buttons/PrimaryButton.vue'
+import BaseButton from '@/common/components/buttons/BaseButton.vue'
 import { getApiErrorMessage } from '@/common/api/errorMessage'
 import { characterAssets, characterAssetsByProfileName } from '@/common/constants/characterAssets'
 import { useToast } from '@/common/composables/useToast'
@@ -224,13 +224,16 @@ async function complete() {
         {{ errorMessage }}
       </p>
     </section>
-    <PrimaryButton
-      variant="green"
+    <BaseButton
+      class="preference-next-button"
+      variant="primary"
+      size="lg"
+      block
       :loading="loading"
       @click="next"
     >
       다음으로
-    </PrimaryButton>
+    </BaseButton>
 
     <Teleport to="body">
       <Transition name="modal">
@@ -317,13 +320,16 @@ async function complete() {
               {{ errorMessage }}
             </p>
 
-            <PrimaryButton
-              variant="green"
+            <BaseButton
+              class="confirm-submit-button"
+              variant="primary"
+              size="lg"
+              block
               :loading="completing"
               @click="complete"
             >
               네, 시작할래요
-            </PrimaryButton>
+            </BaseButton>
           </section>
         </div>
       </Transition>
@@ -373,7 +379,7 @@ h2 {
   color: #566752;
   font-size: 15px;
 }
-.step-page > .primary-button {
+.step-page > .preference-next-button {
   margin-top: 16px;
 }
 .goal-card {
@@ -547,7 +553,7 @@ h2 {
   padding: 21px 18px 20px;
   margin-bottom: 60px;
   border-radius: 26px;
-  background: linear-gradient(135deg, #d5f7e3 0%, #f6f7d9 100%);
+  background: var(--ui-background, #f6f7f6);
 }
 .summary-column {
   display: grid;
@@ -616,7 +622,7 @@ h2 {
   font-size: 14px;
   white-space: nowrap;
 }
-.confirm-modal .primary-button {
+.confirm-modal .confirm-submit-button {
   min-height: 54px;
   background: #59f494;
   color: #15552e;
