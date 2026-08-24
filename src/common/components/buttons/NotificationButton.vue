@@ -96,7 +96,22 @@ const badgeLabel = computed(() =>
     linear-gradient(180deg, rgb(190 222 255 / 58%), rgb(230 242 255 / 44%));
 }
 
+@media (display-mode: standalone) {
+  .notification-button {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 .notification-button__icon {
+  /* iPhone 상단 safe area 합성 시 유리 효과가 헤더까지 흐리지 않게 한다. */
+  @supports (-webkit-touch-callout: none) {
+    .notification-button {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
   width: 38px;
   height: 38px;
   object-fit: contain;

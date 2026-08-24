@@ -1,7 +1,7 @@
-import airForce from '@/assets/character/airForce.png'
-import army from '@/assets/character/army.png'
-import marineCorps from '@/assets/character/marineCorps.png'
-import navy from '@/assets/character/navy.png'
+import airForce from '@/assets/character/airForce.webp'
+import army from '@/assets/character/army.webp'
+import marineCorps from '@/assets/character/marineCorps.webp'
+import navy from '@/assets/character/navy.webp'
 
 export const characterAssets = Object.freeze({
   ARMY: army,

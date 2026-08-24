@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import calendarIcon from '@/assets/icons/CalenderIcon.svg'
 import monthlyInvestmentIcon from '@/assets/rebalancing-monthly-account-icon.png'
-import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.png'
+import aiRecommendationBot from '@/assets/simulations/ai-recommendation-bot.webp'
 import { useToast } from '@/common/composables/useToast'
 import { isSecuritiesAccount } from '@/features/accounts/composables/institutionMapping'
 import { useAccountsStore } from '@/features/accounts/stores/accounts.store'

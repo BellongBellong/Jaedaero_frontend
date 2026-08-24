@@ -111,6 +111,14 @@ function toggleMode() {
   cursor: default;
 }
 
+/* iPhone 상단 safe area 합성 시 유리 효과가 헤더까지 흐리지 않게 한다. */
+@supports (-webkit-touch-callout: none) {
+  .mode-switch {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 .mode-switch.military {
   background:
     linear-gradient(180deg, rgb(255 255 255 / 38%), rgb(255 255 255 / 8%)),
