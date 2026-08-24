@@ -161,17 +161,21 @@ function onItemClick(item) {
   isLensAnimating.value = true
   isNavigating.value = true
 
+  // 첫 프레임에 시작 위치를 그린 뒤 다음 프레임에 이동해야 Safari가
+  // 시작·종료 상태를 하나의 렌더링으로 합치지 않고 슬라이딩을 재생한다.
   window.requestAnimationFrame(() => {
-    draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + targetIndex * NAVIGATION_ITEM_WIDTH
-    Promise.resolve(selectTab(item)).finally(() => {
-      isNavigating.value = false
+    window.requestAnimationFrame(() => {
+      draggedPosition.value = NAVIGATION_HORIZONTAL_PADDING + targetIndex * NAVIGATION_ITEM_WIDTH
+      Promise.resolve(selectTab(item)).finally(() => {
+        isNavigating.value = false
+      })
+
+      window.setTimeout(() => {
+        isLensAnimating.value = false
+        draggedPosition.value = null
+      }, 300)
     })
   })
-
-  window.setTimeout(() => {
-    isLensAnimating.value = false
-    draggedPosition.value = null
-  }, 300)
 }
 
 function selectTab(item) {
