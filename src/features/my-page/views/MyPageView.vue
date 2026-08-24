@@ -128,7 +128,8 @@ const militaryLabel = computed(() => {
     [militaryLabels[type], rankLabels[rank] || rank].filter(Boolean).join(' · ') || '군 복무 정보'
   )
 })
-const validNickname = computed(() => /^[가-힣a-zA-Z0-9]{2,12}$/.test(nicknameInput.value))
+const normalizedNicknameInput = computed(() => nicknameInput.value.normalize('NFC'))
+const validNickname = computed(() => /^[가-힣a-zA-Z0-9]{2,12}$/.test(normalizedNicknameInput.value))
 
 function openNicknameDialog() {
   nicknameInput.value = nickname.value
@@ -185,11 +186,17 @@ async function saveGoalAmount(targetAmount) {
 }
 
 async function validateNickname() {
-  if (!validNickname.value || saving.value) return
+  if (saving.value) return
+  if (!validNickname.value) {
+    nicknameStatus.value = 'idle'
+    errorMessage.value = '닉네임은 한글, 영문, 숫자 2~12자로 입력해 주세요.'
+    return
+  }
+
   saving.value = true
   errorMessage.value = ''
   try {
-    const result = await myPageStore.checkNickname(nicknameInput.value)
+    const result = await myPageStore.checkNickname(normalizedNicknameInput.value)
     nicknameStatus.value = result.available ? 'available' : 'duplicate'
   } catch {
     errorMessage.value = '중복 확인 중 오류가 발생했어요.'
@@ -202,7 +209,7 @@ async function saveNickname() {
   if (nicknameStatus.value !== 'available' || saving.value) return
   saving.value = true
   try {
-    await myPageStore.saveNickname(nicknameInput.value)
+    await myPageStore.saveNickname(normalizedNicknameInput.value)
     activeDialog.value = ''
     toast.show('닉네임을 변경했어요.', { variant: 'success', placement: 'bottom' })
   } catch {
@@ -521,7 +528,7 @@ onMounted(async () => {
           >
           <button
             type="button"
-            :disabled="!validNickname || saving"
+            :disabled="saving"
             @click="validateNickname"
           >
             중복확인
@@ -1295,7 +1302,6 @@ onMounted(async () => {
   border: 1px solid #ddd;
   border-radius: 15px;
   outline: none;
-  font-family: '감탄로드감탄체', sans-serif;
 }
 .nickname-row input:focus {
   border-color: #35e780;

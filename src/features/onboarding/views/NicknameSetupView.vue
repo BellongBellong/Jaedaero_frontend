@@ -40,7 +40,8 @@ const profileSourceCodes = {
   '#F7F7F7': 'GRAY',
   '#333333': 'BLACK',
 }
-const validNickname = computed(() => /^[가-힣a-zA-Z0-9]{2,12}$/.test(nickname.value))
+const normalizedNickname = computed(() => nickname.value.normalize('NFC'))
+const validNickname = computed(() => /^[가-힣a-zA-Z0-9]{2,12}$/.test(normalizedNickname.value))
 const nicknameRuleIcon = computed(() =>
   !isComposing.value && validNickname.value
     ? nicknameCheckRuleMatchedIcon
@@ -82,7 +83,7 @@ async function validateNickname() {
     status.value = 'idle'
     return
   }
-  const nicknameToCheck = nickname.value
+  const nicknameToCheck = normalizedNickname.value
   status.value = 'checking'
   errorMessage.value = ''
   try {
@@ -131,7 +132,7 @@ async function next() {
   loading.value = true
   errorMessage.value = ''
   try {
-    await onboarding.saveNickname(nickname.value)
+    await onboarding.saveNickname(normalizedNickname.value)
     router.push({ name: 'military-info' })
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
@@ -310,7 +311,6 @@ async function next() {
   border: 1px solid var(--gray-300);
   border-radius: 15px;
   outline: none;
-  font-family: '감탄로드감탄체', sans-serif;
 }
 .nickname-row input:focus {
   border-color: var(--green-600);
