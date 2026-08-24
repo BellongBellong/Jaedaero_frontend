@@ -246,6 +246,14 @@ h1 {
   line-height: var(--leading-normal);
 }
 
+/* iPhone PWA의 상단 safe area에서는 배경을 흐리는 유리 효과를 쓰지 않는다. */
+@media (display-mode: standalone) {
+  .app-header__back {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .app-header {
     transition: none;

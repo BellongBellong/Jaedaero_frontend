@@ -22,7 +22,7 @@
    --app-header-height: 56px;
    --bottom-navigation-height: 66px;
    /* 물러날 때 상하좌우 동일 비율로 줄어드는 배율 */
-   --bottom-navigation-minimized-scale: 0.76;
+   --bottom-navigation-minimized-scale: 0.9;
    /* 네비게이션 66px + 컨테이너 내부 상단 8px + 하단 4px */
    --bottom-navigation-area-height: 78px;
    --page-bottom-navigation-space: 96px;
@@ -480,4 +480,12 @@
 --leading-relaxed: 1.7;
 
 
+}
+
+
+/* iPhone 홈 화면 PWA는 자체 하단 여백을 쓰지 않는다. */
+@media (display-mode: standalone) {
+  :root {
+    --safe-area-bottom: 0px;
+  }
 }

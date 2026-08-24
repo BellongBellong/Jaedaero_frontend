@@ -221,9 +221,9 @@ function selectTab(item) {
   position: fixed;
   z-index: 10;
   left: 50%;
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  width: 294px;
-  height: 60px;
+  bottom: calc(16px + var(--safe-area-bottom));
+  width: 270px;
+  height: 56px;
   transform: translateX(-50%);
   transform-origin: bottom center;
 }
