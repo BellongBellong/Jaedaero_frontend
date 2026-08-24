@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import airForceCharacter from '../../../assets/character/airForce.png'
@@ -12,6 +12,7 @@ import DashboardAssetSwitcher from '@/features/dashboard/components/DashboardAss
 import DashboardSkeleton from '@/features/dashboard/components/DashboardSkeleton.vue'
 import EventAddModal from '@/features/dashboard/components/EventAddModal.vue'
 import FinancialDdayCard from '@/features/dashboard/components/FinancialDdayCard.vue'
+import FinancialDdayCompactCard from '@/features/dashboard/components/FinancialDdayCompactCard.vue'
 import MissionListSheet from '@/features/dashboard/components/MissionListSheet.vue'
 import TodayMissionCard from '@/features/dashboard/components/TodayMissionCard.vue'
 import TodayMilitaryBenefits from '@/features/dashboard/components/TodayMilitaryBenefits.vue'
@@ -49,10 +50,8 @@ const useMockServer = import.meta.env.VITE_USE_MOCK_SERVER === 'true'
 const dashboardCharacterImage = ref(armyCharacter)
 const financialCardAnchor = ref(null)
 const showCompactFinancialCard = ref(false)
-let dashboardScrollElement = null
+let financialCardObserver = null
 const toast = useToast()
-const COMPACT_CARD_SHOW_PROGRESS = 0.28
-const COMPACT_CARD_HIDE_PROGRESS = 0.2
 const characterImages = {
   ARMY: armyCharacter,
   NAVY: navyCharacter,
@@ -128,6 +127,39 @@ const reportRoute = computed(() => ({
   name: 'ai-financial-report',
   query: marketReportMission.value?.id ? { missionId: marketReportMission.value.id } : {},
 }))
+
+function disconnectFinancialCardObserver() {
+  financialCardObserver?.disconnect()
+  financialCardObserver = null
+}
+
+function observeFinancialCard(element) {
+  disconnectFinancialCardObserver()
+
+  if (!element || isVacationMode.value || !('IntersectionObserver' in window)) {
+    showCompactFinancialCard.value = false
+    return
+  }
+
+  const scrollRoot = element.closest('.main-layout__content')
+  financialCardObserver = new IntersectionObserver(
+    ([entry]) => {
+      const rootTop = entry.rootBounds?.top ?? 0
+      const cardHasPassedHeader =
+        !entry.isIntersecting && entry.boundingClientRect.bottom <= rootTop
+      showCompactFinancialCard.value = cardHasPassedHeader
+    },
+    { root: scrollRoot, threshold: 0 },
+  )
+  financialCardObserver.observe(element)
+}
+
+watch(financialCardAnchor, (element) => observeFinancialCard(element), { flush: 'post' })
+watch(isVacationMode, async () => {
+  await nextTick()
+  observeFinancialCard(financialCardAnchor.value)
+})
+onBeforeUnmount(disconnectFinancialCardObserver)
 
 function normalizeMission(mission) {
   const category = String(mission.missionCategory || mission.missionGroup || '').toUpperCase()
@@ -336,11 +368,29 @@ function openVacationTransactions() {
         @view-transactions="openVacationTransactions"
       />
 
-      <FinancialDdayCard
-        v-bind="dashboardData.financialDday"
-        :character-image="dashboardCharacterImage"
-        :mode="isVacationMode ? 'vacation' : 'default'"
-      />
+      <div
+        ref="financialCardAnchor"
+        class="dashboard__financial-card-anchor"
+      >
+        <FinancialDdayCard
+          v-bind="dashboardData.financialDday"
+          :character-image="dashboardCharacterImage"
+          :mode="isVacationMode ? 'vacation' : 'default'"
+        />
+      </div>
+
+      <Transition name="financial-summary">
+        <div
+          v-if="showCompactFinancialCard && !isVacationMode"
+          class="dashboard__financial-summary"
+        >
+          <FinancialDdayCompactCard
+            v-bind="dashboardData.financialDday"
+            :character-image="dashboardCharacterImage"
+            mode="default"
+          />
+        </div>
+      </Transition>
 
       <TodayMilitaryBenefits
         v-if="isVacationMode"
@@ -435,14 +485,37 @@ function openVacationTransactions() {
   gap: var(--dashboard-gap);
 }
 
+.dashboard__financial-card-anchor {
+  width: 100%;
+}
+
 .dashboard__after-financial {
   display: flex;
   flex-direction: column;
   gap: var(--dashboard-gap);
 }
 
-.dashboard:has(.financial-dday-card--compact-placeholder) .dashboard__after-financial {
-  transform: translateY(-32px);
+.dashboard__financial-summary {
+  position: fixed;
+  top: calc(var(--safe-area-top, 0px) + var(--app-header-height, 76px) + 8px);
+  left: 50%;
+  z-index: calc(var(--z-header, 30) + 1);
+  width: min(calc(100vw - 40px), 353px);
+  translate: -50% 0;
+  will-change: opacity, transform;
+}
+
+.financial-summary-enter-active,
+.financial-summary-leave-active {
+  transition:
+    opacity 220ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.financial-summary-enter-from,
+.financial-summary-leave-to {
+  opacity: 0;
+  transform: translateY(-12px) scale(0.98);
 }
 
 .dashboard.screen.app-page.dashboard--vacation {
