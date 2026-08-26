@@ -1,689 +1,220 @@
-﻿# 화면별 데이터 타입 명세서
-
-Vue 3 + JavaScript 프론트엔드에서 사용하는 화면 데이터 계약입니다. TypeScript를 사용하지 않으므로, 이 문서를 DTO와 목데이터의 기준으로 사용합니다.
-
-## 공통 표기 규칙
-
-| 표기                | 의미                                                 |
-| ------------------- | ---------------------------------------------------- |
-| `number`            | 금액은 원 단위 정수, 비율은 별도 설명이 없으면 0~100 |
-| `string(date)`      | `YYYY-MM-DD`                                         |
-| `string(date-time)` | ISO 8601                                             |
-| `enum`              | 정해진 문자열만 허용                                 |
-| `null`              | 응답이 없거나 아직 계산되지 않은 값                  |
-| 배열                | `Type[]` 형식으로 표기                               |
-
-## 공통 Enum
-
-| Enum                       | 값                                                                                           |
-| -------------------------- | -------------------------------------------------------------------------------------------- |
-| `SocialType`               | `GOOGLE`, `KAKAO`                                                                            |
-| `SoldierType`              | `ARMY`, `NAVY`, `AIR_FORCE`, `MARINE`                                                        |
-| `InvestmentType`           | `SAFE`, `BALANCED`, `AGGRESSIVE`                                                             |
-| `InvestmentPreferenceType` | `SAFE`, `BALANCED`, `AGGRESSIVE`                                                             |
-| `MarketCondition`          | `RISK_ON`, `NEUTRAL`, `RISK_OFF`                                                             |
-| `DeviceType`               | `WEB`, `ANDROID`, `IOS`                                                                      |
-| `GoalStatus`               | `NORMAL`, `CHALLENGING`, `UNREALISTIC`, `ACHIEVED`                                           |
-| `CodefConnectionStatus`    | `PENDING`, `CONNECTED`, `FAILED`                                                             |
-| `AccountStatus`            | `ACTIVE`, `SYNC_REQUIRED`, `ERROR`, `DISCONNECTED`                                           |
-| `AccountRole`              | `MILITARY_SAVINGS`, `CHECKING`, `SAVINGS`, `INVESTMENT`                                      |
-| `TransactionType`          | `INCOME`, `EXPENSE`, `ASSET_TRANSFER`                                                        |
-| `CategorySourceType`       | `RULE`, `AI`, `USER`                                                                         |
-| `AnalysisType`             | `SIMULATION`, `CASHFLOW`, `SPENDING`                                                         |
-| `ProductStatus`            | `AVAILABLE`, `SUSPENDED`, `ENDED`                                                            |
-| `StrategySourceType`       | `AI_ANALYSIS`, `REBALANCING`                                                                 |
-| `RecommendedTarget`        | `MONTHLY_SPENDING`, `MONTHLY_SAVING`, `MONTHLY_INVESTMENT`, `VACATION_BUDGET`, `ASSET_RATIO` |
-
----
-
-## 1. 소셜 로그인 화면
-
-- 화면 ID: `AUTH_01_LOGIN`
-- Route: `/login`
-- API: `POST /api/v1/auth/login`
-- Request DTO: `LoginRequest`
-- Response DTO: `LoginResponse`
-
-### LoginRequest
-
-| 필드                | 타입         | 필수 | 설명                            |
-| ------------------- | ------------ | ---: | ------------------------------- |
-| `socialType`        | `SocialType` |    O | Google 또는 Kakao               |
-| `authorizationCode` | `string`     |    O | 소셜 인증 완료 후 전달받은 코드 |
-| `redirectUri`       | `string`     |    O | 로그인 콜백 주소                |
-
-### LoginResponse
-
-| 필드                       | 타입         | 필수 | 설명                                   |
-| -------------------------- | ------------ | ---: | -------------------------------------- |
-| `accessToken`              | `string`     |    O | 목 서버에서는 고정 토큰                |
-| `refreshToken`             | `string`     |    O | 실제 운영 저장 방식은 백엔드 정책 확인 |
-| `expiresIn`                | `number`     |    O | 초 단위                                |
-| `user.userId`              | `number`     |    O | 사용자 ID                              |
-| `user.nickname`            | `string`     |    O | 닉네임                                 |
-| `user.socialType`          | `SocialType` |    O | 로그인 제공자                          |
-| `user.onboardingCompleted` | `boolean`    |    O | 온보딩 완료 여부                       |
-
-```json
-{
-  "accessToken": "mock-access-token",
-  "refreshToken": "mock-refresh-token",
-  "expiresIn": 1800,
-  "user": {
-    "userId": 1,
-    "nickname": "도헌",
-    "socialType": "GOOGLE",
-    "onboardingCompleted": true
-  }
-}
-```
-
-## 2. 프로필 설정 화면
-
-- 화면 ID: `ONB_01_PROFILE`
-- Route: `/onboarding/profile`
-- API: 닉네임 중복확인, 닉네임 변경, 프로필 외형 변경
-
-### NicknameAvailabilityResponse
-
-| 필드        | 타입      | 필수 | 설명           |
-| ----------- | --------- | ---: | -------------- |
-| `nickname`  | `string`  |    O | 확인한 닉네임  |
-| `available` | `boolean` |    O | 사용 가능 여부 |
-
-### NicknameRequest
-
-| 필드       | 타입     | 필수 | 제약   |
-| ---------- | -------- | ---: | ------ |
-| `nickname` | `string` |    O | 2~12자 |
-
-### ProfileAppearanceRequest
-
-| 필드                     | 타입     | 필수 | 설명                                                  |
-| ------------------------ | -------- | ---: | ----------------------------------------------------- |
-| `profileImage`           | `string` |    O | 프리셋 이미지 코드                                    |
-| `profileBackgroundColor` | `string` |    O | `#RRGGBB`                                             |
-| `profileSource`          | `enum`   |    O | `GREEN`, `OLIVE`, `YELLOW`, `ORANGE`, `GRAY`, `BLACK` |
-
-## 3. 약관 동의 화면
-
-- 화면 ID: `ONB_02_AGREEMENT`
-- Route: `/onboarding/agreement`
-- API: `POST /api/v1/agreements`
-
-### UserAgreementRequest / UserAgreementResponse
-
-| 필드        | 타입                | 필수 | 설명           |
-| ----------- | ------------------- | ---: | -------------- |
-| `termsCode` | `string`            |    O | 약관 코드      |
-| `agreed`    | `boolean`           |    O | 동의 여부      |
-| `agreedAt`  | `string(date-time)` | 응답 | 동의 처리 시각 |
-
-## 4. 군 정보 입력 화면
-
-- 화면 ID: `ONB_03_MILITARY_INFO`
-- Route: `/onboarding/military-info`
-- API: `POST /api/v1/onboarding/military-info`
-- Request: `MilitaryInfoRequest`
-- Response: `SoldierProfileResponse`
-
-| 필드                                | 타입           | 필수 | 설명                         |
-| ----------------------------------- | -------------- | ---: | ---------------------------- |
-| `soldierType`                       | `SoldierType`  |    O | 군종                         |
-| `rankName`                          | `string`       |    O | 현재 계급                    |
-| `enlistmentDate`                    | `string(date)` |    O | 입대일                       |
-| `success`                           | `boolean`      | 응답 | 저장 성공 여부               |
-| `dischargeDate`                     | `string(date)` | 응답 | 전역 예정일                  |
-| `savingJoinYn`                      | `boolean`      | 응답 | 군적금 가입 여부             |
-| `challengeGroupTargetAmountAverage` | `number`       | 응답 | 입대 동기 그룹 평균 목표금액 |
-
-## 5. 초기 투자성향 프리뷰 화면
-
-- 화면 ID: `ONB_04_INVESTMENT_PREFERENCE`
-- Route: `/onboarding/investment-preference`
-- API: `POST /api/v1/onboarding/investment-preference`
-
-### InvestmentPreferenceRequest
-
-| 필드                   | 타입                       | 필수 |
-| ---------------------- | -------------------------- | ---: |
-| `investmentPreference` | `InvestmentPreferenceType` |    O |
-
-### InvestmentPreferencePreviewResponse
-
-| 필드                                | 타입                       | 필수 | 설명                        |
-| ----------------------------------- | -------------------------- | ---: | --------------------------- |
-| `investmentPreference`              | `InvestmentPreferenceType` |    O | 뱃지 해금 전 임시 추천 기준 |
-| `title`                             | `string`                   |    O | 프리뷰 제목                 |
-| `summary`                           | `string`                   |    O | 추천 성격 설명              |
-| `recommendedAssetRatio.safeAsset`   | `number`                   |    O | 안전자산 비중               |
-| `recommendedAssetRatio.growthAsset` | `number`                   |    O | 성장자산 비중               |
-
-## 6. 목표 설정 화면
-
-- 화면 ID: `ONB_05_GOAL`
-- Route: `/onboarding/goal`
-- API: `POST /api/v1/goals`, `GET /api/v1/goals`
-
-### GoalRequest / GoalResponse
-
-| 필드                         | 타입             | 필수 | 설명                       |
-| ---------------------------- | ---------------- | ---: | -------------------------- |
-| `targetAmount`               | `number`         |    O | 목표 금액                  |
-| `targetDate`                 | `string(date)`   |    O | 기본값은 전역일            |
-| `goalStatus`                 | `GoalStatus`     | 응답 | 목표 난이도 또는 달성 상태 |
-| `estimatedAmountAtDischarge` | `number`         | 응답 | 전역 예상 자산             |
-| `warningMessage`             | `string \| null` | 응답 | 목표가 높을 때 경고        |
-
-## 7. CODEF 계좌 연동 화면
-
-- 화면 ID: `ONB_06_ACCOUNT_CONNECT`
-- Route: `/onboarding/accounts`
-- API: `POST /api/v1/accounts/connect`, `GET /api/v1/accounts`
-
-### AccountConnectRequest
-
-| 필드               | 타입          | 필수 | 설명                  |
-| ------------------ | ------------- | ---: | --------------------- |
-| `organizationCode` | `string`      |    O | 금융기관 코드         |
-| `accountRole`      | `AccountRole` |    O | 군적금/입출금/투자 등 |
-| `isPrimary`        | `boolean`     |    O | 대표 계좌 여부        |
-
-### CodefConnectionResponse
-
-| 필드                    | 타입                    | 필수 |
-| ----------------------- | ----------------------- | ---: |
-| `connectionId`          | `string`                |    O |
-| `status`                | `CodefConnectionStatus` |    O |
-| `connectedAccountCount` | `number`                |    O |
-| `connectedAt`           | `string(date-time)`     |    O |
-
-### ConnectedAccountResponse
-
-| 필드                  | 타입                | 필수 | 설명               |
-| --------------------- | ------------------- | ---: | ------------------ |
-| `id`                  | `number`            |    O | 계좌 ID            |
-| `organizationCode`    | `string`            |    O | CODEF 금융기관 코드 |
-| `institutionName`     | `string`            |    O | 금융기관 표시명     |
-| `bankName`            | `string`            |    O | 금융기관명         |
-| `accountName`         | `string`            |    O | 계좌명             |
-| `accountNumberMasked` | `string`            |    O | 마스킹 번호        |
-| `accountRole`         | `AccountRole`       |    O | 계좌 역할          |
-| `accountStatus`       | `AccountStatus`     |    O | 동기화 상태 포함   |
-| `balance`             | `number`            |    O | 잔액               |
-| `monthlyPayment`      | `number`            |    O | 월 납입액          |
-| `lastSyncedAt`        | `string(date-time)` |    O | 마지막 동기화 시각 |
-
-## 8. 홈 대시보드
-
-- 화면 ID: `HOME_01_DASHBOARD`
-- Route: `/home`
-- API: `GET /api/v1/dashboard`
-- Response: `DashboardResponse`
-
-| 필드                     | 타입           | 필수 | 화면 사용처                   |
-| ------------------------ | -------------- | ---: | ----------------------------- |
-| `achievementRate`        | `number`       |    O | 전역 목표 금액 달성률         |
-| `actualDischargeDate`    | `string(date)` |    O | 실제 전역일 및 D-day 계산     |
-| `currentAsset`           | `number`       |    O | 현재 순자산                   |
-| `deltaDaysVsActual`      | `number`       |    O | 실제·재정적 전역일 차이       |
-| `expectedAsset`          | `number`       |    O | 전역 예상 자산                |
-| `financialDischargeDate` | `string(date)` |    O | 재정적 전역일 및 D-day 계산   |
-| `thisMonthSaving`        | `number`       |    O | 이번 달 저축액                |
-| `thisMonthSpending`      | `number`       |    O | 이번 달 지출액                |
-
-금액 필드는 모두 원(`KRW`) 단위이며, 비율 필드는 `0~100` 사이의 퍼센트 값입니다.
-
-현재 응답에는 데일리 금융 리포트, 오늘의 미션, 예정 이벤트 데이터가 포함되지 않습니다.
-해당 UI를 동적으로 구성하려면 별도 API 또는 `DashboardResponse` 확장이 필요합니다.
-
-## 9. 월별 캐시플로우 화면
-
-- 화면 ID: `HOME_02_CASHFLOW`
-- Route: `/cashflow`
-- API: `GET /api/v1/cashflow?months=`
-- Response: `CashflowForecastResponse`
-
-### CashflowForecastResponse
-
-| 필드                        | 타입                              | 필수 |
-| --------------------------- | --------------------------------- | ---: |
-| `baseDate`                  | `string(date)`                    |    O |
-| `requestedMonths`           | `number`                          |    O |
-| `currentAsset`              | `number`                          |    O |
-| `projectedAssetAtDischarge` | `number`                          |    O |
-| `targetAmount`              | `number`                          |    O |
-| `shortfallAmount`           | `number`                          |    O |
-| `financialDischargeDate`    | `string(date) \| null`            |    O |
-| `actualDischargeDate`       | `string(date)`                    |    O |
-| `months`                    | `CashflowForecastMonthResponse[]` |    O |
-
-### CashflowForecastMonthResponse
-
-| 필드                | 타입              | 필수 |
-| ------------------- | ----------------- | ---: |
-| `month`             | `string(YYYY-MM)` |    O |
-| `income`            | `number`          |    O |
-| `spending`          | `number`          |    O |
-| `saving`            | `number`          |    O |
-| `investment`        | `number`          |    O |
-| `eventExpense`      | `number`          |    O |
-| `governmentSupport` | `number`          |    O |
-| `endingAsset`       | `number`          |    O |
-
-## 10. What-if 시뮬레이션 화면
-
-- 화면 ID: `AI_01_SIMULATION`
-- Route: `/ai-coach/simulations`
-- API: `POST /api/v1/simulations`, `GET /api/v1/simulations`, `GET /api/v1/simulations/{simulationId}`
-
-### SimulationRequest
-
-| 필드                      | 타입     | 필수 |
-| ------------------------- | -------- | ---: |
-| `name`                    | `string` |    O |
-| `monthlySpendingAmount`   | `number` |    O |
-| `monthlySavingAmount`     | `number` |    O |
-| `monthlyInvestmentAmount` | `number` |    O |
-| `spendingPercent`         | `number` |    X |
-| `savingPercent`           | `number` |    X |
-| `investmentPercent`       | `number` |    X |
-| `annualReturnRate`        | `number` |    O |
-| `vacationBudget`          | `number` |    O |
-| `targetAmount`            | `number` |    O |
-
-### SimulationResponse 추가 필드
-
-| 필드                        | 타입                   | 필수 |
-| --------------------------- | ---------------------- | ---: |
-| `id`                        | `number`               |    O |
-| `projectedAssetAtDischarge` | `number`               |    O |
-| `financialDischargeDate`    | `string(date) \| null` |    O |
-| `differenceFromCurrent`     | `number`               |    O |
-| `spendingPercent`           | `number`               |    X |
-| `savingPercent`             | `number`               |    X |
-| `investmentPercent`         | `number`               |    X |
-| `createdAt`                 | `string(date-time)`    |    O |
-
-> `spendingPercent` · `savingPercent` · `investmentPercent`는 분석 기록 화면(3-4)이 사용자가 설정한 배분 비율을 그대로 보여주기 위한 FE 확장 필드로, 백엔드 확정 전까지 목 서버 기준으로 관리합니다. 시뮬레이션 화면의 슬라이더는 항목마다 기준 금액이 달라(저축은 군적금 한도, 소비·투자는 월급) **저장된 금액만으로는 비율을 역산할 수 없습니다.** 요청에 담아 보낸 값을 응답에 그대로 돌려주면 됩니다. 값이 없는 과거 기록은 세 항목 합 대비 비중으로 근사해 표시합니다.
-
-## 11. AI 분석 화면
-
-- 화면 ID: `AI_02_ANALYSIS`
-- Route: `/ai-coach/analyses/:analysisId`
-- API: AI 분석 생성·상세·전략 적용·적용 이력
-
-### AiAnalysisRequest
-
-| 필드           | 타입             | 필수 |
-| -------------- | ---------------- | ---: |
-| `simulationId` | `number \| null` |    X |
-| `analysisType` | `AnalysisType`   |    O |
-
-### AiAnalysisResponse
-
-| 필드                   | 타입                              | 필수 |
-| ---------------------- | --------------------------------- | ---: |
-| `id`                   | `number`                          |    O |
-| `simulationId`         | `number \| null`                  |    O |
-| `analysisType`         | `AnalysisType`                    |    O |
-| `summary`              | `string`                          |    O |
-| `summaryHighlight`     | `string \| null`                  |    X |
-| `causes`               | `AiAnalysisCause[]`               |    O |
-| `recommendedScenarios` | `AiRecommendedScenarioResponse[]` |    O |
-| `spendingPattern`      | `SpendingPatternResponse`         |    O |
-| `investmentPattern`    | `InvestmentPatternResponse`       |    X |
-| `expectedEffect`       | `AiExpectedEffectResponse`        |    O |
-| `recommendedProducts`  | `AiRecommendedProductResponse[]`  |    O |
-| `warnings`             | `string[]`                        |    O |
-| `generatedAt`          | `string(date-time)`               |    O |
-
-> `spendingPattern`, `expectedEffect`, `recommendedProducts`와 `causes` 항목 구조는 AI 분석 화면(3-2) 구현을 위한 확장 필드로, 백엔드 확정 전까지 프론트엔드 Mock 데이터 기준으로 관리합니다.
-
-> `investmentPattern`과 `spendingPattern.changeRate`는 분석 기록 화면(3-4)의 카드 지표(`이번 달 소비` / `투자 자산`과 증감 배지)를 위한 FE 확장 필드로, 백엔드 확정 전까지 프론트엔드 Mock 데이터 기준으로 관리합니다. **아직 백엔드에는 구현되지 않아 추가 요청이 필요합니다.** 응답에 없으면 프론트는 해당 지표 칸을 그리지 않습니다(대체값을 넣지 않음).
-
-### InvestmentPatternResponse
-
-| 필드                    | 타입     | 필수 | 설명                       |
-| ----------------------- | -------- | ---: | -------------------------- |
-| `totalInvestmentAmount` | `number` |    O | 기준 월의 투자 자산 금액   |
-| `changeRate`            | `number` |    X | 전월 대비 증감률(%), 음수 가능 |
-
-### AiAnalysisCause
-
-| 필드          | 타입                                | 필수 |
-| ------------- | ----------------------------------- | ---: |
-| `code`        | `string`                            |    O |
-| `title`       | `string`                            |    O |
-| `status`      | `CAUTION \| CHECK_REQUIRED \| GOOD` |    O |
-| `statusLabel` | `string`                            |    O |
-| `description` | `string`                            |    O |
-
-### SpendingPatternResponse
-
-| 필드                 | 타입                                                | 필수 |
-| -------------------- | --------------------------------------------------- | ---: |
-| `baseMonthLabel`     | `string`                                            |    O |
-| `totalExpenseAmount` | `number`                                            |    O |
-| `changeRate`         | `number`                                            |    X |
-| `categories`         | `{ code: string, label: string, amount: number }[]` |    O |
-| `insight`            | `{ message: string, highlight: string \| null }`    |    O |
-
-### AiExpectedEffectResponse
-
-| 필드                             | 타입     | 필수 |
-| -------------------------------- | -------- | ---: |
-| `currentProjectedAsset`          | `number` |    O |
-| `strategyProjectedAsset`         | `number` |    O |
-| `additionalAmount`               | `number` |    O |
-| `currentFinancialDischargeLabel` | `string` |    O |
-| `advancedDays`                   | `number` |    O |
-
-### AiRecommendedProductResponse
-
-| 필드        | 타입       | 필수 |
-| ----------- | ---------- | ---: |
-| `productId` | `number`   |    O |
-| `name`      | `string`   |    O |
-| `tags`      | `string[]` |    O |
-
-### AiRecommendedScenarioResponse
-
-| 필드                   | 타입                    | 필수 |
-| ---------------------- | ----------------------- | ---: |
-| `scenarioId`           | `number`                |    O |
-| `title`                | `string`                |    O |
-| `recommendedTarget`    | `RecommendedTarget`     |    O |
-| `expectedEffectAmount` | `number`                |    O |
-| `priority`             | `HIGH \| MEDIUM \| LOW` |    O |
-
-### StrategyApplicationResponse
-
-| 필드            | 타입                 | 필수 |
-| --------------- | -------------------- | ---: |
-| `id`            | `number`             |    O |
-| `sourceType`    | `StrategySourceType` |    O |
-| `sourceId`      | `number`             |    O |
-| `appliedTarget` | `RecommendedTarget`  |    O |
-| `beforeValue`   | `number`             |    O |
-| `afterValue`    | `number`             |    O |
-| `appliedAt`     | `string(date-time)`  |    O |
-
-## 12. 거래내역 화면
-
-- 화면 ID: `ASSET_01_TRANSACTIONS`
-- Route: `/transactions`
-- API: 조회, 카테고리 수정
-
-### TransactionSearchRequest
-
-| 필드        | 타입                   | 필수 |
-| ----------- | ---------------------- | ---: |
-| `accountId` | `number \| null`       |    X |
-| `startDate` | `string(date) \| null` |    X |
-| `endDate`   | `string(date) \| null` |    X |
-| `category`  | `string \| null`       |    X |
-
-### TransactionResponse
-
-| 필드                       | 타입                 | 필수 |
-| -------------------------- | -------------------- | ---: |
-| `id`                       | `number`             |    O |
-| `accountId`                | `number`             |    O |
-| `merchantName`             | `string`             |    O |
-| `amount`                   | `number`             |    O |
-| `transactionType`          | `TransactionType`    |    O |
-| `category`                 | `string`             |    O |
-| `categorySourceType`       | `CategorySourceType` |    O |
-| `classificationConfidence` | `number`             |    O |
-| `transactionDate`          | `string(date-time)`  |    O |
-
-### TransactionCategoryUpdateRequest
-
-| 필드       | 타입     | 필수 |
-| ---------- | -------- | ---: |
-| `category` | `string` |    O |
-
-## 13. 장병내일준비적금 화면
-
-- 화면 ID: `ASSET_02_SOLDIER_SAVING`
-- Route: `/soldier-savings`
-- API: `GET /api/v1/soldier-savings`
-
-| 필드                      | 타입            | 필수 |
-| ------------------------- | --------------- | ---: |
-| `bankName`                | `string`        |    O |
-| `productName`             | `string`        |    O |
-| `monthlyPayment`          | `number`        |    O |
-| `paidMonthCount`          | `number`        |    O |
-| `totalPaidAmount`         | `number`        |    O |
-| `maturityDate`            | `string(date)`  |    O |
-| `estimatedMaturityAmount` | `number`        |    O |
-| `governmentSupportAmount` | `number`        |    O |
-| `accountStatus`           | `AccountStatus` |    O |
-
-## 14. 동기 그룹·랭킹 화면
-
-- 화면 ID: `CHALLENGE_01_GROUP`
-- Route: `/challenges`
-- API: `GET /api/v1/challenges/group`
-
-### ChallengeGroupResponse
-
-| 필드               | 타입                             | 필수 |
-| ------------------ | -------------------------------- | ---: |
-| `groupName`        | `string`                         |    O |
-| `groupSize`        | `number`                         |    O |
-| `myRankPercentile` | `number`                         |    O |
-| `monthlyResult`    | `ChallengeMonthlyResultResponse` |    O |
-| `topMembers`       | `ChallengeMemberResponse[]`      |    O |
-
-## 15. 미션·투자 뱃지 화면
-
-- 화면 ID: `CHALLENGE_02_MISSIONS_BADGES`
-- Route: `/missions`, `/badges`
-- API: 오늘 미션, 미션 완료, 투자 뱃지 목록
-
-### MissionResponse
-
-| 필드               | 타입                                    | 필수 |
-| ------------------ | --------------------------------------- | ---: |
-| `id`               | `number`                                |    O |
-| `title`            | `string`                                |    O |
-| `missionType`      | `SAFE \| AGGRESSIVE \| COMMON`          |    O |
-| `rewardExperience` | `number`                                |    O |
-| `status`           | `AVAILABLE \| IN_PROGRESS \| COMPLETED` |    O |
-| `progress`         | `number`                                |    O |
-| `target`           | `number`                                |    O |
-
-### MissionCompletionResponse
-
-| 필드           | 타입                              | 필수 |
-| -------------- | --------------------------------- | ---: |
-| `mission`      | `MissionResponse`                 |    O |
-| `badgeChanged` | `boolean`                         |    O |
-| `currentBadge` | `InvestmentBadgeResponse \| null` |    O |
-
-### InvestmentBadgeResponse
-
-| 필드                     | 타입                | 필수 |
-| ------------------------ | ------------------- | ---: |
-| `badgeGrade`             | `string`            |    O |
-| `investmentType`         | `InvestmentType`    |    O |
-| `safeCount`              | `number`            |    O |
-| `aggressiveCount`        | `number`            |    O |
-| `level`                  | `number`            |    O |
-| `missionsUntilNextLevel` | `number`            |    O |
-| `unlockedAt`             | `string(date-time)` |    O |
-
-`badgeGrade`는 `BRONZE`, `SILVER`, `GOLD`, `PLATINUM`, `DIAMOND` 중 하나입니다.
-완료 미션 수 기준은 각각 1회, 10회, 50회, 100회, 300회입니다. 화면에서는
-`missionCount`가 제공되면 이를 우선 사용하고, 없는 경우 `safeCount + aggressiveCount`로
-완료 미션 수를 계산합니다.
-
-대표 뱃지 선택은 현재 프런트엔드의 브라우저 저장소에 유지합니다. 기기 간 동기화가 필요하면
-대표 뱃지 ID를 저장하는 사용자 설정 API를 별도로 제공해야 합니다.
-
-## 16. 전역 리포트 화면
-
-- 화면 ID: `REPORT_01_DISCHARGE`
-- Route: `/reports/discharge`
-- API: `GET /api/v1/reports/discharge`
-
-| 필드                             | 타입                   | 필수 |
-| -------------------------------- | ---------------------- | ---: |
-| `generatedAt`                    | `string(date-time)`    |    O |
-| `currentAsset`                   | `number`               |    O |
-| `projectedAssetAtDischarge`      | `number`               |    O |
-| `targetAmount`                   | `number`               |    O |
-| `goalAchievementRateAtDischarge` | `number`               |    O |
-| `shortfallAmount`                | `number`               |    O |
-| `financialDischargeDate`         | `string(date) \| null` |    O |
-| `summary`                        | `string`               |    O |
-
-## 17. 금융상품 추천 화면
-
-- 화면 ID: `REPORT_02_PRODUCTS`
-- Route: `/products/recommendations`
-- API: `GET /api/v1/products/recommendations`
-
-| 필드                 | 타입                | 필수 |
-| -------------------- | ------------------- | ---: |
-| `id`                 | `number`            |    O |
-| `productName`        | `string`            |    O |
-| `provider`           | `string`            |    O |
-| `productStatus`      | `ProductStatus`     |    O |
-| `investmentType`     | `InvestmentType`    |    O |
-| `riskGrade`          | `number`            |    O |
-| `expectedReturnRate` | `number \| null`    |    O |
-| `reason`             | `string`            |    O |
-| `isBeta`             | `boolean`           |    O |
-| `dataAsOf`           | `string(date-time)` |    O |
-| `badge`              | `string \| null`    |    X |
-| `rateLabel`          | `string`            |    X |
-| `rateTone`           | `NEUTRAL \| YELLOW \| GREEN` |    X |
-| `minDepositLabel`    | `string`            |    X |
-| `maxDepositLabel`    | `string`            |    X |
-
-> `badge` 이하 필드는 투자상품 추천 화면(3-2) 구현을 위한 FE 확장 필드로, 백엔드 확정 전까지 목 서버 기준으로 관리합니다. `riskGrade`는 화면에서 1=매우낮음, 2=낮음, 3=보통, 4=높음, 5=매우높음 라벨로 표시합니다.
-
-## 18. 군인 혜택 화면
-
-- 화면 ID: `REPORT_03_BENEFITS`
-- Route: `/benefits`
-- API: `GET /api/v1/benefits?category=&rank=`
-
-| 필드              | 타입           | 필수 |
-| ----------------- | -------------- | ---: |
-| `id`              | `number`       |    O |
-| `title`           | `string`       |    O |
-| `category`        | `string`       |    O |
-| `rank`            | `string`       |    O |
-| `discountSummary` | `string`       |    O |
-| `requiredProof`   | `string`       |    O |
-| `validFrom`       | `string(date)` |    O |
-| `validTo`         | `string(date)` |    O |
-| `verifiedAt`      | `string(date)` |    O |
-| `sourceUrl`       | `string`       |    O |
-
-## 19. 리밸런싱 화면
-
-- 화면 ID: `AI_03_REBALANCING`
-- Route: `/ai-coach/rebalancing`
-- API: 추천 조회, 추천 적용
-
-### RebalancingRecommendationResponse
-
-| 필드                   | 타입                | 필수 |
-| ---------------------- | ------------------- | ---: |
-| `id`                   | `number`            |    O |
-| `marketCondition`      | `MarketCondition`   |    O |
-| `currentRatio`         | `object`            |    O |
-| `recommendedRatio`     | `object`            |    O |
-| `remainingServiceDays` | `number`            |    O |
-| `reason`               | `string`            |    O |
-| `dataAsOf`             | `string(date-time)` |    O |
-
-## 20. 알림 화면
-
-- 화면 ID: `MY_01_NOTIFICATIONS`
-- Route: `/notifications`
-- API: 토큰 등록, 알림 이력, 읽음 처리
-
-### DeviceTokenRequest / DeviceTokenResponse
-
-| 필드         | 타입                | 필수 |
-| ------------ | ------------------- | ---: |
-| `deviceType` | `DeviceType`        |    O |
-| `token`      | `string`            |    O |
-| `createdAt`  | `string(date-time)` | 응답 |
-
-### NotificationResponse
-
-| 필드        | 타입                | 필수 |
-| ----------- | ------------------- | ---: |
-| `id`        | `number`            |    O |
-| `type`      | `string`            |    O |
-| `title`     | `string`            |    O |
-| `message`   | `string`            |    O |
-| `isRead`    | `boolean`           |    O |
-| `createdAt` | `string(date-time)` |    O |
-
-## 21. 휴가모드 화면
-
-- 화면 ID: `LEAVE_01_MODE`
-- Route: `/leave-mode`
-- API: `POST /api/v1/leave-mode`, `GET /api/v1/leave-mode/current`
-
-### LeaveModeRequest / LeaveModeResponse
-
-| 필드                   | 타입           | 필수 | 설명               |
-| ---------------------- | -------------- | ---: | ------------------ |
-| `startDate`            | `string(date)` |    O | 휴가 시작일        |
-| `endDate`              | `string(date)` |    O | 휴가 종료일        |
-| `budget`               | `number`       |    O | 전체 예산          |
-| `active`               | `boolean`      | 응답 | 현재 활성화 여부   |
-| `currentDay`           | `number`       | 응답 | 휴가 며칠째        |
-| `totalDays`            | `number`       | 응답 | 전체 일수          |
-| `spentAmount`          | `number`       | 응답 | 사용액             |
-| `remainingBudget`      | `number`       | 응답 | 남은 예산          |
-| `dailyAvailableAmount` | `number`       | 응답 | 일평균 사용 가능액 |
-
-`GET /leave-mode/current`는 휴가 중이 아니면 `204 No Content`를 반환하므로 화면에서 `response.status === 204`를 처리합니다.
-
-## 22. 오늘의 AI 투자 리포트 화면
-
-- 화면 ID: `AI_04_TODAY_MARKET_REPORT`
-- Route: `/ai-coach/market-report`
-- API: `GET /api/v1/market-reports/today`
-
-### TodayMarketReportResponse
-
-| 필드              | 타입                | 필수 |
-| ----------------- | ------------------- | ---: |
-| `reportDate`      | `string(date)`      |    O |
-| `validFrom`       | `string(date-time)` |    O |
-| `validUntil`      | `string(date-time)` |    O |
-| `marketCondition` | `MarketCondition`   |    O |
-| `title`           | `string`            |    O |
-| `summary`         | `string`            |    O |
-| `details`         | `string[]`          |    O |
-| `dataAsOf`        | `string(date-time)` |    O |
-| `isBeta`          | `boolean`           |    O |
-
-## 23. 마이페이지
-
-- 화면 ID: `MY_02_PAGE`
-- Route: `/my-page`
-- 사용 API: 닉네임 변경, 프로필 외형 변경, 계좌 목록, 투자 뱃지 목록, 로그아웃, 회원 탈퇴
-
-프로필 전체 조회 API는 제공된 명세에 없으므로 로그인 응답과 Pinia 사용자 상태를 사용합니다. 새로고침 이후에도 사용자 정보를 복구해야 한다면 백엔드에 `GET /api/v1/users/me` 추가 여부를 확인해야 합니다.
-
----
-
-## DTO 변경 관리 규칙
-
-1. 백엔드 DTO 필드가 변경되면 이 문서를 먼저 수정합니다.
-2. 기능별 `api/*.api.js`와 화면을 수정합니다.
-3. DTO 명칭은 백엔드 명세의 클래스 이름과 동일하게 유지합니다.
-4. 제공된 API 명세에 없는 엔드포인트를 임의로 추가하지 않습니다.
+# 화면 데이터 계약
+
+현재 Vue 화면이 사용하는 라운트와 프론트엔드 정규화 모델의 기준입니다.
+
+## 기준과 우선순위
+
+1. 백엔드 Request·Response DTO는 백엔드 Swagger와 백엔드 `api-endpoint-mapping.md`가 기준입니다.
+2. HTTP 경로와 메서드는 `docs/api-endpoint-mapping.md`와 `src/common/api/endpoints.js`를 따릅니다.
+3. 이 문서는 서버 DTO를 복제하지 않고, 화면이 직접 사용하는 라운트·정규화 필드만 관리합니다.
+
+## 공통 표기
+
+| 표기                | 의미                                   |
+| ------------------- | -------------------------------------- |
+| `number`            | 금액은 별도 설명이 없으면 원(KRW) 단위 |
+| `string(date)`      | `YYYY-MM-DD`                           |
+| `string(date-time)` | ISO 8601 또는 서버 LocalDateTime 배열  |
+| `null`              | 응답이 없거나 아직 계산되지 않음       |
+| `[]`                | 데이터가 없는 목록                     |
+
+## 현재 라운트
+
+### 인증·온보딩
+
+| Path                                    | Name                    | View                          | 주요 데이터                |
+| --------------------------------------- | ----------------------- | ----------------------------- | -------------------------- |
+| `/`                                     | `splash`                | `SplashView.vue`              | 세션 복구 상태             |
+| `/login`                                | `social-login`          | `SocialLoginView.vue`         | OAuth Provider             |
+| `/auth/callback/:provider`              | `social-login-callback` | `SocialLoginCallbackView.vue` | `provider`, OAuth code     |
+| `/terms`                                | `terms`                 | `TermsView.vue`               | 약관 동의 상태             |
+| `/onboarding`                           | `onboarding-intro`      | `OnboardingIntroView.vue`     | 온보딩 진행 상태           |
+| `/onboarding/accounts`                  | `connect-accounts`      | `AccountConnectView.vue`      | 연동 계좌 목록             |
+| `/onboarding/accounts/codef/:assetType` | `connect-codef-bank`    | `CodefBankConnectView.vue`    | 자산 유형·금융기관         |
+| `/onboarding/nickname`                  | `nickname`              | `NicknameSetupView.vue`       | 닉네임·프로필 외형         |
+| `/onboarding/military-info`             | `military-info`         | `MilitaryInfoView.vue`        | 군종·입대일·적금 가입 여부 |
+| `/onboarding/preference-goal`           | `preference-goal`       | `PreferenceGoalView.vue`      | 투자 성향·목표 금액        |
+
+### 주요 서비스
+
+| Path                                      | Name                        | View                         | 주요 데이터               |
+| ----------------------------------------- | --------------------------- | ---------------------------- | ------------------------- |
+| `/home`                                   | `dashboard`                 | `DashboardView.vue`          | 대시보드 합성 모델        |
+| `/notifications`                          | `notifications`             | `NotificationsView.vue`      | 알림 목록·안 읽은 수      |
+| `/ai-coach`                               | `ai-coach`                  | `AiCoachView.vue`            | AI 기능 진입 상태         |
+| `/challenge`                              | `challenge`                 | `ChallengeView.vue`          | 동기 그룹·미션            |
+| `/mypage`                                 | `mypage`                    | `MyPageView.vue`             | 프로필·목표·뱃지          |
+| `/mypage/connected-banks`                 | `connected-banks`           | `ConnectedBanksView.vue`     | 금융기관별 연동 상태      |
+| `/mypage/connected-banks/:institutionKey` | `connected-bank-management` | `AccountManagementView.vue`  | 기관별 계좌·연동 상태     |
+| `/transactions`                           | `transactions`              | `TransactionHistoryView.vue` | 거래 목록·필터            |
+| `/transactions/detail/:transactionId`     | `transaction-detail`        | `TransactionDetailView.vue`  | 선택 거래·카테고리        |
+| `/assets`                                 | `asset-overview`            | `AssetOverviewView.vue`      | 자산 요약                 |
+| `/assets/accounts`                        | `account-assets`            | `AccountAssetsView.vue`      | 계좌별 자산               |
+| `/monthly-asset-report`                   | `monthly-asset-report`      | `MonthlyAssetReportView.vue` | 월 수입·투자·지출         |
+| `/upcoming-events`                        | `upcoming-events`           | `UpcomingEventsView.vue`     | 예정 이벤트, 현재 빈 목록 |
+| `/benefits`                               | `benefits`                  | `BenefitsView.vue`           | 군인 혜택·카테고리        |
+| `/badge-history`                          | `badge-history`             | `BadgeHistoryView.vue`       | 투자 뱃지 이력            |
+
+### AI·시뮬레이션·투자
+
+| Path                                        | Name                                 | View                              | 주요 데이터                |
+| ------------------------------------------- | ------------------------------------ | --------------------------------- | -------------------------- |
+| `/ai-financial-report`                      | `ai-financial-report`                | `AiFinancialReportView.vue`       | 오늘의 시장 리포트·지표    |
+| `/ai-asset-analysis-result/:analysisId?`    | `ai-asset-analysis-result`           | `AiAssetAnalysisResultView.vue`   | AI 분석 상세               |
+| `/analysis-history`                         | `analysis-history`                   | `AnalysisHistoryView.vue`         | What-if·AI 통합 이력       |
+| `/analysis-history/what-if/:simulationId`   | `what-if-detail`                     | `WhatIfDetailView.vue`            | 시뮬레이션 상세            |
+| `/what-if-simulation`                       | `what-if-simulation`                 | `WhatIfSimulationView.vue`        | What-if 기본값·실행 결과   |
+| `/ai-product-recommendation`                | `ai-product-recommendation`          | `AiProductRecommendationView.vue` | 수익률 기반 상품 추천      |
+| `/investment-guide`                         | `investment-guide`                   | `RebalancingView.vue`             | 최신 투자 가이드·적립 계획 |
+| `/investment-guide/plan/new`                | `investment-plan-create`             | `RecurringInvestmentPlanView.vue` | 적립 계획 생성             |
+| `/investment-guide/plan/edit`               | `investment-plan-edit`               | `RecurringInvestmentPlanView.vue` | 적립 계획 수정             |
+| `/investment-guide/plan/connect-securities` | `investment-plan-connect-securities` | `CodefBankConnectView.vue`        | 증권사 연동                |
+| `/investment-guide/result`                  | `investment-guide-result`            | `InvestmentGuideResultView.vue`   | 새 투자 가이드             |
+| `/investment-guide/detail/:guidanceId`      | `investment-guide-detail`            | `InvestmentGuideDetailView.vue`   | 투자 가이드 상세·적용      |
+
+`/rebalancing`은 `investment-guide`로 redirect합니다. 위 표에 없는 View 파일은 현재 Router에 등록되지 않은 보조 화면입니다.
+
+## 정규화 모델
+
+### `AuthSession`
+
+| 필드                   | 타입             | 설명               |
+| ---------------------- | ---------------- | ------------------ |
+| `accessToken`          | `string \| null` | API Bearer Token   |
+| `refreshToken`         | `string \| null` | 토큰 재발급에 사용 |
+| `expiresIn`            | `number`         | 초 단위 만료 기간  |
+| `accessTokenExpiresAt` | `number`         | epoch millisecond  |
+| `user`                 | `object \| null` | 로그인 사용자 요약 |
+
+`auth.storage.js`는 `auth.session`을 기본으로 사용하고 기존 `accessToken`, `refreshToken`, `userId` 키와 호환을 유지합니다.
+
+### `AccountViewModel`
+
+| 필드                          | 타입               | 정규화                                     |
+| ----------------------------- | ------------------ | ------------------------------------------ |
+| `accountId`, `id`             | `number \| string` | `accountId` 또는 `id`                      |
+| `accountName`                 | `string`           | 계좌·상품·별칭 순으로 선택                 |
+| `organizationCode`            | `string`           | 기관 매핑 결과                             |
+| `institutionName`, `bankName` | `string`           | 기관 표시명                                |
+| `accountNumberMasked`         | `string`           | `accountMasked` 또는 `accountNumberMasked` |
+| `balance`, `amount`           | `number`           | `currentBalance` 또는 `balance`            |
+| `accountStatus`               | `string`           | 서버 상태, 로컬 해제 상태는 `DISCONNECTED` |
+
+### `DashboardViewModel`
+
+| 필드                    | 타입                            | 설명                               |
+| ----------------------- | ------------------------------- | ---------------------------------- |
+| `response`              | `object`                        | 원본 `DashboardResponse`           |
+| `dailyReport`           | `{ title, date }`               | 시장 리포트 요약                   |
+| `financialDday`         | `object`                        | 재정적·실제 전역 D-day, 자산, 목표 |
+| `missions`              | `object[]`                      | 오늘의 미션 정규화 목록            |
+| `events`                | `object[]`                      | 현재 서버 모드에서 `[]`            |
+| `assetSummary.monthly`  | `object`                        | 수입·투자·지출                     |
+| `assetSummary.total`    | `object`                        | 총자산·계좌                        |
+| `assetSummary.forecast` | `object`                        | 전역 예상 자산·차트                |
+| `apiMeta`               | `{ goalAppliedAt, goalSource }` | 적용 전략 메타 정보                |
+
+세부 변환은 `docs/dashboard-api-mapping.md`를 따릅니다.
+
+### `TransactionViewModel`
+
+| 필드                  | 타입                | 정규화                                               |
+| --------------------- | ------------------- | ---------------------------------------------------- |
+| `id`, `transactionId` | `number \| string`  | `transactionId` 또는 `id`                            |
+| `accountId`           | `number \| string`  | 서버 값 유지                                         |
+| `merchantName`        | `string`            | `merchantName → description → title` 순으로 선택     |
+| `amount`              | `number`            | 원 단위                                              |
+| `transactionType`     | `INCOME \| EXPENSE` | `DEPOSIT → INCOME`, `WITHDRAW\|WITHDRAWAL → EXPENSE` |
+| `category`            | `string`            | 카테고리 코드                                        |
+| `transactionDate`     | `string(date-time)` | `transactionAt` 또는 `transactionDate` 정규화        |
+
+날짜 배열·객체 응답도 `YYYY-MM-DDTHH:mm:ss` 문자열로 변환합니다.
+
+### `AnalysisHistoryCard`
+
+| 필드               | 타입                     | 설명                                  |
+| ------------------ | ------------------------ | ------------------------------------- |
+| `id`               | `string`                 | `ai-{sourceId}` 또는 `sim-{sourceId}` |
+| `sourceId`         | `number \| string`       | 원본 분석·시뮬레이션 ID               |
+| `type`             | `AI_ANALYSIS \| WHAT_IF` | 카드 유형                             |
+| `title`            | `string`                 | 사용자 표시 제목                      |
+| `date`, `sortKey`  | `string`                 | 표시용 날짜·정렬 원본                 |
+| `summary`          | `string`                 | 분석 요약                             |
+| `applied`          | `boolean`                | 전략 적용 여부                        |
+| `metrics`          | `object[]`               | 소비·예상 자산 지표                   |
+| `allocationRatios` | `object[] \| undefined`  | What-if 배분 비율                     |
+| `projectedAsset`   | `string`                 | 만원 단위 표시값                      |
+
+통합 이력 응답은 `records`, `totalCount`, `hasNext`, `latestDate`, `latestProjectedAsset`로 변환합니다.
+
+### `WhatIfDetailViewModel`
+
+| 그룹      | 필드                                                                                                   |
+| --------- | ------------------------------------------------------------------------------------------------------ |
+| 식별·요약 | `id`, `title`, `saved`, `projectedAsset`, `targetAmount`, `targetReturnRate`, `financialDischargeDate` |
+| 계산 검증 | `hasCalculationDetail`, `calculationStatus`, `calculationPolicyVersion`                                |
+| 계산 내역 | `calculationRows`, `benefitRows`, `principalRows`                                                      |
+| 월 배분   | `baseSalary`, `allocations`, `payments`                                                                |
+
+배분은 투자·군적금·소비·미배분으로 표시하고, 미배분 금액은 0 미만으로 내려가지 않게 보정합니다.
+
+### `ProductRecommendationCard`
+
+| 필드                      | 타입               | 설명                   |
+| ------------------------- | ------------------ | ---------------------- |
+| `id`                      | `number \| string` | 상품·ETF 식별자        |
+| `productName`, `provider` | `string`           | 표시명·제공사          |
+| `expectedReturnRate`      | `number \| null`   | 최근 1년 수익률 우선   |
+| `riskLabel`               | `string`           | 위험 등급 한글 표시    |
+| `reason`                  | `string`           | 추천 근거              |
+| `rateText`, `rateLabel`   | `string`           | 수익률 표시            |
+| `previewTags`             | `string[]`         | 최대 2개 미리보기 태그 |
+| `themeClass`, `emoji`     | `string`           | 카드 표현              |
+
+개인화 추천이 있으면 우선 사용하고, 없으면 투자 성향과 추천 가능 조건을 만족하는 상품을 사용합니다.
+
+### `NotificationViewModel`
+
+| 필드               | 타입                | 정규화                         |
+| ------------------ | ------------------- | ------------------------------ |
+| `notificationId`   | `number \| string`  | `notificationId` 또는 `id`     |
+| `notificationType` | `string`            | `notificationType` 또는 `type` |
+| `title`            | `string`            | 알림 제목                      |
+| `body`             | `string`            | `body` 또는 `message`          |
+| `read`             | `boolean`           | `read` 또는 `isRead`           |
+| `createdAt`        | `string(date-time)` | 생성 시각                      |
+
+목록 상태는 `page`, `hasNext`, `totalElements`, `unreadCount`를 포함합니다. 푸시 권한 상태는 `granted`, `denied`, `default`, `disabled`, `unsupported` 중 하나입니다.
+
+### `MarketIndicatorRow`
+
+| 필드     | 타입                              | 설명                              |
+| -------- | --------------------------------- | --------------------------------- |
+| `label`  | `string`                          | 코스피·코스닥·미국채 10년·원/달러 |
+| `value`  | `string`                          | 단위가 포함된 표시값              |
+| `change` | `string`                          | 등락값·등락률                     |
+| `tone`   | `positive \| negative \| neutral` | 색상 상태                         |
+
+지원하지 않는 지표 코드는 화면 목록에서 제외합니다.
+
+## 서버 응답을 그대로 사용하는 영역
+
+| 영역                  | Store·API                                    | 비고                          |
+| --------------------- | -------------------------------------------- | ----------------------------- |
+| 온보딩                | `onboarding.store.js`, `onboarding.api.js`   | 입력 단계 상태만 Store에 보관 |
+| 챌린지·미션           | `challenge.store.js`, `mission.store.js`     | 목록 래핑만 해제              |
+| 전역 리포트·혜택      | `reports.store.js`, `reports.api.js`         | 응답 유지                     |
+| 장병내일준비적금      | `soldierSavings.api.js`                      | 응답 유지                     |
+| 휴가모드              | `leave-mode.store.js`, `leaveMode.api.js`    | `204` 현재 모드 없음 처리     |
+| 투자 가이드·적립 계획 | `rebalancing.store.js`, `rebalancing.api.js` | 응답 유지                     |
+| 마이페이지·목표       | `my-page.store.js`, `myPage.api.js`          | 사용자·목표 응답 유지         |
+
+이 영역에 화면 전용 변환이 필요해지면 현재 Store에 최소 변환을 추가하거나 복잡할 때만 Mapper를 분리합니다.
+
+## 변경 규칙
+
+1. 백엔드 DTO·엔드포인트 변경을 먼저 확인합니다.
+2. `src/common/api/endpoints.js`와 해당 Feature API를 수정합니다.
+3. 정규화 모델이 바뀌면 Mapper·Store·View와 이 문서를 함께 수정합니다.
+4. 라운트가 바뀌면 Router와 이 문서의 라운트 표를 함께 수정합니다.
+5. 응답에 없는 값을 임의로 만들어 화면에 노출하지 않습니다.

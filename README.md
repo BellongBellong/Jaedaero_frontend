@@ -1,169 +1,115 @@
-﻿# 🪖 제대로 (Jaedaero) Frontend
+# 🪖 제대로 (Jaedaero) Frontend
 
-전역 예정 장병의 확정소득과 금융 데이터를 기반으로 전역 예상 자산, 재정적 전역일과 목표 달성 전략을 제공하는 군 특화 AI 자산관리 서비스의 Vue 프론트엔드 프로젝트입니다.
+전역 예정 장병의 확정 소득과 금융 데이터를 기반으로 전역 예상 자산, 재정적 전역일, 목표 달성 전략을 제공하는 군 특화 AI 자산관리 서비스의 프론트엔드입니다.
+
+## 주요 기능
+
+- Google·Kakao 소셜 로그인과 온보딩
+- CODEF 금융기관 연동과 통합 자산·거래 내역 조회
+- 전역 예상 자산, 재정적 전역일, 휴가 예산 관리
+- AI 자산 분석, What-if 시뮬레이션, 금융상품·적립식 투자 가이드
+- 오늘의 미션, 챌린지, 군인 혜택, 투자 뱃지
+- FCM 푸시 알림과 PWA
 
 ## 기술 스택
 
-- Vue 3
-- JavaScript
-- Vite
-- Pinia
-- Vue Router
-- Axios
-- json-server 0.17.4
+- Vue 3, JavaScript, Vite
+- Pinia, Vue Router, Axios
+- Tailwind CSS
+- Firebase Cloud Messaging
+- Vite PWA
 
-> TypeScript를 사용하지 않습니다. `.ts`, `.tsx`, `tsconfig.json`, `vue-tsc`, `<script setup lang="ts">`를 사용하지 않고 `.js`와 `<script setup>`을 사용합니다.
+## 시작하기
 
-## 주요 MVP 기능
+### 사전 준비
 
-1. Google·Kakao 소셜 로그인과 온보딩
-2. CODEF 계좌 연동 및 통합 자산 조회
-3. 확정소득 캐시플로우와 재정적 전역일
-4. What-if 시뮬레이션과 히스토리
-5. AI 분석, 추천 전략 적용 및 적용 이력
-6. 거래내역 조회와 카테고리 수정
-7. 장병내일준비적금 납입·매칭지원금 조회
-8. 동기 그룹 비교, 오늘의 미션, 투자 뱃지
-9. 전역 리포트, 금융상품 추천, 군인 혜택
-10. 리밸런싱 추천
-11. 알림·FCM, 휴가모드, 오늘의 AI 투자 리포트
+- Node.js `22.18.x` 또는 `24.12.0` 이상
+- npm
 
-## 문서
+### 설치 및 실행
 
-```text
-docs/
-├── api-endpoint-mapping.md       # 제공된 API 명세 전체 반영표
-├── screen-data-spec.md           # 화면별 DTO와 필드 타입 명세
-├── file-structure.md             # MVP 기능별 파일 구조
-└── package-scripts.example.json
+```bash
+npm ci
+cp .env.example .env
+npm run dev
 ```
 
-- [API 명세 반영표](docs/api-endpoint-mapping.md)
-- [화면별 데이터 타입 명세서](docs/screen-data-spec.md)
-- [파일 구조 문서](docs/file-structure.md)
+Windows PowerShell에서는 환경 파일을 다음과 같이 복사합니다.
+
+```powershell
+Copy-Item .env.example .env
+```
+
+개발 서버는 `http://localhost:5173`에서 실행됩니다. 포트가 사용 중이면 실행이 중단됩니다.
+
+## 환경 변수
+
+`.env.example`을 기준으로 `.env`를 작성합니다.
+
+| 변수                    | 용도                       | 기본값    |
+| ----------------------- | -------------------------- | --------- |
+| `VITE_API_BASE_URL`     | 백엔드 API 기본 경로       | `/api/v1` |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth 클라이언트 ID | 없음      |
+| `VITE_KAKAO_CLIENT_ID`  | Kakao OAuth 클라이언트 ID  | 없음      |
+| `VITE_FIREBASE_*`       | FCM 초기화 및 웹 푸시 설정 | 없음      |
+
+로컬에서 `/api` 요청은 `vite.config.js`의 프록시 설정을 통해 백엔드로 전달됩니다. OAuth·Firebase 기능을 확인하려면 해당 환경 변수를 모두 설정해야 합니다.
+
+API Secret과 Client Secret은 프론트엔드 환경 변수나 소스 코드에 저장하지 않습니다.
+
+## npm 명령어
+
+| 명령어             | 설명                      |
+| ------------------ | ------------------------- |
+| `npm run dev`      | 개발 서버 실행            |
+| `npm run build`    | 운영용 빌드 생성          |
+| `npm run preview`  | 빌드 결과 로컬 미리보기   |
+| `npm run lint`     | ESLint 검사               |
+| `npm run lint:fix` | ESLint 자동 수정          |
+| `npm run format`   | Prettier 포맷 적용        |
+| `npm run commit`   | 프로젝트 커밋 도우미 실행 |
 
 ## 프로젝트 구조
 
 ```text
-frontend/
-├── docs/
-├── public/
-├── src/
-│   ├── app/
-│   ├── features/
-│   │   ├── auth/
-│   │   ├── onboarding/
-│   │   ├── accounts/
-│   │   ├── dashboard/
-│   │   ├── cashflow/
-│   │   ├── simulations/
-│   │   ├── ai-analysis/
-│   │   ├── transactions/
-│   │   ├── soldier-savings/
-│   │   ├── challenges/
-│   │   ├── reports/
-│   │   ├── rebalancing/
-│   │   ├── notifications/
-│   │   ├── leave-mode/
-│   │   ├── market-report/
-│   │   └── my-page/
-│   ├── common/
-│   │   └── api/
-│   │       ├── client.js
-│   │       └── endpoints.js
-│   └── main.js
-├── .env.example
-├── jsconfig.json
-├── package.json
-└── vite.config.js
+src/
+├── app/                         # 라우터, 레이아웃, 앱 진입점
+├── assets/                      # 이미지, 아이콘, 폰트
+├── common/                      # API, 인증, 공통 컴포넌트·스타일
+├── features/                    # 도메인별 화면, 상태, API, 컴포넌트
+│   ├── auth/                    # 로그인·인증
+│   ├── onboarding/              # 온보딩·계좌 연동
+│   ├── dashboard/               # 대시보드·자산
+│   ├── ai-analysis/             # AI 분석·이력
+│   ├── simulations/             # What-if·상품 추천
+│   └── ...                      # 거래, 미션, 알림, 리포트 등
+├── firebase-messaging-sw.js     # FCM 서비스 워커
+└── main.js                      # Vue 앱 부트스트랩
 ```
 
-상세 구조는 `docs/file-structure.md`에서 확인합니다.
+상세 구조는 [파일 구조 문서](docs/file-structure.md)에서 확인합니다.
 
-## API 데이터 계약
+## API 연동 규칙
 
-```text
-POST   /api/v1/auth/login
-POST   /api/v1/onboarding/military-info
-POST   /api/v1/accounts/connect
-GET    /api/v1/accounts
-GET    /api/v1/dashboard
-GET    /api/v1/cashflow?months=8
-POST   /api/v1/simulations
-GET    /api/v1/simulations?page=0&size=20
-POST   /api/v1/ai-analyses
-GET    /api/v1/transactions
-PUT    /api/v1/transactions/4/category
-GET    /api/v1/missions/today
-POST   /api/v1/missions/2/complete
-GET    /api/v1/reports/discharge
-GET    /api/v1/rebalancing/recommendations
-GET    /api/v1/notifications?page=0&size=20
-GET    /api/v1/leave-mode/current
-GET    /api/v1/market-reports/today
-```
+- `src/common/api/client.js`: API 기본 설정, JWT 주입, 토큰 재발급·재시도
+- `src/common/api/endpoints.js`: REST API 경로 통합 관리
+- `src/features/*/api`: 도메인별 API 호출
 
-전체 엔드포인트는 `docs/api-endpoint-mapping.md`에 정리되어 있습니다.
+엔드포인트를 임의로 추가하지 않고 [API 명세 반영표](docs/api-endpoint-mapping.md)를 기준으로 합니다. 화면 데이터 형식은 [화면별 데이터 타입 명세서](docs/screen-data-spec.md)와 동기화합니다.
 
-## Axios 설정
+데이터 필드나 API 경로가 변경되면 다음을 함께 수정합니다.
 
-`src/common/api/client.js`
-
-```js
-import axios from 'axios'
-
-const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
-
-export default apiClient
-```
-
-경로는 `src/common/api/endpoints.js`에서 통합 관리합니다.
-
-## 화면별 데이터 계약 관리
-
-TypeScript 대신 `docs/screen-data-spec.md`를 화면 데이터 계약으로 사용합니다.
-
-- 금액: 원 단위 `number`
-- 날짜: `YYYY-MM-DD`
-- 시각: ISO 8601
-- 상태값: Enum 문자열
-- 응답 DTO 명칭: 백엔드 API 명세와 동일하게 유지
-
-데이터 필드가 변경되면 다음 파일을 함께 수정합니다.
-
-1. `docs/screen-data-spec.md`
+1. `docs/api-endpoint-mapping.md` 또는 `docs/screen-data-spec.md`
 2. `src/common/api/endpoints.js`
-3. 해당 Feature의 `api/*.api.js`
+3. 해당 `src/features/*/api/*.api.js`
 
-## 제공된 API 명세에 없는 기능
+## 검증 및 빌드
 
-아래 기능은 프론트엔드에서 임의 엔드포인트를 만들지 않고 백엔드 확정 전까지 제한합니다.
+변경 전 아래 검사를 실행합니다.
 
-- 이벤트 등록·수정·삭제
-- 휴가모드 종료
-- 알림 수신 설정
-- 프로필 전체 조회
-- 계좌 해제·수동 동기화
-
-세부 내용은 `docs/api-endpoint-mapping.md`의 API 공백 표를 확인합니다.
-
-## 실제 백엔드 전환
-
-```env
-VITE_API_BASE_URL=http://localhost:8080/api/v1
+```bash
+npm run lint
+npm run build
 ```
 
-```text
-개발/운영: Vue → Spring Framework → MyBatis → MySQL
-                              ├→ CODEF
-                              ├→ 캐시플로우 엔진
-                              └→ AI 분석 API
-```
-
-API Secret과 Client Secret은 프론트엔드에 저장하지 않습니다.
+Vercel 배포 시 SPA 라우팅과 `/api` 프록시는 `vercel.json`의 rewrite 설정을 사용합니다.
