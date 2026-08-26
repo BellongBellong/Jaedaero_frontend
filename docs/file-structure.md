@@ -1,87 +1,96 @@
-# 파일 구조 문서
+# 파일 구조
 
-이 프로젝트는 Vue 3와 JavaScript를 사용하며 MVP 도메인별 Feature 구조를 사용합니다.
-공통 코드는 `common`에 두고 의존 방향은 `app → features → common`으로 유지합니다.
+Vue 3·JavaScript 기반의 Feature 단위 구조를 사용합니다. 의존 방향은 `app → features → common`을 기본으로 합니다.
 
 ```text
-frontend/
+Jaedaero_frontend/
 ├── docs/
 │   ├── api-endpoint-mapping.md
-│   ├── screen-data-spec.md
-│   └── file-structure.md
+│   ├── dashboard-api-mapping.md
+│   ├── dashboard-personas.md
+│   ├── file-structure.md
+│   └── screen-data-spec.md
 ├── public/
+│   └── icons/                       # PWA·파비콘
 ├── src/
 │   ├── app/
 │   │   ├── layouts/
 │   │   ├── router/
 │   │   └── App.vue
+│   ├── assets/                      # 이미지·아이콘·폰트
+│   ├── common/
+│   │   ├── api/                     # Axios 클라이언트·엔드포인트
+│   │   ├── auth/                    # 인증 세션 저장
+│   │   ├── components/              # 공통 UI
+│   │   ├── composables/             # 공통 Vue 로직
+│   │   ├── constants/
+│   │   └── styles/
 │   ├── features/
-│   │   ├── auth/
-│   │   ├── onboarding/
 │   │   ├── accounts/
-│   │   ├── dashboard/
-│   │   ├── cashflow/
-│   │   ├── simulations/
 │   │   ├── ai-analysis/
-│   │   ├── transactions/
-│   │   ├── soldier-savings/
+│   │   ├── auth/
+│   │   ├── benefits/
+│   │   ├── cashflow/
 │   │   ├── challenges/
-│   │   ├── missions/
-│   │   ├── reports/
-│   │   ├── rebalancing/
-│   │   ├── notifications/
+│   │   ├── dashboard/
 │   │   ├── leave-mode/
 │   │   ├── market-report/
-│   │   └── my-page/
-│   ├── common/
-│   │   ├── api/
-│   │   │   ├── client.js
-│   │   │   └── endpoints.js
-│   │   ├── components/
-│   │   ├── composables/
-│   │   ├── constants/
-│   │   ├── styles/
-│   │   └── utils/
-│   ├── assets/
-│   ├── mocks/
-│   └── main.js
+│   │   ├── missions/
+│   │   ├── my-page/
+│   │   ├── notifications/
+│   │   ├── onboarding/
+│   │   ├── rebalancing/
+│   │   ├── reports/
+│   │   ├── simulations/
+│   │   ├── soldier-savings/
+│   │   └── transactions/
+│   ├── firebase-messaging-sw.js     # FCM·PWA 서비스 워커
+│   └── main.js                      # Vue·Pinia·Router 부트스트랩
 ├── .env.example
-├── jsconfig.json
 ├── package.json
+├── vercel.json
 └── vite.config.js
 ```
 
-## Feature 내부 구조
+## Feature 내부 규칙
 
-기능 규모에 따라 필요한 폴더만 생성합니다.
+기능에 필요한 폴더만 만듭니다.
+
+| 폴더          | 역할                              |
+| ------------- | --------------------------------- |
+| `api`         | Axios API 요청과 서버 응답 반환   |
+| `components`  | 해당 Feature 전용 UI              |
+| `composables` | 화면 로직과 재사용 Vue 상태       |
+| `constants`   | 해당 Feature의 고정 매핑          |
+| `firebase`    | 알림 Feature의 Firebase 초기화    |
+| `mappers`     | 백엔드 응답을 화면 모델로 변환    |
+| `mocks`       | 명시적 화면 테스트 데이터         |
+| `services`    | 브라우저·외부 SDK 연동            |
+| `stores`      | 여러 화면에서 공유하는 Pinia 상태 |
+| `utils`       | Vue 상태와 무관한 순수 변환 로직  |
+| `views`       | Vue Router에 연결되는 페이지      |
+
+도메인 라운팅은 현재 `src/features/auth/routes.js`, `src/features/onboarding/routes.js`, `src/app/router/main.js`로 나누어 관리합니다.
+
+## 데이터 흐름
 
 ```text
-features/dashboard/
-├── api/
-│   └── dashboard.api.js
-├── components/
-├── composables/
-├── stores/
-├── views/
-└── routes.js
+View
+  → Store 또는 Composable
+  → Feature API
+  → common/api/client.js
+  → Backend
 ```
 
-- `api`: Axios 기반 API 요청과 응답 데이터 반환
-- `components`: 해당 기능에서만 사용하는 UI
-- `composables`: 조회 상태와 화면 로직 및 API 호출 흐름, 로딩·오류 상태, 계산 및 여러 UI가 공유하는 동작
-- `stores`: 여러 화면에서 공유하거나 장기간 유지해야 하는 전역 상태
-- `views`: Vue Router와 연결되는 페이지 구성
-- `routes.js`: 해당 기능의 라우트 배열
-- `utils`: Vue 상태와 무관한 단순 계산·변환 함수
-- `mappers`: 백엔드 응답을 프론트 화면 데이터로 변환
+서버 응답과 화면 모델이 다를 때만 `mappers`를 사용합니다. 변환이 필요 없는 응답은 별도 계층을 만들지 않고 Store에서 그대로 관리합니다.
 
+## 변경 동기화
 
-## 데이터 계약 연결 원칙
+| 변경                | 함께 확인할 파일                                                       |
+| ------------------- | ---------------------------------------------------------------------- |
+| API 경로·메서드     | `docs/api-endpoint-mapping.md`, `common/api/endpoints.js`, Feature API |
+| 응답 필드·화면 모델 | `docs/screen-data-spec.md`, Mapper, Store, View                        |
+| 라운트              | `docs/screen-data-spec.md`, Router, View                               |
+| 대시보드 목         | `docs/dashboard-personas.md`, `dashboard/mocks`                        |
 
-1. `docs/screen-data-spec.md`에서 백엔드 DTO 기반 화면 데이터 계약을 정의합니다.
-2. `docs/api-endpoint-mapping.md`에 명시된 API만 호출합니다.
-3. 기능별 API는 `src/common/api/endpoints.js`의 경로를 사용합니다.
-4. 실제 백엔드 연결 시 `VITE_API_BASE_URL`만 변경합니다.
-
-빈 폴더는 저장소에서 유지될 수 있도록 `example.vue` placeholder를 둡니다. 실제 파일을
-추가하면 placeholder는 제거할 수 있습니다.
+빈 폴더 유지용 placeholder는 두지 않습니다.
